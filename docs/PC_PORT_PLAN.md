@@ -2,6 +2,37 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M169: Cure-D z M167, dwaj przeciwnicy pokonani
+
+WynikiM167/ObtainAll/End kończą58720 pole191/335HP i Cure-D14 w24,
+pierwszym wolnym slocie po Naricie23. Left240 prowadzi58960 doM169/
+a80264c8; dalszyLeft uruchamia59240 spotkanie.59440 dwa8:31/8:30 po156HP.
+PodejścieLeft100 kosztuje84HP; reticle214 do8:30 i dwie kule pokonują go,
+60024 Aya107HP/jeden cel. Posiadany Cure-D24 użyty przez oryginalne
+Items/Use; kolejna kula zmniejsza8:31 do70HP,61212 slot24=0,Aya19HP.
+Nie zachowano próbki stanu pomiędzy usunięciem a ponownym nałożeniem
+Darkness, więc ten odcinek nie dowodzi osobno długości okresu bez statusu.
+
+Próba otwarcia PE przed gotowymATB nie otworzyła menu; następne wejścia
+wybrały cel i uruchomiły strzał. Nie było wykonanegoHeal3.61596 zero
+żywych przeciwników,61996 właściwy wynikEXP/selection20,mode2,Aya15/335,
+ammo9. To zwycięstwo,nie błąd ani śmierć; wymaga leczenia po nagrodach.
+NagrodyM169 nieodebrane.
+
+Dwa świeże cold61996 normal/SAN exit0 bez diagnostyki sanitizer/opcode;
+całe JSON i1MiB VRAM równe między profilami oraz zamrożonym live61996.
+Asercje obejmują nagrodęCure-D24,jej zużycie,156→70HP drugiego celu,
+dwa→jeden→zero przeciwników. Cały ekwipunek/4096B rekordów i wszystkie
+zmienne względem coldE2:slot23:0→203,bajt426:0→9,
+zmienne1:998→167,3:9428992→12566528,20:0→21,54:1838946→1838947,
+55:0→4,56:0→5,67:18655→2147502303,74:536→568,78:232→41;
+reszta bez zmian. Źródłowy i prywatneE2 niezmienione.
+/tmp/pe-ex-sewer-m169-E2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ/RAM/save,ten sam pe-video-clock-v1.
+SDK/SDL nieinstrumentowane,brak niezależnego oraclePS1,/tmp tymczasowe.
+Następny krok:nagrody,leczenie,powrót do skrzyżowania kanałów.
+
+
 ### EX M167: trzech przeciwników pokonanych, Darkness i Barrier
 
 Cztery poloweHeal2 po wejściuM166 zwiększają113→173→233→293→335HP

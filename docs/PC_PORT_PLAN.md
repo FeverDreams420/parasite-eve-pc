@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M187: przeciwnik225HP pokonany trzema nabojami
+
+Od17850 dalsze ruchy po torach uruchamiają19686 spotkanie,19902 jeden
+4:31/225HP,Aya139/335HP,ammo7. ATB jeszcze5258; pierwszy Cross nie otwiera
+celu. Po oczekiwaniu20042 target selection,reticle1821,range1245.
+Dwa pojedyncze strzały w Double Action dają20706 cel63HP,ammo5,HP139.
+Kolejna akcja:Cross wybór,Cross jeden strzał,Square kończy resztę kolejki.
+21390 EXP/selection20,combat.mode2,zero wrogów,Aya99/335HP,ammo4.
+Nagrody jeszcze nieodebrane. Nie twierdzi się,że reticle1821 gwarantuje
+trafienie w innym RNG.
+
+Dwa świeże pełne odtworzenia21390 od cold F2 normal/SAN exit0,
+bez diagnostyki sanitizer/opcode. Cały JSON i1MiB VRAM identyczne między
+profilami i zamrożonym live. Verifier sprawdza225→63HP,wynik,ammo4,
+cały ekwipunek/4096B rekordów i wszystkie zmienne. Względem wejścia17850
+tylko rekord bajt426:7→4 i zmienna78:179→128. Źródłowy i prywatne F2
+identyczne bajtowo. Dowód /tmp/pe-ex-m187-win-F2-v1-{seed.json,checkpoint,
+proof/proof.json},runner/verifier obok. Zwykły pad,bez zmian produkcji,
+PsyZ,RAM/save payload; ten sam pe-video-clock-v1. SDK/SDL nieinstrumentowane,
+brak oraclePS1,/tmp nietrwałe. Następne:nagrody i dalsza trasa M188.
+
+
 ### EX: ruch po Continue F2 i przejście M184 → M187
 
 Poprzedni proces E2 zakończony quit/native exit0. Nowy proces z samym

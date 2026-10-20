@@ -3,6 +3,37 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — Maya, gabinet M325, Autopsy Key i prawdziwy Save O
+
+Z M326 powrót do M321 przez pierwotne drzwi: po korekcieX Left60,Down100,
+przy32201 pełne HP210 i Fuse1. Opcjonalnego starcia M326 nie wywołano.
+M321 na zachód i+Z prowadzi do M323/a80621c8/dialog123–124(Maya).
+Po zamknięciu marsz na północ→M339/a80634c8. Przy zachodnim przejściu
+konieczne wyrównanieZ około1555; Left72 prowadzi do M325/a80622c8
+przy37351,HP210/210. Nie zaliczono walki M324 ani użycia karty BLUE.
+
+Przy pełnym23-slotowym ekwipunku Items→Junk8→Discard→Yes zwalnia8.
+Od wejściaM325[200,1600] Right120,Up320 iCross dają AutopsyKey/item209
+do8; panel55 przy38477. Telefon wymaga obejścia biurka: od[-540,1887]
+Down220,Left155,Up235 iCross→6. Save→karta1→pustyO/index14→File saved41529;
+zamknięcie41841. M325/story470,HP210/210,menu null,lock0,enemy0.
+
+/tmp/pe-ex-autopsy-save-O-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live; wszystkie8192B nowegoO zgodne między
+profilami i live,N bajtowo niezmieniony. Całe wyposażenie jakN poza
+slot22:0→206(Fuse1) i8:20→209;4096B rekordów,capacity23 i wyposażone
+pozycje bez zmian. Wszystkie zmienne porównane:65:536870912→536870977,
+66:0→4,67:0→5,74:464→470. Asercje usunięciaJunk,odbioru klucza,zapisu.
+O: /tmp/pe-ex-autopsy-save-O-v1-source/BASLUS-006620000000O,
+SHA256 1dc8f314022dd668b39f18b63eb522d4dd4337bf19e69f00d9e1277a2b1566bc.
+Artefakty /tmp/pe-ex-autopsy-save-O-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji,brak niezależnego oracle PS1. Kod produkcyjny,
+RAM/RNG/payloady save bez edycji. Zimny Continue O jeszcze niezweryfikowany;
+to następny krok przed użyciem klucza i dalszymi bezpiecznikami.
+Pełny port pozostaje nieukończony.
+
+
+
 ### EX — otwarcie windy, dolny szpital i Fuse1
 
 Po awarii467 ponowne podejście do panelu i Cross otwierają drzwi.

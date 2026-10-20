@@ -3,6 +3,35 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — zwycięstwo M122 przy2HP, awans i Medicine2
+
+Od M122/37000 Up40,Up552 uruchamia spotkanie37592: dwa typ5/137HP/
+def27,typ3/109HP/def25 oraz powiązany typ4/100HP/def27. Przy38164
+HP137/189,ammo14. Double Action zabija5:31, po trafieniach HP73.
+Tester przez menu PE wybrał prawą pozycję pierwszego wiersza, potwierdził
+ją i strzał w drugiej akcji. W komentarzu nazwano ją Heal2, ale nazwa
+nie została tu niezależnie potwierdzona; nie zaliczamy dowodu leczenia PE.
+Obserwujemy koszt PE i zmianę flag, a następnie HP36. Kolejna para zabija
+5:1 i uszkadza3 do32HP; HP spada2. Próba otwarcia ataku przed pełnym ATB
+nie zadziałała; dodatkowe Cross uruchomiły właściwą kolejkę. Trafienie3
+kończy także4. Przy41034 EXP20,enemy0,HP2/189,ammo8. Revive20/18 zachowany.
+
+Panel21 zwiększa maxHP189→195 i capacity21→22. ObtainAll daje Medicine2/7
+do nowego21; End zamyka nagrody przy42114. Items→slot21→Use leczy2→92,
+slot21 wyzerowany, przy42754 menu null,lock0,story400,battle9.
+Wszystkie50 slotów jak L;capacity22,4096B rekordów jak L pozaammo426:3→8.
+
+/tmp/pe-ex-m122-win-L-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live,L bajtowo niezmieniony. Wszystkie zmienne
+porównane: od wejścia M122 tylko17:64→65; dodatkowe asercje zwycięstwa,
+Medicine2 w21, użycia i zachowanegoRevive. Artefakty
+/tmp/pe-ex-m122-win-L-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji,brak niezależnego oracle PS1. Kod produkcji,
+RAM/RNG/payloady save bez edycji. L ostatni trwały zapis; live92/195HP.
+Następne M124 i dalsza fabuła NYPD; pełny port pozostaje nieukończony.
+
+
+
 ### EX — zwycięstwo M121 i schody do M122
 
 Po wejściu M121 tester skierował się omyłkowo z powrotem do M115;

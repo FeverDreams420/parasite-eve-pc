@@ -3,6 +3,42 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — M146 próba i oryginalne ulepszenia BP od A2
+
+Poprzednia tura była postępem: Save/Continue A2, commit03f58fb8c.
+Nowa sesja /tmp/pe-ex-hospital-A2-nav-v1-live przy12920 zgodna całym
+JSON/VRAM z cold A2. Trasa od telefonu Down28,Left270,Up192(run)→M146
+przy13410; HP73/273. Spotkanie13914:7:31/167HP i6:0/153HP. Dwie akcje
+M8000 w7:31 dają po69, zostaje29HP przy14594; dalszy ruch kończy HP0
+przy14714. To porażka rozgrywki, nie dowód awarii; quit/native0.
+
+Nowa sesja /tmp/pe-ex-hospital-A2-upgrade-v1-live od cold A2. Oryginalne
+menu BP (root7), wyposażony M8000:3935BP,atak76(base57+19). Spend20×100
+zwiększa atak do96(base57+39);1935BP pozostaje. B Jacket1:19×100 zwiększa
+bonusdef48→67, pozostaje35BP (obejrzane menu). Przy15192 zamknięte menu,
+M126/story488,HP73/273. Żadnych zmian RAM/RNG/payloadów poza zwykłym UI.
+
+/tmp/pe-ex-bp-upgrade-A2-v1-verify.py PASS: pełna trasa cold A2,normal/SAN
+exit0, cały JSON identyczny z live i profilami; pełny VRAM zgodny między
+profilami. Końcowy live VRAM15192 nie zachowany, nie twierdzimy jego
+zgodności. Cały inventory/4096B rekordów porównany: tylko byte14:48→67
+(pancerz),430:19→39 (atak broni); wszystkie50 slotów/pozostałe bajty bez
+zmian, wszystkie zmienne skryptów bez zmian. A2/kopie8192B niezmienione,
+SHA jak poprzednio. Artefakty
+/tmp/pe-ex-bp-upgrade-A2-v1-{seed.json,checkpoint,proof/proof.json}.
+
+Dalsza próba tej sesji z tą samą trasą ruchu wywołała ponowne spotkanie
+pięciu celów M126 przy15578, zamiast przejścia do M146. Sesja zamknięta
+quit/native0 w wyborze celów, bez uznania zwycięstwa i bez nowego save.
+Ulepszenia nie zmieniły zmiennych fabularnych; wcześniejsze stwierdzenie
+„M126 nie uruchamia ponownie spotkania” jest zbyt szerokie — jedna trasa
+bez ponowienia nie dowodzi wyłączenia wszystkich dalszych spotkań.
+Bez zmian produkcji/PsyZ i nowych plików repo; SDK/SDL nieinstrumentowane,
+brak oracle PS1, dowody/tmp nie są trwałym CTest. Trwały A2 nadal sprzed
+ulepszeń; seed15192 pozwala je powtórzyć. Następne dalsza trasa i test
+M146 z lepszą bronią/pancerzem. Pełny port nieukończony.
+
+
 ### EX — telefon M126, autentyczny Save A2 i zimny Continue
 
 Poprzednia tura była postępem: pięć celów M126 i levelup, commit2bc3bd58b.

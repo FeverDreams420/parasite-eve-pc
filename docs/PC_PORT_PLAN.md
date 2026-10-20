@@ -54,6 +54,20 @@ niezaliczone zwycięstwo. Błędy pilota obejmowały strzały z dużej
 odległości i zbyt późne leczenie. Live25136 zamknięte quit/exit0;
 taśma i stan zachowane. Następna gałąź zatrzymuje się przy133953,
 przed ostatnią turą M428, aby użyć leczenia przed przejściem do M350.
+/tmp/pe-m350-corrected-death-v1-proof/proof.json potwierdza HP0/mode3
+i bossa60HP: osobne cold normal/SAN exit0 bez raportów, pełny JSON/VRAM
+identyczne, J bez zmian. To zachowany dowód porażki, nie awarii portu.
+
+Gałąź /tmp/pe-m350-healed-v1-live (sesja82394) przy133953 użyła dwóch
+Heal3+strzał w kolejnych turach. M428 wygrana przy135101 z621HP;
+M350 rozpoczyna135949 z621HP i44819324/93061120PE. PE nie resetuje się
+między tymi formami. Ruch podczas regeneracji: przy137049 Aya213HP,
+pełnePE; Liberate przy139171: część3/2 ma179/900HP. Medicine3+strzał
+wykonane przy140845:393HP. Dwa strzały w część3: przy141094 pozostał
+tylko główny boss900HP, Aya257HP. Aktualnie141278, oryginalne menu
+zbroi selection6/cursor[0,1], bez zatwierdzenia zmiany ekwipunku;
+proces czeka na polecenie runnera. Ta gałąź nie jest jeszcze cold-proof
+ani wygraną. Starsze próby i ich wejścia pozostają osobno.
 
 ### M350: udana druga próba, następny brak M429/E19
 

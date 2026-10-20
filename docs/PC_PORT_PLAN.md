@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — drugi dzień: odprawa M042 i gabinet M041
+
+Dalszy ordinary input z cold ContinueB przechodzi dialogi9..20 w M042,
+oryginalne kamery/animacje i przejście do M041/0xa80040c8/story144.
+Przy18228 oryginalny receipt55, item55 dodany do slot14; po zamknięciu
+menu null. move_lock2 nie blokuje całego ruchu: Up8 przesuwa Ayę
+z z−25296896 do−23724096, bez ręcznej zmiany flagi. Przy19400 M041,
+72/72HP,story144,oba klucze i M8000 zachowane. Nie deklaruje się, że
+samo wejście do gabinetu pokrywa wszystkie rozmowy z Bakerem lub
+pełną eksplorację komisariatu. Read-only skrypty:
+/tmp/pe-ex-m041-script-v1. Kod gry/PsyZ bez zmian.
+Seed/checkpoint: /tmp/pe-ex-day2-briefing-v1-{seed.json,checkpoint}.
+Cold normal/SAN exit0; /tmp/pe-ex-day2-briefing-v1-verify.py potwierdza
+pełny JSON/VRAM zgodny z live, prywatny B wszystkie8192B bez zmian,
+brak sanitizer/opcode/assertion. Dowód:
+/tmp/pe-ex-day2-briefing-v1-proof/proof.json. SDK/SDL bez instrumentacji.
+Pełny drugi dzień/EX/Chrysler i porównanie
+obrazu/audio PS1 nadal niepotwierdzone.
+
 ### EX — cold Continue B i wejście w drugi dzień
 
 Nowy proces /tmp/pe-ex-day1-continue-v1-live z prywatną kartą zawierającą

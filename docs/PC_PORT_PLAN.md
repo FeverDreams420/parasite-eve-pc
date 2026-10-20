@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — powrót przez M086, powóz M088 i wejście do Eve/M089
+
+Po Save I zwykły pad wraca z telefonu na wschód M087→M086. Zachodni
+marsz przez pokonaną arenę nie uruchamia ponownie robaków ani nie zmienia
+HP73/181; przy34784 przejście do M088/a8008448. Ruch na północ uruchamia
+rozmowę57/58, zamkniętą przy36440/story280. Podejście[569,194] po lewej
+stronie powozu i wait1200 prowadzi przy38628 do M089/a80084c8/story272,
+movie9,dialog60. Kolejne dialogi60/61/62/63 zamknięte zwykłym Cross.
+Przy39628: M089/story272,battle0,enemy1,HP73/181,menu null,ammo16,
+ATB9000. Eve type1:0/def18; oryginalne specjalne HP1000461, bez modyfikacji.
+
+/tmp/pe-ex-m089-entry-H-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z checkpointem live; H bajtowo i hash bez zmian.
+Seed obejmuje zimny H, walkę z robakami, Save I i dalsze przejście:
+/tmp/pe-ex-m089-entry-H-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji; nie porównano filmu/obrazu/audio z PS1.
+To dowód wejścia do walki, nie zwycięstwa. Brak zmian kodu produkcyjnego,
+RAM, RNG lub payloadów zapisów. Następne: walka Eve i zakończenie Day2.
+
+
 ### EX — autentyczny zapis I po robakach i zimny Continue
 
 Powrót M086→M087 bez nowej walki i bez utraty HP. Podejście do telefonu

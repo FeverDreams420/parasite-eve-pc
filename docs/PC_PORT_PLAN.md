@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M188 z obroną132: Cure-P i reload, nadal bez zwycięstwa
+
+Kontynuacja28100 z bonusem pancerza89 uruchamia28436 spotkanie.
+Dwie pary strzałów dają29580 korpus1000347,Aya120HP,zatrucie bit0=1.
+Zwykłe Items/slot8/Cure-P + strzał usuwa zatrucie;30336 Aya nadal120HP,
+slot8pusty,battle ammo17 po reload18. Strzał nie zadał obrażeń na tej turze.
+Dalsze podejścia/strzały obniżają korpus do1000259,ale31908 GameOver.
+Ta próba nie dowodzi wygranej ani przewagi nad poprzednimi:inne wejście
+zmieniło RNG. Nie przypisywać różnicy otrzymanych obrażeń samemu pancerzowi.
+
+Dwa świeże cold30336 normal/SAN exit0,bez diagnostyki sanitizer/opcode.
+Pełny JSON równy profilom i zapisanej obserwacji live; VRAM zgodny tylko
+między profilami (live30336 nie zamrożono). Całe inventory i4096B rekordów
+sprawdzone względem F2:slot8:13→0,rekord14:67→89,426:7→18;
+wszystkie zmienne:1=187,11=74,20=1049957,78=129,reszta bez zmian.
+Asercja potwierdza usunięcie zatrucia29580→30336. Źródłowe i prywatne F2
+niezmienione. Dowód /tmp/pe-ex-m188-cureP-F2-v1-{seed.json,checkpoint,
+proof/proof.json},runner/verifier obok. Bez zmian produkcji/PsyZ/RAM/save
+payload;SDK/SDL nieinstrumentowane,brak oraclePS1,/tmp nietrwałe.
+Zmierzony dystans31312=1650,31520=1351,31688=300 pokazuje potrzebę
+sterowania z rzeczywistego położenia/celów,zamiast stałych kierunków.
+Następne:poprawić strategię ruchu i wcześniejsze leczenie;nie traktować
+kolejnych identycznych porażek jako substytutu przejścia kampanii.
+
+
 ### EX M188: dostępne BP wydane na oryginalne ulepszenie pancerza
 
 Nowy kontroler /tmp/pe-ex-m188-prep-F2-v1-live odtwarza wejście25986,

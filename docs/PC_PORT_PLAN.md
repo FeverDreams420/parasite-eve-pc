@@ -3,6 +3,31 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — otwarcie windy, dolny szpital i Fuse1
+
+Po awarii467 ponowne podejście do panelu i Cross otwierają drzwi.
+Próby ruchu podczas animacji zachowano; Right prowadzi do M131/a80230c8
+przy24890/dialog33. Dalsze33/100→M320/a8062048/story470, dialogi101/131.
+Po zamknięciu M320/26840,HP210/210,menu null,lock0. WyrównanieZ i ruch+X
+przechodzą do M321/a80620c8 przy28438. Od spawnu[0,-2300] droga do
+[-795,-2270] i+Z prowadzi do M326/a8062348 przy29976. Podejście
+[400,-600],Right65 iCross uruchamia panel55/Fuse1. Przy30721 zamknięty,
+slot22:0→206,HP210/210,story470,enemy0,battle0. Jeszcze bez walki M326.
+
+/tmp/pe-ex-fuse1-N-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live,N bajtowo niezmieniony. Całe wyposażenie
+jak N poza Fuse1/22; wszystkie4096B rekordów,capacity23 i wyposażone
+pozycje bez zmian. Wszystkie zmienne sprawdzone:1:998→321,
+65:536870912→536870976,66:0→4,67:0→1,74:464→470.
+Asercje obejmują wcześniejszą windę87/98/99,33,131 i panel55.
+Artefakty /tmp/pe-ex-fuse1-N-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji,brak niezależnego oracle PS1. Kod produkcyjny,
+RAM/RNG/payloady save bez edycji. N ostatni trwały zapis; następne dalsze
+pomieszczenia i bezpieczniki, w tym ewentualne starcie przy wyjściu M326.
+Pełny port pozostaje nieukończony.
+
+
+
 ### EX — M127 i oryginalna awaria lewej windy M128
 
 Nowy live /tmp/pe-ex-hospital-N-nav-v1-live od zimnego N, startup-proof

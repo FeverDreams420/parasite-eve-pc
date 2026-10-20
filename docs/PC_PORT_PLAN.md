@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — wygrana M067, druga brama i pełny FMV8 do etapu240
+
+Przy156877 M067 uruchamia wariant czterech przeciwników:3:31/3:1 po48HP,
+4:1/4:0 po61HP, wszyscydef25. Dwie tury Double Action z rozdzieleniem
+celów pokonują wszystkich; ammo8→4,HP102→94/115. Rewards zamknięte
+przy158705,enemy0,battle9,menu null,capacity19 bez zmian; pełny plecak
+nie oznacza odebrania wszystkich nagród.
+
+Podejście do bramy M067 około[−2250,8000], twarz na północ i Cross:
+oryginalna animacja/tekst107, var54=1572962. Aya przechodzi M068/a8006448,
+potem M072/a8007148 i M069/a80064c8. Podejście do sceny około[1150,−7100]
+uruchamia36, M071/37 i wielostronicowy38. Przy171749 film jeszcze7/
+video0, tekst38 zamknięty. Przy172109 film8/frame45/video2/story240.
+Odtąd wyłącznie oczekiwanie: przy175709 film8/frame449/video0, M069/
+108. Cały przedział171749→175709 ma ciągły zerowy input, także start
+filmu; brak Cross/Start podczas odtwarzania. Zamknięcie108 daje przy
+176077 M069/story240,94/115HP,menu null,move_lock0,enemy0,battle9.
+
+/tmp/pe-ex-amphitheater240-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON i VRAM zgodny z live, E/F bajtowo i hashe bez zmian,
+brak sanitizer/opcode/assertion. Weryfikator sprawdza również ciągłość
+zerowego inputu oraz aktywny i zakończony film. Ekwipunek:19 miejsc,
+klucz4/Medicine2slot8/Junk16i18 zachowane; cały4096B bufor wobec E ma
+tylko bonusdef14:43→45 i ammo426:10→4. Cure-P nadal w skrzyni M062.
+Artefakty /tmp/pe-ex-amphitheater240-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Bez zmian kodu gry, RAM, RNG lub zapisów.
+To naturalne zakończenie filmu i oddanie sterowania, nie audyt wszystkich
+klatek/audio z PS1 ani ukończony park/Day2/EX. Następne: pościg za Eve,
+etapy244/248 i dalsza fabuła. Kontroler pozostaje przy176077 w M069.
+
 ### EX — powrót z ogrodu, wygrana M358 i wejście do M067
 
 Z M062 odsunięcie od kolizji skrzyni i pad według ścieżki wracają przez

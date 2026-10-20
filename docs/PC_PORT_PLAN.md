@@ -3,6 +3,35 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — M152 wygrane, dodatkowy cel i przeładowanie
+
+Poprzednia tura była postępem:13F/M152,commitc2070d0c6. Sesja87367
+ponownie żywa. Left80(run) wywołuje17090 cztery cele:4:31/237HP,
+5:0/62HP i6:0/6:1 po123HP. Dwie akcje w korpus4:31 zostawiają59HP;
+przy17846 live5, nowy5:1/62HP. Następna kolejka: strzał kończy korpus,
+zmiana celu i drugi strzał zostawiają6:0/34HP. Przy18270 live3,HP112,
+magazynek0. Heal2+strzał w6:1 (do34HP), automatyczne przeładowanie do18
+przed strzałem, przy19118 ammo17. Po ruchu oba typ6 w zasięgu;
+jedna kolejka z przełączeniem celu zabija oba,19954 zostaje5:0/62HP,
+Aya50HP. Strzał kończy ostatniego;20234 EXP20,enemy0,HP50/273.
+Nie założono, że śmierć korpusu usuwa wszystkie pozostałe cele.
+
+Rozliczenie EXP zwiększa maxHP273→283; Cure-M/16 w19. Przy21482
+swobodne M152/a8025148,story496,HP50/283,menu null,lock0. Nie potwierdzono
+pełnych cykli wszystkich ataków/spawnów, tylko opisany rzeczywisty przebieg.
+/tmp/pe-ex-m152-win-B2-v1-verify.py PASS: pełna trasa cold B2 w obu
+profilach exit0, cały JSON/VRAM identyczny między profilami i live.
+Pełne50 slotów i4096B rekordów porównane do B2:slot19:0→16;
+rekordy tylko byte426:4→14 (amunicja po przeładowaniu). Wszystkie zmienne:
+1:998→150,66:572→828,74:494→496,82:5460→21844;pozostałe bez zmian.
+Asercje obejmują początkowe4/nowe5 celów,korpus59,ammo17,ostatni cel,
+EXP/zeroenemy oraz wcześniejszą trasę13F. B2/kopie8192B niezmienione.
+Artefakty /tmp/pe-ex-m152-win-B2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ i nowych plików repo; SDK/SDL nieinstrumentowane,
+brak oracle PS1; /tmp nie zastępuje trwałych CTest. B2 ostatni trwały zapis;
+dalej leczenie i pozostałe piętra szpitala. Pełny port nieukończony.
+
+
 ### EX — Continue B2, wybór13F, M150/M151 i wejście M152
 
 Poprzednia tura była postępem: Save/ContinueB2,commit46cb6457d. Nowa sesja

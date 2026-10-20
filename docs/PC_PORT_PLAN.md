@@ -2,6 +2,67 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Zimny odczyt Clear Data i rzeczywisty start EX Round 2
+
+Bez zmian kodu lub danych zapisów zainstalowany pe-video-clock-v1
+uruchomiono od zera z prywatną kopią BASLUS-006620000001M, SHA256
+412d9806dbae710409e18133bed137d26e219f60d46174a5bdb70bb5aed851c8.
+/tmp/pe-ex-cold-v1-live zachowuje args/input/stany/VRAM. Tytuł rozpoznaje
+EX Game z karty po restarcie; zwykłe Up/Up/Cross wybiera EX, slot1 karty,
+następnie pozycję13/M. Gra pokazuje „File loaded”, EX Round2, poziom1,
+45/45HP, Clear Data. Po potwierdzeniu przechodzi do pełnego filmu2,
+bez jego przewijania, a przy24112 do M010/0xa8001048/story1/dialog9.
+W ekwipunku zachowano podpisane M8000 rekord13/item72 i B Jacket1
+rekord0/item187; standardowa broń/armor startowe są początkowo wyposażone.
+Przeniesienie tych oznaczonych rekordów wykonuje oryginalny TakeTagged
+w Inv_InitNewGameInventory; nie ma dodatkowego wyboru broni w tym wejściu.
+
+/tmp/pe-ex-start-v1-proof/proof.json: niezależne cold normal/SAN/live
+mają identyczne pełne JSON/VRAM przy24112, oba exit0, brak
+sanitizer/opcode/assertion, Clear Data i prywatne karty bez zmian.
+Pełny input:/tmp/pe-ex-start-v1-seed.json. Początkowy verifier miał błędnie
+wpisany token0xa8002848; poprawny odczyt i nazwa base32 to M010/0xa8001048.
+Nie zmieniano gry dla tej korekty testera.
+
+Kontynuacja normal-only potwierdziła oryginalny edytor imienia, akceptację
+Start/Cross i przejście do M002/0xa8000148/story9 przed operą, nadal45HP.
+Pełne32 bajty każdego przeniesionego rekordu13/0 są identyczne ze stanem
+Clear Data; verifier porównuje oba pełne rekordy. Zwykłe menu poza walką ma
+row1 Change Weapon i row2 Change Armor; wejście do podglądu5 wymaga
+kolejnego Cross, aby uaktywnić listę7. Down z podglądu przechodzi do
+listy modyfikatorów6, nie do następnej broni/armor. Eksploracyjne ruchy
+kontrolera są zachowane; nie uznano ich za błąd gry. Wyposażono slot5
+M8000 oraz slot6 B Jacket1; BP3017 niewydane, HP45.
+
+/tmp/pe-ex-opera-equipped-v1-proof/proof.json potwierdza przy55262
+M004/0xa8000248/story24 pełne cold normal/SAN/live JSON/VRAM, exit0,
+bez sanitizer/opcode/assertion i z niezmienionym Clear Data. Film3 i
+operowe sceny przeszły bez przewijania. Tester najpierw zatrzymywał się
+na wewnętrznej ścianie przy schodach; tylko-obserwacyjne odczyty
+/tmp/pe-ex-m004-{script,floor,camera}-v1 wskazały wejście od tyłu filaru.
+Zwykłe Down500/Right240/Up400 przechodzi do M005/0xa80002c8, a Left500
+wyzwala oryginalną scenę Melissy, story40/dialog38. Dalszy fragment
+jest na razie normal-only. Nie zmieniono kolizji, skryptów lub geometrii.
+Dialogi38..44 uruchamiają oryginalną pierwszą walkę. Przy59290 Aya45HP,
+M8000 ammo3, ATB9000, Melissa HP1000055/def12. Zwykły wybór ataku z
+Double Action kończy się pierwszym trafieniem68: przy59434 HP999987,
+ammo2, Aya45HP, dialog46. Druga akcja nie zużyła naboju, ponieważ skrypt
+przerwał walkę. Przy62258 live_enemies0/mode12 i dialog51. Następnie
+dialogi51..57 prowadzą przez M371 (oryginalna wizja po walce), powrót
+M005/story39/dialog60 i zakończenie do story40 przy66106. Aya45/45HP,
+move_lock0, aktor Melissy2:0 zniknął, nie ma aktywnej walki/przeciwników,
+Aya pozostaje zwykłym graczem na scenie. Niezależny cold normal/SAN potwierdził pełne JSON/VRAM identyczne z live,
+oba exit0 bez sanitizer/opcode/assertion. M8000 ma2 pozostałe naboje,
+a Clear Data i karty są niezmienione. Dowód:
+/tmp/pe-ex-melissa-victory-v1-proof/proof.json. Wszystkie trzy checkpointy
+EX (wejście, wyposażenie w operze, koniec pierwszej walki) sprawdza
+/tmp/pe-ex-campaign-verify-v1.py, wszystkie PASS. Pełny seed:/tmp/pe-ex-melissa-victory-v1-seed.json.
+Proces live zakończony quit0, źródłowy Clear Data i jego prywatna kopia
+bez zmian. Zainstalowany kandydat i fixture nadal mają hashe z manifestu
+pe-video-clock-v1; kod gry/PsyZ nie zmieniony w tym odcinku.
+To nie jest dowód całej kampanii EX ani Chrysler; brak pełnego obrazu/audio
+PS1. Archiwa PsyZ/SDL pozostają nieinstrumentowane w procesach gry.
+
 ### Deterministyczny zegar audio VBlank i pierwszy zapis Clear Data
 
 W istniejących sdl3_audio.c/sdl3_common.h własnego PsyZ dodano jawny tryb

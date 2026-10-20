@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — Tool ze sklepu M095 przy pełnym ekwipunku
+
+Zwykły pad w M095 dochodzi do skrzyni typu7[-407,-1003]. Próby od dolnego
+korytarza blokowane przez skrzynię/ladę; odczyt LLDB podłoża tylko do
+odczytu i detach, /tmp/pe-ex-m095-floor-v1.json. Nav55 zatrzymał się na
+narożniku. Skuteczne obejście od[-238,-954]:Right450→Up250→Left500→Down190,
+pozycja[-406,-804],facing0. Cross→dialog3/Yes→oryginalne Items→slot16/Junk
+→Tool22. Panel55 zamknięty przy40294; M095/story328,HP181/181,menu null.
+Jedyna zmiana całego ekwipunku względem K to slot16:20→22; istniejący
+Tool14 zachowany, rekordy4096B i wyposażenie bez zmian. Zmienna146=20:
+Junk pozostał w skrzyni, flaga opróżnienia nie ustawiona. Pozostałe
+skrzynie sklepu nieobjęte tym dowodem.
+
+/tmp/pe-ex-gunshop-tool-K-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live, K bajtowo/hash bez zmian. Dokładne
+zmiany wszystkich zmiennych od zimnego K:1:998→94,25:67108882→67108922,
+146:0→20. Artefakty /tmp/pe-ex-gunshop-tool-K-v1-{seed.json,checkpoint,
+proof/proof.json}. SDK/SDL bez instrumentacji, brak nowego oracle PS1.
+Bez zmian kodu produkcyjnego, RAM/RNG i payloadów zapisów. Następne:
+dalsze interakcje sklepu i wyjazd z Soho; Day3 nadal nieukończony.
+
+
 ### EX — otwarcie sklepu i wejście do M095 z zimnego K
 
 Z M093 południowe obejście samochodu i zachód wczytują M094/a8009248.

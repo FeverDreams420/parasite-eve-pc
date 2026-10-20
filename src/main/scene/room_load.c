@@ -1,5 +1,6 @@
 #include "pe1/room_spark_ring_burst.h"
 #include "../../overlays/room_m273_liberty/room_m273.h"
+#include "../../overlays/scene_e22_liberty/scene_e22_shared.h"
 #include "pe1/room_trail_burst.h"
 #include "pe1/room_ground_eruption.h"
 #include "pe1/room_floor_walker.h"
@@ -691,6 +692,15 @@ int Scene_LoadRoom(unsigned int roomId)
             if (slot == 140 && record[i].u.handlerAddress == 0x80195720u) native = &g_RoomSeekingTrailProgram;
             if (slot == 141 && record[i].u.handlerAddress == 0x801957e4u) native = &g_RoomScatterTrailProgram;
         }
+        if (map + 1 == 432) {
+            if (slot==75 && record[i].u.handlerAddress==0x801990f8u) native=&g_RoomActorClassTable[2];
+            if (slot==149 && record[i].u.handlerAddress==0x801991f0u) native=&g_SceneE22LinkBeamProgramA;
+            if (slot==165 && record[i].u.handlerAddress==0x801992b0u) native=&g_SceneE22RingBurstProgram;
+            if (slot==163 && record[i].u.handlerAddress==0x80199254u) native=&g_SceneE22LinkBeamProgramB;
+            if (slot==150 && record[i].u.handlerAddress==0x80199330u) native=&g_SceneE22EmberDriftProgram;
+            if (slot==151 && record[i].u.handlerAddress==0x801993b8u) native=&g_SceneE22EmberColumnProgram;
+            if (slot==162 && record[i].u.handlerAddress==0x801994b4u) native=&g_SceneE22SwirlBoltProgram;
+        }
         if (map + 1 == 273) {
             if (slot == 82 && record[i].u.handlerAddress == 0x8019a900u) native = &g_RoomM273OscillationClass;
             if (slot == 81 && record[i].u.handlerAddress == 0x8019a8e4u) native = &g_RoomM273GrabClass;
@@ -947,6 +957,17 @@ int Scene_LoadRoom(unsigned int roomId)
     record = SceneAsset_ResolveOffset(room, directory->scripts & 0x3FFFFF);
     for (i = 0; i < directory->scripts >> 22; i++) {
         slot = record[i].source.bytes.slot;
+        if (map+1==432) {
+            if(slot==75){g_PmCmdHandlerTable[75]=&g_RoomActorClassTable[2];SceneE22_ResetModule();}
+            else if(slot==149) g_FieldFxTaskPrograms[64]=&g_SceneE22LinkBeamProgramA;
+            else if(slot==165) g_FieldFxTaskPrograms[80]=&g_SceneE22RingBurstProgram;
+            else if(slot==163) g_FieldFxTaskPrograms[78]=&g_SceneE22LinkBeamProgramB;
+            else if(slot==150) g_FieldFxTaskPrograms[65]=&g_SceneE22EmberDriftProgram;
+            else if(slot==151) g_FieldFxTaskPrograms[66]=&g_SceneE22EmberColumnProgram;
+            else if(slot==162) g_FieldFxTaskPrograms[77]=&g_SceneE22SwirlBoltProgram;
+            continue;
+        }
+
         /* Validation above resolves the room-specific descriptor. Assign even
          * when a prior statically linked room used this same slot. */
         if (map + 1 == 188 || map + 1 == 390) {

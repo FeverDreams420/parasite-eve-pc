@@ -1924,11 +1924,11 @@ static int native_glow_layer_packets(void)
     /* M269's authored orbit trail passes NULL for a zero-scale endpoint.
      * Compare every emitted byte with the equivalent nonnull colour path. */
     struct { _Alignas(RenderGpuTag) u8 bytes[512]; u8 guard[32]; } line_buffer;
-    u8 reference[512], colour[4]={120,80,40,0};
+    u8 reference[512], colour[4]={120,80,40,0}, black[4]={0,0,0,0};
     GteShortVector from={-30,0,1024,0},to={30,0,1024,0};
     RenderEffectParameters old_params=g_FieldFxSpriteParams;
     memset(&g_FieldFxSpriteParams,0,sizeof(g_FieldFxSpriteParams));
-    for(unsigned slot=0;slot<2;++slot)for(unsigned mode=0;mode<2;++mode){
+    for(unsigned slot=0;slot<2;++slot)for(unsigned mode=0;mode<2;++mode)for(unsigned tail=0;tail<2;++tail){
         int used=0;
         for(unsigned null_endpoint=0;null_endpoint<2;++null_endpoint){
             memset(&line_buffer,0xa5,sizeof(line_buffer));
@@ -1936,9 +1936,11 @@ static int native_glow_layer_packets(void)
             D_800B0E38.ordering[slot]=ordering;D_800B0E38.packets[slot]=(char *)&line_buffer;
             g_ActiveDrawSlot=slot;g_DrawPacketOffset=0;
             gte_ldrotmatrix(&view);gte_ldtransmatrix(&view);
-            FieldFx_DrawGlowLine(&from,&to,null_endpoint?NULL:colour,colour,0,128,mode?255:1);
+            FieldFx_DrawGlowLine(&from,&to,tail?colour:(null_endpoint?NULL:colour),
+                tail?(null_endpoint?NULL:black):colour,tail?128:0,tail?0:128,mode?255:1);
             FieldLineG2Packet *line=(void *)line_buffer.bytes;
-            if(line->r0 || line->g0 || line->b0 || line->r1!=120 || line->g1!=80 || line->b1 ||
+            if(line->r0!=(tail?120:0) || line->g0!=(tail?80:0) || line->b0!=(tail?40:0) ||
+                line->r1!=(tail?0:120) || line->g1!=(tail?0:80) || line->b1 ||
                 g_DrawPacketOffset>sizeof(line_buffer.bytes) || g_DrawPacketOffset<=sizeof(*line))return 0;
             for(unsigned k=0;k<sizeof(line_buffer.guard);++k)if(line_buffer.guard[k]!=0xa5)return 0;
             if(!null_endpoint){used=g_DrawPacketOffset;memcpy(reference,line_buffer.bytes,sizeof(reference));}

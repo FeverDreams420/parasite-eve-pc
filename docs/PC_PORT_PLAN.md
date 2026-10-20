@@ -2,6 +2,61 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M432/E22 zintegrowane, wygrana i autentyczny zapis K
+
+Cały istniejący e22.c włączono do CMake, zachowując wszystkie21 funkcji.
+Naprawiono ABI callbacków (void* / intptr_t), natywne konteksty tasków,
+właścicieli/stanów aktorów i pule cząstek; typy GTE uporządkowane bez
+zmiany algorytmów. W tym samym pliku są oryginalne stałe i sześć programów
+ze skryptami. room_load.c waliduje i rejestruje komplet7 rekordów M432.
+Bez nowych plików repo ani przenoszenia funkcji do innych modułów.
+
+Pierwszy kandydat ładował M432, ale dalszy RingBurst ujawnił null kolor
+drugiego końca linii: geometry.c:1742, normal SIGSEGV, SAN null load.
+Zachowane /tmp/pe-m432-effects-crash-v1-{normal,san}/. Oryginalne E22
+przekazuje NULL/scale0 dla czarnego ogona; FieldFx_DrawGlowLine obsługuje
+ten przypadek w istniejącym rendererze, bez zmiany ścieżki niezerowego
+koloru. Istniejący test pakietów glow rozszerzony o drugi koniec, oba
+bufory i blend modes, porównanie wszystkich bajtów oraz guardów.
+
+Kandydat /tmp/pe-m432-native-v3:418 świeżych obiektów (209+209), normal
+i ASan/UBSan/function; E22 bez ostrzeżeń. Pełne70 regresji exit0 oraz7/7
+asset CTests Passed, bez SKIP. -build-manifest.json, -verification.json,
+-ctest-assets.log i -source-check.json: ponownie sprawdzone hashe źródeł,
+zależności, bibliotek i plików wykonywalnych. PsyZ/SDL nieinstrumentowane.
+30 bloków stałych oraz komplet6 programów (callbacki, rozmiary, initializer,
+skrypty) porównane z odczytanym oryginalnym modułem. Wszystkie21 funkcji
+pozostało w e22.c. build/parasite-eve-pc i fixture są kopiami v3.
+
+Cold J→wygrana M273→M432, zwykłe pady. Heal3 i pojedynczy strzał w
+Double Action:328→608HP, boss2200→2106 ponad próg miliona. Zwycięstwo
+przy61380/61448, HP514, boss999944, mode12/live0, Medicine3 zachowane.
+/tmp/pe-m432-victory-v3-proof/proof.json: cold SAN exit0 bez raportów,
+pełny JSON/VRAM identyczne, J bez zmian; tylko oczekiwane zmiany
+CureM/Medicine4/amunicji względem J, bonusy i efekty M8000 zachowane.
+
+Dalsza scena/film37 doprowadziły do M348/0xa8065148, story723; oryginalny
+skrypt przywrócił HP621. Oryginalne menu zapisało nowy K w pustym
+slocie10/No11, J bez zmian. Przy73161 trwa już film38 (video_state2).
+/tmp/pe-m348-post-eve-save-K-v1-proof/proof-v2.json: cold SAN od J exit0,
+pełny JSON/VRAM i plik K identyczne z normalnym. V1 po poprawnym
+porównaniu błędnie wymagał starego movie36/video0; osobny v2 weryfikuje
+zachowane terminalne przebiegi, nie powtarza gry.
+
+Źródło /tmp/pe-m348-post-eve-save-K-v1-source/BASLUS-006620000000K,
+8192B, SHA256 a5267441e6e851c156f7c183a0fbece86dc148940ec249c35d245c1a807bb37e.
+/tmp/pe-m348-continue-K-v1-proof.json: cold normal/SAN K-only exit0,
+pełny JSON/VRAM identyczne, inventory/story723/HP621 zachowane,
+źródło i prywatne K bez zmian. Aktualny live92380 przy73161, wrapper
+/tmp/pe-m432-native-v3-live.py. Film38 i dalsza kampania nieukończone.
+
+Zachowano błędy narzędzi: entry-v1 błędnie wpisany scene literal,
+entry-v2 sprawdził zakończone przebiegi M432/0xa8083148. Build-v2 błędnie
+nazwał pole macierzy translation; v3 używa rzeczywistego GteMatrix.t.
+Source-check-v3 błędnie oczekiwał32 zamiast30 bloków; osobny v4 przeszedł.
+Dowody natywne/SAN nie są oracle obrazu/audio retail PS1 ani dowodem
+ukończenia całego portu. Nie zmieniano balansu/statystyk/skryptów gry.
+
 ### M432: zidentyfikowany kompletny oryginalny moduł E22
 
 Odczyt Disc2 PE.IMG: M432 start99067, scratch33, texture170,

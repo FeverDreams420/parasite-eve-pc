@@ -1739,9 +1739,14 @@ void FieldFx_DrawGlowLine(GteShortVector *from, GteShortVector *to, u8 *color0,
     gte_cop2_hazard_slot();
     gte_cop2_hazard_slot();
     gte_rtps_command();
-    line->r1 = color1[0] * scale1 / 128;
-    line->g1 = color1[1] * scale1 / 128;
-    line->b1 = color1[2] * scale0 / 128;
+    if (color1 == NULL && scale1 == 0) {
+        /* E22's ring trail uses the PS1 zero address for a black tail. */
+        line->r1 = line->g1 = line->b1 = 0;
+    } else {
+        line->r1 = color1[0] * scale1 / 128;
+        line->g1 = color1[1] * scale1 / 128;
+        line->b1 = color1[2] * scale0 / 128;
+    }
     {
         s32 *out;
         out = (s32 *)&depth[1];

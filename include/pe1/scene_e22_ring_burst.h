@@ -32,7 +32,7 @@ extern RenderColor g_SceneE22RingBurstRingColor;
 extern RenderColor g_SceneE22RingBurstHaloColor;
 extern GteShortVector g_SceneE22BurstAnchor;
 extern int rand(void);
-extern int SceneE22_RingBurstParticleCallback(int mode, RoomOrbitTrailParticle *p);
+extern int SceneE22_RingBurstParticleCallback(int mode, void *state, intptr_t argument);
 
 /* Orbit ring trail particle (SceneE22_RingBurstParticleCallback): its colour seed and trail
  * track, and the trail strip renderer. */

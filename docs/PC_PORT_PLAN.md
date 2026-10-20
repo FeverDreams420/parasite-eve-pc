@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — skrzynia w M334, mechanizm nadal otwarty
+
+Z93853 zwykły input w M334 dociera do skrzyni. Przy96719 oryginalny
+receipt55, po zamknięciu item13 w slot12. Aya38/64HP, story104,
+menu null, move_lock0. Kamera w tym pomieszczeniu jest obrócona o90°;
+read-only cameraBasis=[0,0,−4096;0,4096,0;4096,0,0]. Próby dalszej
+trasy zatrzymywały się na przeszkodach, nie zmieniano geometrii ani
+pozycji. Var43 pozostaje0, więc nie deklaruje się uruchomienia mechanizmu
+sprawdzającego bit4. To nadal wymaga dotarcia zwykłym sterowaniem.
+Checkpoint98249 i pełny seed: /tmp/pe-ex-m334-chest-v1-{checkpoint,seed.json}.
+Niezależny cold normal/SAN exit0; /tmp/pe-ex-m334-chest-v1-verify.py
+potwierdza pełny JSON/VRAM zgodny z live, prywatny A8192B bez zmian,
+brak sanitizer/opcode/assertion. Dowód:
+/tmp/pe-ex-m334-chest-v1-proof/proof.json. SDK/SDL bez instrumentacji.
+Kod gry/PsyZ bez zmian. Pełny EX,
+Chrysler i zgodność obrazu/audio PS1 pozostają niepotwierdzone.
+
 ### EX — spotkanie z dziewczynką w M031 i przejście do M334
 
 Z checkpointu87823 zwykły ruch przez M028 prowadzi M031/0xa80030c8

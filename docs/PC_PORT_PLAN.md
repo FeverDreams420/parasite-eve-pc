@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — przejazd i wejście do Central Park z autentycznego E
+
+Zimne Continue E, przejście przez NYPD i recepcję uruchamiają film7.
+Przy19312 movie7/frame89/video2; po oczekiwaniu bez inputu przy21712
+M039, movie_frame205/video0. Następne potwierdzenia dialogów prowadzą
+przez mapę do M374 i rozmowy z Danielem. Przy29104 M374/story232,
+move_lock0, brak aktywnych dialogów/menu/przeciwników,92/92HP.
+Cały ekwipunek identyczny z autentycznym E, karta E bajtowo bez zmian.
+
+/tmp/pe-ex-park-entry-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON i VRAM zgodne z live, źródłowy hash E zachowany, brak błędów
+sanitizer/opcode/assertion. Artefakty:
+/tmp/pe-ex-park-entry-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Nie zmieniano kodu gry, RAM ani save’ów.
+Dowód obejmuje wejście i oddanie sterowania; nie obejmuje eksploracji
+parku, całego Day2/EX ani porównania obrazu/audio z PS1.
+
 ### EX — użycie ulepszeń, leczenie i trwały zapis E przed Central Park
 
 W M043/story224 zwykłe Items→Use: Offense+2 item30 ze slot4, wybór

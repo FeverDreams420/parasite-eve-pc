@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Audyt kompletności: E08/M418 nadal poza natywnym linkiem
+
+Porównanie istniejących src/overlays/*/*.c z CMake wykazało dwa niepodłączone
+pliki gry: scene_e08_chrysler/e08.c i SceneE08_ModuleStart.c (pozostałe
+niepodłączone pliki to diagnostyka MDEC). Nie oznacza to kompletności innych
+zlinkowanych modułów. Bez zmian w źródłach uruchomiono pełną kompilację
+obu plików flagami kandydata v3 normal/SAN z błędami typów jako errors:
+e08.c ma27 diagnostyk errors, start ma1, w obu profilach. Dowód ze wszystkimi
+komendami, SHA256 źródeł i logami: /tmp/pe-e08-baseline-v2-proof.json.
+Pierwsze próby z domyślnym limitem diagnostyk zachowane jako baseline-v1.
+Problemy obejmują32-bitowy offset struktury ze wskaźnikami, błędny int zwrot
+assetu, lokalne widoki macierzy, deklaracje ring geometry, tablice rozmiarów
+int zamiast u16 oraz przestarzałe typy callbacków. Nie naprawiać samymi castami.
+
+/tmp/pe-e08-inspect-v1.py odczytał bezpośrednio z obrazu Disc2 pełne M418,
+329728B, zachowane /tmp/pe-m418-room-inspect-v1.bin. Pierwsze0x9800 bajtów
+mają SHA1 0561952b402bdd3f599bf37627a7d67737e8de9d, zgodny z historycznym
+opisem E08; pełne dane/rekordy/funkcje i hash w /tmp/pe-e08-module-audit-v1.json.
+Sześć rekordów:75/80198b1c,70/80198ae4,46/801986ac,47/80198760,
+48/80198914,49/80198a48. Cztery ostatnie to klasy istniejącego E08;
+mapa418 nie ma ich natywnych bindingów. Historyczna lista zawiera90 funkcji
+SceneE08 (także metody klas); pełna integracja musi zachować cały moduł,
+cztery skrypty i wszystkie listy/init/update/draw, nie wybrane efekty.
+Kolejny krok: normalizacja całego istniejącego modułu w miejscu, oryginalne
+dane i bindingi, test dwukrotnego ładowania M418 oraz wykonania klas,
+potem świeży kandydat, regresje i numeryczne referencje. Nie jest to działający
+Chrysler Building ani dowód przejścia tej lokacji. Bieżąca sesja E19 bez zmian.
+
 ### E19: dojście w zasięg i pierwsza salwa tej gałęzi
 
 Sesja56313: przy143123/113HP Heal2+strzał (poza zasięgiem) podniósł

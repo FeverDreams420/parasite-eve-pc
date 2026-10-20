@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Ulepszone M8000: dalsza trasa i dwie wygrane
+
+Live10181 po zapisaniu I wrócił przez M343/M229/M242. W M243
+uruchomiło się dodatkowe spotkanie390HP. Zwykłe pady, pojedyncze strzały
+w Double Action: wygrana przy39761,365/621HP, zero wrogów. Zamrożony
+punkt40001: /tmp/pe-m243-upgraded-victory-v1-proof/proof.json,
+cold SAN od G exit0 bez raportów, pełny JSON/VRAM identyczne, G bez
+zmian, I bajtowo identyczne, bonusy i efekty M8000 zachowane. Odebrano
+Cure-P13 do slot20; Medicine4slot15 i Medicine3slot27 pozostały.
+
+Dalej M243→M245→M246, film22 bez skipu. Spotkanie280/280/240 wygrane
+przy52298:192/621HP, mode2/live0, menu20, ammo7. Duże leki i CureM
+zachowane, M8000 nadal slot1 z bonusami17/11/6 i Double Action.
+/tmp/pe-m246-upgraded-victory-v1-proof/proof.json: cold SAN od G exit0
+bez raportów, pełny JSON/VRAM identyczne, sprawdzone zmiany inventory
+(Cure-P i amunicja), G bez zmian, plik I zgodny. Aktualny live53026
+na ekranie wyników. To powtarzalność natywna/SAN, nie oracle retail PS1.
+Bez zmian źródeł, nadal kandydat v4. Finał pozostaje nieukończony.
+
 ### Przygotowanie broni: Tool z M199 i bonusy M500→M8000
 
 Aktualizacja: oryginalne Heal3 podniosło HP318→598. Zwykłym padem

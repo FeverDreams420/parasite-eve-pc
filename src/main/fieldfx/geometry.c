@@ -22,6 +22,7 @@
 #include "pe1/field_tile.h"
 #include "pe1/field_tri_test.h"
 #include "pe1/fieldfx_task.h"
+#include "pe1/fieldfx_calls.h"
 #include "pe1/geom_state.h"
 #include "pe1/gte.h"
 #include "pe1/gte_types.h"

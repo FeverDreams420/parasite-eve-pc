@@ -49,7 +49,6 @@ extern u8 g_SceneE19SpinRayBurstColorTrack[];
 extern GteShortVector g_SceneE19SpinRayOrigin;
 
 int rand(void);
-void FieldFx_RandomScatterOffsetXY(SceneSpinRay *ray);
 int SceneE19_SpinRayCallback(int mode, void *memory, intptr_t argument);
 
 #endif

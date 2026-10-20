@@ -17,4 +17,7 @@ int FieldFx_IsPlayerWithinRadius(void *position, int radius);
 /* Status check on the object (FieldFx_GetStatus() == 3). */
 int func_800C6C18(void *obj);
 
+void FieldFx_RandomScatterOffsetYZ(s16 *out);
+void FieldFx_RandomScatterOffsetXY(s16 *out);
+
 #endif

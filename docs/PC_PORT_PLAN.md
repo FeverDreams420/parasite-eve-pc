@@ -2,6 +2,54 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M350 wygrana na poprawionych flagach; wejście i walka M429/E19
+
+Gałąź /tmp/pe-m350-healed-v1-live, build v4: po wyłączeniu części3
+przy141094 pozostał boss900HP i Aya257HP. Oryginalnymi padami dobrano
+odległość, pojedyncze strzały Double Action i dwa kolejne Heal3.
+Przy145176 boss999976/mode7, Aya285HP, ammo5. Przy145776 przejściowy
+M349/a80644c8, story732; przy146272 właściwy M429/a80824c8.
+Brak dawnego missing descriptor slot179. /tmp/pe-m429-entry-v3-proof/
+proof.json: cold J normal/SAN do146520, exit0 bez raportów, pełny
+JSON/VRAM zgodny z live i między wariantami, źródłowe J bez zmian.
+Medicine3 zużyto zgodnie z wejściami oryginalnego menu.
+
+E19 nie kończy się na załadowaniu pokoju: dialog64, potem walka
+przy147308, główny type2/sub31 ma3500HP, dodatkowy type3/sub30 ma1300.
+Heal2 i Heal3 wykonują się przez oryginalne menu; trafienia w główny
+cel zadają102. /tmp/pe-m429-combat-v1-proof/proof.json: cold normal/SAN
+do149678, pełny JSON/VRAM zgodny, bez raportów; Aya177HP, boss3194HP.
+Nie jest to wygrana ani oracle obrazu PS1. Dalsze zwykłe pady do151198:
+Aya356HP, boss2888HP, ammo15. Live82394 zamknięto quit/exit0.
+
+W audycie ujednolicono deklarację FieldFx_RandomScatterOffsetXY:
+wspólna funkcja przyjmuje s16*, a E19 przekazuje pole spin.angles;
+poprzednia deklaracja SceneSpinRay* była niespójna z definicją.
+Deklaracje obu scatter helperów są w istniejącym fieldfx_calls.h,
+dołączanym także przez geometry.c. Brak nowych plików lub funkcji.
+Kandydat /tmp/pe-m429-native-v5 kompiluje świeże213+213 obiektów;
+pełne regresje, asset CTest i cold replay E19 do151198 są w toku.
+Nowy live /tmp/pe-m429-native-v5-live (sesja66562) odtwarza tę samą
+taśmę do151198 na v5; nie należy mylić go ze starszym live82394.
+
+V5: wszystkie70 regresji normal/SAN exit0 oraz7 asset CTest exit0;
+426 obiektów, zależności i biblioteki ponownie zahashowane.
+/tmp/pe-m429-combat-v2-proof/proof.json: cold J normal/SAN do151198,
+pełny JSON/VRAM identyczne z oboma live v4/v5, bez raportów, J bez zmian.
+To pokrywa wykonanie walki E19 i leczenia, nadal nie zwycięstwo.
+/tmp/pe-scatter-v2-proof.json:648 przypadków obu helperów XY/YZ,
+oryginalny MIPS z resident FX engine kontra faktyczne obiekty v5 normal
+iSAN. Hook wyłącznie rand; liczba wywołań, faza i wszystkie8 bajtów
+bufora identyczne (w tym niezmieniony guard). Fazy0..7/65535, sześć
+wartości każdego losowania. V1 helpera nie linkował: potrzebny symbol
+Psyz_Rand, nie libc rand; poprawiony helper v2 zachowany osobno.
+
+Live v5 dalej do151978: Aya76HP, PE21506815/93061120, ammo13,
+boss2684HP; menu główne walki mode2/selection0/cursor[0,0], queue0.
+Brak zwycięstwa; proces66562 czeka na wejście. Przed przypisaniem
+wszystkich trudności taktyce należy też porównać warunki trafień efektów
+E19 z oryginałem, zwłaszcza Blast/Ember i obsługę właściciela efektu.
+
 ### E19: integracja kompletnego modułu, ponowna weryfikacja walk
 
 Istniejące e19.c/e19_class.c i wspólny grab_await_stance są włączone

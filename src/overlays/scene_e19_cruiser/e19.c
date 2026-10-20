@@ -1516,7 +1516,7 @@ int SceneE19_SpinRayBurst(int mode, void *memory, intptr_t argument) {
         if (!(burst->timer & 3) && burst->blades > 0) {
             child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (child) {
-                FieldFx_RandomScatterOffsetXY(child);
+                FieldFx_RandomScatterOffsetXY((s16 *)&child->spin.angles);
                 child->timer = 0;
                 child->state = 0;
                 child->reach = (rand() & 0x1F) - 0x10;
@@ -1528,7 +1528,7 @@ int SceneE19_SpinRayBurst(int mode, void *memory, intptr_t argument) {
             for (i = 0; i < 26; i++) {
                 child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child) {
-                    FieldFx_RandomScatterOffsetXY(child);
+                    FieldFx_RandomScatterOffsetXY((s16 *)&child->spin.angles);
                     child->timer = 0;
                     child->state = 1;
                     child->reach = (rand() & 0x1FF) + 600;

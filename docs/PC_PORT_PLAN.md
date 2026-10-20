@@ -2,6 +2,62 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Oryginał USA: M425→M275→M276 i zgodne grawerowanie Wayne'a
+
+Kontynuowano istniejący proces referencyjny, nie restart: zwykłe Cross
+w dialogach8..13 M425, Start przy filmie38, potem Circle+Up80 oraz
+Circle+Left120 do M276. Oryginał wymagał dodatkowego czasu na odczyt
+sceny; pobrano osobne stany po zakończeniu przejść, nie zakładano równego
+numeru vblank w PS1 i PC. /tmp/pe-reference-day6-M-v1/story-to-field.jsonl,
+m276-story.jsonl, input.jsonl i screenshoty zachowane.
+
+verify-field.py/m275-proof.json: M275/0xa80472c8,621HP, wszystkie pozycje
+i yaw wszystkich5 aktorów, lock2, dialogi, capacity28, wszystkie50 slotów,
+4096B rekordów wyposażenia i wyposażone pozycje zgodne z oryginałem.
+Świeże normal/SAN do26048 na pe-e19-blast-shift-v1 mają identyczny cały
+JSON/VRAM, exit0 bez sanitizer/opcode. M425 przy21808 również normal/SAN
+zgodne; oryginalna pozycja Ayi i dialog8 zgodne, ale aktor4 jest w innej
+fazie ruchu. Nie uznano wszystkich ruchomych stanów M425 za równoważne.
+Wcześniejszy natywny21208 jest przed tym dialogiem i nie służy jako oracle.
+
+compare-rooms.py/room-image-comparisons.json: dla M425 tylko402/71680
+pikseli RGB5 różni się w prostokącie115,115..146,175 obejmującym ruchomą
+postać, natomiast M275 różni65979 pikseli. Obrazy obejrzano: oryginalny
+M275 złapany podczas fade-in jest ciemniejszy niż późny checkpoint PC.
+To diagnostyka niezsynchronizowanych animacji/fade, nie zaliczony oracle
+obrazu ani potwierdzenie błędu. Poprzedni pełny oracle statycznej planszy
+Day6 pozostaje odrębnym porównaniem71680 zgodnych pikseli.
+
+verify-engraving.py/engraving-proof.json: oryginał przeszedł dialogi
+Wayne/Maeda i menu przechowania (Ammo Crate0/Rocket Crate0), następnie
+wybrano M8000 i B Jacket1, zachowując nazwy przez Start/Start.
+Stan po grawerowaniu, dialog25 i story726, jest identyczny z natywnym
+checkpointem31548: wszystkie pozycje/yaw aktorów,50 slotów,4096B
+rekordów, wyposażone pozycje i capacity. Zmieniają się wyłącznie
+rekord0 offset5 oraz rekord13 offset5, oba0→16; żadne bonusy/statystyki
+lub modyfikatory. Nazwy obserwowano na ekranach, nie porównywano ich
+oddzielnego bufora binarnie. Świeże native normal/SAN mają identyczny
+pełny JSON/VRAM i exit0 bez sanitizer/opcode. Payload M, wrapper PS1
+oraz prywatne karty native niezmienione; nie wykonywano zapisu na kartę.
+To rzeczywisty oryginalny interfejs i stan, nie fixture edytujący RAM.
+Nie jest to jeszcze dowód walk M428/M350/E19 w obu implementacjach.
+
+Zapieczętowano wejścia poszczególnych obserwacji: day6-input.jsonl14666
+klatek (hash równy pierwotnemu proof), m425-input.jsonl15870,
+m275-input.jsonl17144 i engraving-input.jsonl21264. Day6 verify.py
+teraz haszuje jego niezmienny prefiks, zamiast rosnącego input.jsonl;
+poprzedni manifest zachowano jako proof-at-Day6-original.json.
+Ponowne verify.py, verify-field.py i verify-engraving.py przechodzą.
+Dzięki temu dalsze sterowanie emulatora nie unieważnia hashy wejścia
+wcześniejszych checkpointów.
+
+Referencja nadal żyje: PID36091/uchwyt60200, AI25171/GDB25170,
+obecnie M276/0xa8047348,621HP, dialog25 po grawerowaniu, pauza przy
+21265 (21264 zwykłych klatek inputu). Przed użyciem odpytać uchwyt/status;
+nie uruchamiać drugiej instancji tylko dlatego, że skończyła się obserwacja.
+Dalsza trasa prowadzi przez M426/M427 do walki M428; E19 nadal niewygrane.
+Żadnych zmian kodu gry ani nowych plików repo w tych porównaniach.
+
 ### Niezależny oryginał USA Disc2: Continue M i wszystkie piksele planszy Day6
 
 /tmp/pe-reference-day6-M-v1/proof.json oraz verify.py: headless
@@ -35,9 +91,10 @@ instalacji. Nieudany start z exit1 zachowany jako attempt0; późniejszy
 proces został sprawdzony żywy przez uchwyt i status AI, nie restartowano
 żadnej sesji po samym timeout.
 
-Oryginał pozostaje zatrzymany na planszy Day6, nie zakończony:
+Po tym porównaniu oryginał był zatrzymany na planszy Day6; aktualny
+checkpoint po kontynuacji opisano wyżej. Proces nie jest zakończony:
 PID36091, uchwyt60200, AI25171/GDB25170, /tmp/pe-reference-day6-M-v1.
-Status przy końcu obserwacji: paused1/running1, advance_remaining0,
+Historyczny status po planszy Day6: paused1/running1, advance_remaining0,
 frames_remaining4985334. Przed dalszym użyciem sprawdzić ten proces/uchwyt;
 nie uruchamiać duplikatu wyłącznie na podstawie starego pliku stanu.
 To pauza emulatora do obserwacji, nie pauza aktywnego celu portu.

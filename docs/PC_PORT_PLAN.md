@@ -2,6 +2,35 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Przygotowana gałąź: zapis H przed finałem, oba leki zachowane
+
+Po wygranej M246 gałąź E→Medicine4→G przeszła M248/M249, dialogi Eve,
+filmy23/24, retrospekcję M367, sceny samochodu i lotniskowca M271/M272.
+W scenie M272 oryginalny skrypt przywrócił HP488→621. Medicine4 w15
+oraz Medicine3 w27 pozostały nietknięte. Zapisano H w pustym slocie7
+(No8). Domyślnie menu wskazywało ostatni G; powtórzone wejścia otwierały
+i anulowały potwierdzenie nadpisania z domyślnym No. G nie nadpisano,
+co potwierdza niezmieniony hash, a H wybrano przez Down przed zapisem.
+
+/tmp/pe-m271-prepared-save-H-v1-proof/proof.json: cold SAN od E przez
+całą tę gałąź do122541 exit0 bez raportów, pełny JSON/VRAM identyczne,
+G iH bajtowo identyczne w obu przebiegach, E bez zmian. H ma8192B,
+źródło /tmp/pe-m271-prepared-save-H-v1-source/BASLUS-006620000000H,
+SHA256 ee87ad412957b1ef26126a18a4857d1648fa6a8e35a8c0e50ebdd9202dc89680.
+Nie jest to niezależny oracle retail PS1 ani dowód całej kampanii.
+
+Zimne Continue z samego H w normalnym iSAN: oba exit0, identyczne
+pełne JSON/VRAM, inventory zachowane (M8000slot1, Medicine4slot15,
+Medicine3slot27), M271/story716/dialogue59, karty bez zmian.
+/tmp/pe-m271-continue-H-v2-proof.json, -v2-verify.py sprawdził terminalne
+replaye /tmp/pe-m271-continue-H-v1-{normal,san}/. Weryfikator v1 dopiero
+w końcowym print odwołał się do usuniętej zmiennej pos; nie była to
+awaria gry. Oryginalne nieudane narzędzie zachowane, nie powtarzano gier.
+
+Live37815 zamknięto quit/exit0 z zachowanymi E/G/H. Nowy live66498,
+/tmp/pe-m273-prepared-H-v1-live.py, startuje wyłącznie z H na kandydacie
+v4 i odtwarza przejście do M273 przed walką. Dalszy finał pozostaje otwarty.
+
 ### Przygotowana gałąź: M246 wygrane z zachowanymi lekami
 
 Live37815 po zapisaniu G wrócił M340→M343→M229. Przejście sprawdzonych

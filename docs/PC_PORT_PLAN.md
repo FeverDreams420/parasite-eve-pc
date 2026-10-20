@@ -3,6 +3,36 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — telefon M154, autentyczny Save/Continue C2
+
+Poprzednia tura była postępem:M154,commit20f3f879d. Sesja87367 ponownie
+żywa. Heal1 w polu leczy258→283. Podejście z[1283,-1373] Left180(normal),
+Down12,Left4,Cross otwiera6 przy34525; telefon bez kolejnego spotkania.
+Slot1→pustyC/index2 (jedenDown odB),File saved36197:level20,story496,
+HP283/283,M154. Nowy plik powstał wyłącznie przez oryginalny telefon.
+
+Źródło /tmp/pe-ex-hospital-save-C2-v1-source/BASLUS-006620000000C,
+8192B,SHA256821ecb80671106d258e14335b4346782cd5a58c99adf4e8864c25e1956b1f7cf.
+/tmp/pe-ex-hospital-save-C2-v1-verify.py PASS: pełna trasa cold B2 w obu
+profilach exit0, cały JSON/VRAM zgodny między profilami i live, noweC
+identyczne wszystkimi8192B. B2/kopie niezmienione. Pełne50 slotów i4096B
+rekordów względem B2:19:0→16,22:0→6;rekordy tylko426:4→2.
+Wszystkie zmienne:19:0→5,65:667025391→801243119,66:572→1020,
+67:16527→18575,74:494→496,82:5460→21844;1 przy zapisie998,
+pozostałe bez zmian. Artefakty
+/tmp/pe-ex-hospital-save-C2-v1-{seed.json,checkpoint,proof/proof.json}.
+
+/tmp/pe-ex-hospital-C2-loaded-v1-verify.py PASS: świeży Continue z samymC2,
+normal/SAN exit0,12920 M154/a8025248,story496,HP283/283,menu null,
+lock0,enemy0. Cały ekwipunek i wszystkie zmienne jakSave36197;
+pełny JSON/VRAM zgodny między profilami,źródłowe/prywatneC2 niezmienione.
+Artefakty /tmp/pe-ex-hospital-C2-loaded-v1-{seed.json,proof/proof.json}.
+Sesja87367 zamknięta quit/native0. C2 nowym trwałym punktem13F;
+następne komputer/Elevator Key i dalszy szpital. Bez zmian produkcji/PsyZ
+ani nowych plików repo;SDK/SDL nieinstrumentowane,brak oracle PS1,
+/tmp nie zastępuje trwałych CTest. Pełny port nieukończony.
+
+
 ### EX — M154 zwycięstwo przy258HP
 
 Poprzednia tura była postępem:M153,commit10340aa50. Sesja87367 ponownie

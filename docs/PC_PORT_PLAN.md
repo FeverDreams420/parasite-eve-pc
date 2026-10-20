@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M188: druga próba zadaje528HP, nadal porażka
+
+Nowy kontroler /tmp/pe-ex-m188-attempt2-F2-live odtwarza wejście25986.
+Krótsze oczekiwania300 i ruch po kolejkach dają27094 Aya285HP po176
+obrażeniach korpusu,27466 Aya205HP po352 obrażeniach. Reload działa.
+Darkness nakładane w trzeciej turze; z następnych czterech kul trafiają
+dwie.28190 korpus1000171 (ubyło528HP),Aya12HP,battle ammo14,
+move_lock4 podczas akcji. Dalsza próba Energy Shot nie uratowała Ayi;
+29154 ponownie GameOver. Nie potwierdzono fazy drugiej ani zwycięstwa.
+
+Świeże normal/SAN cold28190 exit0,bez diagnostyki sanitizer/opcode,
+pełny JSON równy profilom i zapisanej obserwacji live; VRAM zgodny tylko
+między profilami (live28190 nie zamrożono). Verifier sprawdza cały inventory
+oraz wszystkie zmienne względem FileSavedF2:1=187,11=74,20=1049957,
+78=129,rekord426=18; battle ammo14. Źródłowe i prywatne F2 niezmienione.
+Pierwszy verifier błędnie wymagał move_lock0; rzeczywisty stan4 sprawdzony
+w live i obu odtworzeniach,poprawiono wyłącznie asercję w /tmp.
+Dowód /tmp/pe-ex-m188-core171-F2-v1-{seed.json,checkpoint,proof/proof.json}.
+Ten sam kandydat,bez zmian produkcji/PsyZ/RAM/save payload; SDK/SDL
+nieinstrumentowane,brak oraclePS1,/tmp nietrwałe. Odczyt istniejącego
+battle_ailment.h/attack.c potwierdza:Barrier przenosi obrażenia na PE,
+Cure-D usuwa Darkness albo daje jednorazową odporność. Następna próba
+powinna użyć ochrony/leczenia przed spadkiem HP i uwzględnić Darkness;
+nie powtarzać dwóch kolejnych kolejek z aktywnym Darkness na dystansie.
+
+
 ### EX M188: nieudana próba, reload i Game Over
 
 Kontynuacja28694/87HP: pierwszy Triangle zbyt wcześnie przed ATB9000

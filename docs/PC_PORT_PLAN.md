@@ -2,6 +2,69 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Niezależny oryginał USA Disc2: Continue M i wszystkie piksele planszy Day6
+
+/tmp/pe-reference-day6-M-v1/proof.json oraz verify.py: headless
+DuckStation/scph1001 (BIOS fastboot), oryginalny Disc2, zwykłe pad inputs
+przez Continue→karta1→pozycja13/M→File loaded→OK. M352/0xa8065148,
+plansza Day6 Liberation, HP621/621. Scena, pozycja[0,-524288,0], yaw0,
+capacity28, wszystkie50 slotów, wszystkie4096B rekordów wyposażenia oraz
+wyposażone pozycje1/2 identyczne z aktualnym natywnym kandydatem
+pe-e19-blast-shift-v1. Świeże cold normal/SAN w native-proof/ kończą exit0
+bez sanitizer/opcode; cały ich JSON i VRAM identyczny.
+
+Nowy oracle obrazu: wszystkie71680 pikseli screenshotu oryginału320x224,
+po sprowadzeniu doRGB5, identyczne z display0,224 natywnego VRAM.
+verify.py odtwarza porównanie bez zewnętrznego pakietu obrazów.
+Oryginał i native mają różne numery klatek wejścia; porównanie dotyczy
+ustalonej statycznej planszy oczekującej na przycisk, nie synchronizacji
+animacji, renderingu całej gry, audio lub walki E19. Nie jest to ukończenie
+kampanii. Screenshoty day6-M.png/native-day6-M.png, stan oryginału,
+input.jsonl, wrapper karty, konfiguracja i hashe w proof.json zachowane.
+
+Payload8192B M pozostaje SHA256
+64fdec4d8f90d5692f1d91c2dce49273fdbf66d78eb74911c575fc2d6816de58;
+wrapper131072B i prywatne natywne karty również niezmienione po odczycie.
+Card1Path w konfiguracji regtest nie skonfigurował pliku, więc przy pauzie
+włożono kartę przez istniejące hostowe MemoryCard::Open/Pad::SetMemoryCard
+(card_setup.cpp/dylib i insert-card.log), jak w poprzednich oracle O/B2.
+Nie edytowano emulowanego RAM, EXE gry ani payloadu; GDB tylko odczytuje
+stan. Stare ścieżki bibliotek emulatora były nieaktualne; run.py ustawia
+DYLD_LIBRARY_PATH na zachowane biblioteki z prywatnego /tmp, bez zmian
+instalacji. Nieudany start z exit1 zachowany jako attempt0; późniejszy
+proces został sprawdzony żywy przez uchwyt i status AI, nie restartowano
+żadnej sesji po samym timeout.
+
+Oryginał pozostaje zatrzymany na planszy Day6, nie zakończony:
+PID36091, uchwyt60200, AI25171/GDB25170, /tmp/pe-reference-day6-M-v1.
+Status przy końcu obserwacji: paused1/running1, advance_remaining0,
+frames_remaining4985334. Przed dalszym użyciem sprawdzić ten proces/uchwyt;
+nie uruchamiać duplikatu wyłącznie na podstawie starego pliku stanu.
+To pauza emulatora do obserwacji, nie pauza aktywnego celu portu.
+
+### E19: unik chwytu przed doskokiem i wynik polityki opartej na ruchu
+
+/tmp/pe-e19-grab-dodge-v2/results.json: osiem kierunków od76655,
+z autentycznego replayu V5/16, do76975. Końcowe HP Up1,Right1,Down184,
+Left170,UpRight1,DownRight156,UpLeft86,DownLeft51; main1001562/secondary1300.
+/tmp/pe-e19-grab-dodge-v2-64-proof/proof.json: Down8256 rozpoczynany przed
+trybem16 pozwala ominąć chwyt do1HP. Pozostaje trafienie kontaktowe56;
+240→184. Pełny JSON/VRAM próby i cold normal/SAN zgodny, exit0,
+bez sanitizer/opcode; źródłowa M i prywatne karty bez zmian.
+Nie jest to całkowite uniknięcie obrażeń ani uniwersalna strategia chwytu.
+
+/tmp/pe-e19-active-dodge-v6/results.json: cztery kontynuacje tego stanu
+z drobnym krokiem6, wykrywaniem przemieszczenia w trybie2 i pomijaniem
+podejścia/strzału po takim ruchu do następnego trybu. Wszystkie zginęły:
+16 przy78867/main1358 ponad milion,64 przy78909/main1358,
+96 przy79039/main1460,192 przy78791/main1562. Badano tylko normalnie;
+wszystkie native quit/exit0, źródłowa/prywatne karty bez zmian. Artefakty
+zachowane. Pomijanie całych ruchomych okien2 traci okazje do strzału;
+nie ma dowodu poprawnego automatu finału. Wszystkie sesje natywne
+tego porównania są zakończone. Dalej potrzebne porównanie animacji,
+chwytu i okien walki z oryginałem oraz faktyczne zwycięstwo E19.
+Żadnych zmian źródeł gry ani nowych plików repo w tych próbach.
+
 ### E19: dalsze trafienia, kolejny unik i ograniczenia strategii
 
 /tmp/pe-e19-active-dodge-v2-32-proof/proof.json: od tej samej autentycznej

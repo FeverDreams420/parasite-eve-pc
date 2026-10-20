@@ -715,7 +715,7 @@ int SceneE19_Blast(int mode, void *memory, intptr_t argument) {
                 intensity = intensity * 15 / 16;
             }
             rotation.x = 0;
-            rotation.y = -g_FieldFxCurrentAge << 5;
+            rotation.y = (s16)(0u - ((u32)g_FieldFxCurrentAge << 5));
             rotation.z = 0;
             g_FieldFxSpriteParams.tpage = g_FieldFxTpageTable[g_FieldFxTpageSlots[3]];
             g_FieldFxSpriteParams.palette = 3;
@@ -858,7 +858,7 @@ int SceneE19_Blast(int mode, void *memory, intptr_t argument) {
                 intensity = intensity * 15 / 16;
             }
             rotation.x = 0;
-            rotation.y = -g_FieldFxCurrentAge << 5;
+            rotation.y = (s16)(0u - ((u32)g_FieldFxCurrentAge << 5));
             rotation.z = 0;
             g_FieldFxSpriteParams.tpage = g_FieldFxTpageTable[g_FieldFxTpageSlots[3]];
             g_FieldFxSpriteParams.palette = 3;

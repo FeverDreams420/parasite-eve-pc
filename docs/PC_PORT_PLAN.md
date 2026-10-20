@@ -2,6 +2,96 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### E19 Blast: naprawa rzeczywistego UB wykrytego przez dłuższy replay
+
+Pierwsze odtworzenie checkpointu V4 do76581 nie przeszło SAN:
+/tmp/pe-e19-distance-policy-v4-checkpoint-proof/san/game.log,
+exit−6, e19.c:718: left shift of negative value−48. Normal przeszedł.
+Nie utworzono z tego nieudanego przebiegu pozytywnego proof.
+W istniejącym SceneE19_Blast poprawiono dwa identyczne wystąpienia
+(718/861): kąt obliczany przez unsigned32 shift i odejmowanie, następnie
+narrowing do s16. Zachowuje dolne16 bitów oryginalnego obrotu; nie zmienia
+czasów efektów, hitboxów ani parametrów walki. Żadnych nowych plików gry.
+
+Świeży /tmp/pe-e19-blast-shift-v1:219 normal+219 SAN obiektów,
+ponowny rehash wszystkich obiektów, zależności, bibliotek i binarek.
+70/70 regresji,12/12 CTestów w obu profilach, sześć ścisłych kompilacji
+trzech jednostek E19 bez diagnostyk. CTesty E08 sprawdzają też83 próbki
+VRAM/12 cykli, pozostałe niezmienione binarki assetów pochodzą z build;
+Psyz/SDL pozostają nieinstrumentowane. Manifest i dowody:
+*-build-manifest.json, *-verification.json, *-effects-proof.json,
+*-strict-proof.json, *-installed-build-proof.json. Normalne game/fixture
+skopiowano do build, wcześniejsze binarki zachowano.
+
+/tmp/pe-e19-blast-shift-v1-e19-proof/proof.json i *-regression-proof.json:
+ten sam pełny input od autentycznego M do76581 przechodzi normal/SAN,
+pełne JSON i VRAM identyczne także ze starszą sesją normalną. Aya75HP,
+main1001664/secondary1300, source M i prywatne karty bez zmian,
+bez sanitizer/opcode. To regression reproducer rzeczywistego błędu oraz
+powtarzalność natywna; nie oracle obrazu PS1 ani zwycięstwo E19.
+Odrębny pozytywny checkpoint V2 przy74781/1HP/main1001766 również
+normal/SAN zgodny; nie należy go mylić ze starą porażką SAN w76581.
+
+Po sprawdzeniu poprawionego kandydata zamknięto stary live V4/sesja92807
+quit0. Tester V5 używa pe-e19-blast-shift-v1-game, odtwarza ten sam
+checkpoint76581, poprawia jedynie własny próg wyboru leczenia PE>=60
+(zamiast100); nie zmienia gry. /tmp/pe-e19-distance-policy-v5.py,
+prywatne karty i args w *-v5-live, komendy run N/quit. Sesja88526
+potwierdziła start76581/75HP na poprawionym buildzie; przed użyciem
+ponownie sprawdzić uchwyt. Do dalszej próby
+pozostaje1664HP głównego ciała, drugie nadal1300; brak dowodu pełnego finału.
+
+### E19: źródła trafień, sterowanie po stanie i ponad połowa HP bossa
+
+Read-only LLDB nad zachowanym procesem: odczyt PM/FX przy69366 pokazał
+JitterSparkSpawner, bez aktywnego HomingBurst. Nie dowodzi to źródła
+wcześniejszych trafień. Dwa hardware watchpointy (HP i flaga trafienia)
+wykazały w dalszej próbie kontakt Entity_CheckActionIdMatch przez
+Scene_UpdateEntityPositions, bez callbacku FX na tych stosach.
+69938: główne ciało2:31/tryb7 w odległości182 ustawia flagę;
+69940: power172/category3/effectType0,120→64HP, źródło nadal2:31.
+70000: tryb9, dystans375, flaga;70002 power186,64→65495 jako pośredni
+u16, następnie clamp0, czyli105 obrażeń. Drugi obserwator zachowuje
+również ten pośredni zapis. Nie jest to nowy błąd podprzepełnienia.
+Dystans w momencie odejmowania HP wynosi199/396, nie182/375 z chwili flagi.
+/tmp/pe-e19-observer-v2-proof.json i *-events.jsonl: cały JSON/VRAM zgodny
+między dwiema obserwacjami a replayem bez debuggera normal/SAN do70072.
+Bez zapisów pamięci lub wywołań funkcji targetu. Próba kończy śmiercią,
+main1003398; sesje97025/12271 zamknięte quit0. W tej sekwencji wystąpił
+też błąd testera: menu rozpoczęte przy ATB3648, więc input nie wykonał
+zamierzonej pary Heal2. Nie jest to błąd wejścia oryginalnej gry.
+
+Zewnętrzny tester /tmp/pe-e19-distance-policy-v1.py wysyła wyłącznie
+zwykłe pad inputs, czyta JSON i liczy kierunek względem pozycji bossa.
+Steruje co12 klatek, czeka na ATB9000, sprawdza menu i kolejkę,
+podaje ruch również podczas końca animacji. Pierwsza wersja poprawnie
+przerwała po KeyError: tryb przeciwnika jest w battle_detail, nie actors;
+exit0 gry i wszystkie wejścia zachowano, bez restartu na timeout.
+V2 naprawia odczyt i ma oddzielne artefakty. Read-only odczyt rzeczywistej
+tabeli resident, /tmp/pe-e19-spell-read-v1.json: Heal1 koszt60, Heal2
+120, Heal3 500. Wcześniejsze przybliżenia50/125 w roboczym testerze nie
+są wartościami gry; V2/V4 używają odczytanych kosztów. Kod gry bez zmian.
+
+Od autentycznego M nowy input doszedł do73781:435HP, main1001970;
+później main1001766 i chwyt sprowadzający Ayę do1HP. V2 zatrzymała się
+na asercji menu przy74781. /tmp/pe-e19-distance-policy-v2-checkpoint-proof/
+proof.json: cold M normal/SAN, pełne JSON/VRAM zgodne z live,1HP,
+main1001766/secondary1300, exit0 bez sanitizer/opcode, M/karty niezmienione.
+Błędna interpretacja testera V3 wymagała move_lock==4 i nie pozwoliła
+leczyć, gdy wynosiło20; próba zmarła przy75021. Flaga0x10 to dezorientacja,
+a nie blokada menu. Kod ruchu odwraca składową X. Nie ma tu potwierdzonego
+błędu zwalniania chwytu w porcie; V4 akceptuje flagi jako bity,
+kompensuje odwrócone X i ponawia otwarcie menu z kontrolą wyniku.
+Menu faktycznie otworzyło się, dwie Heal2 dały121HP po chwycie,
+Heal1+strzał151HP/main1001664. Późniejszy atak76 zostawił75HP.
+V4 osiągnęła76581 na komendach run N/quit, sesja92807;
+po walidacji poprawki UB została zamknięta quit0 (aktualny V5 powyżej). Skrypty i prywatne karty w /tmp/
+pe-e19-distance-policy-v4-live, pełny input i policy.jsonl zachowane.
+Nie jest to zwycięstwo E19 ani dowód niezawodnego automatu walki.
+Dalsze ograniczenia testera: próg heal PE>=100 pomija dostępne Heal1
+za60; należy go poprawić przed kolejną turą. Boss ma jeszcze1664HP ponad
+próg, drugie ciało1300. Pełny cel portu nadal otwarty.
+
 ### Gałąź od M: M350 pokonane, początek E19 nadal bez sukcesu
 
 Sesja97025 potwierdzona żywa przy58010. Heal2 parą dały228HP; Down100run

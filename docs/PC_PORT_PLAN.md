@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — zwycięstwo nad czterema robakami M086 z H
+
+Zimny H i zwykły pad, bez zmiany wyposażenia: cztery robaki typu3,
+początkowo167HP/def18. Double Action/M8000 power76; pierwsze dwa
+trafienia zdejmują152HP z wybranego robaka. Pozostałe zwiększają HP po
+śmierci towarzyszy; ostatni ma hp_limit293. Tester zachował także
+nieudane ataki podczas zejścia pod ziemię i zbędne zmiany pozycji;
+nie jest to wzorcowa strategia ani dowód skuteczności wszystkich strzałów.
+
+Przy19836 HP60/133; Triangle→Use P.E. (Down1)→Heal2→potwierdzenie→
+cel Aya, druga akcja normalny strzał. Przy20848 HP112 po leczeniu i
+kolejnym trafieniu przeciwnika. Żaden przedmiot leczący nie został zużyty.
+Ostatni robak65HP, po zbliżeniu i wynurzeniu dystans217 przy24904;
+strzał kończy walkę. Przy25644 enemy0,HP73/133,ekranEXP20.
+Po awansie i Obtain All/End przy26652: M086/story248,HP73/181,
+capacity21,Defense+1/item41 w nowym slocie20,menu null,battle9,lock0.
+Pierwsze20 slotów identyczne z H; cały4096B bufor wyposażenia zmienia
+wyłącznie ammo426:14→16. M8000 i B Jacket1 nadal wyposażone.
+
+/tmp/pe-ex-m086-win-H-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON i VRAM identyczne z live, źródłowy H bajtowo i hash bez zmian.
+Artefakty /tmp/pe-ex-m086-win-H-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji; brak porównania obrazu/audio z PS1.
+Kod produkcyjny bez zmian. Następne: powrót do telefonu i zapis postępu,
+dalszy Day2/EX nadal nieukończony.
+
+
 ### EX — zimny H i wejście do walki M086
 
 Zwykły pad z H: z pozycji telefonu zejście do południowej krawędzi,

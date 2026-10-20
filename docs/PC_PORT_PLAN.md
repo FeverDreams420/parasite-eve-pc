@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: telefon NYPD, Save D2 i zimny Continue
+
+Od87820 M046/story534 zwykły ruch potwierdza, że move_lock2 pozwala
+sterować. Podejście do osi drzwi około[-1022,912] prowadzi88179 doM043;
+Down w osi około[-49,-4311] prowadzi88887 doM042/a8004148/dialog173.
+Po zamknięciu dialogu dojście do telefonu około[595,-793],facingDown,
+90079 dialog6. Oryginalne menu36→37 ma domyślnie C2/index2;
+Down wybiera pusty index3/D2. Potwierdzenie tworzy91811 menu40/FileSaved.
+161/320HP,story534,ekwipunek bez zmian względem87820. Wszystkie zmienne
+sprawdzone:tylko1:35→998 i44:72751164→72751165.
+
+Dwa świeże cold91811 normal/SAN:exit0, całe JSON i1MiB VRAM równe
+między profilami oraz zamrożonym live. Wszystkie8192B D2 są równe
+w źródle, live i obu profilach; wcześniejszy C2 pozostaje niezmieniony.
+Źródło /tmp/pe-ex-hospital-save-D2-v1-source/BASLUS-006620000000D,
+SHA256 b0e8550f899c34921e0f66d34bdb5179c77b523a5d7368eea52a7567fd18498c.
+Dowód /tmp/pe-ex-hospital-save-D2-v1-proof/proof.json; journal i checkpoint
+/tmp/pe-ex-hospital-save-D2-v1-{seed.json,checkpoint}.
+
+Zimny Continue z D2 jako jedynym zapisem na prywatnej karcie, dwa profile
+normal/SAN12920:exit0,M042/story534,161/320HP,menuNULL,mode0,zero wrogów.
+Cały ekwipunek i wszystkie zmienne identyczne z Save91811; całe JSON i1MiB
+VRAM równe między profilami. Wejściowy i prywatne D2 niezmienione.
+/tmp/pe-ex-hospital-D2-loaded-v2-{seed.json,proof/proof.json}.
+Pierwszy runner v1 został odrzucony przed startem przez nieuporządkowane
+argumenty --pad-at (exit1); poprawiono kolejność wejść tylko w runnerze.
+Nie jest to błąd ani zmiana gry. Live zamknięte quit/exit0.
+
+Bez nowych źródeł gry, zmian produkcji/PsyZ/RAM/payloadów zapisów.
+Nadal pe-video-clock-v1; SDK/SDL nieinstrumentowane, brak niezależnego
+oracle PS1. Artefakty /tmp tymczasowe, cold Continue nie miał osobnego
+live VRAM. D2 jest nowym autentycznym punktem kontynuacji EX; Dzień5
+z tej gałęzi pozostaje do przejścia.
+
+
 ### EX M159 wygrane i powrót do NYPD/story534
 
 Od zweryfikowanego76852 zwykłe zamknięcie dialog137 prowadzi77212 do

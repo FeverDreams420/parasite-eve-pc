@@ -3,6 +3,33 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — zwycięstwo M121 i schody do M122
+
+Po wejściu M121 tester skierował się omyłkowo z powrotem do M115;
+zachowano wszystkie odcinki inputu. Ponowne wejście i Up296 w M121
+uruchamia spotkanie31052. Kamera M121: Up=+X,Right=−Z. Przy31624:
+trzy typ9/97HP/def20 oraz typ8/48HP/def30,HP139/189 po wejściowych
+trafieniach. Double Action wybiera8,9:1; następnie kończy uszkodzonego9
+oraz uszkadza kolejnego. Cztery kolejki kończą wszystkich przy34076,
+EXP20,HP139/189. Magazynek3→14 z automatycznym przeładowaniem;
+nie zalicza się liczby zakolejkowanych akcji jako liczby oddanych strzałów.
+ObtainAll/End przy pełnym21-slotowym ekwipunku nie dodaje przedmiotów.
+Przy34886 menu zamknięte,enemy0,battle9. Up650,Right1224 prowadzą
+środkowymi schodami do M122/a8022148. Checkpoint37000/story400,
+HP139/189,menu null,lock0. Całe50 slotów,capacity i wyposażone pozycje
+jak L, wszystkie4096B rekordów jak L poza ammo426:3→14.
+
+/tmp/pe-ex-m122-arrival-L-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live, L bajtowo niezmieniony. Wszystkie
+zmienne porównane; od wcześniejszego M121 dodatkowo1:115→121,
+16:0→65536,97:64→192. Asercje obejmują skład wrogów, wygraną i zamknięte
+nagrody. Artefakty /tmp/pe-ex-m122-arrival-L-v1-{seed.json,checkpoint,
+proof/proof.json}. SDK/SDL bez instrumentacji, brak niezależnego oracle PS1.
+Kod produkcji,RAM/RNG/payloady save bez zmian. L ostatni trwały zapis;
+następne eksploracja M122. Pełny port pozostaje nieukończony.
+
+
+
 ### EX — M112→M115, scena M044/film14 i sterowanie M121
 
 Po Medicine3 wyjście M112 przyx[-284,-105],z[357,575],yaw3072

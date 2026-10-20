@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: Continue E2 → mapa/NYPD/Chrysler lobby → Chinatown M162 wygrane
+
+Świeży liveE2-only12920,kartaM362/story536,320HP. Right/odmowa ponownego
+zapisu daje13832 mapę/story544. Wybór domyślnego NYPD uruchamia scenę
+a8005448,wyjście15792 wraca na mapę. DwieLeft wskazują w EX Chrysler
+(page10),nie Chinatown; wejście17348 i wyjście18564/18864 potwierdzają
+lobbya8049048 bez walki i bez utraty HP. Dwie kolejneLeft:Hospital6,
+Chinatown7 (nazwa sprawdzona na obrazie mapy). Potwierdzenia prowadzą
+20420 doM161/a80260c8. RuchUp prowadzi21000 doM162/a8026148,
+21448 trigger,21648 dwaj5:31/5:30 po188HP,Aya320HP,magazynek0.
+
+Automatyczny reload przy pierwszym ostrzale. Dwie kule w5:31 dają22512
+12HP; następna salwa kończy5:31 i trafia5:30 do100HP. Przy23048 Aya133,
+jeden żywy przeciwnik. Dwie dalsze kule prowadzą23632/23812 do wyniku
+EXP/selection20,mode2,zero żywych przeciwników,Aya133/320,ammo12.
+Nagrody tej walki nieodebrane; live czeka na wynikach.
+
+Świeże cold23812 normal/SAN exit0 bez diagnostyki sanitizer/opcode,
+całe JSON i1MiB VRAM równe między profilami i zamrożonym live23812.
+Weryfikator sprawdza wizytę/wyjście Chrysler, wejścieM161,188HPwrogów,
+pozostałe12HP i redukcję do jednego celu. Cały ekwipunek/rekordy i
+wszystkie zmienne względem coldE2 sprawdzone:tylko rekord bajt426:0→12,
+zmienne1:998→161,3:9428992→12566528,74:536→544,78:232→137;
+reszta bez zmian. Źródłowy i prywatne E2 niezmienione.
+/tmp/pe-ex-chinatown-m162-E2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian źródeł gry/PsyZ/RAM/save,ten sam pe-video-clock-v1.
+SDK/SDL nieinstrumentowane,brak niezależnego oraclePS1,/tmp tymczasowe.
+To nie dowodzi ukończenia Chrysler Building ani całego Chinatown.
+
+
 ### EX: zimny D2 → koniec Dnia4 → Save E2 → mapa Dnia5
 
 Nowy live wyłącznie z autentycznym D2/Continue12920 przechodzi M042→M041

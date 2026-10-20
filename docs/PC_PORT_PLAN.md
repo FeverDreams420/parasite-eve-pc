@@ -2,6 +2,20 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — wyjście ze zbrojowni po tutorialu
+
+Z checkpointu51442 zwykły input doprowadził Ayę do drzwi M052 i do
+korytarza M051 (0xa80050c8). Przy52304 story152,72/72HP,menu null;
+zużyty Mod Permit, zachowany Offense+2 i slot M8000 3→4 pozostają
+potwierdzone. Nie zmieniano kodu gry ani pamięci/zapisu.
+Niezależne zimne odtworzenia od autentycznego B: normal/SAN exit0,
+pełny JSON i VRAM identyczne z live, prywatny B identyczny bajtowo
+ze źródłem, brak błędów sanitizer/opcode/assertion. Weryfikator wykonany
+przed wpisaniem wyniku: /tmp/pe-ex-armory-exit-v1-verify.py (PASS).
+Seed/checkpoint oraz proof.json: /tmp/pe-ex-armory-exit-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. To dowód przejścia tych drzwi po tutorialu,
+nie całego drugiego dnia, EX ani zgodności obrazu/audio z PS1.
+
 ### EX — Mod Permit, slot M8000 i zakończenie tutorialu zbrojowni
 
 Kontynuacja poprawionej gałęzi z42560. Oryginalny receipt wyposażenia

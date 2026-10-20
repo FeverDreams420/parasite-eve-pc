@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Przygotowanie z E: Medicine4 i nowy autentyczny zapis G
+
+Z E po T-Rexie zwykłe wejścia przeszły M340→M197. Oryginalna boczna
+skrzynia aktora4 daje Medicine4/item9. Przy pełnym plecaku odmówiono
+zamiany przedmiotu, przez oryginalne menu użyto Medicine3 ze slot15
+(285→465HP), następnie wrócono do skrzyni. Medicine4 trafiło do pustego15;
+Medicine3 w27 zachowane, pozostałe inventory i rekordy wyposażenia
+identyczne z E. Nie zmieniano skryptów, danych ani pamięci.
+/tmp/pe-m197-medicine4-v1-proof/proof.json: cold SAN do23031 exit0 bez
+raportów, pełny JSON/VRAM zgodne z normalnym live, źródłowe i prywatne E
+bez zmian. To rzeczywiste dodatkowe zasoby dla późniejszej próby.
+
+Powrót M197→M340, oryginalny telefon zapisał nowy G w pustym slocie6
+(No7), bez nadpisania E. Menu zamknięte przy25851:465/621HP, field/lock0.
+/tmp/pe-m340-medicine4-save-G-v1-proof/proof.json: cold SAN exit0 bez
+raportów, pełny JSON/VRAM zgodne, G w obu przebiegach bajtowo identyczne,
+8192B. Źródło /tmp/pe-m340-medicine4-save-G-v1-source/BASLUS-006620000000G,
+SHA256 199c5c0f68624d517623a428a77c291d58379610c0df74f25656eb60d5125361.
+
+Zimne Continue z samego G na normalnym i SAN kandydacie v4 do20000:
+exit0 obu, pełny JSON/VRAM identyczne, inventory (Medicine4 w15,
+Medicine3 w27), HP465 i zmienna historii zachowane; obie prywatne i
+źródłowa karta G bez zmian. /tmp/pe-m340-continue-G-v1-proof.json,
+replaye /tmp/pe-m340-continue-G-v1-{normal,san}/. Gracz pojawia się w
+oryginalnym punkcie telefonu, nie dokładnym miejscu przerwania animacji.
+Live37815 pozostaje przy25851 po zapisie. Dalszy grind, ponowna trasa
+finałowa i zwycięstwo nadal otwarte; te dowody nie są oracle retail PS1.
+
 ### M273: wynik drugiej próby i przygotowanie z wcześniejszego zapisu
 
 Live84495 zakończył walkę porażką przy47966. Prosty pilot używał tylko

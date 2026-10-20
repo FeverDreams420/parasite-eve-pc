@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — nocny powrót do NYPD i druga odprawa, story224
+
+Od99180 M192/story208 zwykły input opuszcza muzeum przez polygon
+x7692..8074,z1404..4304. Nocna mapa NYC, Left wybiera NYPD; potwierdzenie
+uruchamia M037 i rozmowę Daniela po wizycie u Klampa. Aktywnie
+zaobserwowane strony26..31. Przejście do recepcji M046/story218,
+dalej M043. Strona200 została zarejestrowana tylko jako nieaktywna,
+więc nie deklaruje się osobnego dowodu jej aktywnego wyświetlenia.
+Przejście do M047 i oczekiwanie na oryginalny ruch ustawiają scenę
+odprawy128. Aktywnie obserwowane128..134,137..140,142; nie deklaruje
+się brakujących/warunkowych numerów stron. Receipt55 i odbiór kolejnego
+Mod Permit55 do ostatniego wolnego slot15. Po scenie M043/story224.
+
+Przy114756 M043 (0xa80041c8),72/92HP,menu null,move_lock2, plecak16/16.
+Względem stanu po Chryslerze jedyną zmianą ekwipunku jest slot15:0→55;
+wszystkie rekordy wyposażenia identyczne. Nie użyto przedmiotów/BP ani
+nie zmieniano RAM/save'a. /tmp/pe-ex-second-briefing-v1-verify.py wykonany
+PASS: zimne normal/SAN exit0, pełny końcowy JSON/VRAM i wszystkie bajty
+C/D zgodne z live, źródłowy C bez zmian, brak sanitizer/opcode/assertion.
+Artefakty: /tmp/pe-ex-second-briefing-v1-{seed.json,checkpoint,proof/proof.json}.
+
+Przy przeglądzie wykryto odziedziczony błędny wpis metadanych frame65210
+w proof.json wizyty Klampa (prawidłowe99180). Runtime asercje tego
+weryfikatora już sprawdzały99180; poprawiono wyłącznie metadane i ponownie
+wykonano verifier PASS na istniejących niezależnych odtworzeniach.
+Nowy verifier odprawy również dostał prawidłowe frame114756 przed PASS.
+SDK/SDL bez instrumentacji. Kod gry/PsyZ bez zmian. Odcinek potwierdza
+powrót i drugą odprawę tej gałęzi EX, nie pełny Day2/Central Park ani
+porównanie obrazu/audio z PS1. Nowego zapisu po etapie224 jeszcze nie ma.
+
 ### EX — wnętrze muzeum, notes, zapis D i ukończona wizyta u Klampa
 
 Z M191/story200 sprawdzono zablokowane wyjście (112 „Can't just leave

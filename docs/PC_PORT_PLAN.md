@@ -3,6 +3,36 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — M149 wygrane z automatycznym przeładowaniem, urządzenie/story494
+
+Poprzednia tura była postępem: M148/story492, commit737a998e5. Sesja72173
+ponownie żywa przy40377. Medicine2/19 i dwa Heal2 poza walką leczą
+77→167→227→273 przy41613. Slot19 pusty. Right60(run),Up100(run),
+Left75(run),neutral260→M149/a80244c8 przy42108. Podejście wywołuje42316
+jeden cel4:31/281HP. Magazynek0; dwie akcje automatycznie przeładowują
+M8000 i trafiają po89:43012 ammo16,wróg103HP,HP273. Kolejne dwie akcje
+kończą43332:enemy0,EXP20,HP273/273 (bez utraty HP). Nagrody zamknięte,
+nie przybył przedmiot do slotów; nie oznacza pełnego pokrycia ataków celu.
+
+Dojście do urządzenia przez[-325,552],[125,552],[125,754] omija przeszkodę
+po istniejącej podłodze. Tolerancja nav kończy przy[115,721];Up4 iCross
+jeszcze poza triggerem, dodatkoweUp8 iCross poprawnie uruchamiają urządzenie.
+Przy45428 story492→494;45788 M149,HP273/273,menu null,lock0.
+
+/tmp/pe-ex-m149-device-A2-v1-verify.py PASS: cała trasa cold A2 w obu
+profilach exit0, cały JSON/VRAM identyczny między profilami i live.
+Asercje obejmują leczenie273, magazynek0→16,wróg103,EXP/zeroenemy i494
+oraz wcześniejsze etapy. Pełne50 slotów i4096B rekordów porównane do A2:
+sloty identyczne (Medicine2 z19 odebrane/zużyte, klucz z22 odebrany/zużyty);
+rekordy tylko14:48→67,426:12→14,430:19→39. Wszystkie zmienne:
+1:998→148,65:541196235→667025391,66:548→572,67:143→16527,
+74:488→494,82:84→5460; pozostałe bez zmian. A2/kopie8192B niezmienione.
+Artefakty /tmp/pe-ex-m149-device-A2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ i nowych plików repo; SDK/SDL nieinstrumentowane,
+brak oracle PS1; /tmp nie zastępuje trwałych CTest. A2 ostatni trwały zapis
+sprzed BP; następne nowy zapis i dalsze piętra. Pełny port nieukończony.
+
+
 ### EX — Maya/story492, użycie211 i wejście M148
 
 Poprzednia tura była postępem: M147/klucz, commit49dede992. Sesja72173

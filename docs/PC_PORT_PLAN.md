@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: po M162 maxHP335, M163 trzy cele pokonane
+
+Od zweryfikowanego wyniku23812 potwierdzenia awansu/ObtainAll/End
+prowadzą25472 do swobodnego M162,133/335HP. Trzy polowe Heal2 przez
+oryginalne menu dają26036:193,26376:253,26716:313HP. Sloty pozostają
+bez zmian po obsłudze nagród M162. RuchUp daje27400 M163/a80261c8,
+27728 trigger,27928 trzech przeciwników8:31/138HP,7:30/188HP,8:29/138HP.
+PodejścieUp60 daje reticle887 do8:31; dwie kule pokonują go,28796
+pozostają dwa cele/Aya225HP. Dwie kule w8:29 pokonują drugi cel,
+29380 Aya130HP/jeden cel. Dwie kule w7:30 zmniejszają188→10HP,
+30044 Aya65HP. Heal2 i ostatnia kula prowadzą30932/31112 do wynikuEXP,
+mode2,zero przeciwników,Aya113/335,ammo5. Nagrody M163 jeszcze nieodebrane.
+
+Dwa świeże cold31112 normal/SAN exit0 bez diagnostyki sanitizer/opcode;
+całe JSON i1MiB VRAM równe między profilami oraz zamrożonym live31112.
+Weryfikator obejmuje całą trasę od autentycznego E2, poprzednią walkę,
+leczenie do313, trzy→dwa→jeden cel i pozostałe10HP przed ostatnią akcją.
+Cały ekwipunek/4096B rekordów i wszystkie zmienne względem coldE2:
+sloty/pojemność bez zmian,bajt426:0→5,zmienne1:998→162,
+3:9428992→12566528,20:0→1,74:536→544,78:232→174;reszta bez zmian.
+Źródłowy i prywatne E2 niezmienione. Dowód/journal/checkpoint
+/tmp/pe-ex-chinatown-m163-E2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ/RAM/save,ten sam pe-video-clock-v1.
+SDK/SDL nieinstrumentowane,bez niezależnego oraclePS1,/tmp tymczasowe.
+Następny krok:nagrody M163,Maeda/Narita i kanały w tej gałęzi EX.
+
+
 ### EX: Continue E2 → mapa/NYPD/Chrysler lobby → Chinatown M162 wygrane
 
 Świeży liveE2-only12920,kartaM362/story536,320HP. Right/odmowa ponownego

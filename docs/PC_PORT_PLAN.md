@@ -3,6 +3,34 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — Eve/story476, zużycie Blue Cardkey i wejście M329
+
+Poprzednia tura była postępem: BlueCardkey/Fuse2, commit6cdf22f0a.
+Potwierdzona żywa sesja64839 kontynuuje36023. Powrót M328→M327→M321
+bez walki i utraty HP; przy38607 dialog34 i story470→476. Zachowano
+nadmiarowe impulsy Cross i neutralne czekanie; przy41047 lock0.
+M321 Up1320,Right128→M323;Up1144→M339 przy43879.
+Kamera M339 w tej gałęzi: Up+Z,Right+X; pierwsze podejście błędne,
+po pomiarze ruchu korektaRight88,Up90. Cross uruchamia134 przy44883;
+oryginalny skrypt usuwa kartę210 ze18. DalszeUp328→M329/a80624c8
+przy45699; dialog125 zamknięty,46683 story476,HP111/210,menu null,lock0.
+Fuse1/206 w22 i Fuse2/207 w19 zachowane. Zasilania jeszcze nie naprawiono.
+
+/tmp/pe-ex-blue-door-O-v1-verify.py PASS: pełne zimne odtworzenie O,
+normal/SAN exit0, cały JSON/VRAM zgodny między profilami i live.
+Wszystkie50 slotów i4096B rekordów sprawdzone względem cold O:
+8:209→13,18:20→0 (Junk usunięty, karta odebrana i zużyta),19:20→207;
+rekordy tylko byte426:8→9. Wszystkie zmienne porównane:
+1:998→339,65:536870977→541065419,66:4→548,67:5→13,74:470→476,
+82:0→20,97:192→208. Asercje obejmują dialogi34/134/125, obie wcześniejsze
+wygrane oraz odbiory karty/Fuse2. O i kopie bajtowo niezmienione.
+Artefakty /tmp/pe-ex-blue-door-O-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian kodu produkcyjnego/PsyZ i nowych plików repo; zwykły input,
+LLDB w tej turze niepotrzebny. SDK/SDL nieinstrumentowane, brak oracle PS1,
+/tmp nie zastępuje trwałych CTest. Następne M144 i instalacja bezpieczników,
+M332/Fuse3; pełny port pozostaje nieukończony.
+
+
 ### EX — Blue Cardkey i Fuse2 w jednej gałęzi O
 
 Poprzednia tura: postęp potwierdzony dowodem M328 i commit8badf96ca.

@@ -2,6 +2,35 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M156: pierwsza forma629→34HP, jeszcze bez zwycięstwa
+
+Dwie normal-only gałęzie od wejścia C2 na dach badały zwykły input.
+Pierwsza traciła HP podczas podejścia z dystansu3791 i została zakończona
+quit0; użyła Cure-M18. Wybrana druga gałąź poLeft180/Left200/Down260
+osiąga49226 reticle617 przy zasięgu1245,254HP Ayi i2 naboje. Dwie kule
+zmniejszają HP pierwszej formy1000629→1000459. Automatyczny reload,
+Heal2 i dalsze salwy dają54308:boss1000034,Aya84/283,ammo11,ATB9000,
+menuNULL, czterech żywych przeciwników; Cure-M18 nadal zachowany.
+Dalszy ogon tej gałęzi do57684/35HP nie jest wybraną kontynuacją.
+Nie dowodzi wygrania pierwszej formy ani wejścia M380. Obie live quit0.
+
+Dwa świeże cold replaye54308 normal/SAN exit0 bez diagnostyki, całe JSON
+równe między profilami i zapisanym live54308. Pełne1MiB VRAM równe między
+profilami; brak zachowanego live VRAM54308, więc nie ma takiego porównania.
+Cały ekwipunek i wszystkie zmienne sprawdzone względem wejścia48506:
+sloty bez zmian, rekord sprzętu bajt426:2→13 (bieżący battleammo11),
+zmienna11:2→10; reszta bez zmian. Źródłowy i prywatne C2 niezmienione.
+/tmp/pe-ex-spider-phase1-C2-v1-{seed.json,live.json,proof/proof.json}.
+
+Odczyt istniejącego attack.c oraz battle_ailment.h potwierdza, że Cure-M
+nałożone przy Stiffness usuwa je, natomiast użyte bez dolegliwości daje
+odporność; maska0xC0,lock0x80. W54308 maska jest0, więc zachowany Cure-M
+może posłużyć przed kolejnym podejściem. To wskazówka taktyczna, jeszcze
+nie sprawdzona kontynuacja. Bez zmian produkcji/PsyZ/RAM/save, nadal
+pe-video-clock-v1. SDK/SDL nieinstrumentowane, bez niezależnego oraclePS1;
+/tmp tymczasowe. Następny krok: domknąć pierwszą i drugą formę EX.
+
+
 ### EX: bez ponownej walki w M154 → klucz → okręt/FMV15 → dach M156
 
 Kontynuacja zwykłego journalu C2 od29780/story500 obeszła meble górą.

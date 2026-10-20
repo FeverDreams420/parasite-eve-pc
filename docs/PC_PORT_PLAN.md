@@ -3,6 +3,35 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — Blue Cardkey i Fuse2 w jednej gałęzi O
+
+Poprzednia tura: postęp potwierdzony dowodem M328 i commit8badf96ca.
+Sesja64839 ponownie żywa. Od31754 podejście Down230,Left65,Cross do ciała
+w M328. Pełny ekwipunek daje dialog4 przy32297, bez karty. Oryginalne
+Items→Discard→Yes usuwa Junk20 ze slotów18 i19. Ponowny Cross odbiera
+Blue Cardkey210 do18, panel55 przy33501, pole33689. Żaden zapis/RAM/RNG
+nie zmieniony poza oryginalnymi mechanizmami gry.
+
+Odczyt LLDB tylko do odczytu i detach potwierdził bieżącą siatkę kolizji.
+Nav zatrzymał się przy[1190.8,-451.1]; zwykły ruch Up70,Right120,Up450
+potemUp150 prowadzi pod skrzynkę. Cross odbiera Fuse2/item207 do19,
+panel55 przy35775, pole36023: M328/a8062448,story470,HP111/210,
+menu null,lock0. Fuse1/206 w22 i BlueCardkey/210 w18 zachowane.
+
+/tmp/pe-ex-blue-fuse2-O-v1-verify.py PASS po pełnym zimnym odtworzeniu O:
+normal/SAN exit0, cały JSON i pełny VRAM identyczny między profilami i live.
+Wszystkie50 slotów i4096B rekordów porównane:8:209→13,18:20→210,
+19:20→207; rekordy tylko byte426:8→9. Wszystkie zmienne porównane:
+1:998→327,65:536870977→541065419,66:4→516,82:0→20,97:192→208.
+Źródłowe/prywatne8192B O niezmienione, SHA jak poprzednio. Asercje obejmują
+odmowę przy pełnym inventory, obie wygrane oraz oba odbiory.
+Artefakty /tmp/pe-ex-blue-fuse2-O-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ i nowych plików repo; SDK/SDL nieinstrumentowane,
+brak niezależnego oracle PS1, dowód /tmp nie jest trwałym CTest.
+O nadal ostatni trwały zapis; następne powrót, Blue Door i Fuse3.
+Pełna kampania EX oraz cały port pozostają nieukończone.
+
+
 ### EX — M328, leczenie poza walką i zwycięstwo od O
 
 Poprzednia tura stanowiła postęp: zweryfikowane zwycięstwo M327, commit

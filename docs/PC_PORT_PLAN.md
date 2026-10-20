@@ -2,6 +2,35 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M273: przerwanie chwytu strzałem po wcześniejszym Liberate
+
+Próba po wydaniu BP dotarła do walki przy38866 z621HP. Wcześniejsze
+Liberate pozostawiło537HP i11nabojów. Przy41531 kolejka dwóch
+pojedynczych strzałów podczas podejścia Eve/trybu16 zakończyła native
+SIGSEGV. Cold SAN wskazał store NULL w m273.c:280, GrabRelease:
+aktor nadal istnieje, lecz jego action_state/event już wygasł.
+Nieudana reprodukcja zachowana w /tmp/pe-m273-prebattle-shot-crash-v1-proof/
+(input, poprzedni stan i VRAM, SAN game.log i exit.json=-6).
+
+Naprawiono istniejące RoomM273_GrabRelease: potwierdzenie eventu jest
+warunkowe, zwolnienie slotu i przywrócenie gracza nadal wykonywane.
+Test --m273-load sprawdza stop przez prawdziwą klasę PM zarówno dla
+wygasłego, jak i aktywnego eventu (wartość4). Nie dodano plików źródłowych.
+
+Świeży kandydat /tmp/pe-m273-grab-stop-v4-*:416 obiektów, pełny ponowny
+hash zależności,70/70 regresji exit0 i7/7 asset CTests bez SKIP.
+-build-manifest.json, -verification.json, -source-check.json i -ctest-assets.log.
+Cold normal/SAN po tej samej sekwencji do41621: exit0, bez raportów,
+pełny JSON/VRAM identyczne, F niezmienione, Aya537HP, ammo11→9,
+cel5 1000468→1000384, Eve wróciła do trybu2.
+/tmp/pe-m273-grab-stop-v4-replay/proof.json. To nadal porównanie
+natywne/SAN, bez oracle PS1 i bez dowodu zwycięstwa.
+Build w repo odpowiada v4. Live8463 zakończył się crashem;
+aktualna próba live33138, /tmp/pe-m273-grab-stop-v4-live2.py,
+kontynuuje od41621. Pierwszy wrapper v4-live zakończył się EOF na
+wejściu hosta; nie jest dowodem terminalnego zakończenia gry.
+PsyZ/SDL nadal nieinstrumentowane; pełna kampania pozostaje otwarta.
+
 ### M273: wygasanie eventu po Liberate, chwyt, Sway i Heal3
 
 Dalszy live58354 na7503b3a0e zakończył się SIGSEGV po42448,

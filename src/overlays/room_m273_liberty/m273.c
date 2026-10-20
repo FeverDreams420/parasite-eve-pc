@@ -276,7 +276,9 @@ int RoomM273_GrabRelease(PmSlotHeader *raw) {
 
     actorState = selection->actor->state;
     placementState = &selection->placement;
-    if (actorState != 0) {
+    /* The animation event can finish before the asynchronous grab slot.
+     * Release the slot and player even when its acknowledgement expired. */
+    if (actorState != 0 && actorState->action_state != 0) {
         actorState->action_state[0] = 4;
     }
 

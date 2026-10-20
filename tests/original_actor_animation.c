@@ -17430,6 +17430,15 @@ int main(int argc, char **argv)
          * all four controllers live through a missing event acknowledgement. */
         FieldActorState boss_state={0};RenderMatrix matrices[45]={0};
         boss.state=&boss_state;boss.render_object.matrices=matrices;
+        signal=3;grab.status=0;
+        g_RoomM273GrabClass.stop((PmSlotHeader *)&grab);
+        if(signal!=0 || grab.status!=4 || boss_state.action_state!=NULL)
+            return fprintf(stderr,"M273 expired grab release failed\n"),1;
+        u8 grab_event=2;boss_state.action_state=&grab_event;signal=3;grab.status=0;
+        g_RoomM273GrabClass.stop((PmSlotHeader *)&grab);
+        if(signal!=0 || grab.status!=4 || grab_event!=4)
+            return fprintf(stderr,"M273 live grab release acknowledgement failed\n"),1;
+        boss_state.action_state=NULL;
         FieldFxObjectPrefix owner={0};owner.actor=&boss;
         FieldFxObjectPrefix *saved_owner=g_FieldFxOwner;g_FieldFxOwner=&owner;
         FieldFxTaskProgram *controlled[]={&g_RoomM273GrabEffects,&g_RoomM273HandTrailEffects,&g_RoomM273SweepEffects,&g_RoomM273SwayEffects};

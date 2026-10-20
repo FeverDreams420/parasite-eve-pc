@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — M078: dwa cele, leczenie, Defense+1 i wejście M079
+
+Dalszy marsz z M078 uruchamia przy38134 wariant4:31/4:0, obaj61HP/def25.
+Pierwszy jest blisko (75), drugi poza zasięgiem (1355>1245), więc dwie
+kolejne tury wybierają pojedyncze cele; po pokonaniu pierwszego drugi
+podchodzi do267. Dwa naboje17→15, HP115→108/123. Nagrody zamknięte
+przy39906,enemy0,battle9,menu null,capacity20 bez awansu. Nie oznacza
+to odebrania wszystkich nagród do pełnego plecaka.
+
+Medicine1/slot14 przez Items→Use leczy do123/123 i zwalnia slot.
+Podłoże M078 ma55 trójkątów ze skosami; odczyt
+/tmp/pe-ex-m078-floor-v1.json. Próba nawigacji zatrzymała się na limicie
+przy pierwszym narożniku; zwykły Right100/Down600 obchodzi go bez zmian
+kolizji. Skrzynia daje41/Defense+1 do14; Items→Use→lista pancerzy→
+B Jacket1 zużywa przedmiot, bonus obrony45→46. Var85=21 (flaga4),var134=0.
+Zachodnia ścieżka kończy w M079/a80074c8 przy56766/story248,123/123HP,
+menu null,move_lock0,battle9,enemy0; Sv Vest1 pozostaje w10, B Jacket1
+wyposażony, slot14 pusty. W całym4096B buforze wobec G tylko trzy zmiany:
+bonusdef14:45→46, aktywacjaSvVest224:0→19 i ammo426:2→15.
+
+/tmp/pe-ex-m079-arrival-G-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON i VRAM identyczne z live, jedyny G i hash bez zmian,
+brak sanitizer/opcode/assertion. Artefakty:
+/tmp/pe-ex-m079-arrival-G-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Bez zmian kodu gry, RAM, RNG lub zapisów.
+Nie jest to ukończony park/Day2/EX ani porównanie obrazu/audio PS1.
+Kontroler pozostaje w M079; następne: interakcje i droga do M081.
+
 ### EX — zimny G przez alejki M076/M077, most i wejście do M078
 
 Z oryginalnego Continue G wyjście M075→M074, zachodnia odnoga przez

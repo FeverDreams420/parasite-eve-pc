@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M432: zidentyfikowany kompletny oryginalny moduł E22
+
+Odczyt Disc2 PE.IMG: M432 start99067, scratch33, texture170,
+room167 sektorów. Pierwsze0xa800 bajtów części room (43008B) ma SHA1
+4d2d79346c1883f249b46b8c052e95fb94834817, dokładnie jak historyczny
+configs/USA/overlays/scene_e22_liberty.yaml z eadcfc73f^; konfiguracja
+wprost wiąże moduł z map432. Odczyt i audyt wyłącznie do /tmp:
+/tmp/pe-m432-inspect-v1.py, -room-inspect-v1.bin,
+/tmp/pe-m432-module-audit-v1.py i .json. Nie przywracano infrastruktury
+byte-match; hash identyfikuje oryginalny moduł, nie cel kompilacji PC.
+
+Wszystkie siedem rekordów zmapowane: slot75/801990f8 to kompletna
+klasa HandlerE (już wspólna g_RoomActorClassTable[2]); sloty149/163
+to dwa programy LinkBeam,165 RingBurst+PlayerGate,150 EmberDrift,
+151 EmberColumn,162 SwirlRing/TwistModel/SweepBolt/QuakeBlast.
+Oryginalne21 funkcji efektów/configure są w istniejącym
+src/overlays/scene_e22_liberty/e22.c; plik nie jest jeszcze w CMake.
+Sama rejestracja slot75 nie rozwiąże całego modułu. Należy zintegrować
+wszystkie sześć programów, oryginalne skrypty/dane i komplet21 funkcji,
+naprawiając ten plik i istniejące nagłówki na miejscu.
+
+Próbna kompilacja bez zmian repo zakończona exit1, zapis
+/tmp/pe-m432-e22-baseline-compile-v1.log: m.in. PS1 assertions struktur
+z wskaźnikami (callback offset12→16), brak deklaracji g_GeomScroll,
+niezgodne typy macierzy/wektorów GTE. To ujawniony zakres integracji,
+nie gotowa poprawka. Źródła nadal bez zmian, kandydat v4 nie obsługuje M432.
+
 ### M273 z J: wszystkie części wyłączone, przejście do M432 niegotowe
 
 Autentyczne J uruchomiono na kandydacie v4, prywatna karta J-only.

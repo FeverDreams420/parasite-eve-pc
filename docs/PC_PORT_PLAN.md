@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — M334: uruchomienie mechanizmu zwykłym inputem
+
+Dalsze badanie read-only g_CollisionDb zachowano w
+/tmp/pe-ex-m334-floor-v1.json:11 trójkątów, promień111. Sama podłoga
+nie oznacza braku przeszkód obiektowych. Poprzednie ruchy zatrzymywały
+się przy skrzyniach: należało cofnąć się, obejść pierwszą z lewej,
+przesunąć do środka po minięciu kolejnej i dopiero podejść do przełącznika.
+Nie modyfikowano żadnej kolizji. Przy100297 interakcja ustawia var43=4,
+oryginalna animacja odsłania actor7:0. Skrypt zawiera komendy dźwięku
+AKAO2068/2069; ten dowód stanu/VRAM nie porównuje ich PCM. Checkpoint100657:
+M334,story104,38/64HP,menu null,move_lock0,actor7 obecny przy837,13.
+Zawartość odsłoniętego obiektu nie została jeszcze odebrana.
+Seed/checkpoint: /tmp/pe-ex-m334-switch-v1-{seed.json,checkpoint}.
+Cold normal/SAN exit0; /tmp/pe-ex-m334-switch-v1-verify.py potwierdza
+pełny JSON/VRAM zgodny z live i wszystkie8192B prywatnego A bez zmian,
+brak sanitizer/opcode/assertion. Dowód:
+/tmp/pe-ex-m334-switch-v1-proof/proof.json. SDK/SDL bez instrumentacji.
+Brak zmian kodu gry/PsyZ/RAM/save; dalszy EX,
+Chrysler i porównanie obrazu/audio PS1 pozostają niepotwierdzone.
+
 ### EX — skrzynia w M334, mechanizm nadal otwarty
 
 Z93853 zwykły input w M334 dociera do skrzyni. Przy96719 oryginalny

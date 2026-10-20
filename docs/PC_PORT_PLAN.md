@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M273: pierwsza część wyłączona, przeładowanie i dalsze leczenie
+
+Na kandydacie v4 zwykła walka od F z wydanymi BP dotarła do46151.
+Po pierwszym pełnym chwycie Heal3+strzał w jednej turze dały327→607HP.
+Haste zostało użyte; po chwycie wystąpił też odwracający kierunki
+status, więc samo Haste nie oznaczało usunięcia wszystkich dolegliwości.
+Kolejne pojedyncze strzały z Double Action obniżyły HP części5 poniżej
+oryginalnego progu miliona. Przy45712 i w końcowym stanie dostępne
+pozostały tylko cele6 i7; część5 ma999964HP i wyłączoną flagę celu.
+Nie modyfikowano HP, progów, AI ani statystyk dla ułatwienia walki.
+
+Sprawdzono automatyczne przeładowanie pustego M8000 (ammo1→12,
+pozostały strzał kolejki wykonany później), Medicine3+strzał
+(41→221HP, slot27 zużyty, część5 1000006→999964), drugi chwyt z
+pozostawieniem1HP oraz oryginalne Heal3 zatwierdzone Square (1→281HP).
+Nieudane wejścia w menu przed końcem animacji przeładowania pozostały
+w taśmie; nie są zaliczane jako użycie przedmiotu.
+
+/tmp/pe-m273-first-part-v4-proof/proof.json: cold SAN do46151 exit0
+bez raportów, pełny JSON/VRAM identyczne z normalnym live, oba mają
+pozostałe cele[6,7], źródłowa i prywatna karta F bez zmian. Zamrożono
+stan/VRAM/input; live33138 pozostaje w tym miejscu z281HP i9nabojami.
+Sekwencja obserwowała także tryby Eve12/13 i7. Nie oznacza to jeszcze
+pokonania bossa ani zgodności obrazu/audio z retail PS1.
+
 ### M273: przerwanie chwytu strzałem po wcześniejszym Liberate
 
 Próba po wydaniu BP dotarła do walki przy38866 z621HP. Wcześniejsze

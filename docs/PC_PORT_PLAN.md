@@ -2,6 +2,53 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — wnętrze muzeum, notes, zapis D i ukończona wizyta u Klampa
+
+Z M191/story200 sprawdzono zablokowane wyjście (112 „Can't just leave
+him...”), następnie zwykłą drogą podejście do schodów i grupy przy wejściu.
+Pierwsza rozmowa24..27 nie kończyła całej sceny: podejście uruchamia28..34
+i wejście do M195. Oryginalny skrypt ustawia tam story192. Po rozmowach
+w holu strażnik przypomina44 „Notebook's on the counter. That's all.”.
+Wcześniejsze określenie tej postaci jako Daniela było błędne; obraz
+identyfikuje strażnika. Próba przejścia przed wpisem cofa Ayę do662,−744.
+
+Punkt po lewej stronie M195 okazał się telefonem: oryginalny prompt6,
+karta1, puste D/cursor3, FileSaved40, zamknięcie menu. Przy65210 M195,
+story192,72/92HP,menu null. /tmp/pe-ex-museum-save-D-v1-verify.py wykonany
+PASS: zimne normal/SAN exit0, cały JSON/VRAM i wszystkie bajty plików C/D
+zgodne z live, C bez zmian, brak sanitizer/opcode/assertion.
+Artefakty: /tmp/pe-ex-museum-save-D-v1-{seed.json,checkpoint,proof/proof.json}.
+Autentyczny D: /tmp/pe-ex-museum-D-v1-source/BASLUS-006620000000D,
+hash w proof.json. Zapis jest sprzed podpisania notesu.
+
+Osobne zimne Continue tylko D: normal/SAN exit0, pełny JSON/VRAM zgodny
+między nimi, cały ekwipunek i wszystkie zmienne skryptów zgodne z zapisem,
+D bajtowo bez zmian. Przy12500 aktywny oryginalny dialog41 strażnika,
+move_lock3. Pierwszy verifier błędnie oczekiwał lock2; odczyt aktywnego41
+wyjaśnił różnicę. Poprawiony /tmp/pe-ex-museum-D-continue-v1-verify.py
+wykonany PASS. Nie deklaruje się swobodnego sterowania po tym checkpointcie
+ani porównania tej pary z osobnym live. Dowód:
+/tmp/pe-ex-museum-D-continue-v1-proof/proof.json.
+
+Dalsza żywa gałąź od C: notes na ladzie x−113,z−664 i zwykły Cross
+uruchamia45 „Just my name?” oraz46; zmienna34→16. Po tym strażnik nie
+cofa Ayi. Schody wymagają ominięcia aktora przy1425,−369: z1262,−464
+ruch w lewo do1112, następnie w górę prowadzi do M230,53..54. Podejście
+około2200,400 uruchamia56 i laboratorium M239/57. Rozmowa prowadzi przez
+wspomnienie M367/story205 (m.in.148) i wraca do M239/story206. Dalszy
+wielostronicowy dialog używa także slotu1; nie wystarczy obserwować slot0.
+Po zakończeniu story208, mapa NYC i ponowne potwierdzenie Museum prowadzą
+do M192. Przy99180 M192 (0xa8029148),story208,72/92HP,menu null,lock2,
+cały ekwipunek wciąż identyczny z C. Nie deklaruje się każdego wariantu
+rozmowy lub aktywnego pokazania wszystkich numerów stron.
+
+/tmp/pe-ex-klamp-visit-v1-verify.py wykonany PASS: zimne normal/SAN exit0,
+cały końcowy JSON/VRAM i wszystkie bajty C/D zgodne z live, źródłowy C
+bez zmian, brak sanitizer/opcode/assertion. Artefakty:
+/tmp/pe-ex-klamp-visit-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Kod gry/PsyZ bez zmian. Wizyta tej gałęzi EX
+ukończona; pełny Day2/EX, pozostałe muzeum i porównanie PS1 nadal otwarte.
+
 ### EX — odprawa Bakera i podróż do muzeum po Continue C
 
 Autentyczne zimne Continue C, dalszy zwykły pad w M042, obejście mebli

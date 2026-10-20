@@ -3,6 +3,38 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — M124/M123 i powtarzalna śmierć mimo zużycia Revive
+
+Z M122 wejście[375,-600]→M124/a8022248, przejście na zachód→M044/95–96,
+następnie M123/a80221c8/dialog97–99,106 i walka Sheevy. Start92/195HP,
+po trafieniu62. Obraz /tmp/pe-ex-m123-pe-menu-L-v1.png potwierdził nazwy:
+prawa górna pozycja to Heal2. Użycie leczy62→122 przy47892, strzał w drugiej
+akcji. Kolejne trafienia61HP; następnie Barrier i strzał. PE maleje przy
+trafieniach, HP początkowo61. Dalsze Double Action niszczą głowy3 i2;
+przed ostatnią głową4/559HP pozostaje30HP. Heal2 w menu niedostępne przy
+PE7541281/17694720 (obraz -heal-disabled-L-v1.png); wybór Heal1 i strzał
+uszkadza ostatnią głowę do489, ale Aya umiera. Nie zaliczono zwycięstwa.
+
+Przy52210 i52450 mode3/HP0, Revive/item18 nadal w20. Po wait1200
+przy53650 GameOver/a9400048/HP0, a slot20 wyzerowany. Revive więc zostaje
+zużyte po animacji, ale nie uzyskano skutecznego powrotu do walki. Wymaga
+diagnostyki, bez rozstrzygnięcia przyczyny ani twierdzenia o zgodności z PS1.
+Oryginalny encounter.c mode3 sprawdza Inv_CountByValue(0x12), wykonuje
+Battle_StepVictory i usuwa przedmiot po wyniku1; funkcja odtwarza połowęHP.
+Read-only LLDB/detach po GameOver: slotLimit22,categoryBase26,overrideNULL.
+
+/tmp/pe-ex-sheeva-death-L-v1-verify.py: reprodukcja PASS, wynik rozgrywki
+NIEUDANY. Normal/SAN exit0, pełny JSON/VRAM identyczny z live; L bajtowo
+niezmieniony. Asercje obejmują rzeczywiste Heal2, mode3 z Revive oraz
+GameOver po jego zużyciu. Artefakty
+/tmp/pe-ex-sheeva-death-L-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji, brak niezależnego oracle PS1. Bez zmian kodu,
+RAM/RNG/payloadów save. Sesja v2 stoi w GameOver; następne: deterministyczny
+replay z zatrzymaniem na śmierci i diagnoza oryginalnego modułu wskrzeszenia.
+Pełny port pozostaje nieukończony.
+
+
+
 ### EX — zwycięstwo M122 przy2HP, awans i Medicine2
 
 Od M122/37000 Up40,Up552 uruchamia spotkanie37592: dwa typ5/137HP/

@@ -2,6 +2,35 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — Darkness, trafienia i porażka w pierwszej walce Chryslera
+
+Dalsza obserwacja wyjaśnia istotny czynnik chybienia: state_flags Ayi
+miały dolne0x10, czyli AYA_DARKNESS. Oryginalny Battle_CheckEvasion
+w setup.c używa wtedy AYA_DARKNESS_RANGE=200 zamiast zasięgu broni1245;
+odległości ponad360 automatycznie chybiają. Nie wykonano jeszcze
+PS1 oracle tego starcia, więc nie deklaruje się zgodności każdego rolla.
+Read-only LLDB potwierdził wywołania Battle_ResolveHitOnTimer i
+Battle_CheckEvasion, action1/range1245/hitTrigger2/power74. Trace:
+/tmp/pe-chrysler-hit-trace-v1.jsonl. Debugger odłączony bez edycji stanu.
+
+Przy90883 Darkness nie jest już ustawiony; po kolejnych dwóch strzałach
+przy91343 jeden wróg98→16HP. Nie jest to dowód trafienia podczas
+Darkness z bliska: status wygasł wcześniej. Aya spadła do2HP;
+oryginalne PE menu, Heal1 i zatwierdzenie celu podniosły2→32 przy92079.
+Dalszy manewr nie uratował próby: przy92441 M309/story164,HP0,mode3,
+dwóch żywych wrogów. Ta gałąź jest porażką, nie przejściem Chryslera.
+Kontroler zakończony jawnie quit/exit0; źródłowy i prywatny B bez zmian.
+
+/tmp/pe-ex-chrysler-darkness-v1-verify.py wykonany PASS: niezależne
+zimne normal/SAN exit0, cały końcowy JSON i VRAM zgodne z live,
+B zgodny bajtowo i z wcześniejszym hashem, brak sanitizer/opcode/assertion.
+Pośrednie obserwacje statusu/HP/Heal1 sprawdza zapis states.jsonl live;
+zimne replaye porównują pełny stan końcowy, nie każdą klatkę pośrednią.
+Artefakty: /tmp/pe-ex-chrysler-darkness-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji, kod gry bez zmian. Przygotowano zwykły zimny
+prefix do88281 (/tmp/pe-ex-chrysler-retry-v1-seed.json) do ponownej próby
+przed utratą HP, bez przywracania RAM. Zwycięstwo nadal otwarte.
+
 ### EX — schody Chryslera, pierwsze korytarze i leczenie w walce
 
 Oryginalne schody M290 mają trigger około x2415..2855,z539..909.

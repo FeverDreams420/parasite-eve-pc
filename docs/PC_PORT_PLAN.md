@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: górna droga M174 i drzwi M175 → M176
+
+Z123546 dialog20 zamknięty Cross20/wait600. Up1700,Right1800,Up160,
+Right1648 (guard stop na zmianie sceny) daje129774 M175/a80272c8.
+Bez utraty HP i bez spotkania na dolnym poziomie M174.
+Historyczne ruchy bez pierwszego Cross nie otwierają drzwi. Journal
+zawiera nieudane podejścia; odczyt skryptu LLDB wyłącznie do odczytu,
+po czym detach. Podejście z136724:Down100,Right260,Cross20,wait600
+uruchamia oryginalną interakcję i137704 M176/a8027348/story584,
+move_lock0,menu null,brak dialogu,139/335HP,zero wrogów,ammo7.
+
+Dwa świeże pełne odtworzenia137704 od cold E2 normal/SAN exit0,
+bez diagnostyki sanitizer/opcode. Pełny JSON i1MiB VRAM równe profilom
+oraz zamrożonemu live. Cały ekwipunek równy wejściu M174,wszystkie
+zmienne sprawdzone; względem123546 tylko1:433→175 i54:1838947→6033251
+(bit drzwi0x400000). Źródłowy i prywatne E2 identyczne bajtowo.
+Dowód /tmp/pe-ex-m176-entry-E2-v1-{seed.json,checkpoint,proof/proof.json};
+runner/verifier obok. Bez zmian produkcji/PsyZ/RAM/save,ten sam kandydat
+pe-video-clock-v1. SDK/SDL nieinstrumentowane,brak oraclePS1,/tmp
+nietrwałe. Potwierdzone wejście M176; panel pomp jeszcze niesprawdzony
+w tej gałęzi EX i na tym kandydacie.
+
+
 ### EX: nagrody M173, M433 i film 19 → M174
 
 Z wyniku114796 zwykłe cztery Cross60/release240 odbierają nagrody:

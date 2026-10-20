@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — cold Continue B i wejście w drugi dzień
+
+Nowy proces /tmp/pe-ex-day1-continue-v1-live z prywatną kartą zawierającą
+wyłącznie prawdziwy B, bez A. Zwykły title Continue/card1, Down doB,
+File loaded, wejście M351/story128. Cały ekwipunek zachowany,72/72HP.
+Plansza „Day2 — FUSION” czeka na potwierdzenie; samo wait1200 nie jest
+zawieszeniem. Oryginalny Script_DispatchCmd w M351 sprawdza pad.
+Cross8 i wait600 prowadzą M042/0xa8004148/story136,dialog9 przy14252.
+Inventory JSON identyczny z checkpointem zapisuB; spośród wszystkich
+script_variables różnią się tylko1:998→0 i74:128→136. move_lock3 należy
+do aktywnej sceny, nie jest dowodem swobodnej eksploracji drugiego dnia.
+Seed/checkpoint: /tmp/pe-ex-day2-continue-v1-{seed.json,checkpoint}.
+Cold normal/SAN exit0; /tmp/pe-ex-day2-continue-v1-verify.py potwierdza
+pełny JSON/VRAM zgodny z live i wszystkie8192B prywatnego B bez zmian,
+brak sanitizer/opcode/assertion. Wynik:
+/tmp/pe-ex-day2-continue-v1-proof/proof.json. SDK/SDL bez instrumentacji.
+Poprzedni długi proces zakończono quit0,
+źródłowy A i prywatny A bez zmian. Brak edycji RAM/save lub zmian kodu.
+Pełny drugi dzień/EX/Chrysler i porównanie PS1 obrazu/audio nadal otwarte.
+
 ### EX — zakończenie pierwszego dnia i oryginalny zapis B
 
 Po aligatorze ordinary Cross przechodzi zakończenie: M359/0xa80654c8,

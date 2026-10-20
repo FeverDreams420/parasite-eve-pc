@@ -2,6 +2,37 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — właściwa zbrojownia M052, pełny plecak i odbiór sprzętu
+
+W M052 dialog25 identyfikuje Wayne’a; dalsza oryginalna sekwencja25..39
+uruchamia GiveItem121. Pełne15/15 miejsc prowadzi do dialogu23 i ekranów
+obsługi ekwipunku50/51. Nie należy traktować ponownego wejścia do tego
+menu jako błędu: skrypt po powrocie ponawia GiveItem121, dopóki brak
+miejsca. Otrzymany wcześniej item55 to Mod Permit (widoczna nazwa menu).
+
+W pierwszej prywatnej próbie pomylono Move z użyciem upgrade’u: przy41584
+zamieniono Medicine1 i Offense+2 między slotami0/4. Następnie usunięto
+niewłaściwy item30; tej gałęzi nie używa się do kontynuacji. Zakończona
+quit0, źródłowy B bez zmian. Błąd sterowania testem, bez zmiany gry.
+Pełny cold input z B odtworzono do41584 w nowym procesie
+/tmp/pe-ex-torres-correct-v1-live. Tym razem wybrano slot0 Medicine1,
+oryginalne Discard i Yes. Po zamknięciu menu skrypt dodaje nowy rekord
+262 przez GiveItem121. Przy42560 slot0=262,slot4=30 Offense+2 zachowany,
+jedna Medicine1 nadal w slot8, M8000/klucze/Mod Permit zachowane,
+72/72HP,story144,M052,menu null,aktywny dialog41,move_lock3.
+Nie deklaruje się ukończenia dalszego tutorialu ani wszystkich usług.
+
+Odczyty tylko do obserwacji /tmp/pe-armory-input-v1.json potwierdziły,
+że Down zmienia g_DialogueChoiceCursor. Podejrzenie niedziałającej
+nawigacji nie uzasadniało zmiany kodu; niczego nie poprawiano na ślepo.
+Seed/checkpoint: /tmp/pe-ex-torres-receipt-v1-{seed.json,checkpoint}.
+Cold normal/SAN poprawionej gałęzi exit0;
+/tmp/pe-ex-torres-receipt-v1-verify.py potwierdza pełny JSON/VRAM zgodny
+z live, prywatny B wszystkie8192B bez zmian, brak sanitizer/opcode/assertion.
+Dowód: /tmp/pe-ex-torres-receipt-v1-proof/proof.json. SDK/SDL bez instrumentacji.
+Pełny EX/Chrysler i porównanie
+obrazu/audio PS1 nadal niepotwierdzone.
+
 ### EX — korekta identyfikacji M055 i przejście do M052
 
 Próby interakcji w M055 uruchamiały dialog211 wielokrotnie, bez wydania

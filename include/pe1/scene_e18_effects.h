@@ -18,39 +18,8 @@
 /* Particle emitters of the scene_e18 script: one rises from random model
  * joints and fades out, the other drops wave rings from random joints. */
 
-typedef struct SceneE18Owner {
-    u32 flags;                    /* 0x00 */
-    s32 reserved04;
-    s32 asset;                    /* 0x08 */
-    u8 reserved0C[0xC];
-    u8 *stage;                    /* 0x18 */
-    u8 reserved1C[0x30];
-    u32 status;                   /* 0x4C */
-} SceneE18Owner;
-
-typedef struct SceneE18Instance {
-    SceneE18Owner *owner;         /* 0x00 */
-    u8 reserved04[0xA];
-    u8 animationId;               /* 0x0E */
-    u8 frameLimit;                /* 0x0F */
-    u8 reserved10[4];
-    union {
-        s32 word;                 /* 0x14 */
-        struct {
-            u16 step;
-            u16 frame;            /* 0x16 */
-        } part;
-    } animation;
-    u8 reserved18[0x10];
-    s32 x, y, z;                  /* 0x28: 16.16 position */
-    u8 reserved34[0x1B4];
-    GteMatrix transform;          /* 0x1E8 */
-    u8 reserved208[0x30];
-    GteMatrix *transforms;        /* 0x238 */
-} SceneE18Instance;
-
-PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneE18Instance, transforms) == 0x238,
-                  scene_e18_instance_transforms);
+typedef FieldActorState SceneE18Owner;
+typedef FieldActor SceneE18Instance;
 
 typedef struct SceneE18Actor {
     s32 reserved[2];
@@ -58,13 +27,6 @@ typedef struct SceneE18Actor {
 } SceneE18Actor;
 PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneE18Actor, instance) == 8,
                   scene_e18_actor_instance_offset);
-
-typedef struct SceneE18Emitter {
-    s32 reserved[2];
-    void *pool;                   /* 0x08 */
-} SceneE18Emitter;
-PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneE18Emitter, pool) == 8,
-                  scene_e18_emitter_pool_offset);
 
 typedef struct SceneE18EmitterState {
     s16 count;
@@ -105,7 +67,7 @@ typedef struct SceneE18FlankParticle {
 
 extern void *g_SceneE18FlankModel;
 extern s16 g_SceneE18FlankRemaining;
-extern int SceneE18_FlankParticleCallback(int mode, SceneE18FlankParticle *particle);
+extern int SceneE18_FlankParticleCallback(int mode, void *memory, intptr_t argument);
 
 /* Flank model particle (SceneE18_FlankParticleCallback): the player instance whose distance
  * to the model releases the actor, and the model draw helpers. */

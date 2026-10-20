@@ -224,6 +224,7 @@ add_library(parasite-eve-original OBJECT
     src/overlays/room_lib/window_class.c
     src/overlays/room_lib/window_class_table.c
     src/overlays/room_m272_liberty/m272.c
+    src/overlays/scene_e18_cruiser/e18_emitters.c
     src/overlays/scene_e22_liberty/e22.c
     src/overlays/room_m273_liberty/m273.c
     src/overlays/room_m273_liberty/m273_class.c

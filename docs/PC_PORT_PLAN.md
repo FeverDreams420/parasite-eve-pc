@@ -2,6 +2,68 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M428/E18: pełna integracja w miejscu i wygrana pierwszej formy UB
+
+Do CMake włączono istniejący scene_e18_cruiser/e18_emitters.c. Wszystkie
+10 dotychczasowych funkcji zachowane; odtworzono w tym samym pliku
+pominięty SceneE18_ExpandingRingEmitter (USA 80193edc..80194000).
+Oryginalny kod inicjuje cztery pierścienie, emituje co sześć aktualizacji,
+a następnie czeka na licznik zakończeń. Nie zastąpiono callbacku NULL.
+Stara granica YAML 0x5000 ucinała także końcówkę funkcji; hash tego
+prefiksu identyfikuje E18, ale nie jest rozmiarem kompletnego modułu.
+Pełne dane pokoju zawierają kod i wszystkie deskryptory/tablice.
+
+Naprawiono ABI callbacków, widoki FieldActor/FieldActorState, macierze
+i natywne pule. Cząstka Flank zawiera wskaźnik: stride używa rzeczywistego
+sizeof zamiast PS1 20 bajtów. Odczyty niskiej połowy rcossin_tbl używane
+w signed16 render operands zastąpiono rsin z identycznym maskowaniem kąta.
+room_load.c waliduje i rejestruje obie klasy75/78 i trzy programy152/153/154.
+Oryginalne stałe, skrypty i programy pozostają w e18_emitters.c.
+Bez nowych plików repo, przenoszenia funkcji ani zmian parametrów gry.
+
+Kandydat /tmp/pe-m428-native-v2: 420 świeżych obiektów (210 normal,
+210 ASan/UBSan/function), E18 bez ostrzeżeń, pełne 70 regresji exit0,
+7/7 asset CTests Passed bez SKIP. -build-manifest.json, -verification.json,
+-ctest-assets.log i -source-check.json: hashe wszystkich obiektów,
+zależności, bibliotek i executables sprawdzone; trzy kompletne programy
+(callbacki, rozmiary, initializer, bajty skryptów) zgodne z danymi USA.
+PsyZ/SDL pozostają nieinstrumentowane. build/parasite-eve-pc i fixture
+są kopiami v2. V1 nie zlinkował starego symbolu rcossin_tbl; zachowany log.
+
+/tmp/pe-m428-emitter-oracle-v4-proof.json: 1080 przypadków nowo
+odtworzonego callbacku porównanych z rzeczywistym kodem MIPS w Unicorn.
+Tylko InitCallbackList/AcquireCallbackSlot zastąpione kontrolowanym
+alokatorami; zgodne zwroty, stan emitera, licznik, wszystkie 16 bajtów
+cząstki i liczby wywołań alokatora. Obejmuje brak slotu, negatywne stany
+i przepełnienia short. Native SAN daje identyczne wyjście jak normal:
+/tmp/pe-m428-emitter-native-san-v2.txt. V1 narzędzia miał niepełne lokalne
+zależności, v2/v3 ładowały ucięty prefiks 0x5000; v4 czyta pełny pokój.
+
+Cold J przez całą wcześniejszą gałąź do M428: normal/SAN exit0,
+pełny JSON zgodny przy123952, źródło J bez zmian i K bajtowo identyczne:
+/tmp/pe-m428-entry-v2-proof.json. Ten pierwszy dowód nie zawiera VRAM.
+Następny live47676 od tego punktu, /tmp/pe-m428-native-v2-live.py,
+odtworzył scenę i pokonał pierwszą formę UB zwykłymi strzałami M8000.
+Przy129773 boss999996HP, przy130317 już przejście do M350/story731,
+HP621, mode12/live0, Medicine3 zachowane. /tmp/pe-m428-victory-v2-proof/
+proof-v3.json: pełna powtórka SAN od J exit0 bez raportów, pełny JSON/VRAM
+identyczne, tylko oczekiwane flagi grawerowania/CureM/Medicine4/amunicja,
+J bez zmian i K zgodne. V2 porównał dane poprawnie, lecz wymagał mapy428;
+osobny v3 sprawdził terminalny punkt już w następnej mapie, bez powtarzania.
+
+Korekta nazw: Text_EncodeBase32 dekoduje a8065148 jako M0352I, a8065048
+jako M0350I. Wcześniejsze nowe opisy K jako M348 i przemiany jako M346
+były błędnymi etykietami. Dowody sprawdzały prawidłowe identyfikatory
+numeryczne; ścieżki artefaktów z dawnymi nazwami pozostają zachowane.
+
+Aktualny live47676 przy136995 w walce M350, HP463, części3/2:
+1000950/1001416HP, mode1/menuNone. Zastosowano Heal3; Medicine3 nadal
+zachowane. Dalsze wejścia po130317 nie mają jeszcze własnego replayu.
+Kierunki pilota dopasowano do kamery M350; nieskuteczne wcześniejsze
+podejścia zachowane w taśmie wejść, nie są dowodem błędu gry.
+M350 i dalsza kampania pozostają nieukończone; native/SAN nie jest
+niezależnym oracle obrazu/audio retail PS1.
+
 ### Po K: Wayne, grawerowanie, film40 i brak M428/E18
 
 Live92380 przeszedł film38, M425/M275 i rozmowy oficera/Daniela,

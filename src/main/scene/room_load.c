@@ -1,6 +1,7 @@
 #include "pe1/room_spark_ring_burst.h"
 #include "../../overlays/room_m273_liberty/room_m273.h"
 #include "../../overlays/scene_e22_liberty/scene_e22_shared.h"
+#include "../../overlays/scene_e18_cruiser/e18_emitters_externs.h"
 #include "pe1/room_trail_burst.h"
 #include "pe1/room_ground_eruption.h"
 #include "pe1/room_floor_walker.h"
@@ -692,6 +693,13 @@ int Scene_LoadRoom(unsigned int roomId)
             if (slot == 140 && record[i].u.handlerAddress == 0x80195720u) native = &g_RoomSeekingTrailProgram;
             if (slot == 141 && record[i].u.handlerAddress == 0x801957e4u) native = &g_RoomScatterTrailProgram;
         }
+        if(map+1==428) {
+            if(slot==75 && record[i].u.handlerAddress==0x8019403cu) native=&g_RoomActorClassTable[2];
+            if(slot==78 && record[i].u.handlerAddress==0x80194090u) native=&g_RoomActorClassTable[0];
+            if(slot==152 && record[i].u.handlerAddress==0x801940d0u) native=&g_SceneE18ShellProgram;
+            if(slot==153 && record[i].u.handlerAddress==0x80194124u) native=&g_SceneE18PulseProgram;
+            if(slot==154 && record[i].u.handlerAddress==0x80194188u) native=&g_SceneE18WaveProgram;
+        }
         if (map + 1 == 432) {
             if (slot==75 && record[i].u.handlerAddress==0x801990f8u) native=&g_RoomActorClassTable[2];
             if (slot==149 && record[i].u.handlerAddress==0x801991f0u) native=&g_SceneE22LinkBeamProgramA;
@@ -957,6 +965,14 @@ int Scene_LoadRoom(unsigned int roomId)
     record = SceneAsset_ResolveOffset(room, directory->scripts & 0x3FFFFF);
     for (i = 0; i < directory->scripts >> 22; i++) {
         slot = record[i].source.bytes.slot;
+        if(map+1==428) {
+            if(slot==75) {g_PmCmdHandlerTable[75]=&g_RoomActorClassTable[2];SceneE18_ResetModule();}
+            else if(slot==78) g_PmCmdHandlerTable[78]=&g_RoomActorClassTable[0];
+            else if(slot==152) g_FieldFxTaskPrograms[67]=&g_SceneE18ShellProgram;
+            else if(slot==153) g_FieldFxTaskPrograms[68]=&g_SceneE18PulseProgram;
+            else if(slot==154) g_FieldFxTaskPrograms[69]=&g_SceneE18WaveProgram;
+            continue;
+        }
         if (map+1==432) {
             if(slot==75){g_PmCmdHandlerTable[75]=&g_RoomActorClassTable[2];SceneE22_ResetModule();}
             else if(slot==149) g_FieldFxTaskPrograms[64]=&g_SceneE22LinkBeamProgramA;

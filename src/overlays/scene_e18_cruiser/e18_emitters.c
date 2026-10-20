@@ -1,4 +1,6 @@
 #include "common.h"
+#include "pe1/fieldfx_task.h"
+#include "pe1/geom_state.h"
 #include "pe1/asset_find.h"
 #include "pe1/field_actor.h"
 #include "pe1/field_sprite_draw.h"
@@ -26,10 +28,7 @@ typedef struct Effect {
     s16 size;
 } Effect;
 
-typedef struct SceneE18Object {
-    char reserved[0x1FC];
-    s32 x, y, z;
-} SceneE18Object;
+typedef FieldActor SceneE18Object;
 
 typedef struct SceneE18ObjectLink {
     char reserved[8];
@@ -57,7 +56,9 @@ typedef struct SceneE18WaveEffect {
  * widening slow down, it brightens until frame 16 and fades after frame
  * 18. It finishes (setting the model's stage byte to 4) once the model's
  * seventh animation reaches its last frame. */
-int SceneE18_SpinShell(int mode, SceneE18SpinShell *shell) {
+int SceneE18_SpinShell(int mode, void *memory, intptr_t argument) {
+    SceneE18SpinShell *shell = memory;
+    (void)argument;
     GteMatrix matrix;
     GteVector scaleArg;
     GteVector scale;
@@ -78,11 +79,11 @@ int SceneE18_SpinShell(int mode, SceneE18SpinShell *shell) {
         shell->brightness = 0;
         break;
     case 1:
-        if (*instance->owner->stage == 1)
-            *instance->owner->stage = 2;
-        if (instance->animationId == 7
-            && instance->animation.part.frame >= instance->frameLimit - 1U) {
-            *instance->owner->stage = 4;
+        if (*instance->state->action_state == 1)
+            *instance->state->action_state = 2;
+        if (instance->mode == 7
+            && instance->anim.parts.integer >= instance->action - 1U) {
+            *instance->state->action_state = 4;
             return 1;
         }
         shell->angle += shell->turn;
@@ -130,9 +131,9 @@ int SceneE18_SpinShell(int mode, SceneE18SpinShell *shell) {
         scale.z = shell->width;
         scaleArg = scale;
         ScaleMatrix(&matrix, &scaleArg);
-        matrix.t[0] = instance->transform.t[0];
-        matrix.t[1] = instance->transform.t[1];
-        matrix.t[2] = instance->transform.t[2];
+        matrix.t[0] = instance->render_object.model_matrix.translation[0];
+        matrix.t[1] = instance->render_object.model_matrix.translation[1];
+        matrix.t[2] = instance->render_object.model_matrix.translation[2];
         {
             int kind;
             int palette;
@@ -156,7 +157,9 @@ int SceneE18_SpinShell(int mode, SceneE18SpinShell *shell) {
  * fades; the leading particle releases the actor once the player comes
  * within a quarter of its width. Each particle that fades out counts
  * g_SceneE18FlankRemaining down. */
-int SceneE18_FlankParticleCallback(int mode, SceneE18FlankParticle *particle) {
+int SceneE18_FlankParticleCallback(int mode, void *memory, intptr_t argument) {
+    SceneE18FlankParticle *particle = memory;
+    (void)argument;
     GteMatrix matrix;
     GteVector scaleArg;
     GteVector scale;
@@ -179,7 +182,7 @@ int SceneE18_FlankParticleCallback(int mode, SceneE18FlankParticle *particle) {
             range = particle->width / 4;
             if (distance < range) {
                 g_PlayerEntity->state->flags |= 0x4000;
-                ANIM_OWNER_AS(SceneE18Actor)->instance->owner->flags |= 0x80000000;
+                ANIM_OWNER_AS(SceneE18Actor)->instance->state->flags |= 0x80000000;
                 particle->leader = 0;
             }
         }
@@ -224,7 +227,9 @@ int SceneE18_FlankParticleCallback(int mode, SceneE18FlankParticle *particle) {
  * releases one of four model particles on alternating sides of the room
  * model (the first one plays the two launch sounds at the model's root
  * joint) and finishes once the particles have counted g_SceneE18FlankRemaining down. */
-int SceneE18_FlankEmitter(int mode, SceneE18EmitterState *state) {
+int SceneE18_FlankEmitter(int mode, void *memory, intptr_t argument) {
+    SceneE18EmitterState *state = memory;
+    (void)argument;
     SceneE18FlankParticle *particle;
     SceneE18Actor *actor;
     int side;
@@ -236,16 +241,16 @@ int SceneE18_FlankEmitter(int mode, SceneE18EmitterState *state) {
         FieldFx_ModelScrollUv(g_SceneE18FlankModel, 0, 0);
         state->count = 0;
         state->delay = 0;
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(SceneE18Emitter)->pool, 0x14, 4,
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, sizeof(SceneE18FlankParticle), 4,
                              (FieldFxCallbackListCallback)SceneE18_FlankParticleCallback);
     case 1:
         if (state->count < 4) {
             state->delay++;
             if (state->delay < 6) break;
-            particle = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(SceneE18Emitter)->pool);
+            particle = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
             if (particle == 0) break;
             actor = ANIM_OWNER_AS(SceneE18Actor);
-            particle->position = actor->instance->transform.t;
+            particle->position = actor->instance->render_object.model_matrix.translation;
             particle->angle = 0;
             if (state->count & 1)
                 side = 0x80;
@@ -261,14 +266,14 @@ int SceneE18_FlankEmitter(int mode, SceneE18EmitterState *state) {
             state->delay = 0;
             state->count++;
             if (state->count == 1) {
-                Asset_Find08w(0x5C4, actor->instance->owner->asset,
-                              (s16)actor->instance->transforms->t[0],
-                              (s16)actor->instance->transforms->t[1],
-                              (s16)actor->instance->transforms->t[2]);
-                Asset_Find08w(0x5C5, ANIM_OWNER_AS(SceneE18Actor)->instance->owner->asset,
-                              (s16)ANIM_OWNER_AS(SceneE18Actor)->instance->transforms->t[0],
-                              (s16)ANIM_OWNER_AS(SceneE18Actor)->instance->transforms->t[1],
-                              (s16)ANIM_OWNER_AS(SceneE18Actor)->instance->transforms->t[2]);
+                Asset_Find08w(0x5C4, actor->instance->state->progress,
+                              (s16)actor->instance->render_object.matrices->translation[0],
+                              (s16)actor->instance->render_object.matrices->translation[1],
+                              (s16)actor->instance->render_object.matrices->translation[2]);
+                Asset_Find08w(0x5C5, ANIM_OWNER_AS(SceneE18Actor)->instance->state->progress,
+                              (s16)ANIM_OWNER_AS(SceneE18Actor)->instance->render_object.matrices->translation[0],
+                              (s16)ANIM_OWNER_AS(SceneE18Actor)->instance->render_object.matrices->translation[1],
+                              (s16)ANIM_OWNER_AS(SceneE18Actor)->instance->render_object.matrices->translation[2]);
             }
             break;
         }
@@ -290,7 +295,9 @@ int SceneE18_FlankEmitter(int mode, SceneE18EmitterState *state) {
     return 0;
 }
 
-int SceneE18_ExpandingRingCallback(int mode, Effect *effect) {
+int SceneE18_ExpandingRingCallback(int mode, void *memory, intptr_t argument) {
+    Effect *effect = memory;
+    (void)argument;
     s16 position[4];
     s16 params[4];
     SceneE18Object *object;
@@ -310,9 +317,9 @@ int SceneE18_ExpandingRingCallback(int mode, Effect *effect) {
     }
 
     object = ANIM_OWNER_AS(SceneE18ObjectLink)->object;
-    position[0] = object->x;
-    position[1] = object->y;
-    position[2] = object->z;
+    position[0] = object->render_object.model_matrix.translation[0];
+    position[1] = object->render_object.model_matrix.translation[1];
+    position[2] = object->render_object.model_matrix.translation[2];
     params[0] = 0x400;
     params[1] = g_FieldFxCurrentAge << 7;
     params[2] = 0;
@@ -329,7 +336,9 @@ int SceneE18_ExpandingRingCallback(int mode, Effect *effect) {
 /* Pulse ring particle: a pair of light rings around the room model that
  * shrink away. While it lives it advances the model's stage byte; the last
  * ring releases the actor once the player is within 3/8 of its radius. */
-int SceneE18_PulseRingCallback(int mode, SceneE18PulseRing *ring) {
+int SceneE18_PulseRingCallback(int mode, void *memory, intptr_t argument) {
+    SceneE18PulseRing *ring = memory;
+    (void)argument;
     GteShortVector position;
     GteRotation spin;
     SceneE18Instance *instance;
@@ -339,12 +348,12 @@ int SceneE18_PulseRingCallback(int mode, SceneE18PulseRing *ring) {
     switch (mode) {
     case 1:
         instance = ANIM_OWNER_AS(SceneE18Actor)->instance;
-        if (*instance->owner->stage == 1)
-            *instance->owner->stage = 2;
+        if (*instance->state->action_state == 1)
+            *instance->state->action_state = 2;
         ring->size -= ring->shrink;
         if (ring->size < 8) {
             if (ring->active)
-                *instance->owner->stage = 4;
+                *instance->state->action_state = 4;
             return 1;
         }
         angle = (g_FieldFxCurrentAge + 1) * 24;
@@ -352,12 +361,12 @@ int SceneE18_PulseRingCallback(int mode, SceneE18PulseRing *ring) {
             angle = 0x400;
         ring->radius = rsin(angle);
         if (ring->last) {
-            int dx = (g_PlayerEntity->pos_x - instance->x) >> 16;
-            int dz = (g_PlayerEntity->pos_z - instance->z) >> 16;
+            int dx = (g_PlayerEntity->pos_x - instance->pos_x) >> 16;
+            int dz = (g_PlayerEntity->pos_z - instance->pos_z) >> 16;
             if (Math_IntSqrt(dx * dx + dz * dz) < (ring->radius * 3) >> 3) {
                 ring->last = 0;
                 g_PlayerEntity->state->flags |= 0x4000;
-                instance->owner->flags |= 0x80000000;
+                instance->state->flags |= 0x80000000;
             }
             if (ring->size < 0x40)
                 ring->last = 0;
@@ -367,9 +376,9 @@ int SceneE18_PulseRingCallback(int mode, SceneE18PulseRing *ring) {
         instance = ANIM_OWNER_AS(SceneE18Actor)->instance;
         brightness = (s16)(ring->size > 0x80 ? 0x80 : ring->size);
         if (ring->size > 0) {
-            position.x = instance->transform.t[0];
-            position.y = instance->transform.t[1] - 0x140;
-            position.z = instance->transform.t[2];
+            position.x = instance->render_object.model_matrix.translation[0];
+            position.y = instance->render_object.model_matrix.translation[1] - 0x140;
+            position.z = instance->render_object.model_matrix.translation[2];
             spin.x = 0x400;
             spin.y = g_FieldFxCurrentAge << 7;
             spin.z = 0;
@@ -384,7 +393,9 @@ int SceneE18_PulseRingCallback(int mode, SceneE18PulseRing *ring) {
     return 0;
 }
 
-int SceneE18_PulseRingEmitter(int mode, SceneE18PulseState *state) {
+int SceneE18_PulseRingEmitter(int mode, void *memory, intptr_t argument) {
+    SceneE18PulseState *state = memory;
+    (void)argument;
     SceneE18PulseParticle *particle;
     int stage;
 
@@ -399,7 +410,7 @@ int SceneE18_PulseRingEmitter(int mode, SceneE18PulseState *state) {
         }
         state->stage = 0;
         state->ticks = 0;
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(SceneE18Emitter)->pool, 8, 4,
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 8, 4,
                              (FieldFxCallbackListCallback)SceneE18_PulseRingCallback);
 
     }
@@ -408,7 +419,7 @@ update:
     state->ticks++;
     if ((s16)state->ticks < 2) return 0;
 
-    particle = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(SceneE18Emitter)->pool);
+    particle = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
     if (!particle) return 0;
 
     if (state->stage == 0) {
@@ -442,7 +453,9 @@ done:
     return 0;
 }
 
-int SceneE18_RisingParticleCallback(int mode, SceneE18PaletteEffect *effect) {
+int SceneE18_RisingParticleCallback(int mode, void *memory, intptr_t argument) {
+    SceneE18PaletteEffect *effect = memory;
+    (void)argument;
     int size, kind, palette, texture, base;
     int firstFrame, secondFrame;
     int sample;
@@ -454,7 +467,8 @@ int SceneE18_RisingParticleCallback(int mode, SceneE18PaletteEffect *effect) {
         effect->position.pad++;
     } else if (mode == 2) {
         firstFrame = g_FieldFxCurrentAge - 1;
-        sample = rcossin_tbl[(((unsigned int)firstFrame << 8) & 0x3F00) / 4].word;
+        /* Only the low sine half reaches the signed 16-bit quad extent. */
+        sample = rsin(((u32)firstFrame << 6) & 0xfc0);
         base = effect->base;
 
         kind = g_FieldFxSpriteParams.palette;
@@ -466,7 +480,7 @@ int SceneE18_RisingParticleCallback(int mode, SceneE18PaletteEffect *effect) {
         texture = (s16)g_FieldFxSpriteParams.parameter02 * ((secondFrame >> 1) & 7);
         FieldFx_DrawShapeQuads(&effect->position, 0, (s16)size, (s16)size,
                        texture, clut, 1,
-                       (s16)rcossin_tbl[(((unsigned int)secondFrame << 9) & 0x3E00) / 4].word >> 5,
+                       rsin(((u32)secondFrame << 7) & 0xf80) >> 5,
                        0);
     }
     return 0;
@@ -475,18 +489,20 @@ int SceneE18_RisingParticleCallback(int mode, SceneE18PaletteEffect *effect) {
 /* Every fourth frame spawns a rising particle at a random model joint,
  * pushed out by a random horizontal offset that grows with the spawn
  * count, until the script raises the stop flag. */
-int SceneE18_RisingParticleEmitter(int mode, SceneE18EmitterState *state) {
+int SceneE18_RisingParticleEmitter(int mode, void *memory, intptr_t argument) {
+    SceneE18EmitterState *state = memory;
+    (void)argument;
     switch (mode) {
     case 0: {
         SceneE18Instance *instance = ANIM_OWNER_AS(SceneE18Actor)->instance;
-        GteMatrix *matrix = instance->transforms;
+        RenderMatrix *matrix = instance->render_object.matrices;
 
-        Asset_Find08w(0x546, instance->owner->asset, (s16)matrix->t[0],
-                      (s16)matrix->t[1], (s16)matrix->t[2]);
+        Asset_Find08w(0x546, instance->state->progress, (s16)matrix->translation[0],
+                      (s16)matrix->translation[1], (s16)matrix->translation[2]);
         state->count = 0;
         state->delay = 60;
         g_SceneE18RisingStop = 0;
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(SceneE18Emitter)->pool, 12, 10,
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 12, 10,
                              (FieldFxCallbackListCallback)SceneE18_RisingParticleCallback);
     }
     case 1: {
@@ -502,13 +518,13 @@ int SceneE18_RisingParticleEmitter(int mode, SceneE18EmitterState *state) {
 
         if (g_SceneE18RisingStop) return 2;
         if (state->delay-- > 0) break;
-        particle = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(SceneE18Emitter)->pool);
+        particle = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
         if (particle == 0) break;
         count = state->count;
         particle->size = (count << 5) + 0x800;
-        particle->position.x = ANIM_OWNER_AS(SceneE18Actor)->instance->transforms[Inv_ScrambleGrid() % 38].t[0];
-        particle->position.y = ANIM_OWNER_AS(SceneE18Actor)->instance->transforms[Inv_ScrambleGrid() % 38].t[1];
-        particle->position.z = ANIM_OWNER_AS(SceneE18Actor)->instance->transforms[Inv_ScrambleGrid() % 38].t[2];
+        particle->position.x = ANIM_OWNER_AS(SceneE18Actor)->instance->render_object.matrices[Inv_ScrambleGrid() % 38].translation[0];
+        particle->position.y = ANIM_OWNER_AS(SceneE18Actor)->instance->render_object.matrices[Inv_ScrambleGrid() % 38].translation[1];
+        particle->position.z = ANIM_OWNER_AS(SceneE18Actor)->instance->render_object.matrices[Inv_ScrambleGrid() % 38].translation[2];
         random = Inv_ScrambleGrid();
         particle->position.y -= ((random & 0x7F) * particle->size) >> 13;
         halfSize = particle->size >> 1;
@@ -540,7 +556,7 @@ int SceneE18_RisingParticleEmitter(int mode, SceneE18EmitterState *state) {
         particle->position.pad = 0;
         state->delay = 4;
         state->count++;
-        Asset_Find08w(0x5FD, ANIM_OWNER_AS(SceneE18Actor)->instance->owner->asset,
+        Asset_Find08w(0x5FD, ANIM_OWNER_AS(SceneE18Actor)->instance->state->progress,
                       particle->position.x, particle->position.y,
                       particle->position.z);
         break;
@@ -560,7 +576,9 @@ int SceneE18_RisingParticleEmitter(int mode, SceneE18EmitterState *state) {
     return 0;
 }
 
-int SceneE18_WaveRingCallback(int mode, SceneE18WaveEffect *effect) {
+int SceneE18_WaveRingCallback(int mode, void *memory, intptr_t argument) {
+    SceneE18WaveEffect *effect = memory;
+    (void)argument;
     s16 position[4];
     s16 params[4];
     int palette;
@@ -594,12 +612,14 @@ ret0:
 
 /* Emits up to 24 wave rings from random model joints, one every 12 to 19
  * frames, and freezes the model animation at frame 3 once it has played. */
-int SceneE18_WaveRingEmitter(int mode, SceneE18EmitterState *state) {
+int SceneE18_WaveRingEmitter(int mode, void *memory, intptr_t argument) {
+    SceneE18EmitterState *state = memory;
+    (void)argument;
     switch (mode) {
     case 0:
         state->count = 0;
         state->delay = 0;
-        return FieldFx_InitCallbackList(ANIM_POOL_AS(SceneE18Emitter)->pool, 24, 8,
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 24, 8,
                              (FieldFxCallbackListCallback)SceneE18_WaveRingCallback);
     case 1:
         if (state->count < 24) {
@@ -613,14 +633,14 @@ int SceneE18_WaveRingEmitter(int mode, SceneE18EmitterState *state) {
             int tilt;
 
             if (--state->delay == -1) {
-                particle = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(SceneE18Emitter)->pool);
+                particle = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (particle != 0) {
                     random = rand();
                     index = (random >> 2) % 38;
                     actor = ANIM_OWNER_AS(SceneE18Actor);
-                    particle->position.x = actor->instance->transforms[index].t[0];
-                    particle->position.y = actor->instance->transforms[index].t[1];
-                    particle->position.z = actor->instance->transforms[index].t[2];
+                    particle->position.x = actor->instance->render_object.matrices[index].translation[0];
+                    particle->position.y = actor->instance->render_object.matrices[index].translation[1];
+                    particle->position.z = actor->instance->render_object.matrices[index].translation[2];
                     count = state->count;
                     particle->brightness = 128;
                     particle->amplitude = count * 2048 + 2048;
@@ -640,8 +660,8 @@ int SceneE18_WaveRingEmitter(int mode, SceneE18EmitterState *state) {
                 }
             }
             instance = ANIM_OWNER_AS(SceneE18Actor)->instance;
-            if (instance->animation.part.frame >= instance->frameLimit) {
-                instance->animation.word = 0x30000;
+            if (instance->anim.parts.integer >= instance->action) {
+                instance->anim.fixed = 0x30000;
             }
             break;
         }
@@ -661,3 +681,56 @@ int SceneE18_WaveRingEmitter(int mode, SceneE18EmitterState *state) {
     }
     return 0;
 }
+
+/* USA 80193edc..80194000: the scanner had classified this callback as data.
+ * Emit four expanding rings six updates apart, then await their completion. */
+int SceneE18_ExpandingRingEmitter(int mode, void *memory, intptr_t argument)
+{
+    SceneE18EmitterState *state = memory;
+    Effect *particle;
+    (void)argument;
+    switch (mode) {
+    case 0:
+        state->count = 0;
+        state->delay = 0;
+        g_SceneE18ExpandingRingRemaining = 4;
+        return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 16, 4,
+                                       SceneE18_ExpandingRingCallback);
+    case 1:
+        if (state->count >= 4)
+            return (s16)g_SceneE18ExpandingRingRemaining == 0;
+        state->delay++;
+        if (state->delay < 6) return 0;
+        particle = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
+        if (particle) {
+            particle->field00 = 0;
+            particle->field02 = 0;
+            particle->field04 = (s16)0xd0c0;
+            particle->field06 = 0xf0;
+            particle->frame = 0x200;
+            particle->speed = 0;
+            particle->size = 0x280;
+            state->delay = 0;
+            state->count++;
+        }
+        break;
+    }
+    return 0;
+}
+
+
+/* Authored USA M428/E18 data and complete task programs. */
+void *g_SceneE18ShellModel, *g_SceneE18FlankModel;
+s16 g_SceneE18FlankRemaining;
+u16 g_SceneE18ExpandingRingRemaining;
+u8 g_SceneE18RisingStop;
+RenderColor g_SceneE18PulseRingColors[2] = {{0,0,0,0},{192,192,240,0}};
+u32 g_SceneE18WaveFanColor0[1] = {11309200};
+u32 g_SceneE18WaveFanColor1[1] = {0};
+static u16 g_SceneE18ShellProgramScript[] = {4,16,0,2,0,0,4,4,0,2,1,0,2,2,0,0,0,0};
+FieldFxTaskProgram g_SceneE18ShellProgram = {{{SceneE18_SpinShell,SceneE18_FlankEmitter,SceneE18_ExpandingRingEmitter,NULL,NULL,NULL,NULL,NULL},{16,4,4,0,0,0,0,0}},NULL,g_SceneE18ShellProgramScript};
+static u16 g_SceneE18PulseProgramScript[] = {4,30,0,2,0,0,0,0,0,0,0,0,49344,240};
+FieldFxTaskProgram g_SceneE18PulseProgram = {{{SceneE18_PulseRingEmitter,NULL,NULL,NULL,NULL,NULL,NULL,NULL},{4,0,0,0,0,0,0,0}},NULL,g_SceneE18PulseProgramScript};
+static u16 g_SceneE18WaveProgramScript[] = {5,0,0,4,8,0,2,0,0,4,60,0,2,1,0,0,0,0,37008,172,0,0};
+FieldFxTaskProgram g_SceneE18WaveProgram = {{{SceneE18_RisingParticleEmitter,SceneE18_WaveRingEmitter,NULL,NULL,NULL,NULL,NULL,NULL},{4,4,0,0,0,0,0,0}},NULL,g_SceneE18WaveProgramScript};
+void SceneE18_ResetModule(void) { g_SceneE18ShellModel=NULL; g_SceneE18FlankModel=NULL; g_SceneE18FlankRemaining=0; g_SceneE18ExpandingRingRemaining=0; g_SceneE18RisingStop=0; }

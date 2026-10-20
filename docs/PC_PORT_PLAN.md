@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — schody Chryslera, pierwsze korytarze i leczenie w walce
+
+Oryginalne schody M290 mają trigger około x2415..2855,z539..909.
+Read-only LLDB odczytał skrypty, bez zmiany pamięci. Podejście padem
+uruchamia Scene_SelectMapById(20), zmienną5=20 i M297 (0xa80493c8).
+Dalszy ruch przez M305 (0xa80602c8) prowadzi do M309 (0xa80604c8)
+i spotkania dwóch przeciwników type4/sub30,31: HP98,def45.
+Pierwsza obserwacja sugerująca obrażenia po strzałach była błędna:
+po czterech zużytych nabojach obaj nadal mają98HP. Przyczyna pozostaje
+nierozpoznana; nie deklaruje się poprawnego rozstrzygnięcia trafień.
+Aya straciła72→51→8HP. Zwykłe menu walki, Medicine1 w lewej kolumnie
+wiersz4, Use i zatwierdzenie celu: item6 znika ze slot8, przy90173
+Aya53/72HP, dwóch żywych przeciwników,menu null,move_lock5,story164.
+Starcie trwa; nie deklaruje się zwycięstwa ani ukończenia piętra.
+
+/tmp/pe-ex-chrysler-first-battle-v1-verify.py wykonany PASS: zimne
+normal/SAN exit0, pełny JSON/VRAM identyczny z live, prywatny B bajtowo
+zgodny ze źródłem i wcześniejszym hashem, brak sanitizer/opcode/assertion.
+Pierwszy verifier odziedziczył założenie o jedynej zmianie rekordu broni;
+sprawdzenie słusznie zawiodło po zużyciu amunicji. Po odczycie faktycznych
+różnic sprawdza dokładnie byte10 16→12 i byte20 3→4. Pośrednia błędna
+hipoteza byte14 17→12 także zawiodła; dopiero poprawiony verifier PASS.
+Artefakty: /tmp/pe-ex-chrysler-first-battle-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Kod gry/PsyZ bez zmian. Generowanie wszystkich
+wariantów pięter, walki/bossowie i zgodność z PS1 nadal wymagają dowodów.
+
 ### EX — mapa Nowego Jorku i wejście do Chrysler Building
 
 Po sekwencji Bena zwykły input prowadzi z M043 do sali odpraw M047

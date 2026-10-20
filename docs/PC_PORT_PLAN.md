@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — Medicine1, otwarcie budynku i Zoo Key w M064
+
+Po zapisie F użycie Medicine1 ze slot4 leczy92→101/101HP i zwalnia
+miejsce. Telefon→drzwi[761,349], Cross uruchamia oryginalne otwarcie.
+Wejście wymaga obejścia progu przez[~800,500]→[434,511]; krzesło przy
+[290,511] blokuje prosty marsz. Obejście przez[290,285]→[−197,285],
+następnie podejście[~−180,500], twarz w kierunku+Z, Cross otwiera szafkę.
+Oryginalny ekran55 pokazuje Central Park Key / Zoo Key; item202 trafia
+do slot4. Po zamknięciu przy85563 M064/story232,101/101HP,move_lock0,
+menu null, zmienna54=98 (otwarte drzwi i szafka klucza).
+
+/tmp/pe-ex-zoo-key-E-v1-verify.py wykonany PASS: zimne normal/SAN exit0,
+pełny JSON i VRAM zgodny z live, obie karty E/F bajtowo zgodne z
+checkpointem; ich hashe zgodne z wcześniejszymi dowodami. Ekwipunek
+zachowuje cały bufor poza wcześniej potwierdzonym zużyciem ammo10→2;
+slot4 Medicine1→ZooKey202, pozostałe sloty bez zmian. Brak błędów
+sanitizer/opcode/assertion. Artefakty:
+/tmp/pe-ex-zoo-key-E-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Nie zmieniano kodu, RAM, RNG ani zapisów.
+Dowód nie obejmuje pozostałych szafek, ciała/tekstu94 lub użycia klucza
+na bramie. Następne: dalsze interakcje i przejście do zamkniętej części zoo.
+
 ### EX — autentyczny zapis F w M064 i zimne Continue
 
 Z M063 marsz do drzwi około[−2400,−1640] i Cross prowadzi do

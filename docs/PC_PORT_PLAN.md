@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: ruch po Continue F2 i przejście M184 → M187
+
+Poprzedni proces E2 zakończony quit/native exit0. Nowy proces z samym
+F2 cold12920 w M184; Down60 daje12980 inną pozycję Ayi,bez utraty HP.
+Dalsza zwykła trasa po M184 prowadzi17650/17850 do M187/a80283c8,
+story596,139/335HP,ammo7,menu null,move_lock0,combat.mode0,zero wrogów.
+Journal /tmp/pe-ex-subway-F2-nav-v2-live. Pierwszy kontroler v1 uruchomiony
+bez PTY otrzymał EOF po wczytaniu i poprawnie zamknął native exit0;
+nowy v2 uruchomiono z PTY. Nie był to crash gry ani timeout obserwacji.
+
+Dwa świeże cold17850 normal/SAN exit0,bez diagnostyki sanitizer/opcode;
+pełny JSON i1MiB VRAM równe profilom oraz zamrożonemu live. Verifier
+sprawdza rzeczywistą zmianę pozycji po Continue,cały ekwipunek/4096B
+rekordów (bez zmian) i wszystkie zmienne względem FileSaved171752:
+tylko1:998→184. Źródłowy i prywatne F2 identyczne bajtowo.
+Dowód /tmp/pe-ex-m187-entry-F2-v1-{seed.json,checkpoint,proof/proof.json},
+runner/verifier obok. Bez zmian produkcji/PsyZ/RAM/save payload;
+ten sam pe-video-clock-v1. SDK/SDL nieinstrumentowane,brak oraclePS1,
+/tmp nietrwałe. Walka M187 w tej gałęzi EX jeszcze niesprawdzona.
+
+
 ### EX: zapis F2 w metrze i świeże Continue
 
 Telefon M184/dialog6 → Cross do port36/170474 → Cross do plików37/171094,

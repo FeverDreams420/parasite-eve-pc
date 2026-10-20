@@ -412,7 +412,8 @@ RenderColor g_SceneE20OrbFlashColorEven = {120,10,170,0};
 u8 g_SceneE20FlareColorTrack[] = {0,0,0,0,0,0,0,0,200,240,240,8,0,0,0,0,200,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0};
 s32 g_SceneE20HoverOrbHitCooldown;
 void *g_SceneE20HoverOrbModel;
-SceneEffectSlot g_SceneE20EffectSlots[3];
+/* USA M430 reserves 80190860..801908bf for four 24-byte commands. */
+SceneEffectSlot g_SceneE20EffectSlots[4];
 static u16 s_SceneE20HoverOrbScript[] = {5,0,0,1,6,103,4,2,0,2,0,0,0,0,0,0};
 FieldFxTaskProgram g_SceneE20HoverOrbProgram = {
     {{SceneE20_HoverOrbController}, {sizeof(SceneE20TrailEffect)}},

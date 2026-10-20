@@ -40,7 +40,7 @@ extern void *g_SceneE20HoverOrbModel;
 int SceneE20_HoverOrbController(int mode, void *memory, intptr_t argument);
 intptr_t SceneE20_CommandEffectSlot(int command, intptr_t index, intptr_t value, intptr_t z);
 extern FieldFxTaskProgram g_SceneE20HoverOrbProgram;
-extern SceneEffectSlot g_SceneE20EffectSlots[3];
+extern SceneEffectSlot g_SceneE20EffectSlots[4];
 int rand(void);
 
 

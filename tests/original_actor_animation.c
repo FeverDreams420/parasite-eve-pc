@@ -17947,10 +17947,15 @@ int main(int argc, char **argv)
                g_SceneE20HoverOrbProgram.initialize!=SceneE20_CommandEffectSlot ||
                memcmp(g_SceneE20HoverOrbProgram.script,authored+0x17f8,32) ||
                memcmp(g_SceneE20FlareColorTrack,authored+0x181c,32))return 1;
-            if(SceneE20_CommandEffectSlot(2,2,123,-456)!=(intptr_t)&g_SceneE20EffectSlots[2] ||
-               g_SceneE20EffectSlots[2].position.x!=123 || g_SceneE20EffectSlots[2].position.z!=-456 ||
-               g_SceneE20EffectSlots[2].pending!=1 || SceneE20_CommandEffectSlot(0,-1,0,0) ||
-               SceneE20_CommandEffectSlot(0,3,0,0))return 1;
+            for(unsigned i=0;i<4;++i){
+                if(SceneE20_CommandEffectSlot(2,i,123+(int)i,-456-(int)i)!=(intptr_t)&g_SceneE20EffectSlots[i] ||
+                   g_SceneE20EffectSlots[i].position.x!=123+(int)i ||
+                   g_SceneE20EffectSlots[i].position.z!=-456-(int)i ||
+                   g_SceneE20EffectSlots[i].pending!=1)return 1;
+            }
+            if(SceneE20_CommandEffectSlot(4,3,25,0)!=(intptr_t)&g_SceneE20EffectSlots[3] ||
+               g_SceneE20EffectSlots[3].duration!=25 || SceneE20_CommandEffectSlot(0,-1,0,0) ||
+               SceneE20_CommandEffectSlot(0,4,0,0))return 1;
         }
         CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
         puts("Original M430 loader: real Disc2 assets, complete E20 descriptor/script/color track and per-entry reset passed twice");return 0;

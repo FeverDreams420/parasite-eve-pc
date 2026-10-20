@@ -2,7 +2,7 @@
 #include "pe1/scene_e20_hover_orb.h"
 
 intptr_t SceneE20_CommandEffectSlot(int command, intptr_t index, intptr_t value, intptr_t z) {
-    if ((uintptr_t)index >= 3) return 0;
+    if ((uintptr_t)index >= sizeof(g_SceneE20EffectSlots) / sizeof(g_SceneE20EffectSlots[0])) return 0;
     SceneEffectSlot *slot = &g_SceneE20EffectSlots[index];
     int random;
 

@@ -2,6 +2,112 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### E19 wygrana; M430/E20 — naprawiona czwarta kula w oryginalnym module
+
+Autonomiczna kampania z niezmienionego M pokonała E19 zwykłymi padami,
+M8000 single-shot/Double Action i leczeniem PE. Wybrany unik przed chwytem:
+68448→68748 Up zachowuje253HP; pozostałe kierunki poza UpRight/UpLeft
+sprowadzają HP do1. Nie cofano RAM gry — każda gałąź ponownie odtwarza
+całe wejście od prawdziwego zapisu. /tmp/pe-e19-pregrab-directions-v1
+zachowuje wszystkie dziewięć wyników. Wcześniejsze planner-v3 doszło
+zaledwie do134HP bossa i zakończyło wszystkie warianty śmiercią; to nie
+jest wybrana trasa. Alternatywny planner-v5 także kończy się śmiercią.
+
+Wybrany planner-v4: przy71192 główny1000032→999930, Aya60HP;
+po zwycięstwie znikają także wtórny aktor i efekty. Przy71984 wybrano
+M430/0xa8083048 (Text_EncodeBase32 daje M0430I), story732→733,
+Aya nadal60HP. Nie utożsamiono samego live_enemies0 ze zwycięstwem.
+/tmp/pe-e19-victory-v1-proof/{checkpoint-verification.json,victory-verification.json}
+potwierdza zimne normal/SAN poprzedniego kandydata, cały JSON/VRAM,
+exit0 i niezmienione karty. Pełny input: /tmp/pe-e19-planner-v4/last-seed.json.
+Odtwarzanie po zwycięstwie weszło przy72580 w aktywną walkę E20,
+ale kolejny wait240 wywołał rzeczywisty błąd portu, nie śmierć gracza.
+
+Stary kandydat odtwarza ten sam błąd: normal SIGSEGV/exit-11, SAN/exit-6,
+null SceneEffectSlot przy SceneE20_HoverOrbController.c:86. Args i logi:
+/tmp/pe-m430-crash-v1-proof. Odczyt LLDB /tmp/pe-m430-null-debug-v1/trace.json
+pokazuje poprawne komendy dla indeksów0,1,2,3; poprzednia sztuczna granica3
+odrzucała ostatni indeks, pozostawiając argument callbacku równy0. Kod USA
+801906ec liczy adres80190860+24*index, a oryginalne96 bajtów tablicy kończy
+się przy801908c0, przed kolejnym rekordem danych. Poprawiono wyłącznie
+rozmiar tablicy/deklarację na4 i granicę na sizeof; nie pominięto czwartej
+kuli ani nie dodano osłony ukrywającej brakujący efekt. Wszystkie funkcje
+pozostają w dotychczasowych plikach modułu E20. Istniejący --m430-load
+sprawdza teraz wszystkie cztery indeksy, czas komendy indeksu3 i granice.
+
+/tmp/pe-e20-four-orbs-v1-command-proof.json:20160 przypadków oryginalnego
+inicjalizatora MIPS i natywnego normal/SAN, wszystkie cztery indeksy,
+komendy-1..5, wartości graniczne16/32bit, pięć wysokości podłogi i trzy
+kontrolowane wartości zewnętrznego rand. Identyczny zwrócony offset i całe
+96 bajtów tablicy, nietknięte32 bajty canary z każdej strony. Testuje kod
+inicjalizatora, nie cały oryginalny renderer. Po poprawce to samo wejście
+przechodzi do72820/M430/60HP bez awarii: pełny normal/SAN JSON/VRAM
+identyczny, /tmp/pe-e20-four-orbs-v1-replay-proof/proof.json.
+
+Dalsze prawdziwe akcje: Heal2, strzał zadający1 obrażenie przy obronie1200,
+cztery efekty E20 i trafienia przeciwnika. Przy74044:96HP, boss1007991.
+Zimne normal/SAN identyczne z live w całym JSON/VRAM, karty bez zmian:
+/tmp/pe-m430-first-hit-v1-proof/proof.json. Późniejsza próba stania i leczenia
+kończy się śmiercią przy76384, po trzech pojedynczych obrażeniach bossa;
+nie jest to wygrana E20; nie wykazano nowego błędu portu. Tester początkowo zachowywał
+próg dystansu650 z uników E19, który blokował zwykłe strzelanie z bliska;
+w oddzielnej próbie M430 usunięto wyłącznie to ograniczenie testera.
+E20, ucieczka z krążownika i zakończenie nadal niepotwierdzone.
+
+Nowy zainstalowany kandydat pe-e20-four-orbs-v1:438 świeżych obiektów
+(219 normal+219 SAN), oba exe/fixture,70/70 regresji,12/12 assetowych CTestów
+w każdym profilu (w tym M430 oraz83 próbki VRAM E08), sześć ścisłych
+kompilacji trzech istniejących źródeł całego E20. Manifest, zależności,
+biblioteki i exe ponownie zahashowano. /tmp/pe-e20-four-orbs-v1-verify.py
+oraz installed-build-proof.json potwierdzają instalację build/parasite-eve-pc
+SHA5b885736bfc6904fa384ea05e347f49808c2e5389859f3541cae6a87e63b2240
+oraz fixture SHA07e62791bd21c889710a5371ec8d3d6c9fc44ff79c211d7bc63c6499a4c96af7.
+Poprzednie binaria zachowano. PsyZ/SDL nadal nieinstrumentowane. Dodatkowa,
+niewymagana ścisła kompilacja całego fixture wykazała10 wcześniejszych
+niezgodności wskaźników poza zmienionym testem; log zachowano w
+/tmp/pe-e20-four-orbs-v1-strict/fixture-extra-check.log. Zwykły pełny build
+fixture i obie serie regresji przechodzą; nie zadeklarowano ścisłej
+kompilacji całego repo ani zgodności obrazu/audio PS1 całej kampanii.
+
+Referencja USA dotarła zwykłymi padami z M349 do E19,431HP. Pierwszy
+odczyt ma główny3500, po12 klatkach1003500 plus wtórny1300. HP/limit,
+obrona42/90, stateFlags/statusFlags identyczne z zapisanym natywnym58836:
+/tmp/pe-reference-day6-M-v1/{verify-e19-initial.py,e19-initial-proof.json}.
+Niezmienne prefiksy43198 i43210 w e19-{start,initialized}-input.jsonl;
+nie wyrównano HP Ayi, PE, czasu sceny, RNG lub animacji. Referencja nie
+wygrała jeszcze E19. Emulator pozostaje żywy na AI25171/GDB25170,
+po43210 zwykłych klatkach, w pauzie. Źródłowy M i wrapper bez zmian.
+Kontrolery natywne/próby plannerów zamknięte; untracked bu00/ niezmienione.
+
+### M350: niezależna referencja siedmiu trafień Liberate
+
+Kontynuowano żywą referencję PS1 USA od początku M350/394HP; zwykłe
+Cross, menu PE i Liberate, bez zmian RAM/save'a. Po siedmiu trafieniach
+oryginalne HP korpusu1000392 (limit1001500, obrona60) i skrzydła1000179
+(limit1000950, obrona80) są identyczne z aktualnym portem. Niezmienny
+prefiks37574 klatek i wybrany odczyt: /tmp/pe-reference-day6-M-v1/
+m350-{liberate-seven-input.jsonl,after-liberate-seven.json}.
+
+verify-m350-liberate.py/m350-liberate-proof.json w tym katalogu sprawdza
+te parametry PS1/PC. Osobne zimne natywne normal/SAN przy54148 mają
+identyczny cały JSON z wcześniejszym live i identyczny VRAM między sobą:
+/tmp/pe-m350-liberate-stage-v1-proof. Exit0, bez sanitizer/opcode, źródłowy
+M i prywatne karty niezmienione; wrapper PS1 także zawiera identyczny M.
+HP Ayi, rytm akcji, RNG, animacje i obraz PS1 nie są zsynchronizowane;
+to dowód wskazanych parametrów oraz obrażeń, nie całej walki/audio/obrazu.
+PsyZ/SDL nadal nieinstrumentowane; nie zmieniano źródeł gry.
+
+Oryginał następnie wygrał M350 przy41746 zwykłych klatkach wejścia:
+M349/0xa80644c8, story732,431HP, korpus999909. Weryfikator
+/tmp/pe-reference-day6-M-v1/verify-m350-win.py i m350-win-proof.json
+potwierdza oba zwycięstwa (native57976/302HP), niezmienny prefiks
+m350-win-input.jsonl i wszystkie50 slotów/4096 bajtów wyposażenia.
+Jedyna różnica rekordów to załadowana amunicja M8000:16 PS1 wobec14 PC.
+Nie wyrównano RNG/rytmu akcji i nie uznano różnicy HP/amunicji za błąd
+ani dowód całej równoważności. Źródłowy M, cały wrapper PS1 i karty
+natywne niezmienione. Proces kontrolera walki zakończył się0; emulator
+pozostaje żywy i jest dalej sterowany tym samym zwykłym wejściem.
+
 ### M350: wygrana nową trasą i odtwarzalne próby E19
 
 Kontynuacja szybszej trasy M428 przy52500/507HP pokonuje M350 przy57976,

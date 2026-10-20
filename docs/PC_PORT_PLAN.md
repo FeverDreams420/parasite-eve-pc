@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — M092 skrzynia i rozmowa otwierająca Soho/story328
+
+Po Save J/M092 rozmowa35 zamknięta zwykłym Cross. move_lock2 pozostaje,
+ale pad prawidłowo przesuwa Ayę: Down160 daje z-95→-495. Nie jest to
+blokada sterowania. Podejście do skrzyni[354,270],facing2048 i Cross30:
+przy110957 panel55. Po zamknięciu var85=1048701 (ustawione0x100000),
+var143=0. Amunicja odebrana; ten odczyt nie mierzy osobno liczby nabojów
+w rezerwie. Sloty i cały4096B bufor wyposażenia identyczne z początkiem
+Day3, M8000ammo9,weapon5,armor6,Defense+1slot20 niezużyte.
+
+Obejście mebli i wyjście wschodnie przy112369 wczytuje M093/a80091c8.
+Rozmowy85–97 zamknięte oryginalnym padem; przy117799/story328,HP181/181,
+menu null,enemy0,dialog97/state0,move_lock2. Obraz swobodnej ulicy obejrzany.
+/tmp/pe-ex-soho328-H-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON i VRAM identyczne z checkpointem live; źródłowy H bajtowo/hash
+bez zmian. Cały seed od zimnego H obejmuje także Day2 i Save I/J;
+/tmp/pe-ex-soho328-H-v1-{seed.json,checkpoint,proof/proof.json},obraz.png.
+SDK/SDL bez instrumentacji; nie dowodzi zgodności PS1 obrazu/audio.
+Bez zmian kodu produkcyjnego, RAM/RNG i payloadów zapisów. Następne:
+rozmowy z Maedą/Danielem i dalsze Soho; Day3 nadal nieukończony.
+
+
 ### EX — sceny po Eve, koniec Day2, Save J i zimny Continue Day3
 
 Kontynuacja zwykłym padem od zwycięstwa45132: dialogi64–70,film10

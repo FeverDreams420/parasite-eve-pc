@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — komisariat: drzwi M041→M042→M043
+
+Po odprawie zwykły ruch w gabinecie i przejście przez polygon wyjścia
+przyx−610,z~1250 prowadzą do M042 przy21371. Następnie podejście do
+kolejnych drzwi przyx−90,z~1600 uruchamia oryginalny skrypt drzwi,
+animację/flagę obiektu i przejście M043/0xa80041c8 przy21921.
+Story144,72/72HP,menu null,move_lock2. M041 i M042 pozwalają na ruch;
+wartość2 nie jest tu pełną blokadą pada. Nie zmieniano flagi ręcznie.
+Item55, M8000, klucze i Offense+2 zachowane. Nie deklaruje się pełnego
+komisariatu ani wszystkich jego rozmów na podstawie tych dwóch drzwi.
+Seed/checkpoint: /tmp/pe-ex-precinct-doors-v1-{seed.json,checkpoint}.
+Cold normal/SAN exit0; /tmp/pe-ex-precinct-doors-v1-verify.py potwierdza
+pełny JSON/VRAM zgodny z live, prywatny B wszystkie8192B bez zmian,
+brak sanitizer/opcode/assertion. Dowód:
+/tmp/pe-ex-precinct-doors-v1-proof/proof.json. SDK/SDL bez instrumentacji.
+Kod gry/PsyZ i źródłowy B bez zmian. Dalszy EX,
+Chrysler oraz porównanie obrazu/audio PS1 pozostają niepotwierdzone.
+
 ### EX — drugi dzień: odprawa M042 i gabinet M041
 
 Dalszy ordinary input z cold ContinueB przechodzi dialogi9..20 w M042,

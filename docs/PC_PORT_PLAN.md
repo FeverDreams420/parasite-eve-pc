@@ -3,6 +3,35 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — działająca winda M132 i powrót M127 po naprawie
+
+Poprzednia tura była postępem: pełne zasilanie/story488, commita589bbac7.
+Sesja64839 ponownie żywa przy57564 M142/HP179. Right55(run) prowadzi
+bezpośrednio do M129/a80224c8 przy57859 (bez historycznego objazdu M130).
+Down65(run),Right17(run),Cross obsługują oryginalny przycisk. Up36(run),
+Right35(run) i neutral220→M132/a8023148 przy58472.
+Up20(run),Left20(run),Left2(normal),Cross nie uruchomiły przejazdu:
+przy58954 nadal[-225,-157.5]. Wczesny komentarz o uruchomieniu był
+przedwczesny; poprawiono po odczycie stanu. KolejneLeft2(normal),Cross
+uruchamiają właściwy przejazd:59396 resetspawnu[0,-100]. Left40(run)
+i neutral240→M127/a80223c8/dialog126 przy59676; zamknięty przy59924,
+story488,HP179/210,menu null,lock0. Bez zmian kolizji i triggerów.
+
+/tmp/pe-ex-elevator-O-v1-verify.py PASS: pełna trasa od zimnego O w obu
+profilach exit0, cały JSON/VRAM zgodny między profilami i live. Asercje
+obejmują pierwsze nieskuteczne podejście, właściwy reset pozycji po
+przejeździe i dialog126 po wyjściu. Wszystkie50 slotów/4096B rekordów
+porównane do cold O:8:209→13,18:20→16,19:20→0,22:206→0;
+rekordy tylko byte426:8→4. Wszystkie zmienne:1:998→132,
+65:536870977→541196235,66:4→548,67:5→143,74:470→488,
+82:0→84,97:192→208. O i kopie8192B niezmienione.
+Artefakty /tmp/pe-ex-elevator-O-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ i nowych plików repo, tylko input; SDK/SDL bez
+instrumentacji, brak oracle PS1, /tmp nie zastępuje trwałych CTest.
+O ostatni trwały zapis; następne nowy zapis i dalsze piętra szpitala.
+Pełny port pozostaje nieukończony.
+
+
 ### EX — Fuse3, naprawa przewodów i oświetlone M142/story488
 
 Poprzednia tura była postępem: M332/Fuse3, commitffaa35c19. Sesja64839

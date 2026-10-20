@@ -45,7 +45,7 @@ typedef struct SceneE08Context {
     /* 0x2C */ s16 hitRequest;
 } SceneE08Context;
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneE08Context, spriteAsset) == 0x24,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneE08Context, spriteAsset) == sizeof(void *) + sizeof(RenderMatrix),
                   scene_e08_context_sprite_asset_offset);
 
 typedef struct ScenePlayerOrbTimer {

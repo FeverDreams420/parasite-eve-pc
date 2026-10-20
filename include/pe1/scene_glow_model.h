@@ -13,7 +13,7 @@
 /* Scene e08 glowing model: the effect model drawn at the scene anchor,
  * followed by a glow sprite that grows once the timer passes 10. */
 typedef struct SceneGlowModelOwner {
-    /* 0x00 */ u8 pad00[0x24];
+    /* 0x00 */ u8 pad00[sizeof(void *) + 0x20];
     /* 0x24 */ int mode;
 } SceneGlowModelOwner;
 
@@ -38,7 +38,7 @@ typedef struct SceneGlowModelColor {
     u8 bytes[8];
 } SceneGlowModelColor;
 
-extern u8 *g_SceneE08GlowModel;
+extern char *g_SceneE08GlowModel;
 extern int g_SceneE08CentreX;
 extern int g_SceneE08CentreZ;
 extern u8 g_SceneE08GlowModelRamp[];

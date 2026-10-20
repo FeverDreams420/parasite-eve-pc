@@ -38,21 +38,12 @@
 #include "scene_e08_modules.h"
 #include "scene_particle_slots.h"
 
-typedef struct {
-    s32 w0;
-    s32 w1;
-    s32 w2;
-    s32 w3;
-    s32 w4;
-    s32 w5;
-    s32 w6;
-    s32 w7;
-} SceneE08MatrixFields;
+typedef RenderMatrix SceneE08MatrixFields;
 
 typedef struct {
     RoomLink *link;
     SceneE08MatrixFields matrix;
-    void *asset;
+    int asset;
 } SceneE08LinkInitState;
 
 typedef struct SceneShiftedPosition {
@@ -61,7 +52,7 @@ typedef struct SceneShiftedPosition {
 } SceneShiftedPosition;
 
 typedef struct SceneFadeOwner {
-    u8 reserved[4];
+    u8 reserved[sizeof(void *)];
     SceneShiftedPosition position;
     u8 drawMode;
 } SceneFadeOwner;
@@ -86,18 +77,16 @@ typedef GteMatrix Matrix;
 typedef GteVector Vec4;
 
 typedef struct SceneParticleOwner {
-    u8 reserved[0x24];
+    u8 reserved[sizeof(void *) + sizeof(RenderMatrix)];
     u8 drawMode;
 } SceneParticleOwner;
 
-typedef struct SceneE08MatrixWords {
-    int words[8];
-} SceneE08MatrixWords;
+typedef RenderMatrix SceneE08MatrixWords;
 
 typedef struct SceneE08State {
     RoomLink *link;
     SceneE08MatrixWords matrix;
-    void *asset;
+    int asset;
     u16 timer;
     u16 counter;
     u16 flag;
@@ -124,7 +113,7 @@ typedef struct SceneFadeSlots {
 typedef struct {
     RoomLink *link;
     SceneE08MatrixWords matrix;
-    void *asset;
+    int asset;
 } SceneE08InitState;
 
 typedef GteMatrix SceneE08Matrix;
@@ -146,7 +135,10 @@ typedef struct {
     s16 timer;
 } Ovl178EffectController;
 
-void SceneE08_InitContext(RoomEnt *ent, void *arg1, SceneE08LinkInitState *state) {
+int SceneE08_InitContext(void *raw0, void *raw1, void *raw2) {
+    RoomEnt * ent = raw0;
+    void * arg1 = raw1;
+    SceneE08LinkInitState * state = raw2;
     SceneE08MatrixFields *matrix;
 
     FieldFx_SetScriptContext(state);
@@ -172,19 +164,30 @@ void SceneE08_InitContext(RoomEnt *ent, void *arg1, SceneE08LinkInitState *state
     g_SceneE08ParticleClusterSprite.g = 0x80;
     g_SceneE08ParticleClusterSprite.b = 0xF0;
     g_SceneE08ParticleClusterSprite.flip = 0;
+
+    return 0;
 }
 
-void SceneE08_DrawContext(void) {
+int SceneE08_DrawContext(void *raw0, void *raw1, void *raw2) {
+
+
+    return 0;
 }
 
-void SceneE08_UpdateContext(void *arg0, unsigned char *state) {
+int SceneE08_UpdateContext(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    unsigned char * state = raw1;
     if (FieldFx_IsLastSlotHalted() == 1) {
         state[1] = 2;
     }
+
+    return 0;
 }
 
-void SceneE08_InitGlowRings(void *unused0, void *unused1, Ovl178FadeState *state)
-{
+int SceneE08_InitGlowRings(void *raw0, void *raw1, void *raw2) {
+    void * unused0 = raw0;
+    void * unused1 = raw1;
+    Ovl178FadeState * state = raw2;
     unsigned i;
     int offset;
 
@@ -215,12 +218,17 @@ void SceneE08_InitGlowRings(void *unused0, void *unused1, Ovl178FadeState *state
         item->source = state->sourceData[i];
         FieldFx_BuildRingGeometry(item);
     }
+
+    return 0;
 }
 
 void FieldFx_SetSpriteCellSize(int, int);
 void FieldFx_SetSpriteColorMode(int);
 
-void SceneE08_DrawGlowRings(void *unused, s16 *args, Ovl178FadeState *state) {
+int SceneE08_DrawGlowRings(void *raw0, void *raw1, void *raw2) {
+    void * unused = raw0;
+    s16 * args = raw1;
+    Ovl178FadeState * state = raw2;
     RoomSpriteMatrix matrix;
     SceneFadeSeed seed;
     RoomFxVec4 scale, sourceScale;
@@ -277,9 +285,14 @@ void SceneE08_DrawGlowRings(void *unused, s16 *args, Ovl178FadeState *state) {
         FieldFx_InterpolateColorRamp(g_SceneE08GlowRingsRingRamp, args[1], &state->emitters[i].color1[0]);
         FieldFx_DrawShadedRing(&state->emitters[i], &matrix, 1);
     }
+
+    return 0;
 }
 
-void SceneE08_UpdateGlowRings(void *arg0, Ovl178FadeInput *input, Ovl178FadeState *state) {
+int SceneE08_UpdateGlowRings(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    Ovl178FadeInput * input = raw1;
+    Ovl178FadeState * state = raw2;
     unsigned int i;
     s16 value;
 
@@ -303,9 +316,14 @@ void SceneE08_UpdateGlowRings(void *arg0, Ovl178FadeInput *input, Ovl178FadeStat
     if (input->target == 0x28) {
         input->status = 2;
     }
+
+    return 0;
 }
 
-void SceneE08_InitParticleCluster(int unused0, int unused1, SceneParticleCluster *slots) {
+int SceneE08_InitParticleCluster(void *raw0, void *raw1, void *raw2) {
+    void * unused0 = raw0;
+    void * unused1 = raw1;
+    SceneParticleCluster * slots = raw2;
     unsigned int i;
 
     for (i = 0; i < 30; ++i) {
@@ -342,17 +360,22 @@ void SceneE08_InitParticleCluster(int unused0, int unused1, SceneParticleCluster
     }
     slots->count = 30;
     {
-        void *volatile *sound = g_LoadedSceneAssetBlock;
+        struct SceneAssetBlob **sound = g_LoadedSceneAssetBlock;
         if (*sound) {
             Akao_SendTableCommand(*sound, 0x608, 0, 0x80, 0x7F);
         }
     }
+
+    return 0;
 }
 
 void FieldFx_SetSpriteCellSize(int, int);
 void FieldFx_SetSpriteColorMode(int);
 
-void SceneE08_DrawParticleCluster(void *unused0, void *unused1, SceneParticleCluster *argSlots) {
+int SceneE08_DrawParticleCluster(void *raw0, void *raw1, void *raw2) {
+    void * unused0 = raw0;
+    void * unused1 = raw1;
+    SceneParticleCluster * argSlots = raw2;
     SceneParticleCluster *slots = argSlots;
     Matrix matrix;
     Vec4 scratch, draw;
@@ -419,9 +442,14 @@ void SceneE08_DrawParticleCluster(void *unused0, void *unused1, SceneParticleClu
             FieldFx_DrawGlowSprite((FieldGlowSprite *)((char *)slot - 10), &matrix, 1);
         }
     }
+
+    return 0;
 }
 
-void SceneE08_UpdateParticleCluster(void *unused, RoomFxControl *signal, u8 *state) {
+int SceneE08_UpdateParticleCluster(void *raw0, void *raw1, void *raw2) {
+    void * unused = raw0;
+    RoomFxControl * signal = raw1;
+    u8 * state = raw2;
     SceneParticleCluster *slots = (SceneParticleCluster *)state;
     int eight;
     unsigned i;
@@ -469,6 +497,8 @@ void SceneE08_UpdateParticleCluster(void *unused, RoomFxControl *signal, u8 *sta
             }
         }
     }
+
+    return 0;
 }
 
 /*
@@ -495,7 +525,10 @@ ROOMLIB_CLOSE_TARGET(SceneE08_OrbClose)
 
 ROOMLIB_RETURN_ZERO(SceneE08_OrbNop6)
 
-void SceneE08_InitOrbContext(RoomEnt *ent, void *unused, SceneE08State *state) {
+int SceneE08_InitOrbContext(void *raw0, void *raw1, void *raw2) {
+    RoomEnt * ent = raw0;
+    void * unused = raw1;
+    SceneE08State * state = raw2;
     SceneE08MatrixWords *matrix;
 
     FieldFx_SetScriptContext(state);
@@ -542,14 +575,35 @@ void SceneE08_InitOrbContext(RoomEnt *ent, void *unused, SceneE08State *state) {
     g_SceneE08PlayerOrbPointSprite.g = 128;
     g_SceneE08PlayerOrbPointSprite.b = 240;
     g_SceneE08PlayerOrbPointSprite.flip = 0;
+
+    return 0;
 }
 
-void SceneE08_DrawOrbContext(void) {
+int SceneE08_DrawOrbContext(void *raw0, void *raw1, void *raw2) {
+
+
+    return 0;
 }
 
-ROOM_REARM_TIMER_TICK(SceneE08_UpdateOrbContext, 0x28)
+int SceneE08_UpdateOrbContext(void *object, void *rawSlot, void *memory) {
+    FieldFxSlot *slot = rawSlot;
+    SceneE08State *state = memory;
+    if (state->counter != 0) state->counter--;
+    if (state->flag == 1) {
+        state->flag = 0;
+        if (state->counter == 0) {
+            state->counter = state->timer;
+            func_800C6C18(object);
+        }
+    }
+    if (FieldFx_IsLastSlotHalted() == 1) slot->flag = 2;
+    return 0;
+}
 
-void SceneE08_InitFadeSlots(int unused0, int unused1, SceneEmitterSlots *slots) {
+int SceneE08_InitFadeSlots(void *raw0, void *raw1, void *raw2) {
+    void * unused0 = raw0;
+    void * unused1 = raw1;
+    SceneEmitterSlots * slots = raw2;
     unsigned int i;
     SceneActorPositionTail *origin = (SceneActorPositionTail *)((s32 *)FieldFx_GetScriptContext() + 1);
 
@@ -574,12 +628,17 @@ void SceneE08_InitFadeSlots(int unused0, int unused1, SceneEmitterSlots *slots) 
         slots->field28[i] = 0x40;
         slots->field38[i] = 0;
     }
+
+    return 0;
 }
 
 void FieldFx_SetSpriteCellSize(int, int);
 void FieldFx_SetSpriteColorMode(int);
 
-void SceneE08_DrawFadeSlots(void *unused0, void *unused1, char *effect) {
+int SceneE08_DrawFadeSlots(void *raw0, void *raw1, void *raw2) {
+    void * unused0 = raw0;
+    void * unused1 = raw1;
+    char * effect = raw2;
     Matrix matrix;
     Vec4 scratch, draw;
     FieldGlowSprite *sprite;
@@ -627,9 +686,14 @@ void SceneE08_DrawFadeSlots(void *unused0, void *unused1, char *effect) {
             FieldFx_DrawGlowSprite(sprite, &matrix, 1);
         }
     }
+
+    return 0;
 }
 
-void SceneE08_UpdateFadeSlots(int unused, u8 *sceneState, SceneFadeSlots *slots) {
+int SceneE08_UpdateFadeSlots(void *raw0, void *raw1, void *raw2) {
+    void * unused = raw0;
+    u8 * sceneState = raw1;
+    SceneFadeSlots * slots = raw2;
     unsigned int i;
     u8 frame;
 
@@ -656,12 +720,16 @@ void SceneE08_UpdateFadeSlots(int unused, u8 *sceneState, SceneFadeSlots *slots)
             }
         }
     }
+
+    return 0;
 }
 
 /* Spawn the orb 150 units around the player, rotate that offset around the
  * scene anchor by the anchor's heading, and set the trail colours. */
-void SceneE08_InitPlayerOrb(void *object, void *timer, ScenePlayerOrb *orb)
-{
+int SceneE08_InitPlayerOrb(void *raw0, void *raw1, void *raw2) {
+    void * object = raw0;
+    void * timer = raw1;
+    ScenePlayerOrb * orb = raw2;
     GteShortVector offset;
     GteShortVector rotated;
     GteRotation rotation;
@@ -683,7 +751,7 @@ void SceneE08_InitPlayerOrb(void *object, void *timer, ScenePlayerOrb *orb)
     orb->position.x += rand() % 300 - 150;
     orb->position.z += rand() % 300 - 150;
     rotation.y = *FieldFx_RegPtr(2);
-    RotMatrix(&rotation, &matrix);
+    RotMatrix((GteShortVector *)&rotation, &matrix);
     offset.x = orb->position.x - orb->anchor.x;
     offset.y = orb->position.y - orb->anchor.y;
     offset.z = orb->position.z - orb->anchor.z;
@@ -704,11 +772,15 @@ void SceneE08_InitPlayerOrb(void *object, void *timer, ScenePlayerOrb *orb)
     if (g_LoadedSceneAssetBlock[0] != 0) {
         Akao_SendTableCommand(g_LoadedSceneAssetBlock[0], 0x606, 0, 0x80, 0x7F);
     }
+
+    return 0;
 }
 
 /* Draw the orb's two fading ribbons and the eight trail sprites. */
-void SceneE08_DrawPlayerOrb(void *object, void *timer, ScenePlayerOrb *orb)
-{
+int SceneE08_DrawPlayerOrb(void *raw0, void *raw1, void *raw2) {
+    void * object = raw0;
+    void * timer = raw1;
+    ScenePlayerOrb * orb = raw2;
     RenderColor color;
     GteMatrix matrix;
     GteVector scale;
@@ -751,13 +823,17 @@ void SceneE08_DrawPlayerOrb(void *object, void *timer, ScenePlayerOrb *orb)
             FieldFx_DrawGlowSprite(&g_SceneE08PlayerOrbPointSprite, &matrix, 1);
         }
     }
+
+    return 0;
 }
 
 /* After the start delay, slide the orb's ribbon from the anchor toward its
  * target in sixteenth steps, burst it at step 12, and scatter the trail
  * sprites around the ribbon head. */
-void SceneE08_UpdatePlayerOrb(void *object, ScenePlayerOrbTimer *timer, ScenePlayerOrb *orb)
-{
+int SceneE08_UpdatePlayerOrb(void *raw0, void *raw1, void *raw2) {
+    void * object = raw0;
+    ScenePlayerOrbTimer * timer = raw1;
+    ScenePlayerOrb * orb = raw2;
     GteShortVector step;
     ScenePlayerOrbAnchor *anchor;
     GteShortVector *spawn;
@@ -813,9 +889,14 @@ void SceneE08_UpdatePlayerOrb(void *object, ScenePlayerOrbTimer *timer, ScenePla
         orb->points[i].y = orb->trailA[2].y;
         orb->points[i].z = orb->trailA[2].z - (step.z << 2) + rand() % 100 - 50;
     }
+
+    return 0;
 }
 
-void SceneE08_InitRingSprites(void *unused0, void *unused1, SceneRingSpritesState *effect) {
+int SceneE08_InitRingSprites(void *raw0, void *raw1, void *raw2) {
+    void * unused0 = raw0;
+    void * unused1 = raw1;
+    SceneRingSpritesState * effect = raw2;
     u8 *mid = g_SceneE08RingSpritesRing0Mode;
     u8 *source;
     int width;
@@ -857,6 +938,8 @@ void SceneE08_InitRingSprites(void *unused0, void *unused1, SceneRingSpritesStat
     base[1].extent1 = 800;
     base[1].source = source + 128;
     FieldFx_BuildRingGeometry(&base[1]);
+
+    return 0;
 }
 
 /* Draw the flash sprite while the state is younger than 12 ticks, then the
@@ -864,8 +947,10 @@ void SceneE08_InitRingSprites(void *unused0, void *unused1, SceneRingSpritesStat
  * untyped data argument is read through two typed views and then reused for
  * the matrix pointer of the second half, as retail's use shows
  * (the incoming copy serves the flash block, a second copy the rest). */
-void SceneE08_DrawRingSprites(void *object, void *timer, void *data)
-{
+int SceneE08_DrawRingSprites(void *raw0, void *raw1, void *raw2) {
+    void * object = raw0;
+    void * timer = raw1;
+    void * data = raw2;
     GteRotation rotation;
     GteMatrix matrix;
     GteVector scale;
@@ -925,7 +1010,7 @@ void SceneE08_DrawRingSprites(void *object, void *timer, void *data)
     matrix.t[2] = state->z;
     g_SceneE08RingSpritesGlowSprite.depth = state->depth >> 2;
     FieldFx_DrawGlowSprite(&g_SceneE08RingSpritesGlowSprite, data, 1);
-    RotMatrix(&rotation, data);
+    RotMatrix((GteShortVector *)&rotation, data);
     memset(&source, 0, 0x10);
     source.x = state->size;
     source.y = state->size;
@@ -935,13 +1020,18 @@ void SceneE08_DrawRingSprites(void *object, void *timer, void *data)
     matrix.t[0] = state->x;
     matrix.t[1] = state->y;
     matrix.t[2] = state->z;
-    g_SceneE08RingSpritesRings[0].depth = state->depth;
+    g_SceneE08RingSpritesRings[0].intensity = state->depth;
     FieldFx_DrawShadedRing(&g_SceneE08RingSpritesRings[0], data, 0);
-    g_SceneE08RingSpritesRings[1].depth = state->depth;
+    g_SceneE08RingSpritesRings[1].intensity = state->depth;
     FieldFx_DrawShadedRing(&g_SceneE08RingSpritesRings[1], data, 0);
+
+    return 0;
 }
 
-void SceneE08_UpdateRingSprites(s32 arg0, RoomFxControl *rec, SceneRingSpritesState *p) {
+int SceneE08_UpdateRingSprites(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    RoomFxControl * rec = raw1;
+    SceneRingSpritesState * p = raw2;
     SceneRingSpritesState *q;
     s16 zero;
     s32 step;
@@ -958,6 +1048,8 @@ void SceneE08_UpdateRingSprites(s32 arg0, RoomFxControl *rec, SceneRingSpritesSt
     if (q->depth == zero) {
         rec->state = 2;
     }
+
+    return 0;
 }
 
 /*
@@ -984,15 +1076,18 @@ ROOMLIB_CLOSE_TARGET(SceneE08_SlotsClose)
 
 ROOMLIB_RETURN_ZERO(SceneE08_SlotsNop6)
 
-void SceneE08_InitSlotsContext(RoomEnt *ent, void *unused, SceneE08InitState *state) {
+int SceneE08_InitSlotsContext(void *raw0, void *raw1, void *raw2) {
+    RoomEnt * ent = raw0;
+    void * unused = raw1;
+    SceneE08InitState * state = raw2;
     SceneE08MatrixWords *matrix;
-    void *asset;
+    int asset;
     s16 half;
     FieldActor *player;
     int intensity;
     int mode;
     int offset;
-    void *volatile *sound = g_LoadedSceneAssetBlock;
+    struct SceneAssetBlob **sound = g_LoadedSceneAssetBlock;
     void *handle;
     int playerX;
 
@@ -1044,19 +1139,26 @@ void SceneE08_InitSlotsContext(RoomEnt *ent, void *unused, SceneE08InitState *st
     if (handle != 0) {
         Akao_SendTableCommand(*sound, 0x603, 0, 0x80, 0x7F);
     }
+
+    return 0;
 }
 
-void SceneE08_DrawSlotsContext(void) {
+int SceneE08_DrawSlotsContext(void *raw0, void *raw1, void *raw2) {
+
+
+    return 0;
 }
 
 void Battle_HaltOnPositiveX(void);
 void Battle_InitEntityColors(void);
 int FieldFx_GetStatus(void *arg0);
 
-void SceneE08_UpdateSlotsContext(SceneGrabHead *arg0, RoomFxControl *arg1) {
+int SceneE08_UpdateSlotsContext(void *raw0, void *raw1, void *raw2) {
+    SceneGrabHead * arg0 = raw0;
+    RoomFxControl * arg1 = raw1;
     intptr_t *status;
     int *flags;
-    int *objectFlags;
+    u32 *objectFlags;
 
     status = FieldFx_VarPtr(1);
     if (*status == 1) {
@@ -1079,21 +1181,31 @@ void SceneE08_UpdateSlotsContext(SceneGrabHead *arg0, RoomFxControl *arg1) {
     if (FieldFx_IsLastSlotHalted() == 1) {
         arg1->state = 2;
     }
+
+    return 0;
 }
 
-void SceneE08_InitCentreGlow(void *arg0, void *arg1, SceneE08CentreGlow *glow) {
+int SceneE08_InitCentreGlow(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    void * arg1 = raw1;
+    SceneE08CentreGlow * glow = raw2;
     glow->x = 0;
     glow->y = 0;
     glow->z = 0;
     glow->scale = 0x400;
     glow->unused0A = 0;
     glow->unused0C = 0;
+
+    return 0;
 }
 
 void FieldFx_SetSpriteCellSize(s32 arg0, s32 arg1);
 void FieldFx_SetSpriteColorMode(s32 arg0);
 
-void SceneE08_DrawCentreGlow(void *arg0, void *arg1, SceneE08CentreGlow *glow) {
+int SceneE08_DrawCentreGlow(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    void * arg1 = raw1;
+    SceneE08CentreGlow * glow = raw2;
     SceneE08Matrix matrix;
     SceneE08Vector scratch_scale;
     SceneE08Vector draw_scale;
@@ -1129,23 +1241,38 @@ void SceneE08_DrawCentreGlow(void *arg0, void *arg1, SceneE08CentreGlow *glow) {
     matrix.t[1] = glow->y;
     matrix.t[2] = glow->z + g_SceneE08CentreZ;
     FieldFx_DrawGlowSprite((FieldGlowSprite *)g_SceneE08CentreGlowSprite, &matrix, 1);
+
+    return 0;
 }
 
-void SceneE08_UpdateCentreGlow(void *arg0, RoomFxControl *control, void *arg2) {
+int SceneE08_UpdateCentreGlow(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    RoomFxControl * control = raw1;
+    void * arg2 = raw2;
     if (control->frame >= 0x79) {
         control->state = 2;
     }
+
+    return 0;
 }
 
-void SceneE08_InitRadialRibbons(void *arg0, void *arg1, SceneMovingSlots *slots) {
+int SceneE08_InitRadialRibbons(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    void * arg1 = raw1;
+    SceneMovingSlots * slots = raw2;
     unsigned int i;
 
     for (i = 0; i < 16; i++) {
         slots->active[i] = 0;
     }
+
+    return 0;
 }
 
-void SceneE08_DrawRadialRibbons(s32 arg0, s32 arg1, SceneMovingSlots *base) {
+int SceneE08_DrawRadialRibbons(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    void * arg1 = raw1;
+    SceneMovingSlots * base = raw2;
     Ovl178Position *st;
     u32 i;
     u8 buf38[8];
@@ -1174,9 +1301,14 @@ void SceneE08_DrawRadialRibbons(s32 arg0, s32 arg1, SceneMovingSlots *base) {
                           (struct RenderColor *)buf38, (struct RenderColor *)buf40, type);
         }
     }
+
+    return 0;
 }
 
-void SceneE08_UpdateRadialRibbons(int unused, SceneMovingState *state, SceneMovingSlots *slots) {
+int SceneE08_UpdateRadialRibbons(void *raw0, void *raw1, void *raw2) {
+    void * unused = raw0;
+    SceneMovingState * state = raw1;
+    SceneMovingSlots * slots = raw2;
     unsigned int i;
 
     for (i = 0; i < 16; ++i) {
@@ -1218,9 +1350,14 @@ void SceneE08_UpdateRadialRibbons(int unused, SceneMovingState *state, SceneMovi
     if (state->elapsedFrames >= 181) {
         state->status = 2;
     }
+
+    return 0;
 }
 
-void SceneE08_InitParticleSlots(int unused0, int unused1, SceneParticleSlots *slots) {
+int SceneE08_InitParticleSlots(void *raw0, void *raw1, void *raw2) {
+    void * unused0 = raw0;
+    void * unused1 = raw1;
+    SceneParticleSlots * slots = raw2;
     unsigned int i;
 
     slots->motionRamp = 0;
@@ -1233,12 +1370,16 @@ void SceneE08_InitParticleSlots(int unused0, int unused1, SceneParticleSlots *sl
         slots->offset[i].z = 0;
         slots->timer[i] = rand() % 10 + 10;
     }
+
+    return 0;
 }
 
 /* Draw each slot's sprite at its offset from the scene anchor (doubled in
  * depth), then each slot's shadow sprite using the raw offset. */
-void SceneE08_DrawParticleSlots(void *object, void *timer, SceneParticleSlots *slots)
-{
+int SceneE08_DrawParticleSlots(void *raw0, void *raw1, void *raw2) {
+    void * object = raw0;
+    void * timer = raw1;
+    SceneParticleSlots * slots = raw2;
     GteShortVector position;
     GteShortVector offset;
     RenderColor color;
@@ -1297,10 +1438,14 @@ void SceneE08_DrawParticleSlots(void *object, void *timer, SceneParticleSlots *s
         FieldFx_DrawShapeQuads(&position, (GteRotation *)&slots->offset[i], scale, scale, 0x80,
                       GetClut(0x80, palette), 2, slots->verticalOffset[i], 0);
     }
+
+    return 0;
 }
 
-void SceneE08_UpdateParticleSlots(int unused, u8 *state, SceneParticleSlots *slots)
-{
+int SceneE08_UpdateParticleSlots(void *raw0, void *raw1, void *raw2) {
+    void * unused = raw0;
+    u8 * state = raw1;
+    SceneParticleSlots * slots = raw2;
     unsigned int i;
     u16 oldPhase;
     ++slots->elapsedFrames;
@@ -1330,11 +1475,16 @@ void SceneE08_UpdateParticleSlots(int unused, u8 *state, SceneParticleSlots *slo
     if (slots->elapsedFrames >= 181) {
         state[1] = 2;
     }
+
+    return 0;
 }
 
-void FieldFx_BuildRingGeometry(void *);
 
-void SceneE08_InitRingEffect(void *unused0, void *unused1, SceneE08RingEffectState *effect) {
+
+int SceneE08_InitRingEffect(void *raw0, void *raw1, void *raw2) {
+    void * unused0 = raw0;
+    void * unused1 = raw1;
+    SceneE08RingEffectState * effect = raw2;
     u8 *mid = (u8 *)&g_SceneE08RingEffectRing0Mode;
     u8 *source;
     FieldRingGeometry *ring;
@@ -1395,9 +1545,14 @@ void SceneE08_InitRingEffect(void *unused0, void *unused1, SceneE08RingEffectSta
     source += 0x400;
     record->source = source;
     FieldFx_BuildRingGeometry(record);
+
+    return 0;
 }
 
-void SceneE08_DrawRingEffect(void *unused, RoomFxControl *time, SceneE08RingEffectState *record) {
+int SceneE08_DrawRingEffect(void *raw0, void *raw1, void *raw2) {
+    void * unused = raw0;
+    RoomFxControl * time = raw1;
+    SceneE08RingEffectState * record = raw2;
     Matrix matrix;
     Vec4 scratchScale, firstScale, secondScale;
 
@@ -1405,7 +1560,7 @@ void SceneE08_DrawRingEffect(void *unused, RoomFxControl *time, SceneE08RingEffe
     record->rotation[0] = 0;
     record->rotation[1] = 0;
     record->rotation[2] = 0;
-    RotMatrixYXZ(record->rotation, &matrix);
+    RotMatrixYXZ((GteShortVector *)record->rotation, &matrix);
     memset(&firstScale, 0, 0x10);
     firstScale.x = record->firstScale;
     firstScale.y = record->firstScale;
@@ -1415,13 +1570,13 @@ void SceneE08_DrawRingEffect(void *unused, RoomFxControl *time, SceneE08RingEffe
     matrix.t[0] = g_SceneE08CentreX;
     matrix.t[1] = 0;
     matrix.t[2] = g_SceneE08CentreZ;
-    FieldFx_DrawShadedRing(g_SceneE08RingEffectRings, &matrix, 1);
+    FieldFx_DrawShadedRing(&g_SceneE08RingEffectRings[0], &matrix, 1);
     if (time->frame >= 0x3D) {
         FieldFx_SetSpriteBlendMode(2);
         record->rotation[0] = 0x400;
         record->rotation[1] = 0x400;
         record->rotation[2] = 0;
-        RotMatrixYXZ(record->rotation, &matrix);
+        RotMatrixYXZ((GteShortVector *)record->rotation, &matrix);
         memset(&secondScale, 0, 0x10);
         secondScale.x = record->secondScale;
         secondScale.y = record->secondScale;
@@ -1431,11 +1586,16 @@ void SceneE08_DrawRingEffect(void *unused, RoomFxControl *time, SceneE08RingEffe
         matrix.t[0] = g_SceneE08CentreX;
         matrix.t[1] = 0;
         matrix.t[2] = g_SceneE08CentreZ;
-        FieldFx_DrawShadedRing(g_SceneE08RingEffectRings + 0x18, &matrix, 0);
+        FieldFx_DrawShadedRing(&g_SceneE08RingEffectRings[1], &matrix, 0);
     }
+
+    return 0;
 }
 
-void SceneE08_UpdateRingEffect(s32 arg0, s16 *rec, SceneE08RingEffectState *p) {
+int SceneE08_UpdateRingEffect(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    s16 * rec = raw1;
+    SceneE08RingEffectState * p = raw2;
     u16 *q;
     s16 pad;
 
@@ -1452,19 +1612,29 @@ void SceneE08_UpdateRingEffect(s32 arg0, s16 *rec, SceneE08RingEffectState *p) {
     if (rec[1] >= 0x6A) {
         ((s8 *)rec)[1] = 2;
     }
+
+    return 0;
 }
 
-void SceneE08_InitSpiralRibbons(void *arg0, void *arg1, SceneMovingSlots *slots) {
+int SceneE08_InitSpiralRibbons(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    void * arg1 = raw1;
+    SceneMovingSlots * slots = raw2;
     unsigned int i;
 
     for (i = 0; i < 16; i++) {
         slots->active[i] = 0;
     }
+
+    return 0;
 }
 
 void FieldFx_SetSpriteColorMode(int);
 
-void SceneE08_DrawSpiralRibbons(void *unused0, void *unused1, SceneMovingSlots *effect) {
+int SceneE08_DrawSpiralRibbons(void *raw0, void *raw1, void *raw2) {
+    void * unused0 = raw0;
+    void * unused1 = raw1;
+    SceneMovingSlots * effect = raw2;
     unsigned int i;
     SceneMovingVector *dst;
     SceneMovingWordLane *step;
@@ -1506,9 +1676,14 @@ void SceneE08_DrawSpiralRibbons(void *unused0, void *unused1, SceneMovingSlots *
         ++i;
         frame = (SceneMovingHalfLane *)((s16 *)frame + 1);
     }
+
+    return 0;
 }
 
-void SceneE08_UpdateSpiralRibbons(int unused, SceneMovingState *state, SceneMovingSlots *slots) {
+int SceneE08_UpdateSpiralRibbons(void *raw0, void *raw1, void *raw2) {
+    void * unused = raw0;
+    SceneMovingState * state = raw1;
+    SceneMovingSlots * slots = raw2;
     unsigned int i;
 
     for (i = 0; i < 16; ++i) {
@@ -1560,21 +1735,36 @@ void SceneE08_UpdateSpiralRibbons(int unused, SceneMovingState *state, SceneMovi
     if (state->elapsedFrames >= 181) {
         state->status = 2;
     }
+
+    return 0;
 }
 
-void SceneE08_InitScreenFade(void *arg0, void *arg1, SceneE08ScreenFade *fade) {
+int SceneE08_InitScreenFade(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    void * arg1 = raw1;
+    SceneE08ScreenFade * fade = raw2;
     fade->reserved = 0;
     fade->level = 0;
+
+    return 0;
 }
 
-void SceneE08_DrawScreenFade(void *arg0, void *arg1, SceneE08ScreenFade *fade) {
+int SceneE08_DrawScreenFade(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    void * arg1 = raw1;
+    SceneE08ScreenFade * fade = raw2;
     SceneE08FourBytes local;
 
     local = g_SceneE08ScreenFadeColor;
     FieldFx_DrawScreenTint((unsigned char *)&local, fade->level, 1, 8);
+
+    return 0;
 }
 
-void SceneE08_UpdateScreenFade(void *arg0, RoomFxControl *control, SceneE08ScreenFade *fade) {
+int SceneE08_UpdateScreenFade(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    RoomFxControl * control = raw1;
+    SceneE08ScreenFade * fade = raw2;
     if (control->frame < 0x3D) {
         fade->phase = 1;
     } else {
@@ -1598,25 +1788,35 @@ void SceneE08_UpdateScreenFade(void *arg0, RoomFxControl *control, SceneE08Scree
     if (control->frame >= 0x79) {
         control->state = 2;
     }
+
+    return 0;
 }
 
-void SceneE08_InitOrbitParticles(void *arg0, void *arg1, char *arg2) {
+int SceneE08_InitOrbitParticles(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    void * arg1 = raw1;
+    char * arg2 = raw2;
     char *end = arg2 + 0x20;
 
     do {
         *arg2++ = 0;
     } while (arg2 < end);
+
+    return 0;
 }
 
 void FieldFx_SetSpriteCellSize(int, int);
 void FieldFx_SetSpriteColorMode(int);
-void SceneE08_DrawOrbitParticles(void *unused0, void *unused1, SceneE08OrbitParticles *effect) {
+int SceneE08_DrawOrbitParticles(void *raw0, void *raw1, void *raw2) {
+    void * unused0 = raw0;
+    void * unused1 = raw1;
+    SceneE08OrbitParticles * effect = raw2;
     SceneE08Matrix matrix;
     s16 temp[3];
     SceneE08Vector transformed, v;
     /* Keep the matrix scale live before the first rendering setup call. */
     s16 scale = 0x1000;
-    char *table = g_SceneE08CentreGlowSprite;
+    u8 *table = g_SceneE08CentreGlowSprite;
     Ovl178Position *owner;
     unsigned i;
 
@@ -1656,9 +1856,14 @@ void SceneE08_DrawOrbitParticles(void *unused0, void *unused1, SceneE08OrbitPart
             FieldFx_DrawGlowSprite((FieldGlowSprite *)table, &matrix, 1);
         }
     }
+
+    return 0;
 }
 
-void SceneE08_UpdateOrbitParticles(void *unused, RoomFxControl *condition_arg, SceneE08OrbitParticles *effect) {
+int SceneE08_UpdateOrbitParticles(void *raw0, void *raw1, void *raw2) {
+    void * unused = raw0;
+    RoomFxControl * condition_arg = raw1;
+    SceneE08OrbitParticles * effect = raw2;
     /* The byte cursor and loop-limit base remain pinned for matching. */
     RoomFxControl *condition = condition_arg;
     char *base = (char *)effect;
@@ -1698,9 +1903,14 @@ void SceneE08_UpdateOrbitParticles(void *unused, RoomFxControl *condition_arg, S
     if (condition->frame >= 121) {
         condition->state = 2;
     }
+
+    return 0;
 }
 
-void SceneE08_InitGlowModel(void *arg0, void *arg1, short *state) {
+int SceneE08_InitGlowModel(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    void * arg1 = raw1;
+    short * state = raw2;
     state[1] = -0x1000;
     state[4] = 0;
     state[5] = 0;
@@ -1711,12 +1921,16 @@ void SceneE08_InitGlowModel(void *arg0, void *arg1, short *state) {
     state[9] = 0x1000;
     state[10] = 0x270;
     state[12] = 1;
+
+    return 0;
 }
 
 /* Draw the scene model with the owner's texture page, then a glow sprite
  * whose size grows with the timer after tick 10 (capped at 0x7D00). */
-void SceneE08_DrawGlowModel(void *object, SceneGlowModelTimer *timer, SceneGlowModelState *state)
-{
+int SceneE08_DrawGlowModel(void *raw0, void *raw1, void *raw2) {
+    void * object = raw0;
+    SceneGlowModelTimer * timer = raw1;
+    SceneGlowModelState * state = raw2;
     RoomSpriteMatrix matrix;
     SceneGlowModelColor color;
     RoomFxVec4 scale;
@@ -1782,9 +1996,14 @@ void SceneE08_DrawGlowModel(void *object, SceneGlowModelTimer *timer, SceneGlowM
         matrix.t[2] = g_SceneE08CentreZ;
         FieldFx_DrawGlowSprite(&g_SceneE08GlowModelHaloSprite, &matrix, 1);
     }
+
+    return 0;
 }
 
-void SceneE08_UpdateGlowModel(void *arg0, RoomFxControl *signal, SceneGlowModelState *work) {
+int SceneE08_UpdateGlowModel(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    RoomFxControl * signal = raw1;
+    SceneGlowModelState * work = raw2;
     work->seed.vector.y += 0xC8;
     if (signal->frame < 0x10) {
         u16 depth = work->depth;
@@ -1805,9 +2024,14 @@ void SceneE08_UpdateGlowModel(void *arg0, RoomFxControl *signal, SceneGlowModelS
     if ((s16)work->depth <= 0) {
         signal->state = 2;
     }
+
+    return 0;
 }
 
-void SceneE08_InitLimbBeams(void *unused0, void *unused1, Ovl178RandomizedEffect *effect) {
+int SceneE08_InitLimbBeams(void *raw0, void *raw1, void *raw2) {
+    void * unused0 = raw0;
+    void * unused1 = raw1;
+    Ovl178RandomizedEffect * effect = raw2;
     unsigned i;
     s32 threshold;
 
@@ -1823,11 +2047,15 @@ void SceneE08_InitLimbBeams(void *unused0, void *unused1, Ovl178RandomizedEffect
     } else {
         *FieldFx_VarPtr(1) = 0;
     }
+
+    return 0;
 }
 
 /* Draw the ten limb beams that are switched on (mode 1). */
-void SceneE08_DrawLimbBeams(void *object, void *timer, SceneLimbBeams *beams)
-{
+int SceneE08_DrawLimbBeams(void *raw0, void *raw1, void *raw2) {
+    void * object = raw0;
+    void * timer = raw1;
+    SceneLimbBeams * beams = raw2;
     GteShortVector points[10];
     RenderColor head;
     RenderColor tail;
@@ -1886,9 +2114,14 @@ void SceneE08_DrawLimbBeams(void *object, void *timer, SceneLimbBeams *beams)
                           GetClut(0, 0x1D7), 0x80, &tail, &tail, mode);
         }
     }
+
+    return 0;
 }
 
-void SceneE08_UpdateLimbBeams(int unused, SceneE08RandomState *state, SceneE08RandomEntries *entries) {
+int SceneE08_UpdateLimbBeams(void *raw0, void *raw1, void *raw2) {
+    void * unused = raw0;
+    SceneE08RandomState * state = raw1;
+    SceneE08RandomEntries * entries = raw2;
     unsigned int i;
     for (i = 0; i < 10; ++i) {
         if (entries->active[i] == 1) {
@@ -1904,6 +2137,8 @@ void SceneE08_UpdateLimbBeams(int unused, SceneE08RandomState *state, SceneE08Ra
     if (state->elapsedFrames >= 61) {
         state->status = 2;
     }
+
+    return 0;
 }
 
 /*
@@ -1932,7 +2167,10 @@ ROOMLIB_RETURN_ZERO(SceneE08_LayeredSpriteNop6)
 
 /* The 0x80199560 glow sprite, field by field as Scene_DrawLayeredSprite
  * stores its colour. */
-void SceneE08_InitLayeredSpriteContext(SceneGrabHead *actor, void *unused, SceneE08Context *state) {
+int SceneE08_InitLayeredSpriteContext(void *raw0, void *raw1, void *raw2) {
+    SceneGrabHead * actor = raw0;
+    void * unused = raw1;
+    SceneE08Context * state = raw2;
     FieldActor *source;
     RenderMatrix *block;
     void *sound;
@@ -2034,14 +2272,35 @@ void SceneE08_InitLayeredSpriteContext(SceneGrabHead *actor, void *unused, Scene
         scratch = 0x7F;
         Akao_SendTableCommand(soundAddress->channel, 0x604, 0, 0x80, scratch);
     }
+
+    return 0;
 }
 
-void SceneE08_DrawLayeredSpriteContext(void) {
+int SceneE08_DrawLayeredSpriteContext(void *raw0, void *raw1, void *raw2) {
+
+
+    return 0;
 }
 
-ROOM_REARM_TIMER_TICK(SceneE08_UpdateLayeredSpriteContext, 0x28)
+int SceneE08_UpdateLayeredSpriteContext(void *object, void *rawSlot, void *memory) {
+    FieldFxSlot *slot = rawSlot;
+    SceneE08Context *state = memory;
+    if (state->hitTimer != 0) state->hitTimer--;
+    if (state->hitRequest == 1) {
+        state->hitRequest = 0;
+        if (state->hitTimer == 0) {
+            state->hitTimer = state->hitReload;
+            func_800C6C18(object);
+        }
+    }
+    if (FieldFx_IsLastSlotHalted() == 1) slot->flag = 2;
+    return 0;
+}
 
-void SceneE08_InitTrailGlow(s32 arg0, s32 arg1, SceneE08TrailGlow *p) {
+int SceneE08_InitTrailGlow(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    void * arg1 = raw1;
+    SceneE08TrailGlow * p = raw2;
     Ovl178Position *view;
     s32 z;
 
@@ -2060,11 +2319,16 @@ void SceneE08_InitTrailGlow(s32 arg0, s32 arg1, SceneE08TrailGlow *p) {
     p->scale[0].y = 0x800;
     p->scale[0].z = 0;
     p->trail[0].z = z;
+
+    return 0;
 }
 
 void FieldFx_SetSpriteCellSize(int, int);
 void FieldFx_SetSpriteColorMode(int);
-void SceneE08_DrawTrailGlow(void *arg0, void *arg1, char *effects) {
+int SceneE08_DrawTrailGlow(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    void * arg1 = raw1;
+    char * effects = raw2;
     GteMatrix matrix;
     GteVector scratch, vec;
     Ovl178Position *owner;
@@ -2113,9 +2377,14 @@ void SceneE08_DrawTrailGlow(void *arg0, void *arg1, char *effects) {
     matrix.t[1] = g_RoomFloorY->y;
     matrix.t[2] = ((SceneE08TrailGlow *)base)->trail[0].z;
     FieldFx_DrawGlowSprite(&g_SceneE08TrailGlowFloorSprite, &matrix, 0);
+
+    return 0;
 }
 
-void SceneE08_UpdateTrailGlow(void *unused, RoomFxControl *phase, SceneE08TrailGlow *effect) {
+int SceneE08_UpdateTrailGlow(void *raw0, void *raw1, void *raw2) {
+    void * unused = raw0;
+    RoomFxControl * phase = raw1;
+    SceneE08TrailGlow * effect = raw2;
     Ovl178Position *owner;
     s16 point[3];
     int i;
@@ -2158,10 +2427,14 @@ void SceneE08_UpdateTrailGlow(void *unused, RoomFxControl *phase, SceneE08TrailG
     if (FieldFx_IsPlayerWithinRadius(point, 0x320) != 0) {
         owner->playerHit = 1;
     }
+
+    return 0;
 }
 
-void SceneE08_InitLayeredSprite(void *arg0, void *arg1, SceneLayeredSpriteState *out)
-{
+int SceneE08_InitLayeredSprite(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    void * arg1 = raw1;
+    SceneLayeredSpriteState * out = raw2;
     Ovl178Position *position = FieldFx_GetScriptContext();
 
     out->center[0].fixed = position->x << 16;
@@ -2179,12 +2452,17 @@ void SceneE08_InitLayeredSprite(void *arg0, void *arg1, SceneLayeredSpriteState 
         out->velocity[2] = 0xFFEDB080;
     out->velocity[0] = 0x7A120;
     out->velocity[1] = 0xFFF551A0;
+
+    return 0;
 }
 
 void FieldFx_SetSpriteCellSize(int, int);
 void FieldFx_SetSpriteColorMode(int);
 
-void SceneE08_DrawLayeredSprite(void *unused, u16 *phase, SceneLayeredSpriteState *state) {
+int SceneE08_DrawLayeredSprite(void *raw0, void *raw1, void *raw2) {
+    void * unused = raw0;
+    u16 * phase = raw1;
+    SceneLayeredSpriteState * state = raw2;
     RoomSpriteMatrix matrix;
     RoomFxVec4 firstScale, layerScale;
     char *owner;
@@ -2240,10 +2518,14 @@ void SceneE08_DrawLayeredSprite(void *unused, u16 *phase, SceneLayeredSpriteStat
         *alpha = (5 - i) * 31;
         FieldFx_DrawGlowSprite((FieldGlowSprite *)(owner - 10), &matrix, 0);
     }
+
+    return 0;
 }
 
-void SceneE08_UpdateLayeredSprite(void *unused, RoomFxControl *control, char *state)
-{
+int SceneE08_UpdateLayeredSprite(void *raw0, void *raw1, void *raw2) {
+    void * unused = raw0;
+    RoomFxControl * control = raw1;
+    char * state = raw2;
     Ovl178Position *owner = FieldFx_GetScriptContext();
     /* Keeps the later history-copy loop based at its original offset. */
     char *cursor;
@@ -2347,9 +2629,14 @@ void SceneE08_UpdateLayeredSprite(void *unused, RoomFxControl *control, char *st
     {
         owner->playerHit = 1;
     }
+
+    return 0;
 }
 
-void SceneE08_InitSpinningGlow(void *arg0, void *arg1, Ovl178MotionState *state) {
+int SceneE08_InitSpinningGlow(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    void * arg1 = raw1;
+    Ovl178MotionState * state = raw2;
     Ovl178MotionState *state_reg;
     Ovl178Position *position;
     int z;
@@ -2368,12 +2655,17 @@ void SceneE08_InitSpinningGlow(void *arg0, void *arg1, Ovl178MotionState *state)
     state_reg->shrink = 0;
     state_reg->depth = 0;
     state_reg->z = z;
+
+    return 0;
 }
 
 void FieldFx_SetSpriteCellSize(s32, s32);
 void FieldFx_SetSpriteColorMode(s32);
 
-void SceneE08_DrawSpinningGlow(s32 arg0, RoomFxControl *arg1, Ovl178MotionState *rec) {
+int SceneE08_DrawSpinningGlow(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    RoomFxControl * arg1 = raw1;
+    Ovl178MotionState * rec = raw2;
     Ovl178Position *ctx;
     u32 idx;
     Ovl178MotionState *r;
@@ -2398,17 +2690,21 @@ void SceneE08_DrawSpinningGlow(s32 arg0, RoomFxControl *arg1, Ovl178MotionState 
     vsrc.z = 0x1000;
     vdst = vsrc;
     ScaleMatrix(&buf, &vdst);
-    FieldFx_InterpolateColorRamp(&g_SceneE08SpinningGlowRamp, arg1->frame, &g_SceneE08SpinningGlowSprite);
+    FieldFx_InterpolateColorRamp(&g_SceneE08SpinningGlowRamp, arg1->frame, (u8 *)&g_SceneE08SpinningGlowSprite);
     buf.t[0] = r->x;
     buf.t[1] = r->y;
     buf.t[2] = r->z;
     g_SceneE08SpinningGlowSprite.cell = idx;
     g_SceneE08SpinningGlowSprite.depth = r->depth;
     FieldFx_DrawGlowSprite(&g_SceneE08SpinningGlowSprite, &buf, 1);
+
+    return 0;
 }
 
-void SceneE08_UpdateSpinningGlow(s32 arg0, s16 *rec, u16 *p)
-{
+int SceneE08_UpdateSpinningGlow(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    s16 * rec = raw1;
+    u16 * p = raw2;
   u8 *b = (u8 *) p;
   u16 *q;
   b[0x22] += 0x10;
@@ -2439,9 +2735,14 @@ void SceneE08_UpdateSpinningGlow(s32 arg0, s16 *rec, u16 *p)
   {
     ((s8 *) rec)[1] = 2;
   }
+
+    return 0;
 }
 
-void SceneE08_InitExpandingGlow(void *arg0, void *arg1, SceneE08ExpandingGlow *glow) {
+int SceneE08_InitExpandingGlow(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    void * arg1 = raw1;
+    SceneE08ExpandingGlow * glow = raw2;
     Ovl178Position *position = FieldFx_GetScriptContext();
 
     glow->x = position->x - 0x15E;
@@ -2450,9 +2751,14 @@ void SceneE08_InitExpandingGlow(void *arg0, void *arg1, SceneE08ExpandingGlow *g
     glow->scale = 0;
     glow->growth = 0;
     glow->depth = 0xFF;
+
+    return 0;
 }
 
-void SceneE08_DrawExpandingGlow(void *arg0, void *arg1, SceneE08ExpandingGlow *glow) {
+int SceneE08_DrawExpandingGlow(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    void * arg1 = raw1;
+    SceneE08ExpandingGlow * glow = raw2;
     SceneE08Matrix matrix;
     SceneE08Vector scratch_scale;
     SceneE08Vector draw_scale;
@@ -2492,9 +2798,14 @@ void SceneE08_DrawExpandingGlow(void *arg0, void *arg1, SceneE08ExpandingGlow *g
     draw_slot = &g_SceneE08ArmGlowSpriteDepth;
     *draw_slot = glow->depth;
     FieldFx_DrawGlowSprite((FieldGlowSprite *)((char *)draw_slot - 0xA), &matrix, 1);
+
+    return 0;
 }
 
-void SceneE08_UpdateExpandingGlow(s32 arg0, RoomFxControl *rec, SceneE08ExpandingGlow *p) {
+int SceneE08_UpdateExpandingGlow(void *raw0, void *raw1, void *raw2) {
+    void * arg0 = raw0;
+    RoomFxControl * rec = raw1;
+    SceneE08ExpandingGlow * p = raw2;
     s16 v;
 
     p->scale += p->growth;
@@ -2506,15 +2817,22 @@ void SceneE08_UpdateExpandingGlow(s32 arg0, RoomFxControl *rec, SceneE08Expandin
     if (rec->frame == 0x3C) {
         rec->state = 2;
     }
+
+    return 0;
 }
 
-void SceneE08_InitArmGlow(void) {
+int SceneE08_InitArmGlow(void *raw0, void *raw1, void *raw2) {
+
+
+    return 0;
 }
 
 /* Draw a glow sprite on the player's hand and elbow bones, then a ribbon
  * bent between them through the five script offsets. */
-void SceneE08_DrawArmGlow(void *object, void *timer, SceneArmGlow *glow)
-{
+int SceneE08_DrawArmGlow(void *raw0, void *raw1, void *raw2) {
+    void * object = raw0;
+    void * timer = raw1;
+    SceneArmGlow * glow = raw2;
     GteMatrix matrix;
     GteShortVector points[7];
     RenderColor head;
@@ -2604,10 +2922,14 @@ void SceneE08_DrawArmGlow(void *object, void *timer, SceneArmGlow *glow)
     tpage = GetTPage(0, 0, 0x340, 0x100);
     FieldFx_DrawTexturedRibbon(points, 7, 300, 0x40, 0x80, 0x9C, 0x10, tpage,
                   GetClut(0, 0x1D7), 0x80, &head, &tail, 1);
+
+    return 0;
 }
 
-void SceneE08_UpdateArmGlow(void *unused, Ovl178EffectController *state,
-                   Ovl178RandomizedEffect *effect) {
+int SceneE08_UpdateArmGlow(void *raw0, void *raw1, void *raw2) {
+    void * unused = raw0;
+    Ovl178EffectController * state = raw1;
+    Ovl178RandomizedEffect * effect = raw2;
     unsigned i;
 
     if (effect->extent < 3000) {
@@ -2626,4 +2948,6 @@ void SceneE08_UpdateArmGlow(void *unused, Ovl178EffectController *state,
     if (state->timer >= 36) {
         state->mode = 2;
     }
+
+    return 0;
 }

@@ -20,7 +20,7 @@ typedef struct {
  * position, the sprite page mode the draws select, and the flag the
  * effects raise when they touch the player. */
 typedef struct {
-    char pad_00[0x18];
+    char pad_00[sizeof(void *) + 0x14];
     s32 x;
     s32 y;
     s32 z;
@@ -117,6 +117,6 @@ extern s16 g_SceneE08LimbBeamUnusedAngles[];
 extern u16 g_SceneE08LimbBeamAngles[];
 extern s32 g_SceneE08CentreX;
 extern s32 g_SceneE08CentreZ;
-void FieldFx_BuildRingGeometry(void *item);
+
 
 #endif

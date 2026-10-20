@@ -12,7 +12,7 @@
 /* Scene e08 ring sprites: an animated flash sprite (first 12 ticks), a
  * steady glow sprite, and two shaded rings scaled by the state's size. */
 typedef struct SceneRingSpritesOwner {
-    /* 0x00 */ u8 pad00[0x24];
+    /* 0x00 */ u8 pad00[sizeof(void *) + 0x20];
     /* 0x24 */ u8 mode;
 } SceneRingSpritesOwner;
 
@@ -28,11 +28,7 @@ typedef struct SceneRingSpritesState {
 } SceneRingSpritesState;
 
 /* Shaded ring parameter block drawn by FieldFx_DrawShadedRing. */
-typedef struct SceneRingShade {
-    /* 0x00 */ u8 pad00[0x14];
-    /* 0x14 */ s16 depth;
-    /* 0x16 */ u8 pad16[2];
-} SceneRingShade;
+typedef FieldRingGeometry SceneRingShade;
 
 extern GteRotation g_SceneE08RingSpritesRotation;
 extern GteVector g_SceneE08RingSpritesFlashScale;

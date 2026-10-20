@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### E08: cały istniejący moduł kompiluje się natywnie; integracja otwarta
+
+Naprawiono typy w obu dotychczasowych plikach E08 oraz ich istniejących
+nagłówkach, bez przenoszenia funkcji i nowych plików źródłowych.
+Wszystkie69 callbacków init/draw/update mają ABI FieldFxHandler
+int(void*, void*, void*);67 dotychczasowych
+jawnych funkcji i dwa timery z makr pozostają w e08.c. Timery odwołują się
+do pól natywnych kontekstów zamiast stałego offsetu0x28. Macierze kopiują
+RenderMatrix; asset pozostaje indeksem int (poprzedni opis audytu mylnie
+sugerował błędny zwrot int; błędne było przechowywanie indeksu jako pointer).
+Widoki właścicieli uwzględniają rozmiar wskaźnika, ringi używają rzeczywistego
+FieldRingGeometry, rozmiary slotów są u16, listy mają FieldFxHandler.
+/tmp/pe-e08-normalized-v2-proof.json: cztery kompilacje obu plików
+normal/SAN, zero diagnostyk, typy wskaźników i konwersje jako errors.
+/tmp/pe-e08-function-coverage-v1-proof.json: wszystkie90 historycznych
+funkcji SceneE08 obecne w obiektach (92 eksporty łącznie), żadna zgubiona.
+
+/tmp/pe-e08-fade-oracle-v1-proof.json:845 przypadków aktualizacji ScreenFade,
+oryginalny callback80192ccc, bez hooków. Pełne6 bajtów efektu i6 slotu
+zgodne z MIPS oraz między normal/SAN; natywnie wywołanie przez rzeczywisty
+FieldFxHandler, cały istniejący obiekt E08, z nieużywanymi sekcjami usuniętymi
+przez linker. Zakres obejmuje progi60/61 i120/121 oraz skrajne shorty,
+nie obejmuje pozostałych efektów, renderowania ani przebiegu lokacji.
+
+/tmp/pe-e08-abi-v1: świeże216+216 obiektów zlinkowanej gry/fixture, rehash
+zależności/bibliotek/binarek, wszystkie70 regresji normal/SAN PASS.
+Osiem CTestów PASS: siedem dotychczasowych assetowych i permanentny M430,
+z wymaganymi obrazami obu płyt. CTest aktora wskazuje świeżą fixture,
+pozostałe niezmienione testy na istniejące binarki build. PsyZ/SDL nadal
+nieinstrumentowane. E08 kompilowano osobno i NIE jest jeszcze w linku gry;
+nie jest to dowód działania M418 ani nowy ukończony kandydat wydania.
+Bieżąca gra użytkownika pozostaje v3. Następne wymagane prace: kompletne
+oryginalne dane/listy/cztery klasy, usunięcie pozostałych surowych aliasów
+danych, bindingi loadera, reset/reload i testy wykonywania całego modułu.
+
 ### Audyt kompletności: E08/M418 nadal poza natywnym linkiem
 
 Porównanie istniejących src/overlays/*/*.c z CMake wykazało dwa niepodłączone
@@ -12,8 +47,8 @@ obu plików flagami kandydata v3 normal/SAN z błędami typów jako errors:
 e08.c ma27 diagnostyk errors, start ma1, w obu profilach. Dowód ze wszystkimi
 komendami, SHA256 źródeł i logami: /tmp/pe-e08-baseline-v2-proof.json.
 Pierwsze próby z domyślnym limitem diagnostyk zachowane jako baseline-v1.
-Problemy obejmują32-bitowy offset struktury ze wskaźnikami, błędny int zwrot
-assetu, lokalne widoki macierzy, deklaracje ring geometry, tablice rozmiarów
+Problemy obejmują32-bitowy offset struktury ze wskaźnikami, błędne potraktowanie indeksu
+assetu jako wskaźnika, lokalne widoki macierzy, deklaracje ring geometry, tablice rozmiarów
 int zamiast u16 oraz przestarzałe typy callbacków. Nie naprawiać samymi castami.
 
 /tmp/pe-e08-inspect-v1.py odczytał bezpośrednio z obrazu Disc2 pełne M418,

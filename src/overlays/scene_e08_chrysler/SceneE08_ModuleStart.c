@@ -11,4 +11,4 @@
 ROOMLIB_REGISTER_TABLE_ANY(SceneE08_RegisterDrawList, g_RoomDrawList)
 
 ROOMLIB_START_ANY(SceneE08_StartModule, g_RoomUpdateList, g_RoomInitList,
-                  g_RoomSpawnLayout, RoomLib_CloseTarget)
+                  g_SceneE08FadeSpawnLayout, RoomLib_CloseTarget)

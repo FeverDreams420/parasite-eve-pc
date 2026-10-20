@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M273: autentyczne Cure-M w Double Action
+
+Nowa próba live84495 od tego samego F i300BP: wczesny wybór części7
+przed Liberate nie skupił na niej obrażeń. Po Liberate części5/6/7
+miały1000185/1001452/1001587HP. Nie wyciągamy z samego wyboru celu
+wniosku o rozdziale wszystkich trafień Liberate.
+
+Po dokończeniu części5, pełnym chwycie i Heal3+strzale Aya491HP.
+Cure-M z autentycznego slotu13 oraz pojedynczy strzał w jednej turze:
+slot13 wyczyszczony, ammo5→4, część7 1001515→1001443, HP491,
+state_flags&0xc0==0xc0 (odporność na stiffness). Medicine3 slot27
+pozostawało dostępne. /tmp/pe-m273-cure-m-v4-proof/proof.json:
+cold SAN do43300 exit0 bez raportów, pełny JSON/VRAM identyczne z
+normalnym live, źródłowe i prywatne F niezmienione. To nadal nie jest
+oracle retail PS1 ani zwycięstwo nad bossem.
+
+Cure-M nie zapobiega fizycznemu chwytowi: dalszy live po oczekiwaniu
+na ATB został schwytany i wypuszczony z1HP. Medicine3 przywróciło180HP;
+kolejne Heal3 zostało wykonane podczas ataku Sway. Aktualny live84495,
+/tmp/pe-m273-target7-v1-live.py, zatrzymany na44740 z301HP, ammo3,
+część5 wyłączona, części6/7 nadal aktywne. Odcinek po43300 nie ma
+jeszcze niezależnego replayu; nie jest zaliczany do nowego dowodu.
+Nie zmieniano modułów, balansu ani zapisu w tej próbie.
+
 ### M273: Heal2 i ataki po wyłączeniu pierwszej części
 
 Dalsza taśma v4 do47914 przeszła cold SAN: exit0 bez raportów,

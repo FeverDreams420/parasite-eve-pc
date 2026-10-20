@@ -2,6 +2,42 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: G23, FMV16/story508 i rusztowanie → FMV18/M158/story512
+
+Dalsze potwierdzenia nagród odbierają G23 do pustego slot18 jako dynamiczny
+item266; rekord10 ma baseID0x5B (ITEM_G23), bajty
+01075b005b00012f3a0a0a000000010002000000022200000000000000000012.
+Awans zwiększa maxHP283→320 i pojemność23→25; aktualne72HP pozostaje.
+M38164364; dialogi61–68 uruchamiają67964 film16/video_state2.
+Wait2400 bez przycisków67964–70364 kończy film naturalnie:story508,
+video_state0,dialog70. Dalsze71–74 do72764 zwalniają move_lock0.
+
+Dwa świeże cold72764 normal/SAN:exit0 bez diagnostyki, całe JSON i1MiB
+VRAM równe między profilami oraz zamrożonym live72764. Wszystkie sloty,
+4096 bajtów rekordów, pojemność i zmienne sprawdzone względem48506:
+slot18:16→266,pojemność25,rekord10 jak wyżej,bajt426:2→3;
+zmienne1:155→381,11:2→10,74:504→508. Pozostałe bez zmian.
+/tmp/pe-ex-hospital-story508-C2-v1-{seed.json,checkpoint,proof/proof.json}.
+
+Dwa polowe Heal2 dają73732:132HP,74072:192HP. Próba Heal3 z menu nie
+zużyła PE ani nie leczyła; wybrana kontynuacja korzysta z działającego
+Heal2. Po zamknięciu menu DownLeft460,Cross20,wait120,DownLeft220
+prowadzą75052 doM157/a80253c8. Wait1800 bez pada kończy film18:
+76852 M158/a8025448/story512,video_state0,dialog137,192/320HP.
+move_lock1 odpowiada aktywnemu dialogowi, nie swobodnej eksploracji.
+
+Dwa świeże cold76852 normal/SAN:exit0, całe JSON i1MiB VRAM równe
+między profilami i zamrożonym live76852. Cały ekwipunek równy72764;
+względem niego tylko zmienne1:381→157,74:508→512. Weryfikator obejmuje
+powyższe HP, scenę rusztowania i zakończenia filmów. Dowód
+/tmp/pe-ex-hospital-escape-C2-v1-{seed.json,checkpoint,proof/proof.json}.
+Źródłowe C2 i prywatne kopie obu zestawów bajtowo niezmienione.
+Wyłącznie input pada, bez zmian kodu gry/PsyZ/RAM/payloadów zapisów,
+ten sam pe-video-clock-v1. SDK/SDL nieinstrumentowane; brak niezależnego
+oracle PS1, końcowy VRAM nie potwierdza wszystkich klatek filmu ani PCM.
+/tmp tymczasowe; kolejna walka M159 w tej gałęzi pozostaje otwarta.
+
+
 ### EX: pająk M156/M380 pokonany, Aya72HP
 
 Kontynuacja autentycznego C2 i zwykłego journalu54308 używa zachowanego

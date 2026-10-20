@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M273 z H: część6 wyłączona, pełne HP i leki zachowane
+
+Na v4 dalsze pojedyncze strzały Double Action obniżyły część6
+1000387→1000273→1000159→1000045. Przy pustym magazynku oryginalna
+kolejka Heal3+strzał wykonała leczenie358→621HP, przeładowanie0→12
+oraz pojedynczy strzał: ammo11, część6 999988HP. Ponowne celowanie przy
+44870 ma tylko cele5 i7. Jest to inna kolejność wyłączania części niż
+wcześniejsze próby z częścią5 jako pierwszą.
+
+/tmp/pe-m273-H-part6-v1-proof/proof.json: cold SAN od samego H do44870,
+exit0 bez raportów, cały JSON/VRAM identyczne z normalnym live,
+lista celów[5,7], odporność stiffness0xc0, HP621, ammo11, Medicine4w15
+iMedicine3w27 zachowane. Źródłowa i prywatna karta H bez zmian.
+Nie zmieniano modułów, AI, obrażeń, HP ani progów. To nadal porównanie
+natywne/SAN, bez oracle retail PS1 i bez zwycięstwa nad bossem.
+
+Dalszy live66498 zaobserwował sekwencję Eve10→11. Odejdźcie Down90,
+Left70 ominęło początek ataku bez obrażeń; ponowne podejście Right55
+trafiło w trwający efekt (621→518HP). Przy45308 trwa celowanie,
+pozostałe części5/7, oba leki zachowane; odcinek po44870 nie ma jeszcze
+niezależnego replayu. Live /tmp/pe-m273-prepared-H-v1-live.py pozostaje
+aktywny. Pełny finał i pozostały zakres planu pozostają otwarte.
+
 ### M273 z H: BP, Cure-M+Liberate i tryb11 Eve
 
 Cold H dotarł do M273 z621HP i lekami9/8 w15/27. W oryginalnym menu

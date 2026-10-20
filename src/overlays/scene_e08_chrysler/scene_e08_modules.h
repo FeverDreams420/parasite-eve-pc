@@ -12,8 +12,8 @@
  * same methods over their own script and lists, named in the symbol file. */
 extern u16 g_SceneE08FadeSpawnLayout[];
 
-int SceneE08_RegisterDrawList(void *o);
-int SceneE08_StartModule(void *o);
+int SceneE08_RegisterDrawList(PmSlotHeader *o);
+int SceneE08_StartModule(PmSlotHeader *o);
 
 /* Second module: emitter and fade slots, the player orb and its ring
  * sprites (SceneE08_OrbClass.c). */
@@ -22,13 +22,13 @@ extern FieldFxHandler g_SceneE08OrbDrawList[];
 extern FieldFxHandler g_SceneE08OrbUpdateList[];
 extern FieldFxHandler g_SceneE08OrbInitList[];
 extern u16 g_SceneE08OrbSpawnLayout[];
-int SceneE08_OrbNop0(void);
-int SceneE08_OrbPlantScript(void *object);
-int SceneE08_OrbSpawn6(intptr_t a, int b, int c, intptr_t d, int e, int f);
-int SceneE08_OrbRegister(void *o);
-int SceneE08_OrbStart(void *o);
-int SceneE08_OrbClose(struct RoomEnt *o);
-int SceneE08_OrbNop6(void);
+void SceneE08_OrbNop0(void);
+void SceneE08_OrbPlantScript(PmSlotHeader *object);
+int SceneE08_OrbSpawn6(PmSlotHeader *slot, int b, int c, intptr_t d, intptr_t e, intptr_t f);
+int SceneE08_OrbRegister(PmSlotHeader *o);
+int SceneE08_OrbStart(PmSlotHeader *o);
+int SceneE08_OrbClose(PmSlotHeader *o);
+void SceneE08_OrbNop6(void);
 
 /* Third module: moving and particle slots, the glow model and the limb
  * beams (SceneE08_SlotsClass.c). */
@@ -37,13 +37,13 @@ extern FieldFxHandler g_SceneE08SlotsDrawList[];
 extern FieldFxHandler g_SceneE08SlotsUpdateList[];
 extern FieldFxHandler g_SceneE08SlotsInitList[];
 extern u16 g_SceneE08SlotsSpawnLayout[];
-int SceneE08_SlotsNop0(void);
-int SceneE08_SlotsPlantScript(void *object);
-int SceneE08_SlotsSpawn6(intptr_t a, int b, int c, intptr_t d, int e, int f);
-int SceneE08_SlotsRegister(void *o);
-int SceneE08_SlotsStart(void *o);
-int SceneE08_SlotsClose(struct RoomEnt *o);
-int SceneE08_SlotsNop6(void);
+void SceneE08_SlotsNop0(void);
+void SceneE08_SlotsPlantScript(PmSlotHeader *object);
+int SceneE08_SlotsSpawn6(PmSlotHeader *slot, int b, int c, intptr_t d, intptr_t e, intptr_t f);
+int SceneE08_SlotsRegister(PmSlotHeader *o);
+int SceneE08_SlotsStart(PmSlotHeader *o);
+int SceneE08_SlotsClose(PmSlotHeader *o);
+void SceneE08_SlotsNop6(void);
 
 /* Fourth module: effect palettes, the layered sprite and the arm glow
  * (SceneE08_LayeredSpriteClass.c). */
@@ -52,12 +52,15 @@ extern FieldFxHandler g_SceneE08LayeredSpriteDrawList[];
 extern FieldFxHandler g_SceneE08LayeredSpriteUpdateList[];
 extern FieldFxHandler g_SceneE08LayeredSpriteInitList[];
 extern u16 g_SceneE08LayeredSpriteSpawnLayout[];
-int SceneE08_LayeredSpriteNop0(void);
-int SceneE08_LayeredSpritePlantScript(void *object);
-int SceneE08_LayeredSpriteSpawn6(intptr_t a, int b, int c, intptr_t d, int e, int f);
-int SceneE08_LayeredSpriteRegister(void *o);
-int SceneE08_LayeredSpriteStart(void *o);
-int SceneE08_LayeredSpriteClose(struct RoomEnt *o);
-int SceneE08_LayeredSpriteNop6(void);
+void SceneE08_LayeredSpriteNop0(void);
+void SceneE08_LayeredSpritePlantScript(PmSlotHeader *object);
+int SceneE08_LayeredSpriteSpawn6(PmSlotHeader *slot, int b, int c, intptr_t d, intptr_t e, intptr_t f);
+int SceneE08_LayeredSpriteRegister(PmSlotHeader *o);
+int SceneE08_LayeredSpriteStart(PmSlotHeader *o);
+int SceneE08_LayeredSpriteClose(PmSlotHeader *o);
+void SceneE08_LayeredSpriteNop6(void);
+
+extern PmCommand g_SceneE08Classes[4];
+void SceneE08_ResetModule(void);
 
 #endif

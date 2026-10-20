@@ -2,6 +2,56 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### E08/M418: cały moduł w natywnym linku i permanentny test loadera
+
+Do CMake włączono oba dotychczasowe pliki E08 oraz jego oryginalny
+room_lib/class_plant_script.c z PE_OVERLAY=scene_e08_chrysler.
+Żadnych nowych plików gry ani przenoszenia funkcji. Cztery pełne klasy
+PmCommand mają oryginalne28 metod we właściwej kolejności, natywne
+sygnatury i pełne wskaźniki. Start jawnie aktualizuje istniejące sloty przed
+interpretacją skryptu; nie zależy od kolejności ewaluacji operandów |.
+Zamknięcie odwołuje się do kanonicznych actor/state/core_flags/action_state.
+Reset w e08.c odtwarza wszystkie46 rekordów i pointer modelu, odpowiadając
+ponownemu wczytaniu oryginalnego overlayu. Rejestracja sześciu rekordów
+M418 odbywa się po czyszczeniu banku PM; wcześniej walidowane są adresy
+75/80198b1c,70/80198ae4,46/801986ac,47/80198760,48/80198914,49/80198a48.
+
+Permanentny original-m418-chrysler-load (--m418-load) czyta prawdziwe dane
+Disc2 i dwukrotnie ładuje M418 w każdym profilu. Sprawdza oryginalne28
+adresów metod, komplet czterech skryptów przez initialize, przekazanie
+pełnego pointeru przez send, register, nop/unload oraz close ze stanem
+właściciela i maską core_flags. Nie uruchamia execute całego efektu.
+/tmp/pe-e08-integration-v5-load-proof.json: normal/SAN exit0, bez raportów,
+prywatne karty puste. Wcześniejsze nieudane przebiegi zachowane: v1 miał
+wadliwą arytmetykę pointerów w testerze, v3 rejestrował klasy przed
+czyszczeniem banku, v4 zamykał obiekt testowy bez właściciela. Te usterki
+naprawiono; v5 używa prawidłowego aktora z jego stanem i action_state.
+
+/tmp/pe-e08-integrated-reset-v1-proof.json: po zatruciu wszystkich46
+rekordów reset odtwarza pełne dane M418;65 aliasów i mutacje wspólnej
+pamięci nadal poprawne, normal/SAN identyczne. Helpery linkują dokładnie
+obiekty aktualnego kandydata, bez dodatkowej kopii E08.
+/tmp/pe-e08-integrated-rings-v1-proof.json: ponowne porównanie obu initów,
+pięciu parametrów pierścieni, pełnych stanów i2304 bajtów geometrii z MIPS,
+bez hooków; zgodne normal/SAN. /tmp/pe-e08-integration-v5-data-proof.json
+sprawdza w obiektach4 skrypty,12 list,4 rozmiary i relokacje wszystkich28
+metod klas. Sześć ścisłych kompilacji trzech jednostek normal/SAN ma zero
+diagnostyk; /tmp/pe-e08-integration-v5-strict-proof.json.
+
+Świeży kandydat /tmp/pe-e08-integration-v5:219 normal+219 SAN obiektów,
+całość rehash,70/70 regresji exit0,9/9 CTestów: siedem dotychczasowych
+assetowych oraz M430 i M418, z wymaganymi obrazami płyt. CTest aktora
+używa świeżej fixture, pozostałe niezmienione binarki testowe z build.
+Psyz/SDL nadal nieinstrumentowane. Cold replay od autentycznego L do
+144709/E19,223HP, main1003296 zakończył się exit0 normal/SAN; pełne JSON
+i VRAM identyczne także z zachowaną starszą sesją live. L niezmieniony,
+/tmp/pe-e08-integration-v5-e19-proof/proof.json. Nie jest to zwycięstwo E19.
+Zweryfikowany game i fixture skopiowano do build, poprzednie binarki
+zachowane; /tmp/pe-e08-integration-v5-installed-build-proof.json.
+M418 nie zostało osiągnięte kampanią;
+pełne wykonanie czterech efektów, rendering/audio i Chrysler Building
+pozostają do weryfikacji. Sam loader i poprawny link nie zamykają sceny.
+
 ### E08: oryginalne dane grafiki i współdzielone pola; naprawione dwa offsety PS1
 
 W istniejącym e08.c odtworzono46 rekordów stałych i pamięci roboczej:

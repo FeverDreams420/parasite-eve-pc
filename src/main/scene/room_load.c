@@ -37,6 +37,7 @@
 #include "pe1/room_ember_burst.h"
 #include "pe1/room_shake_burst.h"
 #include "../../overlays/room_m318_chrysler/m318_externs.h"
+#include "../../overlays/scene_e08_chrysler/scene_e08_modules.h"
 #include "pe1/room_model_pulse.h"
 #include "pe1/room_m350_sweep_trap.h"
 #include "../../overlays/room_m350_cruiser/room_m350_data.h"
@@ -528,6 +529,12 @@ int Scene_LoadRoom(unsigned int roomId)
     for (i = 0; i < directory->scripts >> 22; i++) {
         const void *native = NULL;
         slot = record[i].source.bytes.slot;
+        if (map + 1 == 418) {
+            if (slot == 75 && record[i].u.handlerAddress == 0x80198b1cu) native = &g_RoomActorClassTable[2];
+            if (slot == 70 && record[i].u.handlerAddress == 0x80198ae4u) native = &g_RoomActorClassTable[0];
+            const u32 addresses[4] = {0x801986acu,0x80198760u,0x80198914u,0x80198a48u};
+            if (slot >= 46 && slot <= 49 && record[i].u.handlerAddress == addresses[slot-46]) native = &g_SceneE08Classes[slot-46];
+        }
         if(shared_actor){
             if(chrysler_particles && slot==10 && record[i].u.handlerAddress==chrysler_particles)native=&g_RoomThreeParticleHandlers;
             if(chrysler_falling && slot==40 && record[i].u.handlerAddress==chrysler_falling)native=&g_RoomFallingBurstHandlers;
@@ -975,6 +982,8 @@ int Scene_LoadRoom(unsigned int roomId)
         }
     }
 
+    if (map + 1 == 418) SceneE08_ResetModule();
+
     if(map+1==318) {
         memset(g_RoomM318ActorParams,0,sizeof(g_RoomM318ActorParams));
         memset(g_RoomM318EmberBurstParams,0,sizeof(g_RoomM318EmberBurstParams));
@@ -987,6 +996,12 @@ int Scene_LoadRoom(unsigned int roomId)
     record = SceneAsset_ResolveOffset(room, directory->scripts & 0x3FFFFF);
     for (i = 0; i < directory->scripts >> 22; i++) {
         slot = record[i].source.bytes.slot;
+        if (map + 1 == 418) {
+            if (slot == 75) g_PmCmdHandlerTable[75] = &g_RoomActorClassTable[2];
+            else if (slot == 70) g_PmCmdHandlerTable[70] = &g_RoomActorClassTable[0];
+            else if (slot >= 46 && slot <= 49) g_PmCmdHandlerTable[slot] = &g_SceneE08Classes[slot-46];
+            continue;
+        }
         if(map+1==429) {
             if(slot==75) {g_PmCmdHandlerTable[75]=&g_RoomActorClassTable[2];SceneE19_ResetModule();}
             else if(slot==80) g_PmCmdHandlerTable[80]=&g_SceneE19GrabClass;

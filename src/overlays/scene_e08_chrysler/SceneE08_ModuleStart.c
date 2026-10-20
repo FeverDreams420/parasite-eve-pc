@@ -8,7 +8,16 @@
 #include "../room_lib/room_lib.h"
 #include "scene_e08_modules.h"
 
-ROOMLIB_REGISTER_TABLE_ANY(SceneE08_RegisterDrawList, g_RoomDrawList)
+int SceneE08_RegisterDrawList(PmSlotHeader *object) {
+    FieldFx_Register((FieldFxObject *)object, g_RoomDrawList);
+    return 0;
+}
 
-ROOMLIB_START_ANY(SceneE08_StartModule, g_RoomUpdateList, g_RoomInitList,
-                  g_SceneE08FadeSpawnLayout, RoomLib_CloseTarget)
+int SceneE08_StartModule(PmSlotHeader *object) {
+    int result = FieldFx_UpdateSlots((FieldFxObject *)object, g_RoomUpdateList);
+    result |= FieldFx_RunScript((FieldFxObject *)object, g_RoomInitList, g_SceneE08FadeSpawnLayout);
+    if (result == -1) {
+        RoomLib_CloseTarget(object);
+    }
+    return 0;
+}

@@ -103,6 +103,20 @@ else()
     target_compile_options(parasite-eve-original-e19 PRIVATE -ffunction-sections -fdata-sections)
 endif()
 
+# E08 keeps its original module files and scene-specific script planter.
+add_library(parasite-eve-original-e08 OBJECT
+    src/overlays/scene_e08_chrysler/e08.c
+    src/overlays/scene_e08_chrysler/SceneE08_ModuleStart.c
+    src/overlays/room_lib/class_plant_script.c)
+target_include_directories(parasite-eve-original-e08 PRIVATE include)
+target_link_libraries(parasite-eve-original-e08 PRIVATE psyz)
+target_compile_definitions(parasite-eve-original-e08 PRIVATE PE_OVERLAY=scene_e08_chrysler)
+if(MSVC)
+    target_compile_options(parasite-eve-original-e08 PRIVATE /Gy /Gw)
+else()
+    target_compile_options(parasite-eve-original-e08 PRIVATE -ffunction-sections -fdata-sections)
+endif()
+
 # Compile the original game sources in place. Modules join this target as
 # their platform dependencies are made portable; no duplicate game logic.
 add_library(parasite-eve-original OBJECT
@@ -293,7 +307,7 @@ if(MSVC)
 else()
     target_compile_options(parasite-eve-original PRIVATE -ffunction-sections -fdata-sections)
 endif()
-target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>)
+target_sources(parasite-eve-pc PRIVATE $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
 
 # Original AKAO units compile in place while their SPU/timer dependencies
 # are connected. The title frontend uses the original effect playback path.
@@ -336,7 +350,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-math tests/original_math.c
-        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>)
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
     target_include_directories(test-original-math PRIVATE include)
     target_link_libraries(test-original-math PRIVATE psyz)
     add_test(NAME original-game-math COMMAND test-original-math)
@@ -344,7 +358,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-gte tests/original_gte.c
-        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>)
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
     target_include_directories(test-original-gte PRIVATE include)
     target_link_libraries(test-original-gte PRIVATE psyz)
     add_test(NAME original-game-gte COMMAND test-original-gte)
@@ -352,7 +366,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-animation tests/original_animation.c
-        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>)
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
     target_include_directories(test-original-animation PRIVATE include)
     target_link_libraries(test-original-animation PRIVATE psyz)
     add_test(NAME original-game-animation COMMAND test-original-animation)
@@ -360,7 +374,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-transforms tests/original_transforms.c
-        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>)
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
     target_include_directories(test-original-transforms PRIVATE include)
     target_link_libraries(test-original-transforms PRIVATE psyz)
     add_test(NAME original-game-transforms COMMAND test-original-transforms)
@@ -368,7 +382,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-projection tests/original_projection.c
-        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>)
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
     target_include_directories(test-original-projection PRIVATE include)
     target_link_libraries(test-original-projection PRIVATE psyz)
     add_test(NAME original-game-projection COMMAND test-original-projection)
@@ -376,7 +390,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-hierarchy tests/original_hierarchy.c
-        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>)
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
     target_include_directories(test-original-hierarchy PRIVATE include)
     target_link_libraries(test-original-hierarchy PRIVATE psyz)
     add_test(NAME original-game-hierarchy COMMAND test-original-hierarchy)
@@ -384,7 +398,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-input-rules tests/original_input_rules.c
-        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>)
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
     target_include_directories(test-original-input-rules PRIVATE include)
     target_link_libraries(test-original-input-rules PRIVATE psyz)
     add_test(NAME original-game-input-rules COMMAND test-original-input-rules)
@@ -392,7 +406,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-pools tests/original_pools.c
-        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>)
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
     target_include_directories(test-original-pools PRIVATE include)
     target_link_libraries(test-original-pools PRIVATE psyz)
     add_test(NAME original-game-pools COMMAND test-original-pools)
@@ -400,7 +414,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-nodes tests/original_nodes.c
-        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>)
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
     target_include_directories(test-original-nodes PRIVATE include)
     target_link_libraries(test-original-nodes PRIVATE psyz)
     add_test(NAME original-game-nodes COMMAND test-original-nodes)
@@ -412,7 +426,7 @@ if(BUILD_TESTING)
         $<TARGET_OBJECTS:parasite-eve-original-disc>
         $<TARGET_OBJECTS:parasite-eve-original-akao>
         $<TARGET_OBJECTS:parasite-eve-original-camera>
-        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>)
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
     target_include_directories(test-original-queue PRIVATE include)
     target_link_libraries(test-original-queue PRIVATE psyz)
     add_test(NAME original-game-queue COMMAND test-original-queue)
@@ -420,7 +434,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-expression tests/original_expression.c
-        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>)
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
     target_include_directories(test-original-expression PRIVATE include)
     target_link_libraries(test-original-expression PRIVATE psyz)
     add_test(NAME original-game-expression COMMAND test-original-expression)
@@ -428,7 +442,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-contact tests/original_contact.c
-        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>)
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
     target_include_directories(test-original-contact PRIVATE include)
     target_link_libraries(test-original-contact PRIVATE psyz)
     add_test(NAME original-game-contact COMMAND test-original-contact)
@@ -440,7 +454,7 @@ if(BUILD_TESTING)
         $<TARGET_OBJECTS:parasite-eve-original-disc>
         $<TARGET_OBJECTS:parasite-eve-original-akao>
         $<TARGET_OBJECTS:parasite-eve-original-camera>
-        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>)
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
     target_include_directories(test-original-movement PRIVATE include)
     target_link_libraries(test-original-movement PRIVATE psyz)
     add_test(NAME original-game-movement COMMAND test-original-movement)
@@ -458,7 +472,7 @@ if(BUILD_TESTING)
     add_executable(test-original-actor-animation tests/original_actor_animation.c $<TARGET_OBJECTS:parasite-eve-test-disc>
         $<TARGET_OBJECTS:parasite-eve-original-akao>
         $<TARGET_OBJECTS:parasite-eve-original-camera>
-        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>
         $<TARGET_OBJECTS:parasite-eve-original-actor-animation>)
     target_include_directories(test-original-actor-animation PRIVATE include)
     target_link_libraries(test-original-actor-animation PRIVATE psyz)
@@ -554,6 +568,8 @@ if(BUILD_TESTING)
     set_tests_properties(original-game-fx-motion PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
     add_test(NAME original-game-fx-models COMMAND test-original-actor-animation --fx-models)
     set_tests_properties(original-game-fx-models PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
+    add_test(NAME original-m418-chrysler-load COMMAND test-original-actor-animation --m418-load)
+    set_tests_properties(original-m418-chrysler-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "game-assets;room")
     add_test(NAME original-m430-cruiser-load COMMAND test-original-actor-animation --m430-load)
     set_tests_properties(original-m430-cruiser-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60
         LABELS "game-assets;room" ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy")
@@ -586,7 +602,7 @@ if(BUILD_TESTING)
 endif()
 
 if(BUILD_TESTING)
-    add_executable(test-original-floor tests/original_floor.c $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>)
+    add_executable(test-original-floor tests/original_floor.c $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
     target_include_directories(test-original-floor PRIVATE include)
     target_link_libraries(test-original-floor PRIVATE psyz)
     add_test(NAME original-game-floor COMMAND test-original-floor)
@@ -602,7 +618,7 @@ else()
 endif()
 if(BUILD_TESTING)
     add_executable(test-original-camera tests/original_camera.c $<TARGET_OBJECTS:parasite-eve-original-disc>
-        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>
         $<TARGET_OBJECTS:parasite-eve-original-camera>)
     target_include_directories(test-original-camera PRIVATE include)
     target_link_libraries(test-original-camera PRIVATE psyz)
@@ -616,7 +632,7 @@ target_link_libraries(parasite-eve-original-pad PRIVATE psyz)
 foreach(pad_target IN LISTS akao_runtime_targets)
     target_sources(${pad_target} PRIVATE $<TARGET_OBJECTS:parasite-eve-original-pad>)
     if(NOT pad_target STREQUAL "parasite-eve-pc")
-        target_sources(${pad_target} PRIVATE $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>)
+        target_sources(${pad_target} PRIVATE $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
     endif()
 endforeach()
 if(BUILD_TESTING)
@@ -627,7 +643,7 @@ if(BUILD_TESTING)
     add_executable(test-original-actor-lifecycle tests/original_actor_lifecycle.c
         $<TARGET_OBJECTS:parasite-eve-original-akao>
         $<TARGET_OBJECTS:parasite-eve-original-camera>
-        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>
         $<TARGET_OBJECTS:parasite-eve-original-disc>)
     target_include_directories(test-original-actor-lifecycle PRIVATE include)
     target_link_libraries(test-original-actor-lifecycle PRIVATE psyz)
@@ -696,7 +712,7 @@ endif()
 if(BUILD_TESTING)
     add_executable(test-original-shadow tests/original_shadow.c
         $<TARGET_OBJECTS:parasite-eve-original-shadow>
-        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19>)
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
     target_include_directories(test-original-shadow PRIVATE include)
     target_compile_definitions(test-original-shadow PRIVATE __psyz)
     target_link_libraries(test-original-shadow PRIVATE psyz)
@@ -706,7 +722,7 @@ endif()
 if(BUILD_TESTING)
     add_executable(test-original-stat-assets tests/original_stat_assets.c $<TARGET_OBJECTS:parasite-eve-original-disc>
         $<TARGET_OBJECTS:parasite-eve-original-camera> $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
-        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-pad>
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08> $<TARGET_OBJECTS:parasite-eve-original-pad>
         $<TARGET_OBJECTS:parasite-eve-original-actor-animation> $<TARGET_OBJECTS:parasite-eve-original-akao>)
     target_include_directories(test-original-stat-assets PRIVATE include)
     target_link_libraries(test-original-stat-assets PRIVATE psyz)

@@ -1,3 +1,4 @@
+#include "../src/overlays/scene_e08_chrysler/scene_e08_modules.h"
 #include "pe1/scene_e20_hover_orb.h"
 #include "pe1/scene_e20_flare_draw.h"
 #include "pe1/room_spark_ring_burst.h"
@@ -17749,6 +17750,59 @@ int main(int argc, char **argv)
         }
         CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
         puts("Original M187 loader: real USA assets, complete orbit descriptor and per-entry reset passed twice");return 0;
+    }
+    if(argc==2 && !strcmp(argv[1],"--m418-load")){
+        extern FieldGlowSprite g_SceneE08GlowRingsSprite;
+        extern FieldRingGeometry g_SceneE08RingEffectRings[3];
+        extern u8 g_SceneE08RingEffectSource[0x800];
+        extern char *g_SceneE08GlowModel;
+        const char *path=getenv("PE_TEST_DISC2");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};PeDiscFile archive;u8 authored[0xa700];
+        if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return 1;
+        ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
+        Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+        if(!pe_disc_find(&disc,"PE.IMG",&archive) ||
+           !pe_disc_read(&disc,&archive,(95562u+33u+146u)*2048u,authored,sizeof(authored)))return 1;
+        const u32 descriptors[4]={0x801986ac,0x80198760,0x80198914,0x80198a48};
+        const u32 methods[4][7]={
+                {0x8018f240u,0x8018f248u,0x8018f274u,0x8018f2a0u,0x8018f2c8u,0x8018f338u,0x8018f3bcu},
+                {0x8018fedcu,0x8018fee4u,0x8018ff10u,0x8018ff3cu,0x8018ff64u,0x8018ffd4u,0x80190058u},
+                {0x801913d8u,0x801913e0u,0x8019140cu,0x80191438u,0x80191460u,0x801914d0u,0x80191554u},
+                {0x80193ae4u,0x80193aecu,0x80193b18u,0x80193b44u,0x80193b6cu,0x80193bdcu,0x80193c60u}
+        };
+        const u32 scripts[4]={0x801986c8,0x8019877c,0x80198930,0x80198a64};
+        const unsigned words[4]={12,26,35,28};
+        for(unsigned i=0;i<4;i++)if(memcmp(authored+(descriptors[i]-0x8018efe8),methods[i],28))return 1;
+        for(unsigned pass=0;pass<2;pass++){
+            memset(&g_SceneE08GlowRingsSprite,0xa5,sizeof(g_SceneE08GlowRingsSprite));
+            memset(g_SceneE08RingEffectRings,0xa5,sizeof(g_SceneE08RingEffectRings));
+            memset(g_SceneE08RingEffectSource,0xa5,sizeof(g_SceneE08RingEffectSource));
+            g_SceneE08GlowModel=(char *)(uintptr_t)1;
+            for(unsigned i=0;i<4;i++)g_PmCmdHandlerTable[46+i]=NULL;
+            if(Scene_LoadRoom(Text_ParseBase32Id((signed char *)"m0418i")) ||
+               g_PmCmdHandlerTable[75]!=&g_RoomActorClassTable[2] ||
+               g_PmCmdHandlerTable[70]!=&g_RoomActorClassTable[0] || g_SceneE08GlowModel)return 1;
+            for(unsigned j=0;j<sizeof(g_SceneE08GlowRingsSprite);j++)if(((u8 *)&g_SceneE08GlowRingsSprite)[j])return 1;
+            for(unsigned j=0;j<sizeof(g_SceneE08RingEffectRings);j++)if(((u8 *)g_SceneE08RingEffectRings)[j])return 1;
+            for(unsigned j=0;j<sizeof(g_SceneE08RingEffectSource);j++)if(g_SceneE08RingEffectSource[j])return 1;
+            for(unsigned i=0;i<4;i++){
+                FieldFxObject object={0};PmSlotHeader *slot=(PmSlotHeader *)&object;
+                FieldActor owner={0};FieldActorState core={0};u8 action=3;
+                core.core_flags=0xffffffffu;core.action_state=&action;owner.state=&core;object.prefix.actor=&owner;
+                PmCommand *command=&g_SceneE08Classes[i];
+                if(g_PmCmdHandlerTable[46+i]!=command || !command->init || !command->initialize ||
+                   !command->send || !command->start || !command->execute || !command->stop || !command->unload)return 1;
+                command->init();command->initialize(slot);
+                if(!object.state.commands || memcmp(object.state.commands,authored+(scripts[i]-0x8018efe8),words[i]*4))return 1;
+                intptr_t value=(intptr_t)(uintptr_t)&object;
+                if(command->send(slot,0,5,value,0,0) || object.state.vars[5]!=value ||
+                   command->start(slot) || command->stop(slot) || slot->state!=4 ||
+                   action!=4 || core.core_flags!=0xc0ffffffu)return 1;
+                command->unload();
+            }
+        }
+        CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+        puts("Original M418 loader: real Disc2 assets, all four PM classes/scripts, native method ABI and reset passed twice");return 0;
     }
     if(argc==2 && !strcmp(argv[1],"--m430-load")){
         const char *path=getenv("PE_TEST_DISC2");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

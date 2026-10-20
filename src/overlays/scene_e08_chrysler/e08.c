@@ -1,4 +1,5 @@
 #include "common.h"
+#include <string.h>
 #include "pe1/akao_send.h"
 #include "pe1/asset_find.h"
 #include "pe1/field_actor.h"
@@ -509,21 +510,42 @@ int SceneE08_UpdateParticleCluster(void *raw0, void *raw1, void *raw2) {
  * in the symbol file (scene_e08_modules.h).
  */
 
-ROOMLIB_RETURN_ZERO(SceneE08_OrbNop0)
+ROOMLIB_RETURN_VOID(SceneE08_OrbNop0)
 
-ROOMLIB_PLANT_TABLE(SceneE08_OrbPlantScript, g_SceneE08OrbScript)
+void SceneE08_OrbPlantScript(PmSlotHeader *object) {
+    *FieldFx_GetSlot((FieldFxObject *)object) = g_SceneE08OrbScript;
+}
 
-ROOMLIB_SPAWN6(SceneE08_OrbSpawn6)
+int SceneE08_OrbSpawn6(PmSlotHeader *slot, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
+    FieldFx_Spawn6((intptr_t)slot, b, c, d, (int)e, (int)f);
+    return 0;
+}
 
-ROOMLIB_REGISTER_TABLE_ANY(SceneE08_OrbRegister, g_SceneE08OrbDrawList)
+int SceneE08_OrbRegister(PmSlotHeader *object) {
+    FieldFx_Register((FieldFxObject *)object, g_SceneE08OrbDrawList);
+    return 0;
+}
 
-ROOMLIB_START_ANY(SceneE08_OrbStart, g_SceneE08OrbUpdateList,
-                  g_SceneE08OrbInitList, g_SceneE08OrbSpawnLayout,
-                  SceneE08_OrbClose)
+int SceneE08_OrbStart(PmSlotHeader *object) {
+    int result = FieldFx_UpdateSlots((FieldFxObject *)object, g_SceneE08OrbUpdateList);
+    result |= FieldFx_RunScript((FieldFxObject *)object, g_SceneE08OrbInitList, g_SceneE08OrbSpawnLayout);
+    if (result == -1) {
+        SceneE08_OrbClose(object);
+    }
+    return 0;
+}
 
-ROOMLIB_CLOSE_TARGET(SceneE08_OrbClose)
+int SceneE08_OrbClose(PmSlotHeader *slot) {
+    slot->state = 4;
+    if ((unsigned int)FieldFx_GetStatus(slot) >= 2) {
+        FieldActor *actor = ((FieldFxObjectPrefix *)slot)->actor;
+        actor->state->core_flags &= 0xC0FFFFFFu;
+        *actor->state->action_state = 4;
+    }
+    return 0;
+}
 
-ROOMLIB_RETURN_ZERO(SceneE08_OrbNop6)
+ROOMLIB_RETURN_VOID(SceneE08_OrbNop6)
 
 int SceneE08_InitOrbContext(void *raw0, void *raw1, void *raw2) {
     RoomEnt * ent = raw0;
@@ -1059,21 +1081,42 @@ int SceneE08_UpdateRingSprites(void *raw0, void *raw1, void *raw2) {
  * in the symbol file (scene_e08_modules.h).
  */
 
-ROOMLIB_RETURN_ZERO(SceneE08_SlotsNop0)
+ROOMLIB_RETURN_VOID(SceneE08_SlotsNop0)
 
-ROOMLIB_PLANT_TABLE(SceneE08_SlotsPlantScript, g_SceneE08SlotsScript)
+void SceneE08_SlotsPlantScript(PmSlotHeader *object) {
+    *FieldFx_GetSlot((FieldFxObject *)object) = g_SceneE08SlotsScript;
+}
 
-ROOMLIB_SPAWN6(SceneE08_SlotsSpawn6)
+int SceneE08_SlotsSpawn6(PmSlotHeader *slot, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
+    FieldFx_Spawn6((intptr_t)slot, b, c, d, (int)e, (int)f);
+    return 0;
+}
 
-ROOMLIB_REGISTER_TABLE_ANY(SceneE08_SlotsRegister, g_SceneE08SlotsDrawList)
+int SceneE08_SlotsRegister(PmSlotHeader *object) {
+    FieldFx_Register((FieldFxObject *)object, g_SceneE08SlotsDrawList);
+    return 0;
+}
 
-ROOMLIB_START_ANY(SceneE08_SlotsStart, g_SceneE08SlotsUpdateList,
-                  g_SceneE08SlotsInitList, g_SceneE08SlotsSpawnLayout,
-                  SceneE08_SlotsClose)
+int SceneE08_SlotsStart(PmSlotHeader *object) {
+    int result = FieldFx_UpdateSlots((FieldFxObject *)object, g_SceneE08SlotsUpdateList);
+    result |= FieldFx_RunScript((FieldFxObject *)object, g_SceneE08SlotsInitList, g_SceneE08SlotsSpawnLayout);
+    if (result == -1) {
+        SceneE08_SlotsClose(object);
+    }
+    return 0;
+}
 
-ROOMLIB_CLOSE_TARGET(SceneE08_SlotsClose)
+int SceneE08_SlotsClose(PmSlotHeader *slot) {
+    slot->state = 4;
+    if ((unsigned int)FieldFx_GetStatus(slot) >= 2) {
+        FieldActor *actor = ((FieldFxObjectPrefix *)slot)->actor;
+        actor->state->core_flags &= 0xC0FFFFFFu;
+        *actor->state->action_state = 4;
+    }
+    return 0;
+}
 
-ROOMLIB_RETURN_ZERO(SceneE08_SlotsNop6)
+ROOMLIB_RETURN_VOID(SceneE08_SlotsNop6)
 
 int SceneE08_InitSlotsContext(void *raw0, void *raw1, void *raw2) {
     RoomEnt * ent = raw0;
@@ -2147,21 +2190,42 @@ int SceneE08_UpdateLimbBeams(void *raw0, void *raw1, void *raw2) {
  * in the symbol file (scene_e08_modules.h).
  */
 
-ROOMLIB_RETURN_ZERO(SceneE08_LayeredSpriteNop0)
+ROOMLIB_RETURN_VOID(SceneE08_LayeredSpriteNop0)
 
-ROOMLIB_PLANT_TABLE(SceneE08_LayeredSpritePlantScript, g_SceneE08LayeredSpriteScript)
+void SceneE08_LayeredSpritePlantScript(PmSlotHeader *object) {
+    *FieldFx_GetSlot((FieldFxObject *)object) = g_SceneE08LayeredSpriteScript;
+}
 
-ROOMLIB_SPAWN6(SceneE08_LayeredSpriteSpawn6)
+int SceneE08_LayeredSpriteSpawn6(PmSlotHeader *slot, int b, int c, intptr_t d, intptr_t e, intptr_t f) {
+    FieldFx_Spawn6((intptr_t)slot, b, c, d, (int)e, (int)f);
+    return 0;
+}
 
-ROOMLIB_REGISTER_TABLE_ANY(SceneE08_LayeredSpriteRegister, g_SceneE08LayeredSpriteDrawList)
+int SceneE08_LayeredSpriteRegister(PmSlotHeader *object) {
+    FieldFx_Register((FieldFxObject *)object, g_SceneE08LayeredSpriteDrawList);
+    return 0;
+}
 
-ROOMLIB_START_ANY(SceneE08_LayeredSpriteStart, g_SceneE08LayeredSpriteUpdateList,
-                  g_SceneE08LayeredSpriteInitList, g_SceneE08LayeredSpriteSpawnLayout,
-                  SceneE08_LayeredSpriteClose)
+int SceneE08_LayeredSpriteStart(PmSlotHeader *object) {
+    int result = FieldFx_UpdateSlots((FieldFxObject *)object, g_SceneE08LayeredSpriteUpdateList);
+    result |= FieldFx_RunScript((FieldFxObject *)object, g_SceneE08LayeredSpriteInitList, g_SceneE08LayeredSpriteSpawnLayout);
+    if (result == -1) {
+        SceneE08_LayeredSpriteClose(object);
+    }
+    return 0;
+}
 
-ROOMLIB_CLOSE_TARGET(SceneE08_LayeredSpriteClose)
+int SceneE08_LayeredSpriteClose(PmSlotHeader *slot) {
+    slot->state = 4;
+    if ((unsigned int)FieldFx_GetStatus(slot) >= 2) {
+        FieldActor *actor = ((FieldFxObjectPrefix *)slot)->actor;
+        actor->state->core_flags &= 0xC0FFFFFFu;
+        *actor->state->action_state = 4;
+    }
+    return 0;
+}
 
-ROOMLIB_RETURN_ZERO(SceneE08_LayeredSpriteNop6)
+ROOMLIB_RETURN_VOID(SceneE08_LayeredSpriteNop6)
 
 /* The 0x80199560 glow sprite, field by field as Scene_DrawLayeredSprite
  * stores its colour. */
@@ -3250,3 +3314,62 @@ SceneLimbBeamShape g_SceneE08LimbBeamOffsets[10] = {0};
 SceneRingShade g_SceneE08RingSpritesRings[2] = {0};
 FieldRingGeometry g_SceneE08RingEffectRings[3] = {0};
 char *g_SceneE08GlowModel = NULL;
+
+/* Original seven-method classes in the M418 descriptor order. */
+PmCommand g_SceneE08Classes[4] = {
+    {RoomLib_ClassNop0, RoomLib_PlantScript, RoomLib_Spawn6, SceneE08_RegisterDrawList, SceneE08_StartModule, RoomLib_CloseTarget, RoomLib_ClassNop6},
+    {SceneE08_OrbNop0, SceneE08_OrbPlantScript, SceneE08_OrbSpawn6, SceneE08_OrbRegister, SceneE08_OrbStart, SceneE08_OrbClose, SceneE08_OrbNop6},
+    {SceneE08_SlotsNop0, SceneE08_SlotsPlantScript, SceneE08_SlotsSpawn6, SceneE08_SlotsRegister, SceneE08_SlotsStart, SceneE08_SlotsClose, SceneE08_SlotsNop6},
+    {SceneE08_LayeredSpriteNop0, SceneE08_LayeredSpritePlantScript, SceneE08_LayeredSpriteSpawn6, SceneE08_LayeredSpriteRegister, SceneE08_LayeredSpriteStart, SceneE08_LayeredSpriteClose, SceneE08_LayeredSpriteNop6},
+};
+
+/* Loading the PS1 overlay restored this initialized storage on each entry. */
+void SceneE08_ResetModule(void) {
+    g_SceneE08GlowRingsSprite = (FieldGlowSprite) {0,0,0,0,0,0,0,0,0,0,{0,0,0,0}};
+    g_SceneE08ParticleClusterSprite = (FieldGlowSprite) {0,0,0,0,0,0,0,0,0,0,{0,0,0,0}};
+    g_SceneE08GlowSpritesSprite = (FieldGlowSprite) {0,0,0,0,0,0,0,0,0,0,{0,0,0,0}};
+    g_SceneE08RingSpritesFlashSprite = (FieldGlowSprite) {0,0,0,0,0,0,0,0,0,0,{0,0,0,0}};
+    g_SceneE08RingSpritesGlowSprite = (FieldGlowSprite) {0,0,0,0,0,0,0,0,0,0,{0,0,0,0}};
+    g_SceneE08PlayerOrbPointSprite = (FieldGlowSprite) {0,0,0,0,0,0,0,0,0,0,{0,0,0,0}};
+    g_SceneE08GlowModelHaloSprite = (FieldGlowSprite) {0,0,0,0,0,0,0,0,0,0,{0,96,0,46}};
+    g_SceneE08LayeredUnusedSprite = (FieldGlowSprite) {0,0,0,0,0,0,0,0,0,0,{0,0,0,0}};
+    g_SceneE08TrailGlowFloorSprite = (FieldGlowSprite) {0,0,0,0,0,0,0,0,0,0,{0,0,0,0}};
+    g_SceneE08ArmGlowSprite = (FieldGlowSprite) {0,0,0,0,0,0,0,0,0,0,{0,0,0,0}};
+    g_SceneE08GlowModelUnusedSpriteRecord = (FieldGlowSprite) {0};
+    g_SceneE08CentreGlowSpriteRecord = (FieldGlowSprite) {0};
+    g_SceneE08TrailGlowSpriteRecord = (FieldGlowSprite) {0};
+    g_SceneE08LayeredSpriteStorage = (SceneE08PositionedSprite) {0};
+    g_SceneE08SpinningGlowStorage = (SceneE08PositionedSprite) {0};
+    g_SceneE08LayeredUnusedColors = (SceneE08LayeredColors) {0};
+    g_SceneE08GlowRingsRotationSeed = (RoomFxSeed8) {.bytes={0,0,0,0,0,0,0,0}};
+    g_SceneE08PlayerOrbRotationSeed = (GteRotation) {0,0,0,0};
+    g_SceneE08RingSpritesRotation = (GteRotation) {1024,0,0,0};
+    g_SceneE08PlayerOrbTrailBColor = (RenderColor) {16,16,16,0};
+    g_SceneE08ArmGlowHeadColor = (RenderColor) {32,64,128,0};
+    g_SceneE08ArmGlowTailColor = (RenderColor) {64,32,128,0};
+    g_SceneE08ParticleSlotColorInit = (RenderColor) {128,128,128,0};
+    g_SceneE08ParticleSlotOffsetInit = (GteShortVector) {0,0,0,0};
+    g_SceneE08PlayerOrbPointScale = (GteVector) {400,400,400,0};
+    g_SceneE08RingSpritesFlashScale = (GteVector) {1800,1800,1800,0};
+    g_SceneE08RingSpritesGlowScale = (GteVector) {2400,2400,2400,0};
+    g_SceneE08LayeredSpriteScale = (RoomFxVec4) {1224,1224,1224,0};
+    g_SceneE08ScreenFadeColor = (SceneE08FourBytes) {{255,255,255,0}};
+    memcpy(g_SceneE08GlowRingsGlowRamp, (u8[]) {128,200,64,10,200,200,64,10,100,255,32,10,0,0,0,255}, sizeof(g_SceneE08GlowRingsGlowRamp));
+    memcpy(g_SceneE08GlowRingsRingRamp, (u8[]) {64,200,64,10,200,100,64,10,200,255,32,10,0,0,0,255}, sizeof(g_SceneE08GlowRingsRingRamp));
+    memcpy(g_SceneE08PlayerOrbRamp, (u8[]) {255,255,0,14,255,255,128,8,80,80,255,30,0,0,0,200,0,0,0,255,127,127,0,14,127,127,64,8,40,40,127,30,0,0,0,100,0,0,0,255}, sizeof(g_SceneE08PlayerOrbRamp));
+    memcpy(g_SceneE08RadialRibbonsRamp, (u8[]) {136,32,255,7,64,128,160,4,40,40,64,10,0,0,0,200,0,0,0,255}, sizeof(g_SceneE08RadialRibbonsRamp));
+    memcpy(g_SceneE08SpiralRibbonsRamp, (u8[]) {136,32,255,8,64,178,160,8,40,40,128,30,0,0,0,200,0,0,0,255,0,32,200,14,32,64,128,8,40,40,64,10,28,64,20,10,0,0,0,255}, sizeof(g_SceneE08SpiralRibbonsRamp));
+    memcpy(g_SceneE08OrbitParticlesRamp, (u8[]) {0,0,0,10,0,32,100,14,120,255,255,8,255,255,255,10,28,64,20,10,0,0,0,255}, sizeof(g_SceneE08OrbitParticlesRamp));
+    memcpy(g_SceneE08GlowModelRamp, (u8[]) {0,0,50,10,0,50,100,14,150,100,200,8,255,255,255,255,28,64,20,10,0,0,0,255}, sizeof(g_SceneE08GlowModelRamp));
+    memcpy(g_SceneE08LimbBeamsHeadRamp, (u8[]) {64,128,255,1,64,128,255,10,240,160,128,10,0,0,128,10,0,0,0,255}, sizeof(g_SceneE08LimbBeamsHeadRamp));
+    memcpy(g_SceneE08LimbBeamsTailRamp, (u8[]) {0,0,0,1,0,0,0,5,128,240,240,10,16,64,128,10,0,0,0,255}, sizeof(g_SceneE08LimbBeamsTailRamp));
+    memcpy(g_SceneE08SpinningGlowRamp, (u8[]) {50,64,0,14,100,90,0,10,64,64,64,255,0,0,0,255}, sizeof(g_SceneE08SpinningGlowRamp));
+    memset(g_SceneE08RingSpritesSource, 0, sizeof(g_SceneE08RingSpritesSource));
+    memset(g_SceneE08RingEffectSource, 0, sizeof(g_SceneE08RingEffectSource));
+    memset(g_SceneE08LimbBeamUnusedAngles, 0, sizeof(g_SceneE08LimbBeamUnusedAngles));
+    memset(g_SceneE08LimbBeamAngles, 0, sizeof(g_SceneE08LimbBeamAngles));
+    memset(g_SceneE08LimbBeamOffsets, 0, sizeof(g_SceneE08LimbBeamOffsets));
+    memset(g_SceneE08RingSpritesRings, 0, sizeof(g_SceneE08RingSpritesRings));
+    memset(g_SceneE08RingEffectRings, 0, sizeof(g_SceneE08RingEffectRings));
+    g_SceneE08GlowModel = NULL;
+}

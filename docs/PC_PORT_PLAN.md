@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — zimny H i wejście do walki M086
+
+Zwykły pad z H: z pozycji telefonu zejście do południowej krawędzi,
+powrót na z~206 i wschód do M086/a8008348. Kamera w M086 odwraca
+kierunki poziome: rawRight32 prowadzi na zachód; rawLeft128 wraca do
+M087. Próba powrotu i ponowne wejście zachowane w logu, bez utraty HP.
+Przy16292/story248: czterech przeciwników, battle7, HP132/133.
+/tmp/pe-ex-m086-entry-H-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON i VRAM identyczne z checkpointem live, wszystkie8192B H
+niezmienione. Seed/checkpoint/proof w /tmp/pe-ex-m086-entry-H-v1-*.
+SDK/SDL bez instrumentacji; wejście nie dowodzi zwycięstwa ani zgodności
+obrazu/audio z PS1. Bez zmian produkcyjnego kodu, RAM i zapisów.
+
+Live po kolejnych600 VBlank przy16892: M086/story248, HP132/133,
+cztery robaki typu3, każdy167HP/def18 (inne parametry niż starsza trasa),
+ATB9000, PE pełne, ammo14. Walka nadal trwa; następne: jej ukończenie.
+
+
 ### EX — ulepszenia M084, przejście M085 i autentyczny zapis H/M087
 
 Oryginalne schody M083 wczytują M084/a8008248; odczyt podłoża M083

@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M432 z przygotowanego L wygrane; M352 przywróciło pełne HP
+
+Sesja50642 kontynuowała od57975 z401HP/boss2200 ponad próg miliona.
+Pojedyncze strzały Double Action i Heal3 obniżały HP bossa. Fazy13/2
+ukrywały cel (NO TARGET); pilot anulował wybór i czekał/podchodził.
+Nie należy wielokrotnie potwierdzać pustej listy celów, gdy menu
+zatrzymuje czas walki. Próba zbyt wczesnego Triangle przed pełnym ATB
+nie otworzyła menu i dalsze wejścia wykonały ataki zamiast leczenia;
+po sprawdzeniu rzeczywiście otwartego menu dwa Heal3 uratowały próbę.
+Zużyto wszystkie cztery Medicine3 przez oryginalne menu, w tym ostatnie
+przed finałowym strzałem. Boss1000038→999944, następnie przy72732
+mode12/live0, Aya324HP. Zapasów przygotowanej gałęzi nie zachowano.
+
+/tmp/pe-m432-trained-victory-v1-proof/proof.json: zimny L normal/SAN
+do72732, pełny JSON/VRAM identyczny z live, exit0 bez raportów, źródłowe
+L bez zmian. Żadnych zmian kodu ani balansu. Dalsze dialogi przeszły
+do M352/a8065148 przy76996; oryginalny skrypt przywrócił621HP.
+Ten późniejszy punkt nie ma jeszcze osobnej powtórki. Sesja50642 nadal
+żywa w tej scenie; brak nowego zapisu po walce. E19 i pełna kampania
+pozostają niezaliczone.
+
 ### M273 z przygotowanego L wygrane; kolejna walka M432 rozpoczęta
 
 Nowy zimny L powtórzył wcześniejszy zwycięski harmonogram J, z osobnym

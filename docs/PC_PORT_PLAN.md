@@ -2,6 +2,54 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Po K: Wayne, grawerowanie, film40 i brak M428/E18
+
+Live92380 przeszedł film38, M425/M275 i rozmowy oficera/Daniela,
+następnie M276 z Wayne'em. Lock2 pozwala chodzić; początkowe czekanie
+na pokładzie nie było zawieszeniem. Odczyt wyłącznie SBValue/ReadMemory
+z LLDB, bez funkcji ani zapisów: /tmp/pe-m275-wait-read-v1/v2.json,
+/tmp/pe-m275-actor*-v2.bin. Oryginalny actor6 sprawdza strefę wyjścia
+x1400..1800,z−2300..−2000. Zwykły pad wszedł do kabiny. M276 wyjście
+actor7: x400..630,z−1130..−540, również osiągnięte zwykłym ruchem.
+
+Magazyn Wayne'a otwarto i anulowano; ekwipunek identyczny z K.
+/tmp/pe-m276-wayne-v1-proof/proof.json przy97435: cold SAN od J exit0,
+pełny JSON/VRAM identyczne, J bez zmian i K bajtowo zgodne. Następnie
+oryginalne grawerowanie: M8000 oraz B Jacket1, zaakceptowane dotychczasowe
+nazwy przez Start/END. Zmieniły się tylko bity0x1000 w rekordach0/13
+(bajty5/421:0→16); parametry/efekty i amunicja bez zmian względem K.
+/tmp/pe-m276-engrave-v1-proof/proof-v2.json przy99447: cold SAN exit0
+bez raportów, pełny JSON/VRAM identyczne, Medicine3 zachowane, J/K bez
+zmian. Pierwszy weryfikator po poprawnym porównaniu nie dopuszczał flag
+grawerowania; osobny v2 sprawdził te dwa dokładne bity w terminalnych danych.
+
+Dalej M426/Williams przy103312, pełneHP621, nadal story726.
+/tmp/pe-m426-williams-v1-proof/proof.json: cold SAN od J exit0 bez
+raportów, pełny JSON/VRAM identyczne, tylko oczekiwane flagi grawerowania
+i wcześniejsze CureM/Medicine4/amunicja. Bez zmian źródeł, kandydat v3.
+
+Film39 zakończył się bez skipu, M427/story728. Odczyty
+/tmp/pe-m427-wait-read-v1/v2.json i -v2/v3-lldb.log: opcode156 przy
+script_byte4184 czekał na fade; frame48/duration60, później fadeMode1,
+frame15/duration15. Fade kończy się normalnie; brak potwierdzonego błędu.
+Przy117952 trwał już film40, story730, brak aktora gracza w filmie.
+Dalsze advance6000 zakończyło grę exit1: M428 native descriptor missing,
+slot75, PS1 8019403c. /tmp/pe-m428-missing-v1-proof.json: cold normal
+iSAN od J odtwarzają dokładnie ten exit1, bez raportów SAN przed błędem
+loadera; utworzone K w obu przebiegach identyczne, źródła J/K bez zmian.
+Live92380 zakończony; brak uruchomionej gry.
+
+Następny moduł zidentyfikowany: M428, start98175/scratch33/texture81/
+room97 sektorów. Pierwsze0x5000 bajtów SHA1
+7f43edcaa8c1bcc20d1feabb75c703c7496b7502, dokładnie historyczny E18.
+/tmp/pe-m428-module-audit-v1.json: pięć rekordów75/78/152/153/154,
+istniejący scene_e18_cruiser/e18_emitters.c ma10 funkcji SceneE18.
+Ważna luka historycznego katalogu: callback programu152 pod80193edc
+oznaczony g_SceneE18_D_80193EDC i data w YAML jest kodem MIPS (prolog
+27bdffe8,afb00010...). Nie wolno zastąpić go NULL ani pominąć; wymaga
+odtworzenia w istniejącym module wraz z trzema pełnymi programami.
+M428 i dalsza kampania nieukończone; zgodność native/SAN nie jest oracle PS1.
+
 ### M432/E22 zintegrowane, wygrana i autentyczny zapis K
 
 Cały istniejący e22.c włączono do CMake, zachowując wszystkie21 funkcji.

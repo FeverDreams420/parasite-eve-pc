@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M188: dostępne BP wydane na oryginalne ulepszenie pancerza
+
+Nowy kontroler /tmp/pe-ex-m188-prep-F2-v1-live odtwarza wejście25986,
+335HP. Root menu pokazuje2236BP. Zwykłe BP,row7 → equipment → B Jacket1
+→ Defense → dialog wydawania. Początkowe Up nie dodaje punktu (cofa
+wydanie);22 osobne Down wydają2200BP,Cross zatwierdza. Bonus obrony
+67→89,łączna obrona110→132. Root menu27900 pokazuje36BP:
+/tmp/pe-ex-BP5.png. Trzy Circle łącznie wracają28100 do pola M188,
+menu null,335HP,ammo4,zero wrogów. Nie zmieniano RAM ani save payload.
+
+Dwa świeże pełne odtworzenia28100 od cold F2 normal/SAN exit0,
+bez diagnostyki sanitizer/opcode. Cały JSON i1MiB VRAM identyczne
+między profilami i zamrożonym live. Wszystkie sloty i4096B rekordów
+sprawdzone; względem wejścia25986 tylko armor record byte14:67→89.
+Wszystkie zmienne skryptowe bez zmian. JSON kontrolny nie zawiera BP;
+2236→36 potwierdza wymieniony podgląd live,nie osobna asercja pola JSON.
+Źródłowy i prywatne F2 identyczne bajtowo. Dowód
+/tmp/pe-ex-m188-armor-F2-v1-{seed.json,checkpoint,proof/proof.json},
+runner/verifier obok. Bez zmian produkcji/PsyZ,ten sam kandydat;
+SDK/SDL nieinstrumentowane,brak oraclePS1,/tmp nietrwałe.
+Następny krok:walka M188 z ulepszonym oryginalnym pancerzem.
+
+
 ### EX M188: Barrier i Cure-D potwierdzone, strategia nadal niewystarczająca
 
 Trzecia próba od25986,nowy /tmp/pe-ex-m188-attempt3-F2-live:na pierwszej

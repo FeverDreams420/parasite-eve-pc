@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — legalne przygotowanie przez BP przed walką Chryslera
+
+Po porażce odtworzono zwykły prefix od autentycznego B do86816,
+przed spotkaniem w M309. Pierwszy kontroler retry bez TTY otrzymał EOF
+po88281 i poprawnie zamknął grę exit0, sam Python zakończył EOFError;
+nie był to crash gry. Nowy kontroler z TTY /tmp/pe-ex-chrysler-prep-v1.py
+pozostaje w /tmp/pe-ex-chrysler-prep-v1-live, bez przywracania RAM.
+
+Oryginalne menu BP: root ostatnia opcja (Up z0), lista wyposażenia,
+B Jacket1, Defense. Początkowe wejście/wyjście nie wydało BP;
+w numerycznym panelu to Down zwiększa wartość, Up ją zmniejsza.
+Przytrzymanie Down wydało4100 z4170BP na41 punktów obrony.
+Podgląd Defense44→85, bonus1→42. Zatwierdzono i zamknięto menu;
+ponowne otwarcie głównego menu przy88186 pokazuje70BP.
+Cały bufor rekordów ekwipunku różni się od wejścia Chryslera tylko
+w record0/byte14:1→42, sloty plecaka identyczne. M305/story164,
+72/72HP, brak żywych przeciwników. Kod/pamięć nie były edytowane.
+
+/tmp/pe-ex-chrysler-BP-v1-verify.py wykonany PASS przed dokumentacją.
+Zimne normal/SAN exit0, pełny JSON/VRAM zgodny z live, prywatny B
+identyczny bajtowo i źródłowy hash bez zmian, brak sanitizer/opcode/assertion.
+Cyfry BP4170/70 sprawdzone wizualnie; zimne replaye porównują cały VRAM,
+nie niezależny OCR ani osobny odczyt scalaru BP. Nie zapisano jeszcze tej
+zmiany na karcie: trwałość BP przez Save/Continue pozostaje do sprawdzenia.
+Artefakty: /tmp/pe-ex-chrysler-BP-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Ponowna walka i pełny Chrysler nadal otwarte.
+
 ### EX — Darkness, trafienia i porażka w pierwszej walce Chryslera
 
 Dalsza obserwacja wyjaśnia istotny czynnik chybienia: state_flags Ayi

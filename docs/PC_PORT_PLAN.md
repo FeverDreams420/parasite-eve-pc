@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M188 nagrody i M189 z pełnym437HP
+
+Od37774 sześć Cross60/release240 przechodzi EXP,level-up i loot do
+39574 pola. MaxHP335→437,capacity25→26,BP36→253. Gra przyznaje
+broń dynamic267 do slot8 (rekord11) i Medicine3/raw8 do slotów24/25.
+Zwykłe Items/Use obu Medicine3:40458 HP141→321,40830 HP321→437,
+oba sloty puste. Menu zamknięte41110. Up/run240 (guard stop) daje41350
+M189/a80284c8,po wait200 cap41550,story596,437/437HP,zero wrogów,
+move_lock0,menu null. Nowego zapisu jeszcze nie wykonano.
+
+Dwa świeże pełne cold41550 normal/SAN na pe-control-aim-v1 exit0,
+bez diagnostyki sanitizer/opcode. Cały JSON i1MiB VRAM identyczne
+między profilami i zamrożonym live. Verifier sprawdza oba Medicine3,
+maxHP437,całe sloty/4096B rekordów oraz wszystkie zmienne. Względem
+wyniku37774 tylko capacity26,slot8:0→267,rekord11 zastąpiony nagrodą:
+06048b008b000534440506000000020001000100030a21000000000000000000;
+zmienna1:187→188,reszta bez zmian. BP253 potwierdzone JSON.
+Źródłowy i prywatne F2 identyczne bajtowo. Dowód
+/tmp/pe-ex-m189-entry-F2-v1-{seed.json,checkpoint,proof/proof.json},
+runner/verifier obok. Bez zmian produkcji/PsyZ/RAM/save payload;
+SDK/SDL nieinstrumentowane,brak oraclePS1,/tmp nietrwałe.
+Następne:most M189,dalszy postęp i kolejny zapis.
+
+
 ### EX M188: obie fazy i wszystkie segmenty pokonane
 
 Kontynuacja32086:Heal2/Square daje32722 Aya220HP i potwierdzony reset

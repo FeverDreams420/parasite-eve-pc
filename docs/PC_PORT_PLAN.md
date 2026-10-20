@@ -2,6 +2,50 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M350: udana druga próba, następny brak M429/E19
+
+Pierwsza gałąź live47676 po długich nieskutecznych podejściach zużyła
+Medicine3 (250→430HP), potem przy147678 wróciła do tytułu a9400048.
+/tmp/pe-m350-return-title-v1-proof/proof.json: cold SAN od J exit0 bez
+raportów, pełny JSON/VRAM identyczne z końcowym ekranem tytułowym;
+J bez zmian i utworzone K bajtowo zgodne. Nie było snapshotu dokładnej
+klatki HP0; potwierdzony jest powrót do tytułu po wejściach z HP70.
+Live47676 zamknięto quit/exit0. Błędy pilota (kierunki kamery, pogoń
+za ruchomą częścią3) nie są dowodem błędu oryginalnej walki.
+
+Nowy /tmp/pe-m350-J-retry-v1-live.py (live47585) zaczął od cold J i tej
+samej autentycznej taśmy do132117, przed M350: pełneHP621, pełnePE,
+ammo8, Medicine3 zachowane. Oryginalne menu ustawiło Liberate+strzał
+w Double Action. Przy134506 części3/2:1000436/1000900HP, Aya621,
+PE0 i przejściowy stan8192. PE później regenerowało się i oryginalne
+Heal3 działało; nie ma dowodu trwałej blokady PE po Liberate.
+
+Zwykłymi strzałami wyłączono część3 przy136114, następnie główny cel
+przy140308:999976HP. Przy140648 M350/a8065048, story731, Aya416/621,
+ammo5, Medicine3slot27 zachowane, mode7/live_enemies1 i jedyny rekord
+wroga type2/999976. To faza końcowej animacji, nie należy wymagać mode12
+ani live_enemies0. Następne advance600 ładuje już M429, ale kandydat v2
+kończy exit1: missing native descriptor slot179, PS1 8019b630.
+
+/tmp/pe-m350-last-part-v1-proof/proof.json: cold SAN od J odtworzył
+pełną drugą gałąź; snapshot140648 pełny JSON/VRAM identyczne z normalnym,
+potem ten sam jawny błąd M429/exit1, bez raportu SAN. Oczekiwane zmiany
+inventory tylko wcześniejsze CureM/Medicine4/amunicja/grawerowanie,
+Medicine3 zachowane, J bez zmian i K bajtowo zgodne. Oryginalna nieudana
+i udana próba zachowane osobno. Nie zmieniano źródeł ani balansu;
+nadal /tmp/pe-m428-native-v2. Obie sesje gry zakończone, brak live game.
+
+M429 zidentyfikowano jako istniejący scene_e19_cruiser/e19.c (30 funkcji)
+i e19_class.c (4 funkcje), wraz ze wspólnymi klasami/GrabAwaitStance.
+/tmp/pe-m429-module-audit-v1.json: start98386, scratch33, texture170,
+room175; prefiks0xc800 ma SHA1 6b114d71ecf274e02267aa9ea10cb2126793d3af,
+zgodny z historycznym E19. Komplet dziewięciu rekordów: klasy75/80 oraz
+programy145/146/147/148/177/178/179. Brak dotyczy całej integracji E19,
+nie tylko JitterSpark ze slot179. Następny krok: naprawić oba istniejące
+pliki i ich nagłówki w miejscu, zachowując wszystkie funkcje i programy.
+M429 i reszta kampanii pozostają nieukończone; porównania native/SAN
+nie są niezależnym oracle obrazu lub dźwięku PS1.
+
 ### M428/E18: pełna integracja w miejscu i wygrana pierwszej formy UB
 
 Do CMake włączono istniejący scene_e18_cruiser/e18_emitters.c. Wszystkie

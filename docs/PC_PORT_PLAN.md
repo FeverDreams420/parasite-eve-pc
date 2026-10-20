@@ -2,6 +2,39 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: M169 nagrody/leczenie → południowe M168 wygrane
+
+Odebrano nagrodyM169, w tym Cure-D do24. PróbaHeal3 pozostaje nieaktywna;
+trzy wykonane poloweHeal2 dają15→75→135→195HP. Kolejna próba nie leczy.
+Powrót65724 doM167/a80263c8,bank55/56=4/4. Południowe wyjście66464
+prowadziM168/a8026448 i zmniejsza55 do3. Pierwsza próba trasy zawróciła
+z M168 doM167,przywracając55=4; ponowne wejście i przejście w stronę
+malejącego worldX uruchamia67902 walkę. To journal zwykłych wejść,nie
+edycja liczników.68102 dwa8:31/8:30 po156HP,Aya195HP.
+
+Darkness ogranicza ostrzał; pierwsze kule nie uszkadzają celów. Heal3
+w menu pozostaje niedostępne,więc nie twierdzi się,że zostało użyte.
+Heal2 działa. Cure-D24 przez Items/Use oraz kula zmniejszają8:30 do70HP,
+71422 pozostają156/70HP,Aya27. KolejneHeal2 daje72122:83HP. Podejście
+reticle177 i dwie kule pokonują8:31,72782 jeden cel,Aya23HP. Heal2,
+ruch i kolejneHeal2 pozwalają przeżyć. Podejście74796:reticle243,
+pojedyncza kula i Square kończące drugą akcję:75188/75368 wynikEXP,
+mode2,zero wrogów,59/335HP,ammo2. NagrodyM168 nieodebrane.
+
+Dwa świeże cold75368 normal/SAN exit0 bez diagnostyki sanitizer/opcode;
+całe JSON i1MiB VRAM równe między profilami i zamrożonym live75368.
+Asercje obejmują leczenie do195,południowe55=3,156/70HP celów,
+Heal2do83,jeden cel i końcowyreticle243. Cały ekwipunek/4096B rekordów
+i wszystkie zmienne względem coldE2:slot23:0→203,bajt426:0→2,
+zmienne1:998→167,3:9428992→12566528,20:0→277,54:1838946→1838947,
+55:0→3,56:0→4,67:18655→2147502303,74:536→568,78:232→7;
+reszta bez zmian. Źródłowy i prywatneE2 niezmienione.
+/tmp/pe-ex-sewer-m168-E2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ/RAM/save,ten sam pe-video-clock-v1.
+SDK/SDL nieinstrumentowane,brak niezależnego oraclePS1,/tmp tymczasowe.
+Następny krok:nagrody,leczenie i ukończenie przejścia korytarza M168.
+
+
 ### EX M169: Cure-D z M167, dwaj przeciwnicy pokonani
 
 WynikiM167/ObtainAll/End kończą58720 pole191/335HP i Cure-D14 w24,

@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Warehouse Key220 zdobyty w M263
+
+Nagrody M263 zamknięte31972 pola;inventory bez zmian przy pełnych26
+slotach. Zwykłe Items/Medicine1 slot22/Use daje33404 HP245→290,
+slot22pusty. Podejście do miejsca klucza zawiera nieudane ruchy blokowane
+beczkami i wózkiem. Skuteczne obejście od35241:Down300normal,
+Right180normal,Up170normal,Cross.36211 selection55,WarehouseKey/raw220
+w slocie22,pozycja[1979.14,0,-1262.85]. Cross/wait300 daje36531
+M263/story600,menu null,move_lock0,zero wrogów,290/437HP,ammo3.
+Zachowany również Subway Gate Key219slot24.
+
+Dwa świeże pełne cold36531 normal/SAN pe-control-aim-v1 exit0,
+bez diagnostyki sanitizer/opcode. Pełny JSON i1MiB VRAM identyczne
+między profilami i zamrożonym live. Verifier sprawdza zużycie Medicine1,
++45HP iodbiór220,całe inventory/4096B rekordów oraz wszystkie zmienne.
+Względem wyniku31072 tylko slot22:6→220,zmienne20:1312101→269747557,
+47:16777217→16777219 (bit2 dostępu);reszta bez zmian. Źródłowy/prywatne
+G2 identyczne bajtowo. Dowód /tmp/pe-ex-warehouse-key-G2-v1-{seed.json,
+checkpoint,proof/proof.json},runner/verifier obok. Bez zmian produkcji/
+PsyZ/RAM/save payload;SDK/SDL nieinstrumentowane,brak oraclePS1,/tmp
+nietrwałe. Następne:M265,M266,drzwi wymagające klucza i trwały zapis.
+
+
 ### EX Warehouse M263: spotkanie300HP wygrane
 
 Od26244 M262 zwykłe Up/run200,Up200normal i dalszeUp/run112

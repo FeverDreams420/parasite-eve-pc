@@ -47,11 +47,25 @@ nie oracle obrazu/dźwięku PS1. Nie udowodniono jeszcze zwycięstwa.
 -source-check.json, -ctest-assets.log, -regressions.log. PsyZ/SDL
 nadal nieinstrumentowane. Build w repo odpowiada temu kandydatowi.
 
-Starsze lives65674 i98144 zamknięto quit/exit0, karty bez zmian.
-Aktualny live22716, /tmp/pe-m273-event-lifetime-v3-live.py, odtworzony
-od F do44888 na świeżym kandydacie, kontynuuje walkę. Przy45123 Aya347,
-rozpoczął się kolejny chwyt Eve; odcinek po44888 nie ma jeszcze
-niezależnego replayu. Pełna kampania i pozostałe warianty nadal otwarte.
+Starsze lives65674,98144 i22716 zamknięto quit/exit0, karty bez zmian.
+Drugi chwyt zakończył próbę przy45363: Aya0HP, tryb porażki3.
+Cold SAN od F zakończył się exit0 bez raportów, z identycznym pełnym
+JSON/VRAM i niezmienioną kartą: /tmp/pe-m273-second-grab-defeat-v1-proof/proof.json.
+To dowód obsłużenia porażki, nie zwycięstwa nad bossem.
+
+Nowa próba od autentycznego F wydała300 z317BP w oryginalnym menu
+przed walką M273: Active Time44→47, pozostało17BP. Zwiększenie wartości
+obsługuje D-pad w dół; wcześniejsze próby Right/Left nie wydawały BP.
+Po zatwierdzeniu i zamknięciu menu odczyt LLDB bez wywołań funkcji
+potwierdził bonus_points17 i stats.levels[5]=490:
+/tmp/pe-m273-prebattle-BP-committed-v1-lldb.log. Nie zmieniano pamięci,
+pliku zapisu, balansu ani implementacji menu. Cold SAN do28678:
+exit0 bez raportów, cały JSON/VRAM równy normalnemu przebiegowi,
+F niezmienione, HP621; /tmp/pe-m273-prebattle-BP-v1-proof/proof.json.
+To porównanie natywne/SAN, nadal bez oracle PS1. Broń pozostaje
+M8000 z pojedynczym strzałem i Double Action; wielokrotny strzał nie
+jest traktowany jako ulepszenie. Live8463 kontynuuje tę próbę.
+Pełna kampania i pozostałe warianty nadal otwarte.
 
 ### M273 podłączone: wejście do walki Eve i Liberate
 

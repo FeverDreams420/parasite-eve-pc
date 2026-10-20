@@ -3,6 +3,39 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — powtórne lobby wygrane, autentyczny Save/Continue B2/story494
+
+Poprzednia tura była postępem:M149/494,commiteda6f71fc. Sesja72173
+ponownie żywa. Powrót M149→M14846623→M12747038→M12647398 bez utraty
+HP. Próba dojścia do telefonu wschodem wywołuje47470 pięć typ7/123HP.
+Po skróceniu dystansu dziesięć pojedynczych strzałów w pięciu kolejkach
+DoubleAction eliminuje wszystkie cele. Przy49868 EXP20,enemy0,HP45/273;
+nie zmieniono parametrów ani RAM/RNG. Nagrody zamknięte50748, bez nowego
+przedmiotu. Trzy Heal2 w polu zwiększają45→225. Podejście wokół recepcji
+uruchamia6 przy52124;Slot1,pustyB/index1,File saved53796.
+
+Nowe źródło /tmp/pe-ex-hospital-save-B2-v1-source/BASLUS-006620000000B,
+8192B,SHA2560918364fc93b94b8e1abe30d1a7d6908a7481c1e1c8c3a583668b9159ac827e9.
+/tmp/pe-ex-hospital-save-B2-v1-verify.py PASS: pełna trasa cold A2 w obu
+profilach exit0, cały JSON/VRAM zgodny między profilami i live, nowe B
+identyczne wszystkimi8192B. A2/kopie niezmienione. Pełne50 slotów jak A2;
+rekordy4096B tylko14:48→67,426:12→4,430:19→39. Wszystkie zmienne:
+17:321→577,65:541196235→667025391,66:548→572,67:143→16527,
+74:488→494,82:84→5460;1 przy zapisie998, pozostałe bez zmian.
+
+/tmp/pe-ex-hospital-B2-loaded-v1-verify.py PASS: świeży Continue tylkoB2,
+normal/SAN exit0, przy12920 M126/a8022348,story494,HP225/273,
+menu null,lock0,enemy0. Cały ekwipunek i wszystkie zmienne jak Save53796,
+bity naprawionego zasilania zachowane; cały JSON/VRAM zgodny między
+profilami, źródłowe/prywatne B2 niezmienione. Artefakty
+/tmp/pe-ex-hospital-save-B2-v1-{seed.json,checkpoint,proof/proof.json}
+i /tmp/pe-ex-hospital-B2-loaded-v1-{seed.json,proof/proof.json}.
+Sesja72173 zamknięta quit/native0. B2 jest najnowszym trwałym punktem,
+z ulepszeniami BP i urządzeniem494. Bez zmian produkcji/PsyZ i nowych
+plików repo; SDK/SDL nieinstrumentowane, brak oracle PS1, /tmp nie jest
+trwałym CTest. Dalsze piętra i pełny port pozostają nieukończone.
+
+
 ### EX — M149 wygrane z automatycznym przeładowaniem, urządzenie/story494
 
 Poprzednia tura była postępem: M148/story492, commit737a998e5. Sesja72173

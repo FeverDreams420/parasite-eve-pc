@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — M021: szafka i zdarzenie z ciałem
+
+Z M016 zwykła trasa wraca do M012 i uruchamia następną losową walkę
+z dwoma szczurami. Double Action na dwa cele, bez utratyHP; oryginalny
+awans do poziomu3 daje53maxHP, aktualne42HP zachowane. Nagrody odebrane
+przez Obtain All Items/End. Po skorygowaniu pozycji po walce wejście
+w prawe drzwi przyz−1969 prowadzi do M021/0xa80020c8 przy48983.
+
+Szafka5 przyx227,z383: normalna interakcja wywołuje dialog92 i bit1024
+w var24. Podejście do ciała type3:0 przy−220,−562 uruchamia oryginalną
+sekwencję dialogów93..98 z animacjami oraz bit2048. Przy53459 menu null,
+move_lock0, Aya42/53HP, var24=0x21a30e34. Bez nowych błędów opcode,
+bez zmian skryptów/kolizji/inputu/balansu. Pełny seed i checkpoint:
+/tmp/pe-ex-m021-event-v1-{seed.json,checkpoint}; niezależne cold
+normal/SAN exit0, pełny JSON/VRAM zgodny z live, prywatny A wszystkie8192B
+niezmienione, brak sanitizer/opcode/assertion. Weryfikator i dowód:
+/tmp/pe-ex-m021-event-v1-{verify.py,proof/proof.json}. PsyZ/SDL bez
+instrumentacji; pełny EX/Chrysler i obraz/audio PS1 nadal niepotwierdzone.
+
 ### EX — M016: ukryte pomieszczenie i N Protector
 
 Kontynuacja tego samego cold Continue A, zwykłym inputem. M016 ma
@@ -19,7 +38,9 @@ identyczny z live, prywatny A wszystkie8192B niezmienione, brak błędów
 sanitizer/opcode/assertion. SDK/SDL bez instrumentacji.
 Dalszy live powrót do głównej części pokoju i zwykła skrzynia dodają
 item41 do slot10, receipt55 zamknięty, var84=7 przy43340. To ostatnie
-odebranie wymaga jeszcze niezależnego replayu. Kod gry/PsyZ bez zmian;
+odebranie potwierdza /tmp/pe-ex-m016-chests-v1-{proof/proof.json,verify.py}:
+cold normal/SAN exit0, pełny JSON/VRAM zgodny z live, prywatny A8192B
+niezmieniony, brak sanitizer/opcode/assertion. Kod gry/PsyZ bez zmian;
 pełny EX/Chrysler oraz zgodność obrazu/audio PS1 nadal niepotwierdzone.
 
 ### EX — skrzynia M014 i powrót drugimi drzwiami

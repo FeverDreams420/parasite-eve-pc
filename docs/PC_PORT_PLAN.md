@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — ukryte Offense+2 przy pełnym ekwipunku
+
+Kontynuacja M334 po przełączniku, zwykłe obejście skrzyń i podejście
+do odsłoniętego actor7:0. Przy102065 oryginalny dialog3 „Your inventory
+is full”; plecak13/13. Po potwierdzeniu oryginalne menu wyboru przedmiotu
+selection1. Wybrano slot0 z nieużywanym początkowym M84F; oryginalna
+wymiana zastępuje257 przedmiotem30 Offense+2 i pokazuje receipt55.
+Ekran opisuje zwiększenie ataku o2; nie używano jeszcze upgrade’u.
+Wyposażony M8000, pancerz i oba klucze pozostały w plecaku.
+Po zamknięciu przy102953 menu null, move_lock0,38/64HP,story104,
+var43=4. Nie modyfikowano RAM, save, ekwipunku lub logiki wymiany.
+Seed/checkpoint: /tmp/pe-ex-m334-full-inventory-v1-{seed.json,checkpoint}.
+Cold normal/SAN exit0; /tmp/pe-ex-m334-full-inventory-v1-verify.py
+potwierdza pełny JSON/VRAM zgodny z live, wszystkie8192B prywatnego A
+bez zmian, brak sanitizer/opcode/assertion. Dowód:
+/tmp/pe-ex-m334-full-inventory-v1-proof/proof.json. SDK/SDL bez instrumentacji.
+To dowód konkretnej wymiany pełnego plecaka,
+nie wszystkich wariantów anulowania/odmowy ani pełnego EX/Chrysler.
+
 ### EX — M334: uruchomienie mechanizmu zwykłym inputem
 
 Dalsze badanie read-only g_CollisionDb zachowano w

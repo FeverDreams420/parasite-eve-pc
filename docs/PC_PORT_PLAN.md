@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — autentyczny zapis K w aptece
+
+Sterownik najpierw pomylił telefon M097 z M112 i poszedł w niewłaściwą
+część sali. Nieudana próba planera została błędnie połączona z kopią starego
+wyniku; input tej pomyłki zachowany, żadnych zmian gry/ekwipunku/HP.
+Poprawna trasa dociera do[-685,-2167], następnie Down80/Cross30 daje
+prompt6 przy142417. Oryginalne Yes→karta1→lista37/cursor9→Down na pustyK10
+→FileSaved40 przy143935→zamknięcie paneli. Przy144199 M097/story328,
+HP181/181,menu null,enemy0. Medicine2slot12,Revive20,bonusdef48 zachowane.
+Pozostałe punkty odbioru apteki nie zostały tym odcinkiem sprawdzone.
+
+/tmp/pe-ex-pharmacy-K-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM i wszystkie8192B K identyczne z live; H bajtowo/hash bez zmian.
+K SHA256 a4e1b2ffc3da4ddfb5db98310912c66fbd2992c652166f7b7f6bf17a3c63a32f.
+Po PASS kopia /tmp/pe-ex-pharmacy-K-v1-source/BASLUS-006620000000K.
+Artefakty /tmp/pe-ex-pharmacy-K-v1-{seed.json,checkpoint,proof/proof.json}.
+Zimny Continue K jeszcze do wykonania. Łańcuch EX E→F→G→H→I→J→K.
+SDK/SDL bez instrumentacji, brak nowego oracle PS1 obrazu/audio.
+
+Zewnętrzne /tmp/pe_floor_grid_path.py i margin90_v1.py usuwają teraz
+poprzedni wynik przed próbą. /tmp/pe-ex-m097-planner-output-v1-proof.json
+PASS: istniejący wynik znika po nieznalezieniu drogi; następne poprawne
+wyznaczenie zapisuje właściwy cel. Dotyczy narzędzia testera, nie gry.
+Kod produkcyjny bez zmian; dalszy Day3 i pełny port nadal nieukończone.
+
+
 ### EX — Defense+1 na B Jacket1 i Revive z apteki
 
 Oryginalne Items→slot20/Defense+1→Use→B Jacket1/row1: przy130789

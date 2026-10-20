@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M176: pompy, film20 i wyłączenie głównego zasilania
+
+Od137704 zwykłe podejście wokół pulpitu:Right200,Up80,Cross,
+Down260,Right300,Up100,Cross,Up30,Cross otwiera139094 dialog13.
+Dalsze Cross uruchamiają zasilanie i ekran Activate/Pump1/Pump2.
+Pump1 najpierw zgłasza niewystarczającą moc (dialog23); Pump2 wybrane
+Down w dialog14 uruchamia film20.146172 story584→592,HP139/335.
+Ponowne wejście i Pump1 ustawiają drugi wymagany bit. Kilka ponownych
+wejść/wyjść zachowano w journalu.150258 dialog15 pokazuje „The master
+power is on”, domyślne Leave it ON. Down/Cross wybiera Turn it OFF;
+150916 wraca swobodne sterowanie,move_lock0,zero wrogów,ammo7.
+
+Dwa świeże pełne odtworzenia150916 od cold E2 normal/SAN exit0,
+bez diagnostyki sanitizer/opcode; pełny JSON i1MiB VRAM identyczne
+między profilami i z zamrożonym live. Cały ekwipunek równy wejściu
+M176; wszystkie zmienne sprawdzone. Względem137704 tylko1:175→176,
+54:6033251→56508259,74:584→592. Bank54&0x7000==0x3000 potwierdza
+obie pompy i wyłączone zasilanie. Źródłowy i prywatne E2 niezmienione.
+Dowód /tmp/pe-ex-m176-pumps-E2-v1-{seed.json,checkpoint,proof/proof.json},
+runner/verifier obok. Bez zmian produkcji/PsyZ/RAM/save; ten sam
+pe-video-clock-v1. SDK/SDL nieinstrumentowane,brak oraclePS1,/tmp
+nietrwałe. Dalsze wyjście do M180 w tej gałęzi EX jeszcze niesprawdzone.
+
+
 ### EX: górna droga M174 i drzwi M175 → M176
 
 Z123546 dialog20 zamknięty Cross20/wait600. Up1700,Right1800,Up160,

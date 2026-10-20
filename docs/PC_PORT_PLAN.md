@@ -2,6 +2,35 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: nagrody M163 → Maeda/Narita → kanały M166/story568
+
+Od31112 wyniki i ObtainAll/End prowadzą32312 do swobodnegoM163,
+113/335HP. RuchUp przez ulicę33072 doM165/a80262c8,story552.
+DalszeUp140 daje35672 dialog11 z Maedą. Oryginalna rozmowa i przekazanie
+przedmiotu:37272 story560,slot23 item203/Narita (pusty slot24 zachowany),
+menuNULL,113HP. Nie usuwano ani nie podmieniano przedmiotów.
+
+Pierwsze zwykłe próby włazu zatrzymywała geometria/pozycja. Odczyt
+oryginalnych skryptów przez LLDB był wyłącznie do odczytu,z detach;
+obszar interakcji ma x[-200,300],z[1700,2050]. Zwykłe korekty ruchem
+ustawiły Ayę z[-280.15,1747.92] w obszarze poRight110normal i Cross.
+49446 kończy pełne zejście drabiną:M166/a8026348,story568,113/335HP,
+menuNULL,move_lock0,zero wrogów. Bez zmian geometrii lub teleportów.
+Journal zachowuje również nieudane wcześniejsze próby podejścia.
+
+Dwa świeże cold49446 normal/SAN exit0 bez diagnostyki sanitizer/opcode,
+całe JSON i1MiB VRAM równe między profilami oraz zamrożonym live49446.
+Cały ekwipunek/4096B rekordów i wszystkie zmienne względem coldE2:
+slot23:0→203,bajt426:0→5,zmienne1:998→163,3:9428992→12566528,
+20:0→5,67:18655→2147502303,74:536→568,78:232→174;reszta bez zmian.
+Asercje obejmują walkiM162/M163,leczenie,Maedę i przekazanieNarity.
+Źródłowy i prywatneE2 niezmienione. Dowód,journal,checkpoint
+/tmp/pe-ex-sewer-entry-E2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ/RAM/save,ten sam pe-video-clock-v1.
+SDK/SDL nieinstrumentowane,brak niezależnego oraclePS1,/tmp tymczasowe.
+Następny krok:przygotowanie zdrowia i dalsza walka w kanałach EX.
+
+
 ### EX: po M162 maxHP335, M163 trzy cele pokonane
 
 Od zweryfikowanego wyniku23812 potwierdzenia awansu/ObtainAll/End

@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — koniec wizyty Klampa i mapa/story376
+
+Zwykły input kontynuuje długą oryginalną rozmowę M367 po filmie12,
+przez139–166 do movie13 (aktywny83512, zakończony86452/frame359/video0).
+Tester wysłał Cross83512–83542 i83782–83812 podczas FMV; pełne
+nieprzerwane odtworzenie nadal nieudowodnione. Dalsze rozmowy168–229,
+bez modyfikacji tekstu/skryptów. Zamknięcie229 przy108622 podnosi etap
+368→376; wait1200 prowadzi przy109822 do M0000/a8000048, nocna mapa,
+Museum zaznaczone. HP181/181,menu null,enemy0,dialog3/state1. Obraz mapy
+obejrzany. Wizyta fabularna zakończona; następny cel jeszcze niewybrany.
+
+/tmp/pe-ex-museum376-K-v1-verify.py wykonany PASS: cały zimnyK→Soho→
+sklep→Museum→rozmowy/filmy→mapa376, normal/SAN exit0,pełny JSON/VRAM
+identyczny z live; K bajtowo/hash bez zmian. Ekwipunek względem K tylko
+slot16 Junk20→Tool22, wszystkie4096B rekordów bez zmian. Dokładne delty
+wszystkich zmiennych:1:998→191,3:8642560→8904704,25:67108882→67108922,
+34:17→33,74:328→376,146:0→20. Artefakty
+/tmp/pe-ex-museum376-K-v1-{seed.json,checkpoint,proof/proof.json},obraz.png.
+SDK/SDL bez instrumentacji; brak nowego oracle PS1 obrazu/audio.
+Kod produkcyjny,RAM/RNG,payloady save bez zmian. Następne: dalszy Day3
+z mapy/story376. Pełny port i kompletność FMV nadal wymagają weryfikacji.
+
+
 ### EX — wybór Museum i sekwencja Klampa do story368 po filmie12
 
 Z mapy po Soho dwa Left wybierają Museum (obraz sprawdzony),Cross→M038/

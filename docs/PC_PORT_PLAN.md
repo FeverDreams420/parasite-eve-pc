@@ -3,6 +3,30 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — M112→M115, scena M044/film14 i sterowanie M121
+
+Po Medicine3 wyjście M112 przyx[-284,-105],z[357,575],yaw3072
+prowadzi do M115. Od spawnu[47,-3912] Right700,Up1500,Up144 wybiera
+zachodnie schody i scenę M044/a8004248. Dialogi83,84,86,88–91
+uruchamiają film14. Przy21884 video_state2/frame42; wait6000 bez inputu
+kończy film przy27884/video0/frame375,dialog92. Dalsze rozmowy92–94
+oddają sterowanie w M121/a80220c8 przy28964:story400,HP189/189,
+menu null,lock0,enemy0,battle0. Cały ekwipunek nadal identyczny z L.
+
+/tmp/pe-ex-m121-arrival-L-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live, L bajtowo niezmieniony. Całe wyposażenie
+oraz wszystkie zmienne porównane; delty1:998→115,44:67508284→71702588,
+46:1450184→1450188,86:0→512. Asercje obejmują83, aktywny film14,
+końcowe375 i92, oraz zero przycisków w oknie21884–27884. To dowód
+przejścia i końcowego stanu filmu; bez niezależnego oracle każdej klatki/audio.
+Artefakty /tmp/pe-ex-m121-arrival-L-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji, brak nowego porównania PS1. Kod produkcyjny,
+RAM/RNG/payloady save bez zmian. L pozostaje ostatnim trwałym zapisem;
+live189HP po leczeniu. Następne eksploracja M121 i dalsza trasa NYPD.
+Pełny port pozostaje nieukończony.
+
+
+
 ### EX — Medicine3 z M112, leczenie bez utraty ekwipunku
 
 Zimny L/80HP. Skrzynka aktor4[-1146,604] ma Medicine3/item8.

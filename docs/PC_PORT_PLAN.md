@@ -3,6 +3,29 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — prezent M92F, magazyn i etap400 po zbrojowni
+
+Oryginalne rozmowy M108/24–32 otwierają panel5. M92F/szablon148
+trafia do wolnego slot12 jako264, rekord8. Rozmowy37–39 kończą etap392→400.
+Dodatkowy Cross uruchomił rozmowy42–43 i magazyn50; otwarto51 i wycofano
+Circle bez transferu przedmiotów, zamknięto41. Powrót do wyjścia[10,1400]
+w tym wariancie prowadzi do M107, nie M115. Przy167428 M107/a80203c8,
+story400,HP181/181,enemy0,battle9,menu null,lock0. Bank44 nadal2108,
+bez67108864 ze starszej trasy; M115 nie zaliczono.
+
+/tmp/pe-ex-armory400-K-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live, kopie K bajtowo niezmienione.
+Całe50 slotów i4096B rekordów sprawdzono: względem wejścia M108 tylko
+slot12:0→264 i32B rekordu8, pozostałe wyposażenie niezmienione.
+Delty wszystkich zmiennych w proof.json. Artefakty
+/tmp/pe-ex-armory400-K-v1-{seed.json,checkpoint,proof/proof.json}.
+Read-only LLDB/detach: /tmp/pe-ex-m107-story400-K-v1, skrypty aktywnych
+aktorów do ustalenia dalszej trasy. Bez edycji RAM/RNG/save ani zmian kodu.
+SDK/SDL bez instrumentacji, brak niezależnego oracle obrazu/audio PS1.
+K ostatni trwały zapis; dalszy Day3 i pełny port pozostają otwarte.
+
+
+
 ### EX — czterech przeciwników M107 i wejście do zbrojowni M108
 
 Po Cathy powrót do M107, droga na południe uruchamia czterech wrogów:

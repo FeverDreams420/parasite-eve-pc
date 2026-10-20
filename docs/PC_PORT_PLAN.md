@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Nowy zapis M po Eve i potwierdzone Continue; wejście do M428
+
+Po przejściu do M352/a8065148 oryginalny skrypt przywrócił621HP,
+pokazał dialog182 i menu zapisu. Prywatny slot12/No13, nowy M:
+/tmp/pe-m352-trained-save-M-v1-source/BASLUS-006620000000M,8192B,
+SHA256 64fdec4d8f90d5692f1d91c2dce49273fdbf66d78eb74911c575fc2d6816de58.
+/tmp/pe-m352-trained-save-M-v1-proof/proof.json: cold L do80614,
+pełny JSON/VRAM live/normal/SAN identyczny, zapisane M bajtowo zgodne,
+exit0 bez raportów. /tmp/pe-m352-trained-M-continue-v1-proof/proof.json:
+nowy proces wyłącznie z M, normal/SAN do20000, M352/story723,621HP,
+pełny JSON/VRAM zgodny, exit0 bez raportów, M bez zmian. To osobne M,
+nie wcześniejsze K; duże leki pozostały zużyte.
+
+Sesja50642 po wyjściu z menu weszła przy81320 do M428/a80822c8,
+story726,621HP; ten późniejszy punkt jeszcze bez osobnego replayu.
+Nie modyfikowano źródeł gry ani pamięci/savów. Dalsze walki, E19
+i pełne zakończenie kampanii nadal niezaliczone.
+
 ### M432 z przygotowanego L wygrane; M352 przywróciło pełne HP
 
 Sesja50642 kontynuowała od57975 z401HP/boss2200 ponad próg miliona.

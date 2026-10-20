@@ -2,6 +2,51 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Gałąź od M: M350 pokonane, początek E19 nadal bez sukcesu
+
+Sesja97025 potwierdzona żywa przy58010. Heal2 parą dały228HP; Down100run
++Down/Right40run bez obrażeń i reticle962. Dwa strzały obniżyły ciało
+900→732, ale Aya92HP. Kolejne Heal2 do212, ruch Left132 oraz
+Up/Right100 dały okno podejścia bez trafienia, reticle1099. Strzały
+obniżyły ciało do564, Aya121. Down105run bez trafienia dobiło PE do
+32951530, wystarczając na Heal3. Heal3+strzał dały401HP/body480.
+Po podejściu i dalszych turach body312→228→144→60; część strzałów
+nie trafiła po teleportacji poza zasięg. Nie oznacza to zmiany działania
+broni ani powodu do usunięcia kontroli zasięgu.
+
+Przy63041 Aya113HP, PE14838963: druga Heal2 nie mogła zostać
+zatwierdzona po zakolejkowaniu pierwszej. Wybrano Heal1, razem203HP
+przy64301. To prawidłowe odrzucenie niedostępnej akcji; nie błędny input
+silnika ani raport sanitizer. Po kolejnym podejściu ostatni strzał z978
+obniżył ciało do999976 przy65173, Aya112HP. Przy65773 oryginalne
+przejście do M349/a80644c8/story732, mode12/live0.
+
+/tmp/pe-m350-from-M-victory-v1-proof/proof.json: cold autentyczny M do
+65773 na aktualnym pe-e08-orbit-v1, normal/SAN exit0, całe JSON i VRAM
+zgodne także z sesją live. M i obie prywatne karty niezmienione, bez
+sanitizer/opcode. Pełny input i checkpointy zachowane; nie zmieniano
+kodu, balansu, pamięci ani zapisu. To zwycięstwo M350, nie pełnego finału.
+
+Dialogi M349→M429, przy66645 E19 aktywne,112HP/PE11166580; nowa walka
+nie przywraca PE natychmiast do pełna. Pierwsze Up/Leftrun155 bez trafienia
+i PE18835158. Dwie Heal2 podniosły zdrowie, ale po końcu animacji trafił
+atak84 (końcowo148HP), dalszy bieg kosztował70. Heal2+Heal1 z ruchem
+podanym już podczas końca animacji dały168HP bez nowego trafienia,
+jeszcze112 klatek biegu bez straty HP. Dalsze Left140/Down140 kończą
+84HP po84 obrażeniach, a dwie Heal1 z ruchem kończą60HP po kolejnym84.
+Sam ruch po rzuceniu nie stanowi zatem potwierdzonego uniku.
+Źródło tych trafień nie zostało niezależnie zaobserwowane; przypisanie
+konkretnemu pociskowi/pozostałemu efektowi wymaga obserwacji zadań FX.
+
+/tmp/pe-e19-from-M-early-v1-proof/proof.json: cold M do69366, pełne
+JSON/VRAM live/normal/SAN zgodne,60HP, main1003500/secondary1300,
+oba exit0 bez sanitizer/opcode, M i prywatne karty bez zmian. To dowód
+powtarzalności nieudanej taktyki, nie zwycięstwa lub niezawodnego uniku.
+Żywa sesja97025 pozostaje na69366; przed kontynuacją sprawdzić uchwyt.
+Następny krok: obserwacja pozycji aktywnych pocisków/efektów i timingu
+trafień przed dalszym doborem inputu, zamiast wnioskowania wyłącznie
+z trybu/pozycji aktora. E19 i pełny port nadal nieukończone.
+
 ### Gałąź od M: Wayne, sprawdzenie BP, zwycięstwo M428 i skrzydło M350
 
 Sesja97025 ponownie potwierdzona żywa. Wayne: magazyn bez transferów,

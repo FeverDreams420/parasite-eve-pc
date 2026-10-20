@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — obserwowany marsz po pierwszej alejce
+
+Kontynuacja E po wejściu do M374: Up500, następne Up zatrzymane
+po312 klatkach przy zmianie sceny na a80054c8. Powrót przez to samo
+przejście i ponowne wejście działają. Dalszy zwykły pad, dzielony na
+odcinki8 VBlanków, prowadzi południową alejką do pozycji[634,0,−7824].
+Przy40232 scena a80054c8/story232,92/92HP, brak menu/dialogów/wrogów,
+move_lock8. Nie uznaje się tego punktu za potwierdzone swobodne
+sterowanie; znaczenie utrzymującej się flagi wymaga dalszego sprawdzenia.
+
+/tmp/pe-ex-park-walk-v1-verify.py wykonany PASS: normal/SAN exit0,
+cały JSON i VRAM zgodny z live, ekwipunek identyczny z E, jedyna karta E
+bajtowo bez zmian i zgodna z wcześniejszym hashem; brak błędów sanitizer,
+opcode i assertion. /tmp/pe-ex-park-walk-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Nie jest to ukończony park ani walka;
+nie zmieniano kodu gry, RAM ani zapisów. Kontroler pozostaje aktywny.
+
 ### EX — przejazd i wejście do Central Park z autentycznego E
 
 Zimne Continue E, przejście przez NYPD i recepcję uruchamiają film7.

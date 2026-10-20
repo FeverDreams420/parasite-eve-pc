@@ -13567,6 +13567,8 @@ static int original_credit_playback(PeDisc *disc)
     CdIntToPos(g_BootDisplayPlaybackStartPos,&position);CdControlB(2,(u8 *)&position,NULL);CdControlB(27,NULL,NULL);
     size_t reference=Psyz_CdPullSamples(expected,frames);
     CdControlB(8,NULL,NULL);Psyz_CdSetDiskPath(NULL);
+    /* Campaign FMVs can reach credits without opening an SDL audio stream. */
+    Psyz_AudioDestroy();
     int start_status=BootDisplay_StartPlayback();
     if(start_status){fprintf(stderr,"Credits playback start failed: %d\n",start_status);return 0;}
     if(BootDisplay_SetCdFilter(1))return 0;
@@ -18018,17 +18020,34 @@ int main(int argc, char **argv)
         Spu_InitHardware();
         u32 blanks=g_BootHostVBlankCount;
         for(unsigned i=0;i<128;++i){
-            while(g_AkaoMessageQueueCount)VSync(1);
+            for(;;){
+                EnterCriticalSection();
+                if(!g_AkaoMessageQueueCount)break;
+                ExitCriticalSection();VSync(1);
+            }
             memset(g_AkaoMessageQueue,0,sizeof(g_AkaoMessageQueue));
             g_AkaoMessageQueueCount=(i&1)?15:16;
             memset(&g_AkaoCmd,0,sizeof(g_AkaoCmd));
             g_AkaoCmd.opcode=(i&1)?0x99:0;
-            if(Akao_EnqueueStagedCommand()!=0 ||
-               g_AkaoMessageQueueCount!=((i&1)?2:1))return 160;
+            ExitCriticalSection();
+            int queued=Akao_EnqueueStagedCommand();
+            EnterCriticalSection();
+            /* The real consumer may drain the newly enqueued command before
+             * this thread resumes. Consumed slots retain their contents. */
+            int valid=queued==0 && (g_AkaoMessageQueueCount==0 ||
+                g_AkaoMessageQueueCount==((i&1)?2:1));
             if((i&1) && (g_AkaoMessageQueue[0].opcode.word!=0x9B ||
-                         g_AkaoMessageQueue[1].opcode.word!=0x9D))return 160;
+                         g_AkaoMessageQueue[1].opcode.word!=0x9D))valid=0;
+            ExitCriticalSection();
+            if(!valid)return 160;
         }
-        while(g_AkaoMessageQueueCount)VSync(1);
+        for(;;){
+            EnterCriticalSection();
+            int pending=g_AkaoMessageQueueCount;
+            ExitCriticalSection();
+            if(!pending)break;
+            VSync(1);
+        }
         if(g_BootHostVBlankCount!=blanks)return 160;
         Spu_Shutdown();
         puts("Original AKAO queue: 128 full/single and 15-entry/paired boundaries drain through the real timer without advancing VBlank");

@@ -21,6 +21,9 @@ s32 BootDisplay_StartPlayback(void) {
        g_BootDisplayPlaybackStartPos<0 ||
        g_BootDisplayPlaybackStartPos>=g_BootDisplayPlaybackEndPos)return -1;
     u8 mode=200, filter[2]={1,0};
+    /* CdlSetmode lazily creates audio. Create its mutex before taking the
+     * outer playback lock, including the first XA stream after headless FMV. */
+    if(Psyz_AudioInit()<0)return -2;
     CdControlB(8,NULL,NULL);
     Psyz_AudioLock();
     playbackImage=g_CdImage;

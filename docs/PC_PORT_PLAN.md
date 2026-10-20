@@ -2,6 +2,153 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Napisy końcowe — naprawa startu XA bez wcześniej otwartego audio
+
+Zakończenie po filmie46 ujawniło rzeczywisty abort w istniejącym
+BootDisplay_StartPlayback, nie problem walki lub poziomu Ayi. Raport
+macOS zachowany w /tmp/pe-ending-v1-live/crash.ips: SIGABRT,
+BootDisplay_StartPlayback → SDL_UnlockMutex_REAL (rc == 0). Odtwarzacz
+brał blokadę przy nieistniejącym mutexie, a CdlSetmode dopiero wewnątrz
+tej sekcji tworzył SDL audio i mutex. Unlock dotyczył nowego mutexu.
+W src/overlays/boot_display/playback.c dodano sprawdzone Psyz_AudioInit
+przed pierwszą blokadą. Nie zmieniono dekodera, mechaniki ani skryptów.
+
+Istniejący --credits-playback zamyka teraz audio bezpośrednio przed
+startem transportu, po odczycie referencyjnego PCM. Pierwszy wariant
+regresji zamykał je zbyt wcześnie i sam ponownie otwierał przed badanym
+wywołaniem; nie reprodukował błędu i nie stanowi dowodu naprawy.
+/tmp/pe-credits-cold-audio-v2-cold-reproducer/proof.json potwierdza
+stary playback jako jedyny podmieniony obiekt: exit−6; poprawiony
+normal/SAN: exit0, pełne testy credits/XA PCM bez błędów sanitizer.
+
+Szerszy test ujawnił też wyścig w samym --akao-queue-backpressure:
+po wyjściu z enqueue prawdziwy timer może już opróżnić kolejkę.
+Stary test bez synchronizacji wymagał dokładnie1/2 wpisów. Fixture
+synchronizuje teraz przygotowanie i obserwację przez istniejącą sekcję
+krytyczną, dopuszcza opróżnioną kolejkę oraz nadal sprawdza zachowane
+opkody pary. Kod kolejki gry nie zmieniony. Nie ukryto nieudanego
+przebiegu: /tmp/pe-credits-cold-audio-v2-akao-queue-backpressure-san.log,
+exit160. Aktualny kandydat po tej poprawce testu: pe-credits-cold-audio-v3.
+Kandydat zainstalowany do build/parasite-eve-pc i istniejącego fixture.
+/tmp/pe-credits-cold-audio-v3-installed-build-proof.json:438 świeżych
+obiektów z rehashem zależności/bibliotek/plików wykonywalnych,70/70
+regresji,12/12 wybranych CTestów w obu profilach,40/40 osobnych procesów
+stress AKAO i2 ścisłe kompilacje zmienionego modułu playback. Powtórzony
+reproducer starego obiektu:−6, nowy normal/SAN:0. PsyZ/SDL pozostają
+nieinstrumentowanymi archiwami; nie deklaruje się pełnego SAN tych bibliotek.
+Gra SHA256:256ca5f3aeb05b525bb3a484137b3cfbd8670e203d7275df6db13a5469daa156.
+
+Normal-only /tmp/pe-ending-v3-live odtwarza pełny oryginalny M/input,
+przechodzi film46 i rzeczywiście wyświetla napisy, a przy160000 pozostaje
+w dispatch0xaa108448/story756. Obserwacja tylko do odczytu
+/tmp/pe-credits-observe-v3.json: credits frame21433, done0, playbackactive1,
+playbackended0, sektor212748 z przedziału204531..274883. Czarny ekran
+po przewinięciu tekstu nie jest dowodem zakończenia. XA nadal zależy od
+rzeczywistego czasu urządzenia audio w headless, zamiast od liczby klatek
+kontrolera. To kolejny problem do rozwiązania dla deterministycznego
+pełnego przejścia. Obecny JSON nie obejmuje tych wewnętrznych pozycji XA,
+więc zgodność samego JSON nie dowodzi synchronizacji transportu.
+Warianty v1/v2 poprawki przeszły normal/SAN do134000 z identycznym JSON
+napisów; nie zastępuje to dowodu dla finalnego kandydata ani clear data.
+Karty źródłowe i użytkownika pozostają nietknięte; clear save nadal otwarty.
+
+### E20 wygrana zwykłym inputem; potwierdzona ucieczka i epilog M288
+
+Kontynuowano zainstalowanego pe-e20-four-orbs-v1 bez zmian źródeł gry,
+PsyZ lub parametrów. Odczyt tylko do obserwacji /tmp/pe-m430-script-read-v1
+zachowuje oryginalne skrypty aktorów i ich dekodowanie. Monitor HP aktora2
+przy15656..16128 wymaga w pierwszym etapie15 obrażeń; przy obronie1200
+zwykłe trafienia zadają1. Nie trzeba odejmować całych7992HP w tej fazie.
+W ekwipunku zostały3 naboje M8000 i15 w Maeda’s Gun; pozostałe aktywne
+bronie są puste. Poprzedni test źle odczytywał bajt pojemności jako amunicję.
+
+Oryginalne menu: root row2 zmiana broni, lista row2 Maeda’s Gun, zwykłe
+potwierdzenie. Wybrano istniejący slot11/rekord12/item97 z15 nabojami.
+Nie przenoszono modów, nie dodawano przedmiotów/BP/amunicji i nie zmieniano
+save'a. Ruch testera omija cztery kule, Heal2/Heal3 wybierane przez menu.
+Broń Maedy ma własny Rate2 (tail0x21), nie Double Action; zewnętrzny tester
+V1 błędnie oczekiwał końca wyboru po jednym naboju i zatrzymał się przy73964.
+Gra wyszła quit0. V2 zimno odtwarza cały prefix i zwykłym Cross kończy
+pozostały wybór. Nie zmieniono mechaniki, kodu gry lub modyfikatorów broni.
+
+Wszystkie15 naboi trafiło po1 obrażeniu. Skrypt zakończył fazę i wybrał
+M272/0xa8047148 przy77084, story734; ostatnie aktywne HP Ayi356.
+/tmp/pe-m430-phase1-v1-proof/proof.json: cold normal/SAN identyczne z live
+w całym JSON/VRAM, exit0, bez sanitizer/opcode, źródłowy M i karty bez zmian.
+Sam końcowy odczyt jest w trakcie unload i nie ma player_hp; nie uznano
+braku aktora za śmierć. Zamrożony input: /tmp/pe-m430-phase1-v1-seed.json.
+
+Dalszy zwykły input prowadzi przez M272 do M430 przy79760/story735/356HP.
+Oryginalny skrypt przyznaje nową specjalną broń item147 i15 naboi oraz
+wyposaża slot8; wcześniejszy item97 pozostaje pusty. Osiem kolejnych
+trafień nową bronią zadaje po1000, ammo15→7. To wynik oryginalnej broni
+oraz monitora skryptu, nie zmiana obrony1200 lub wzoru obrażeń. Zwycięstwo:
+82500, M426/0xa8082348, story737, Aya396HP/live_enemies0 po właściwej
+zmianie sceny. /tmp/pe-e20-victory-v1-proof/proof.json potwierdza niezależne
+cold normal/SAN/live całego JSON/VRAM. Karty i źródłowy M bez zmian.
+Pełny input /tmp/pe-e20-victory-v1-seed.json; oba etapy, wejścia M280/M282
+zawór M283, M284 i epilog M288 sprawdzane przez /tmp/pe-e20-campaign-verify-v6.py, wszystkie PASS.
+To dowody natywnej kampanii; referencja PS1 nie wygrała jeszcze E19/E20,
+nie ma porównania pełnego obrazu/audio tych walk z oryginałem.
+
+Po walce M426 automatycznie przechodzi do M275. Zwykłe dialogi71/72,
+ruch i interakcja prowadzą przez drzwi M276, schody M278 i dolne wyjście
+M280. Ścigający przeciwnik rzeczywiście zmienia pozycję. /tmp/pe-escape-
+m280-entry-v1-proof/proof.json:85356/M280/396HP, cały normal/SAN/live
+JSON/VRAM identyczny, exit0 bez sanitizer/opcode, karty niezmienione.
+Dalszy tester V1 minął boczne drzwi M280 i zatrzymał się przy86154,
+396HP; zakończony quit0, bez deklaracji przejścia tej gałęzi. Odczyt
+oryginalnego Script_PointInPoly wskazał właściwy prostokąt x360..500,
+z1200..1800. V2 odtwarza pełny M/input do85660 i wchodzi prawidłowo do
+M281, następnie schodzi do M282 przy86380,396HP. Ten checkpoint także
+ma identyczne cold normal/SAN/live JSON/VRAM, exit0 i niezmienione karty:
+/tmp/pe-escape-m282-entry-v1-proof/proof.json. Nie cofano RAM ani
+nie przywracano snapshotów; każdy powrót to pełny zimny replay z M.
+Skrypty, kamery i podłogi odczytano wyłącznie obserwacyjnie w
+/tmp/pe-escape-m{275,276,278,280,281,282}-*. Kontrolery pozostają poza repo.
+Następnie V3 osiąga M283/87336 i przez oryginalny panel oraz dialogi75..77
+uruchamia animacje zaworu, zmienia flagę4096 i wprowadza ścigającego
+przeciwnika. /tmp/pe-engine-valve-v1-proof/proof.json:89042/M283/396HP,
+cały cold normal/SAN/live JSON/VRAM identyczny, exit0, bez sanitizer/opcode,
+źródłowy M i karty bez zmian. V3 potem utknął na narożniku i został złapany;
+przy91010 wybrano M438 (Game Over), nie uznano tego za zakończenie gry.
+Przebieg zachowany, native quit0. V4 zatrzymał zewnętrzny kontroler po
+wykryciu braku postępu, przed złapaniem; także quit0.
+
+Przyczyna błędnej trasy testera: projekcja wszystkich trójkątów X/Z
+ignorowała wewnętrzne ściany i jawne połączenia sąsiadów. Obserwacyjny
+/tmp/pe-engine-floor-live-v1.json zachowuje pełne połączenia85 trójkątów;
+63 ściany osiągalnej części użyto w /tmp/pe-engine-wall-path-v1.json.
+Nie zmieniono kolizji gry. Dalszy kontroler V5 odtwarza prawdziwy M i
+cały input do89042, uwzględnia jawne ściany i dociera do M284 przy89546,
+396HP. /tmp/pe-escape-m284-entry-v1-proof/proof.json potwierdza pełny
+cold normal/SAN/live JSON/VRAM, exit0 bez sanitizer/opcode i niezmienione
+karty. Nie zmieniono fizyki ani kolizji w kodzie gry. Kolejne przebiegi
+V5 idą przez alarmowy korytarz M285 i schody M286 do M287; przy92424
+trwa właściwy film44 po osiągnięciu wyjścia. Film43 w gałęzi porażki
+nie jest tym samym zdarzeniem. Film44 zakończył się i przy94824 działa M288/story738/396HP z Danielem,
+Maedą i Ayą, dialog1 „It’s finally over...”. Cały odcinek do tego punktu
+ma niezależne identyczne cold normal/SAN/live JSON/VRAM, exit0, brak
+sanitizer/opcode i niezmienione karty: /tmp/pe-epilogue-entry-v1-proof/
+proof.json. Pełny input /tmp/pe-epilogue-entry-v1-seed.json. Nie uznano
+samego wyboru filmu za dowód ukończenia: potwierdzono późniejszą scenę,
+etap historii i żywą Ayę. Normal-only kontynuacja /tmp/pe-ending-v1-live przeszła dialogi1..19
+M288, pełny film45, M006/story742, M025/story744 oraz sekwencję
+M373→M049→M373→M049→M373 do752, następnie M050/story754.
+Ostatni potwierdzony stan:117948, film46/frame720. Filmy44/45 nie były
+przewijane. Dalszy log zawiera assertion SDL_UnlockMutex_REAL (rc == 0)
+po ponownej inicjalizacji SPU/audio; proces30827 już nie istnieje. Nie
+uznano tego przebiegu za zakończenie ani poprawne wyjście. Artefakty
+i pełny input pozostają w /tmp/pe-ending-v1-live do odtworzenia błędu.
+Ten dalszy fragment nie ma jeszcze osobnego cold SAN dowodu; napisy
+końcowe i zapis clear data pozostają otwarte. Ucieczka do M288 jest
+potwierdzona osobno. Pełny zakres projektu pozostaje nieukończony.
+
+Dobór broni w autonomicznych testach: preferować pojedynczy strzał
+z Double/Triple Action. Wielokrotny strzał dzieli obrażenia i zużywa
+więcej amunicji; nie traktować go jako ulepszenia siły ognia. Intrinsic
+Rate2 broni Maedy w finale pozostaje oryginalną cechą, bez zmian mechaniki.
+
 ### E19 wygrana; M430/E20 — naprawiona czwarta kula w oryginalnym module
 
 Autonomiczna kampania z niezmienionego M pokonała E19 zwykłymi padami,

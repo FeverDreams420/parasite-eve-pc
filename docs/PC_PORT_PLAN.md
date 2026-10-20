@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — Medicine2 w aptece przy pełnym ekwipunku
+
+M097/story328: przejście od wejścia przez zachodnią alejkę, podejście do
+skrzyni typu6[-96,1110]. Cross uruchamia pytanie3 „Will you replace an item?”;
+oryginalne Yes→Items/selection1→lewa kolumna,row6 (slot12/Junk20)→Cross.
+Przy130063 panel55, zamknięty przy130213. Slot12 zmienił20→7/Medicine2,
+pozostałe sloty,capacity21,weapon5/armor6 i cały4096B bufor wyposażenia
+bez zmian wobec wejścia do apteki. HP181/181. Jedyna zmiana wszystkich
+zmiennych skryptów od127021 to148:0→20: odłożony Junk pozostaje w skrzyni,
+nie uznaje się jej za całkowicie opróżnioną. Menu null,dialog3/state0,
+M097/a80093c8/story328. Żaden item leczący niezużyty.
+
+/tmp/pe-ex-pharmacy-med2-H-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live; H bajtowo/hash bez zmian. Artefakty
+/tmp/pe-ex-pharmacy-med2-H-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji; brak nowego oracle PS1 obrazu/audio.
+Bez zmian produkcyjnego kodu, RAM/RNG i payloadów zapisów. Następne:
+pozostałe interakcje apteki, wykorzystanie ulepszenia pancerza i dalszy Day3.
+
+
 ### EX — Maeda105, Daniel98/99 i wejście do apteki M097
 
 Z M093/story328 zwykły pad podchodzi do Maedy: dialog105; ponowne

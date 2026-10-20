@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M273: wynik drugiej próby i przygotowanie z wcześniejszego zapisu
+
+Live84495 zakończył walkę porażką przy47966. Prosty pilot używał tylko
+odczytu JSON i zwykłych wejść kontrolera: wybierał część7 z bieżącej
+listy, leczył przez oryginalne menu oraz przemieszczał Ayę między turami.
+Przy47740 Aya210HP, część7 1000723HP, część6 1001395HP. Następne dwa
+strzały podczas trybu13 Eve zakończyły się HP0/trybem porażki3.
+Nie zmieniano danych ani balansu, a samego pilota nie uznajemy za
+kompletny runner przejścia kampanii.
+
+/tmp/pe-m273-target7-defeat-v1-proof/proof.json: cold SAN do47966
+exit0 bez raportów, pełny JSON/VRAM równe normalnemu live, F bez zmian.
+Input, stan i VRAM zamrożono; live84495 zamknięto quit/exit0.
+Nie jest to zwycięstwo. Oryginalny moduł działa przez tę ścieżkę porażki.
+
+Rozpoczęto osobną gałąź od autentycznego wcześniejszego E po T-Rexie:
+/tmp/pe-m340-prepare-eve-v1-live.py (live37815), na kandydacie v4.
+Celem jest sprawdzenie dostępnego przygotowania postaci przed finałem,
+z zachowaniem istniejącego F i wszystkich dowodów nieudanych prób.
+Nie zalicza się jeszcze dodatkowego poziomu, przedmiotu ani ulepszenia.
+
 ### M273: autentyczne Cure-M w Double Action
 
 Nowa próba live84495 od tego samego F i300BP: wczesny wybór części7

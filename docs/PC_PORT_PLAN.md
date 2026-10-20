@@ -3,6 +3,36 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — M127 i oryginalna awaria lewej windy M128
+
+Nowy live /tmp/pe-ex-hospital-N-nav-v1-live od zimnego N, startup-proof
+PASS pełny JSON/VRAM jak cold normal/SAN; poprzedni live odM zamknięty0.
+Od lobby trasa na południe i zachód prowadzi do M127/a80223c8/dialog87,
+następnie121. Zachowano próby podejścia do przycisku przy[-271,-1246]
+i błędną kolejność wejścia w drzwi. Oryginalne granice i bloki niezmienione.
+Read-only LLDB/detach /tmp/pe-ex-m127-scripts-N-v1: aktywne skrypty aktorów.
+Kontroler typu5 odpowiada wcześniejszemu dumpowi indeks1; jego maska
+536870912 odpowiada rawCross16384 (potwierdzone polepad20000300).
+Próba Circle8192 dawała40000401, bez wymaganego bitu; nie zmieniono mapowania.
+
+Po Cross przy przycisku podejście wzdłuż korytarza przed ruchem w otwór
+windy prowadzi20834 do M128/a8022448. Próby panelu następnie uruchamiają
+animację; podczas niej skrypt blokuje ruch i ustawia[50,-50], stąd nav
+zatrzymał się bez postępu. Przy22486 dialog98, potem99; przy23296
+story467,HP210/210,menu null,lock0,enemy0,99 zamknięty. Nie zaliczono
+osobnej obserwacji strony18 ani dalszego wyjścia z windy.
+
+/tmp/pe-ex-elevator467-N-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live,N bajtowo niezmieniony. Całe wyposażenie
+identyczne z N, wszystkie zmienne porównane; tylko1:998→127,66:0→4,
+67:0→1,74:464→467. Asercje obejmują87,98,99 i końcowy467.
+Artefakty /tmp/pe-ex-elevator467-N-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji,brak niezależnego oracle PS1. Kod produkcji,
+RAM/RNG/payloady save bez edycji. N ostatni trwały zapis; następne ponowny
+panel windy i dalsza droga do bezpieczników. Pełny port pozostaje nieukończony.
+
+
+
 ### EX — Mayoke, lobby szpitala i autentyczny Save/Continue N
 
 M125: początkowe krótkie podejścia nie uruchamiały rozmowy; korekta pozycji

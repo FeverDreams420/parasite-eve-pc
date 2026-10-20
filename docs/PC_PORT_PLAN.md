@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: Subway Gate Key, story600 i powrót przez most
+
+Od41550 M189 dodatkoweLeft200/Up300 i późniejszeRight/run500,
+Up/run320 (guard stop) prowadzą43370/43670 M190/a8029048.
+Right/run200,Cross uruchamia44190 selection55/Subway Gate Key.
+Gra przyznaje219 do pustego slotu24. Cross zamyka komunikat,
+dialog11 przy44510;po zamknięciu i oczekiwaniu45430 dialog12.
+Cross/wait600 daje46050 story596→600. OryginalneLeft300,Down180,
+Left300,Left/run80 (guard stop),wait300 dają47810 ponownie
+M189/a80284c8,437/437HP,klucz zachowany,menu null,move_lock0.
+Oba CUE podane od startu;bez ręcznej zmiany obrazu/napędu.
+
+Dwa świeże pełne cold47810 normal/SAN na pe-control-aim-v1 exit0,
+bez diagnostyki sanitizer/opcode. Cały JSON i1MiB VRAM identyczne
+między profilami i zamrożonym live. Wszystkie sloty/4096B rekordów
+sprawdzone;względem41550 tylko slot24:0→219. Wszystkie zmienne:
+1:188→190,54:56508258→58605410,74:596→600,reszta bez zmian.
+Pierwszy verifier pominął dwa nowe pola w oczekiwanych zmiennych;
+skorygowano oczekiwanie54/74,bez zmiany gry lub replay.
+Źródłowy i prywatne F2 identyczne bajtowo. Dowód
+/tmp/pe-ex-bridge-key-F2-v1-{seed.json,checkpoint,proof/proof.json},
+runner/verifier obok. Bez zmian produkcji/PsyZ/RAM/save payload;
+SDK/SDL nieinstrumentowane,brak oraclePS1,/tmp nietrwałe.
+Nowego zapisu po bossie jeszcze nie wykonano. Następne:powrót
+z M189 w stronę metra/telefonu i zapis G2.
+
+
 ### EX M188 nagrody i M189 z pełnym437HP
 
 Od37774 sześć Cross60/release240 przechodzi EXP,level-up i loot do

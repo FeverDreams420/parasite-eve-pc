@@ -2,6 +2,84 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Przygotowanie do Chrysler 77 — oryginalna krzywa EXP
+
+Sprawdzono wszystkie 99 progów EXP i rekordów statystyk z oryginalnego
+resident pack. Odczyt LLDB był wyłącznie obserwacją; obie tabele są
+bajtowo identyczne z PE.IMG, resident pack przy offset147456,
+levelExp +27912 (396B), levelStats +25536 (2376B).
+Dowody: /tmp/pe-exp-curve-v1{.json,-proof.json,-pack.bin}; odczyt:
+/tmp/pe_exp_curve_v1_lldb.py. Nie zmieniano kodu, RAM, save ani balansu.
+Poziomy poniżej są ekranowe (indeks tabeli +1), progi są kumulacyjne.
+
+| Awans | Koszt EXP |
+|---|---:|
+| 33→34 | 55 965 |
+| 36→37 | 137 695 |
+| 37→38 | 185 888 |
+| Każdy 38→39 … 97→98 | 4500 |
+| 98→99 | 4841 |
+
+Sprawdzono każdy wpis plateau, nie tylko przykłady. Próg poziomu38
+wynosi725158 EXP, poziomu99 wynosi999999. Zatem całe38→99 kosztuje
+274841 EXP, mniej niż samo33→38 (557097 EXP). Przy planowaniu normalnego
+treningu przed bossem77. piętra należy uwzględnić ten spadek kosztu,
+a nie ekstrapolować drożejących awansów z pierwszej kampanii.
+Oryginalne bazowe HP/offense/defense: poziom38=769/490/490,
+poziom50=793/607/635, poziom99=869/999/984. To rekordy bazowe,
+nie prognoza obrażeń ani finalne statystyki po alokacji BP i ekwipunku.
+Trening i wydawanie BP mają odbywać się zwykłym inputem na autentycznym
+zapisie; ten odczyt tabel nie jest dowodem przejścia Chrysler ani jego bossa.
+
+### EX — Theater Key, ocalały NPC i odblokowanie garderoby
+
+Bez zmian kodu gry/PsyZ pe-video-clock-v1 kontynuowano zimny Continue
+z prawdziwego A, pełny input do12360, w /tmp/pe-ex-key-v1-live. Pierwsza
+interakcja z ciałem w M020 wykonuje dialog112 i oryginalną animację,
+ustawia bit512 w var24. Dalsza interakcja z właściwej strony biurka
+wywołuje dialog115 i oryginalne GiveItem/ShowReceivedItem: item200
+Theater Key dodany do slotu7, bit32 w var24. Przy16456 po zamknięciu
+powiadomienia Aya45HP, move_lock0, zapis A niezmieniony.
+Seed:/tmp/pe-ex-theater-key-v1-seed.json. Pierwsze próby podchodziły
+od strony telefonu/mebli; przypadkowy prompt zapisu anulowano przez
+wybór No, bez zapisywania lub zmiany karty.
+
+Następnie ordinary input wprowadza M017/0xa80013c8 przy20980,
+oryginalny dialog85..89 z ocalałym. Ta garderoba nie wymaga klucza:
+nie użyto jej wejścia jako dowodu odblokowania. Po89 skrypt actor1
+1132..1740 celowo czeka na dowolny kierunek pola, a nie na sam upływ
+czasu lub Cross. Długie wait nie zwalniają sterowania. Up8 przy25260
+uruchamia pozostałą reakcję, bit4 w var24 i move_lock0 przy25868.
+To nie był błąd ani zawieszenie portu, nie zmieniano skryptu.
+
+Właściwa bramka klucza to M012→M014: actor0 sprawdza var24&32,
+a przy pierwszym otwarciu drugich drzwi ustawia bit131072. Trasa
+korytarza musi wrócić na jego środek, aby ominąć ościeżnicę, zamiast
+próbować iść wzdłuż ściany. Przy27796 oryginalny dialog118 „Unlocked
+the door”; Cross i animacja drzwi prowadzą do M014/0xa8001248 przy28284,
+45HP, move_lock0, var24=0x1020234. Item200 pozostaje w ekwipunku.
+Live quit0, źródłowy A i prywatna karta bez zmian. Seed:
+/tmp/pe-ex-key-unlock-v1-seed.json; checkpoint:
+/tmp/pe-ex-key-unlock-v1-checkpoint. Niezależne cold normal/SAN tych
+checkpointów zakończyły się exit0. /tmp/pe-ex-key-verify-v1.py potwierdza
+pełną równość JSON/VRAM live/normal/SAN oraz wszystkie8192B źródłowego
+A i prywatnych kart dla zdobycia klucza i odblokowania.
+
+Alternatywna trasa cold Continue bez klucza wykonuje zwykłą losową walkę
+z dwoma szczurami16HP/def5. Double Action rozdzielono na dwa cele przez
+Right w targetingu; oba giną, oryginalne automatyczne przeładowanie zużywa
+6 nabojów rezerwy, magazynek1→5 po dwóch strzałach. Awans daje maxHP49,
+aktualneHP pozostaje45. Obtain All Items zbiera dwie paczki Ammo+6,
+a Cross na End zamyka oryginalne menu łupu. Bez item200 i bit32 wejście
+M012→M014 wywołuje dialog117 przy20316 i pozostaje w M012. Zamrożony
+checkpoint20572: var24=0x1000010, move_lock0, HP45/49. Seed/checkpoint:
+/tmp/pe-ex-key-locked-v1-{seed.json,checkpoint}; dowód:
+/tmp/pe-ex-key-locked-v1-proof/proof.json. Normal/SAN exit0, pełny
+JSON/VRAM zgodny z live, A niezmieniony; live również quit0.
+Wszystkie trzy dowody sprawdza /tmp/pe-ex-key-verify-v1.py; brak nowych
+błędów sanitizera/opcode/assertion. Biblioteki PsyZ/SDL bez instrumentacji.
+Nie deklaruje się pełnego EX/Chrysler lub obrazu/audio PS1.
+
 ### Kontynuacja EX za kulisami — przebieg w toku
 
 Kandydat pe-video-clock-v1, bez zmian źródeł. Zewnętrzny kontroler

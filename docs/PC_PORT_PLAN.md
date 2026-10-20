@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — użycie ulepszeń, leczenie i trwały zapis E przed Central Park
+
+W M043/story224 zwykłe Items→Use: Offense+2 item30 ze slot4, wybór
+M8000 z filtrowanej listy (M16A1/M8000); bonus ataku rekordu13 byte14
+17→19. Defense+1 item41 ze slot10, wybór B Jacket1 (drugi pancerz
+na liście); rekord0 byte14 bonus obrony42→43. Medicine1 item6 ze slot8
+podnosi72→92/92HP. Wszystkie trzy sloty stają się puste; pozostałe sloty,
+wyposażone indeksy i pozostałe bajty rekordów bez zmian. Mod Permit55
+w slot15 zachowany. Plecak ma13 zajętych miejsc na16, w tym drugie
+Medicine1 wslot14. Nie zmieniano RAM ani payloadów zapisów.
+
+Powrót przez oryginalne drzwi do M042, obejście mebli i telefon przy
+595,−782/yaw2048: prompt6, karta1, puste E/cursor4, FileSaved40,
+zamknięcie menu. Przy125020 M042/story224,92/92HP,menu null,move_lock2.
+/tmp/pe-ex-prepark-save-E-v1-verify.py wykonany PASS: zimne normal/SAN
+exit0, pełny JSON/VRAM oraz wszystkie bajty C/D/E zgodne z live,
+C i D zgodne z wcześniejszymi hashami, brak sanitizer/opcode/assertion.
+Dokładnie dwie różnice całego bufora wyposażenia względem odprawy:
+offset14 42→43 i430 17→19. Artefakty:
+/tmp/pe-ex-prepark-save-E-v1-{seed.json,checkpoint,proof/proof.json}.
+Autentyczny E: /tmp/pe-ex-prepark-E-v1-source/BASLUS-006620000000E,
+hash w proof.json. Stary kontroler od C jawnie zamknięty quit0.
+
+Osobne zimne Continue zawiera wyłącznie E. Przy12528 M042/story224,
+92/92HP,menu null,move_lock2, cały ekwipunek i wszystkie zmienne skryptów
+identyczne ze stanem po zapisie. /tmp/pe-ex-prepark-E-loaded-v1-verify.py
+wykonany PASS: normal/SAN exit0, pełny JSON/VRAM zgodny z live,
+jedyny E bajtowo bez zmian i zgodny z hashem źródła, brak sanitizer/opcode/
+assertion. Artefakty: /tmp/pe-ex-prepark-E-loaded-v1-{seed.json,checkpoint,proof/proof.json}.
+Żywy kontroler /tmp/pe-ex-prepark-E-continue-v1.py obsługuje także
+obserwowany walk po8 VBlanków. SDK/SDL bez instrumentacji. Kod gry/PsyZ
+bez zmian. Użycie tych ulepszeń i trwałość potwierdzone; Central Park,
+pełny Day2/EX i zgodność obrazu/audio z PS1 pozostają otwarte.
+
 ### EX — nocny powrót do NYPD i druga odprawa, story224
 
 Od99180 M192/story208 zwykły input opuszcza muzeum przez polygon

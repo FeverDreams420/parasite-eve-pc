@@ -3,6 +3,39 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — telefon M126, autentyczny Save A2 i zimny Continue
+
+Poprzednia tura była postępem: pięć celów M126 i levelup, commit2bc3bd58b.
+Sesja33141 ponownie żywa przy65918/lock0. Dwa Heal1 w eksploracji leczą
+13→43→73 bez zużycia przedmiotów. MaxHP273; panel zapisu pokazuje level19
+(poprzednie słowo „poziomów” nie jest dowodem wielu awansów).
+Podejście Right115,Up340,Left344,Left34,Up28,Cross uruchamia telefon6
+przy67387. Slot1→lista37 domyślnieO14;14 impulsówUp wybiera pustyA0.
+File saved przy69127/69427: M126/story488,HP73/273,EXRound2,level19.
+To nowy A2 w prywatnej karcie, nie nadpisanie wcześniejszego źródłowego A.
+
+Nowe źródło: /tmp/pe-ex-hospital-save-A2-v1-source/BASLUS-006620000000A,
+8192B,SHA25678a742ac6208179e80cb3da02b520baf736d3420e62a54351401287f56ec6984.
+/tmp/pe-ex-hospital-save-A2-v1-verify.py PASS: pełna trasa cold O w obu
+profilach exit0, cały JSON/VRAM zgodny z live, wszystkie8192B nowego A
+identyczne. O i kopie niezmienione. Pełny ekwipunek jak poprzednia wygrana;
+zmienne względem cold O:17:65→321,65:536870977→541196235,66:4→548,
+67:5→143,74:470→488,82:0→84,97:192→208;1 znormalizowana przy zapisie998.
+Weryfikator poprawiono na rzeczywistą normalizację1 i lock1 panelu zapisu.
+
+/tmp/pe-ex-hospital-A2-loaded-v1-verify.py PASS: świeży Continue wyłącznie
+z A2, normal/SAN exit0, przy12920 M126/a8022348,story488,HP73/273,
+menu null,lock0,enemy0. Całe inventory/4096B rekordów i wszystkie zmienne
+jak zapis69427; oba bity32768/65536 zachowane. Cały JSON/VRAM identyczny
+między profilami, karty bajtowo niezmienione. Artefakty
+/tmp/pe-ex-hospital-save-A2-v1-{seed.json,checkpoint,proof/proof.json}
+i /tmp/pe-ex-hospital-A2-loaded-v1-{seed.json,proof/proof.json}.
+Sesja33141 zamknięta quit/native0; A2 jest najnowszym trwałym punktem.
+Bez zmian produkcji/PsyZ i nowych plików repo; SDK/SDL nieinstrumentowane,
+brak oracle PS1; /tmp nie zastępuje trwałych CTest. Dalej wyższe piętra
+szpitala i pełny zakres portu pozostają nieukończone.
+
+
 ### EX — pięć celów M126, zwycięstwo i rozliczenie poziomów
 
 Poprzednia tura była postępem: winda/M127, commit104a0bba7. Sesja64839

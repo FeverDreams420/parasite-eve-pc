@@ -2,6 +2,22 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Przygotowana gałąź: M246 wygrane, cztery Medicine3 i dwa Medicine4
+
+Po M243 bez aktywnego spotkania sesja74239 przeszła M245→M246,
+film22 bez skipu. Zwykła nawigacja uruchomiła przy74525 spotkanie
+280/280/240HP. Heal3 i pojedyncze strzały Double Action: przy76869
+wyniki, Aya419HP, zero wrogów. Oryginalne menu wymieniło nieużywane
+M9-2/slot8 na kolejne Medicine3. Przy78053 field mode9, Medicine3
+w4/8/26/27, Medicine4 w15/20, M8000 nadal wyposażone w1, B Jacket1 w2.
+/tmp/pe-m246-trained-victory-v1-proof/proof.json: zimny I normal/SAN
+do78053, pełny JSON/VRAM zgodny z live, obie wersje exit0 bez raportów.
+Odczyt SBValue bez zapisów/wywołań /tmp/pe-m246-trained-stats-v1.json:
+EXP221913, poziom zapisany32/wyświetlany33, BP17; do następnego2113EXP.
+Żadnych zmian kodu ani parametrów gry. Dalej M248, przy80048 dialog
+Eve's on the other side; kontynuowana zwykła sekwencja fabularna.
+Finał nadal niewygrany; zgodność native/SAN nie dowodzi zgodności z PS1.
+
 ### Nowa gałąź przygotowań: dodatkowa walka M242 i dwa Medicine3
 
 Zapisana gałąź I/J/K wróciła M340→M343→M229→M242. Tym razem M242

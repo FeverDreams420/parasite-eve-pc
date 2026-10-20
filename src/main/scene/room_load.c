@@ -1,3 +1,4 @@
+#include "pe1/scene_e20_hover_orb.h"
 #include "pe1/room_spark_ring_burst.h"
 #include "../../overlays/room_m273_liberty/room_m273.h"
 #include "../../overlays/scene_e22_liberty/scene_e22_shared.h"
@@ -694,6 +695,13 @@ int Scene_LoadRoom(unsigned int roomId)
             if (slot == 140 && record[i].u.handlerAddress == 0x80195720u) native = &g_RoomSeekingTrailProgram;
             if (slot == 141 && record[i].u.handlerAddress == 0x801957e4u) native = &g_RoomScatterTrailProgram;
         }
+        if(map+1==430) {
+            g_FieldFxTaskPrograms[103]=&g_SceneE20HoverOrbProgram;
+            memset(g_SceneE20EffectSlots,0,sizeof(g_SceneE20EffectSlots));
+            g_SceneE20HoverOrbHitCooldown=0;
+            g_SceneE20HoverOrbModel=NULL;
+            continue;
+        }
         if(map+1==429) {
             if(slot==75 && record[i].u.handlerAddress==0x8019b28cu) native=&g_RoomActorClassTable[2];
             if(slot==80 && record[i].u.handlerAddress==0x8019b324u) native=&g_SceneE19GrabClass;
@@ -826,6 +834,8 @@ int Scene_LoadRoom(unsigned int roomId)
             if (slot == 11 && record[i].u.handlerAddress == 0x801931b0u)
                 native = &g_RoomTwelveElementHandlers;
         }
+        if (map+1==430 && slot==188 && record[i].u.handlerAddress==0x80190824u)
+            native=&g_SceneE20HoverOrbProgram;
         if (!native) {
             fprintf(stderr, "Scene_LoadRoom: native descriptor missing for M%03d slot %u (PS1 %08x)\n",
                     map + 1, slot, record[i].u.handlerAddress);

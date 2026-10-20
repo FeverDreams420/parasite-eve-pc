@@ -1,12 +1,11 @@
+#include "pe1/geom_state.h"
 #include "pe1/gte.h"
 #include "pe1/scene_e20_hover_orb.h"
 
-#define NULL ((void *)0)
-
-/* mode 0: initialize; mode 1: advance the effect; mode 2: draw.
- * Pins and empty barriers preserve retail allocation and scheduling.
- * See docs/ASM_AND_GTE_POLICY.md for the matching debt. */
-s32 SceneE20_HoverOrbController(s32 mode, SceneE20TrailEffect *effect, SceneEffectSlot *command) {
+/* Original charge, beam and fade states share the native task engine. */
+int SceneE20_HoverOrbController(int mode, void *memory, intptr_t argument) {
+    SceneE20TrailEffect *effect = memory;
+    SceneEffectSlot *command = (SceneEffectSlot *)argument;
     s32 initialMode;
     SceneE20Color *initColor0;
     SceneE20Color *initColor1;
@@ -21,14 +20,10 @@ s32 SceneE20_HoverOrbController(s32 mode, SceneE20TrailEffect *effect, SceneEffe
     SceneE20Color flashA;
     SceneE20Color flashB;
     SceneE20Matrix matrix;
-    s32 scale[3];
+    GteVector scale = {0};
     SceneE20Color *oddColor;
     SceneE20Color *evenColor;
-    SceneE20Actor *temp_v1_4;
     SceneE20Color *flashColor;
-    SceneE20Node *temp_a0;
-    SceneE20Node *temp_a0_2;
-    SceneE20Node *temp_v1_3;
     SceneE20Particle *temp_v0_10;
     SceneE20Particle *temp_v0_12;
     SceneE20Vec *temp_s0_2;
@@ -89,9 +84,9 @@ initialize:
             effect->timer = 0;
             effect->alpha = 0x80;
             command->pending = 0;
-            effect->target.x = (s16) (u16) ANIM_OWNER_AS(SceneE20Channel)->pool->position.x;
-            effect->target.y = (s16) (u16) ANIM_OWNER_AS(SceneE20Channel)->pool->position.y;
-            effect->target.z = (s16) (u16) ANIM_OWNER_AS(SceneE20Channel)->pool->position.z;
+            effect->target.x = (s16) (u16) g_FieldFxOwner->actor->render_object.target_x;
+            effect->target.y = (s16) (u16) g_FieldFxOwner->actor->render_object.target_y;
+            effect->target.z = (s16) (u16) g_FieldFxOwner->actor->render_object.target_z;
             assetKey = 0xC5540000U;
             effect->previousPosition.x = (s16) (u16) effect->target.x;
             effect->previousPosition.y = (s16) (u16) effect->target.y;
@@ -104,21 +99,21 @@ initialize:
             g_SceneE20HoverOrbModel = temp_v0;
             FieldFx_ModelScrollUv(temp_v0, 0, 0);
             FieldFx_DrawHistoryTrail(&effect->position, &effect->position, 0x3EE, (unsigned char *)initColor0, (unsigned char *)initColor1, 0x80, (struct FieldTrailPair *)effect->history, initialMode);
-            return FieldFx_InitCallbackList((char *)ANIM_POOL_AS(SceneE20Channel)->pool, 0x14, 0x20,
-                                 (FieldFxCallbackListCallback)SceneE20_FlareParticle);
+            return FieldFx_InitCallbackList((char *)g_FieldFxActiveTaskSlot->end, 0x14, 0x20,
+                                 SceneE20_FlareParticle);
 update: {
     temp_v1_2 = effect->phase;
     switch (temp_v1_2) {                            /* switch 1 */
     case 0:                                         /* switch 1 */
         command->pending = 0;
-        FieldFx_GetActorPosition((char *)D_8009D254, 0, (s16 *)&point);
+        FieldFx_GetActorPosition((char *)g_PlayerEntity, 0, (s16 *)&point);
         point.x = (rand() & 0x7FF) - 0x400;
         point.y = ((u16) g_RoomFloorY->y - 0x258) - (rand() & 0x1FF);
         point.z = (rand() & 0x7FF) - 0x400;
         effect->target.x = (s16) (u16) point.x;
         effect->target.y = (s16) (u16) point.y;
         effect->target.z = (s16) (u16) point.z;
-        FieldFx_GetActorPosition((char *)D_8009D254, 1, (s16 *)&effect->endpoint);
+        FieldFx_GetActorPosition((char *)g_PlayerEntity, 1, (s16 *)&effect->endpoint);
         effect->duration = (rand() & 0xF) + 6;
         effect->timer = 0;
         effect->phase = 1;
@@ -129,9 +124,9 @@ update: {
         if ((temp_v0_5 == 1) && (rand() & 1)) {
             Asset_Find08w(0x5FF, FieldFx_GetOwnerProgress(), effect->position.x, effect->position.y, (s32) effect->position.z);
         }
-        temp_s3 = rsin((effect->timer << 0xA) / effect->duration);
+        temp_s3 = rsin((effect->timer * 1024) / effect->duration);
         LoadAverageShort12(&effect->previousPosition, &effect->target, 0x1000 - temp_s3, temp_s3, &effect->position);
-        FieldFx_GetActorPosition((char *)D_8009D254, 1, (s16 *)&effect->endpoint);
+        FieldFx_GetActorPosition((char *)g_PlayerEntity, 1, (s16 *)&effect->endpoint);
         if (effect->timer >= effect->duration) {
             effect->phase = 2;
             effect->timer = 0;
@@ -139,7 +134,7 @@ update: {
         break;
     case 2:                                         /* switch 1 */
         effect->timer = (u16) effect->timer + 1;
-        FieldFx_GetActorPosition((char *)D_8009D254, 1, (s16 *)&effect->endpoint);
+        FieldFx_GetActorPosition((char *)g_PlayerEntity, 1, (s16 *)&effect->endpoint);
         if (effect->timer >= 4) {
             effect->phase = 0;
             effect->timer = 0;
@@ -171,7 +166,7 @@ update: {
         if (temp_v0_7 == 1) {
             Asset_Find08w(0x5FF, FieldFx_GetOwnerProgress(), effect->position.x, effect->position.y, (s32) effect->position.z);
         }
-        temp_s3 = rsin((effect->timer << 0xA) / effect->duration);
+        temp_s3 = rsin((effect->timer * 1024) / effect->duration);
         temp_s0_3 = 0x1000 - temp_s3;
         LoadAverageShort12(&effect->previousPosition, &effect->target, temp_s0_3, temp_s3, &effect->position);
         LoadAverageShort12(&effect->previousEndpoint, &effect->commandedEndpoint, temp_s0_3, temp_s3, &effect->endpoint);
@@ -187,7 +182,7 @@ update: {
         temp_v0_9 = (u16) effect->timer + 1;
         effect->timer = temp_v0_9;
         if (temp_v0_9 == 1) {
-            temp_v0_10 = FieldFx_AcquireCallbackSlot((char *)ANIM_POOL_AS(SceneE20Channel)->pool);
+            temp_v0_10 = FieldFx_AcquireCallbackSlot((char *)g_FieldFxActiveTaskSlot->end);
             if (temp_v0_10 != NULL) {
                 temp_v0_10->velocity.x = (s16) (u16) effect->rotation.x;
                 temp_v0_10->velocity.y = (s16) (u16) effect->rotation.y;
@@ -206,7 +201,7 @@ update: {
         if (effect->timer >= 4) {
             effect->phase = 5;
             effect->timer = 0;
-            temp_v0_10 = FieldFx_AcquireCallbackSlot((char *)ANIM_POOL_AS(SceneE20Channel)->pool);
+            temp_v0_10 = FieldFx_AcquireCallbackSlot((char *)g_FieldFxActiveTaskSlot->end);
             if (temp_v0_10 != NULL) {
                 temp_v0_10->position.x = (s16) (u16) effect->endpoint.x;
                 temp_v0_10->position.y = (s16) (u16) effect->endpoint.y;
@@ -219,7 +214,7 @@ update: {
                 temp_v0_10->velocity.z = temp_v0_14;
             }
             for (particleIndex = 0; particleIndex < 12; ++particleIndex) {
-            temp_v0_12 = FieldFx_AcquireCallbackSlot((char *)ANIM_POOL_AS(SceneE20Channel)->pool);
+            temp_v0_12 = FieldFx_AcquireCallbackSlot((char *)g_FieldFxActiveTaskSlot->end);
             if (temp_v0_12 != NULL) {
                 temp_v0_12->position.x = (s16) (u16) effect->endpoint.x;
                 temp_v0_12->position.y = (s16) (u16) effect->endpoint.y;
@@ -238,17 +233,13 @@ update: {
     case 5:                                         /* switch 1 */
         effect->timer = (u16) effect->timer + 1;
         if ((FieldFx_IsPlayerWithinRadius(&effect->endpoint, 0x42) != 0) && (g_SceneE20HoverOrbHitCooldown == 0)) {
-            temp_v1_3 = ANIM_OWNER_AS(SceneE20Channel)->pool->node;
-            *(u8 *)((u8 *)temp_v1_3 + ((temp_v1_3->flags >> 17) & 0x70) + 0x1C) = 2;
-            if (FX_TASK_AS(SceneE20Event)->active != 0) {
-                if ((ANIM_OWNER_AS(SceneE20Channel)->pool->node->flags & 0x3F000000) == 0x01000000) {
-                    temp_v1_4 = *((SceneE20Actor **)D_8009D254);
-                    temp_v1_4->flags |= 0x4000;
-                    temp_a0 = ANIM_OWNER_AS(SceneE20Channel)->pool->node;
-                    temp_a0->flags = (temp_a0->flags & 0xC0FFFFFF) | 0x2F000000;
-                    temp_a0_2 = ANIM_OWNER_AS(SceneE20Channel)->pool->node;
-                    temp_a0_2->flags |= 0x80000000;
-                }
+            EnemyCombatant *owner = (EnemyCombatant *)g_FieldFxOwner->actor->state;
+            unsigned int selected = (owner->coreFlags >> 21) & 7;
+            if (selected < 6) owner->records[selected].state = 2;
+            if (g_FieldFxTaskContext->flags != 0 &&
+                (owner->coreFlags & 0x3F000000) == 0x01000000) {
+                g_PlayerEntity->state->flags |= 0x4000;
+                owner->coreFlags = (owner->coreFlags & 0xC0FFFFFF) | 0xAF000000;
             }
             g_SceneE20HoverOrbHitCooldown = 0x74;
         }
@@ -268,7 +259,7 @@ update: {
     default: break;
     }
         if (effect->phase != 6) {
-            effect->alpha = (rsin(g_FieldFxCurrentAge << 5) / 128) + 0x80;
+            effect->alpha = (rsin((u32)g_FieldFxCurrentAge << 5) / 128) + 0x80;
         }
         temp_s0_2 = &effect->rotation;
         FieldFx_CalculateLookAngles(&effect->position, &effect->endpoint, temp_s0_2);
@@ -284,7 +275,7 @@ update: {
         effect->trailTail.x = (u16) effect->trailTail.x + (u16) effect->position.x;
         effect->trailTail.y = (u16) effect->trailTail.y + (u16) effect->position.y;
         effect->trailTail.z = (u16) effect->trailTail.z + (u16) effect->position.z;
-        if ((ANIM_OWNER_AS(SceneE20Channel)->pool->node->progress <= 0x7A11F) && (effect->phase != 6)) {
+        if ((g_FieldFxOwner->actor->state->control10.command_value <= 0x7A11F) && (effect->phase != 6)) {
             effect->phase = 6;
             effect->timer = 0;
         }
@@ -326,15 +317,15 @@ render: {
         temp_v1 = effect->phase;
         switch (temp_v1) {                          /* switch 2; irregular */
         case 4:                                     /* switch 2 */
-            temp_s3 = effect->timer << 0xA;
+            temp_s3 = effect->timer * 1024;
             LoadAverageShort12(&effect->trailHead, &effect->endpoint, 0x1000 - temp_s3, temp_s3, &point);
             var_a1 = &point;
 block_63:
-            FieldFx_DrawGlowLine(&effect->trailHead, var_a1, flashColor, flashColor, 128, 128, 1);
+            FieldFx_DrawGlowLine(&effect->trailHead, var_a1, (u8 *)flashColor, (u8 *)flashColor, 128, 128, 1);
             break;
         case 5:                                     /* switch 2 */
             var_s0 = rcos(effect->timer << 7) / 32;
-            FieldFx_DrawGlowLine(&effect->trailHead, &effect->endpoint, flashColor, flashColor,
+            FieldFx_DrawGlowLine(&effect->trailHead, &effect->endpoint, (u8 *)flashColor, (u8 *)flashColor,
                          var_s0 / 2, var_s0, 1);
             break;
         }
@@ -377,11 +368,11 @@ block_63:
             matrix.t[0] = (s32) effect->position.x;
             matrix.t[1] = (s32) effect->position.y;
             translationZ = effect->position.z;
-            scale[0] = modelScale;
-            scale[1] = modelScale;
-            scale[2] = modelScale;
+            scale.x = modelScale;
+            scale.y = modelScale;
+            scale.z = modelScale;
             matrix.t[2] = translationZ;
-            ScaleMatrix(&matrix, &scale[0]);
+            ScaleMatrix(&matrix, &scale);
             FieldFx_ModelSaveColors(g_SceneE20HoverOrbModel);
             FieldFx_ModelScaleColors(g_SceneE20HoverOrbModel, (u16) effect->alpha);
             FieldFx_ModelDraw(g_SceneE20HoverOrbModel, (GteMatrix *)&matrix);
@@ -410,3 +401,20 @@ block_63:
         return 0;
     }
 }
+
+/* Authored USA M430 constants and complete task descriptor. */
+RenderColor g_SceneE20FlareStreakColor = {128,128,128,0};
+RenderColor g_SceneE20FlareGlowColor = {200,50,10,0};
+RenderColor g_SceneE20OrbBeamColor = {70,200,100,0};
+RenderColor g_SceneE20OrbEdgeColor = {0,50,100,0};
+RenderColor g_SceneE20OrbFlashColorOdd = {200,50,0,0};
+RenderColor g_SceneE20OrbFlashColorEven = {120,10,170,0};
+u8 g_SceneE20FlareColorTrack[] = {0,0,0,0,0,0,0,0,200,240,240,8,0,0,0,0,200,0,0,8,0,0,0,0,0,0,0,0,0,0,0,0};
+s32 g_SceneE20HoverOrbHitCooldown;
+void *g_SceneE20HoverOrbModel;
+SceneEffectSlot g_SceneE20EffectSlots[3];
+static u16 s_SceneE20HoverOrbScript[] = {5,0,0,1,6,103,4,2,0,2,0,0,0,0,0,0};
+FieldFxTaskProgram g_SceneE20HoverOrbProgram = {
+    {{SceneE20_HoverOrbController}, {sizeof(SceneE20TrailEffect)}},
+    SceneE20_CommandEffectSlot, s_SceneE20HoverOrbScript
+};

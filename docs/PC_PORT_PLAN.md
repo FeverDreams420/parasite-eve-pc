@@ -2,6 +2,53 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### E20/M430: komplet oryginalnego modułu w natywnym buildzie
+
+Włączono wszystkie trzy istniejące pliki SceneE20_CommandEffectSlot,
+SceneE20_FlareParticle i SceneE20_HoverOrbController; wszystkie trzy
+funkcje pozostają w swoich plikach. Naprawiono sygnatury callbacków
+i inicjalizatora z natywnym intptr_t. Pule biorą g_FieldFxActiveTaskSlot,
+właściciel używa FieldActor/EnemyCombatant; pozycja inicjalna pochodzi
+z render_object.target_x/y/z zamiast surowego przesunięcia PS1+268.
+Wybrane zdarzenie ataku zapisuje records[(coreFlags>>21)&7].state,
+z ochroną granicy sześciu rekordów. Flagi Ayi i właściciela pozostają
+odrębnymi polami. Nie dodano nowych plików ani funkcji gry.
+
+W tym samym kontrolerze odtworzono kolory,32-bajtowy color track,
+pełny script i deskryptor slot188/80190824 z całego M430. Zwykła
+macierz GteMatrix/GteVector i kanoniczna deklaracja DrawGlowLine.
+room_load waliduje adres przed rejestracją programu103; resetuje
+trzy sloty komend, model i wspólny cooldown przy każdym wejściu.
+CommandEffectSlot odrzuca indeksy spoza0..2, zamiast pisać poza tablicą.
+
+/tmp/pe-m430-native-v3: świeże216 normal+216 SAN obiektów, wszystkie70
+regresji exit0, siedem dotychczasowych asset CTest exit0. Dodatkowo
+--m430-load normal/SAN exit0: prawdziwy Disc2, pełny deskryptor/script/
+color track i dwa wejścia z resetem zabrudzonych globali. Stały CTest
+original-m430-cruiser-load również exit0; wymaga PE_TEST_DISC2.
+Pierwszy build v1 zatrzymał się na brakującym geom_state.h; v2 linkował,
+ale ostrzegał o typie ScaleMatrix. V3 używa GteVector; wszystkie trzy
+pliki E20 kompilują się bez ostrzeżeń. Starsze artefakty zachowane.
+
+/tmp/pe-e20-oracle-v1-proof.json:1890 komend (w tym nieznane komendy,
+trzy sloty, skrajne halfwordy, floor i kontrolowane rand) oraz525
+aktualizacji flar mode1/kind0..2. Rzeczywiste obiekty v3 normal/SAN
+kontra pełny oryginał MIPS: wszystkie bajty i wyniki zgodne. Dla komendy
+hook tylko rand, dla aktualizacji flary żaden hook nie wykonuje się.
+/tmp/pe-e20-beam-v1-proof.json:2880 wariantów phase5 kontrolera,
+wszystkie sześć zdarzeń, core kind/active/cooldown/timer/odległość/HP.
+Zgodne zdarzenia, flagi, cooldown, wynik i196 bajtów efektu. Dwie
+funkcje geometrii zastąpiono jednakowo po obu stronach (kompilacja
+źródła kontrolera z dwoma aliasami testowymi); radius i sine rzeczywiste.
+Nie jest to oracle geometrii ani renderowania kontrolera.
+
+/tmp/pe-m430-integration-replay-v1-proof/proof.json: cold J normal/SAN
+do151978, exit0 bez raportów; pełny JSON/VRAM i bajty kart J/K identyczne
+z wcześniejszym live v5. Nadal M429, Aya76HP, boss2684HP, menu główne.
+Live66562 nadal czeka w tym stanie na starszym kandydacie E19 v5.
+Kampania nie dotarła jeszcze do M430. Renderowanie E20 oraz pozostałe
+fazy kontrolera i pełna sekwencja gry nie są zaliczone tymi testami.
+
 ### M350 wygrana na poprawionych flagach; wejście i walka M429/E19
 
 Gałąź /tmp/pe-m350-healed-v1-live, build v4: po wyłączeniu części3

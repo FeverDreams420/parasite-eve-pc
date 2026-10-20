@@ -1,7 +1,8 @@
 #include "pe1/random.h"
 #include "pe1/scene_e20_hover_orb.h"
 
-SceneEffectSlot *SceneE20_CommandEffectSlot(unsigned int command, int index, int value, int z) {
+intptr_t SceneE20_CommandEffectSlot(int command, intptr_t index, intptr_t value, intptr_t z) {
+    if ((uintptr_t)index >= 3) return 0;
     SceneEffectSlot *slot = &g_SceneE20EffectSlots[index];
     int random;
 
@@ -17,8 +18,7 @@ SceneEffectSlot *SceneE20_CommandEffectSlot(unsigned int command, int index, int
         break;
     case 2:
         slot->position.x = value;
-        /* Keep the position store before the shared-height load; emits no code. */
-                slot->position.y = g_RoomFloorY->y;
+        slot->position.y = g_RoomFloorY->y;
         slot->position.z = z;
         break;
     case 3:
@@ -32,5 +32,5 @@ SceneEffectSlot *SceneE20_CommandEffectSlot(unsigned int command, int index, int
         slot->duration = value;
         break;
     }
-    return slot;
+    return (intptr_t)slot;
 }

@@ -1,3 +1,5 @@
+#include "pe1/scene_e20_hover_orb.h"
+#include "pe1/scene_e20_flare_draw.h"
 #include "pe1/room_spark_ring_burst.h"
 #include "../src/overlays/room_m273_liberty/room_m273.h"
 #include "../src/overlays/room_m273_liberty/room_m273_boss_state.h"
@@ -17747,6 +17749,37 @@ int main(int argc, char **argv)
         }
         CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
         puts("Original M187 loader: real USA assets, complete orbit descriptor and per-entry reset passed twice");return 0;
+    }
+    if(argc==2 && !strcmp(argv[1],"--m430-load")){
+        const char *path=getenv("PE_TEST_DISC2");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};PeDiscFile archive;u8 authored[0x1874];
+        if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return 1;
+        ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
+        Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+        if(!pe_disc_find(&disc,"PE.IMG",&archive) ||
+           !pe_disc_read(&disc,&archive,(98764u+33u+90u)*2048u,authored,sizeof(authored)))return 1;
+        const u32 original_callback=0x8018f750,original_initializer=0x801906ec;
+        if(memcmp(authored+0x183c,&original_callback,4) || memcmp(authored+0x186c,&original_initializer,4))return 1;
+        for(unsigned pass=0;pass<2;++pass){
+            memset(g_SceneE20EffectSlots,0xa5,sizeof(g_SceneE20EffectSlots));
+            g_SceneE20HoverOrbHitCooldown=123;g_SceneE20HoverOrbModel=(void *)(uintptr_t)1;
+            g_FieldFxTaskPrograms[103]=NULL;
+            if(Scene_LoadRoom(Text_ParseBase32Id((signed char *)"m0430i")) ||
+               g_FieldFxTaskPrograms[103]!=&g_SceneE20HoverOrbProgram)return 1;
+            for(unsigned i=0;i<sizeof(g_SceneE20EffectSlots);++i)if(((u8 *)g_SceneE20EffectSlots)[i])return 1;
+            if(g_SceneE20HoverOrbHitCooldown || g_SceneE20HoverOrbModel ||
+               g_SceneE20HoverOrbProgram.table.callbacks[0]!=SceneE20_HoverOrbController ||
+               g_SceneE20HoverOrbProgram.table.sizes[0]!=sizeof(SceneE20TrailEffect) ||
+               g_SceneE20HoverOrbProgram.initialize!=SceneE20_CommandEffectSlot ||
+               memcmp(g_SceneE20HoverOrbProgram.script,authored+0x17f8,32) ||
+               memcmp(g_SceneE20FlareColorTrack,authored+0x181c,32))return 1;
+            if(SceneE20_CommandEffectSlot(2,2,123,-456)!=(intptr_t)&g_SceneE20EffectSlots[2] ||
+               g_SceneE20EffectSlots[2].position.x!=123 || g_SceneE20EffectSlots[2].position.z!=-456 ||
+               g_SceneE20EffectSlots[2].pending!=1 || SceneE20_CommandEffectSlot(0,-1,0,0) ||
+               SceneE20_CommandEffectSlot(0,3,0,0))return 1;
+        }
+        CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+        puts("Original M430 loader: real Disc2 assets, complete E20 descriptor/script/color track and per-entry reset passed twice");return 0;
     }
     if(argc==2 && !strcmp(argv[1],"--m350-load")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

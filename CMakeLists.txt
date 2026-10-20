@@ -239,6 +239,9 @@ add_library(parasite-eve-original OBJECT
     src/overlays/room_lib/window_class_table.c
     src/overlays/room_m272_liberty/m272.c
     src/overlays/scene_e18_cruiser/e18_emitters.c
+    src/overlays/scene_e20_cruiser/SceneE20_CommandEffectSlot.c
+    src/overlays/scene_e20_cruiser/SceneE20_FlareParticle.c
+    src/overlays/scene_e20_cruiser/SceneE20_HoverOrbController.c
     src/overlays/scene_e22_liberty/e22.c
     src/overlays/room_m273_liberty/m273.c
     src/overlays/room_m273_liberty/m273_class.c
@@ -551,6 +554,9 @@ if(BUILD_TESTING)
     set_tests_properties(original-game-fx-motion PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
     add_test(NAME original-game-fx-models COMMAND test-original-actor-animation --fx-models)
     set_tests_properties(original-game-fx-models PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60)
+    add_test(NAME original-m430-cruiser-load COMMAND test-original-actor-animation --m430-load)
+    set_tests_properties(original-m430-cruiser-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60
+        LABELS "game-assets;room" ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy")
     add_test(NAME original-m273-liberty-load COMMAND test-original-actor-animation --m273-load)
     set_tests_properties(original-m273-liberty-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" LABELS "game-assets;render")

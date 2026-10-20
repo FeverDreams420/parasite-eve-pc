@@ -15,7 +15,7 @@ typedef struct SceneE20Particle {
     /* 0x12 */ s16 timer;
 } SceneE20Particle;
 
-int SceneE20_FlareParticle(int mode, SceneE20Particle *particle);
+int SceneE20_FlareParticle(int mode, void *memory, intptr_t argument);
 
 PE1_STATIC_ASSERT(sizeof(SceneE20Particle) == 0x14, scene_e20_particle_size);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneE20Particle, velocity) == 8,

@@ -1,3 +1,4 @@
+#include "pe1/geom_state.h"
 #include "pe1/field_texture_tables.h"
 #include "pe1/scene_e20_flare_draw.h"
 
@@ -8,8 +9,10 @@
  * (`base + (cond ? 8 : 4)`), each from its own palette kind read.
  * The two view-matrix loads are the PSY-Q SetRotMatrix/SetTransMatrix
  * inline transfers (gte_ldrotmatrix/gte_ldtransmatrix in pe1/gte.h). */
-int SceneE20_FlareParticle(int mode, SceneE20Particle *p)
+int SceneE20_FlareParticle(int mode, void *memory, intptr_t argument)
 {
+    SceneE20Particle *p = memory;
+    (void)argument;
     GteRotation rotation;
     RenderColor color;
     RenderColor streakColor;

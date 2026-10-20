@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — Defense+1 na B Jacket1 i Revive z apteki
+
+Oryginalne Items→slot20/Defense+1→Use→B Jacket1/row1: przy130789
+slot20 pusty, bonus obrony rekordu0 wzrósł47→48. Żadnej zmiany wyboru
+pancerza. Próby dojścia do wschodniej skrzyni blokowały regały. Odczyt
+LLDB wyłącznie do odczytu, proces14278 odłączony: M097 ma144 trójkąty,
+/tmp/pe-ex-m097-floor-v1.json. Zewnętrzny planner90 nie znalazł drogi ze
+startu przy samej krawędzi; po odsunięciu znalazł północne obejście.
+Nav v2 zatrzymał się przy[554,734] po120 krokach bez postępu; ręczny
+pad Up70/Right150 obszedł narożnik. Nav tail57 kroków ukończony przy
+[1433,-21]. Nie zmieniono kolizji gry.
+
+Right20/Cross daje ze skrzyni typu7[1644,-62] Revive/item18 do wolnego20;
+panel „Restores Life When You Die” obejrzany. Zamknięcie przy135775:
+M097/story328,HP181/181,menu null. Wobec wejścia do apteki tylko
+slot12 Junk20→Medicine2/7,slot20 Defense+1/41→Revive18; cały4096B bufor
+rekordów różni się wyłącznie offset14:47→48. Weapon5/armor6 zachowane.
+Var85=1179773,var148=20 (Junk nadal w poprzedniej skrzyni).
+
+/tmp/pe-ex-pharmacy-revive-H-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live; H bajtowo/hash bez zmian. Artefakty
+/tmp/pe-ex-pharmacy-revive-H-v1-{seed.json,checkpoint,proof/proof.json},
+obraz /tmp/pe-pharmacy-item18.png. SDK/SDL bez instrumentacji, brak nowego
+oracle PS1. Bez zmian produkcyjnego kodu, RAM/RNG/payloadów save.
+Następne: pozostałe interakcje apteki, zapis i dalsza trasa Day3.
+
+
 ### EX — Medicine2 w aptece przy pełnym ekwipunku
 
 M097/story328: przejście od wejścia przez zachodnią alejkę, podejście do

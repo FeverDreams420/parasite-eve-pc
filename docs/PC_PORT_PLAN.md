@@ -2,6 +2,55 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### E19: potwierdzone okno Heal3 i oracle licznika emitera homing
+
+Sesja56313 odtworzyła left_up do142547 i przez oryginalne menu wykonała
+Heal3+strzał: przy142973 Aya43→323HP, bez trafienia w tej turze.
+/tmp/pe-e19-heal-window-v3-proof/proof.json: cold L normal/SAN,
+pełny JSON/VRAM identyczny z live, exit0 bez raportów, L bez zmian.
+Main3500/dodatkowy1300HP jeszcze nieuszkodzone. Późniejsze podejście
+Right+Down150run kosztowało210HP; przy143123 Aya113HP. Ten późniejszy
+punkt nie ma jeszcze osobnego replayu; sesja56313 czeka na komendę.
+
+Nie zakładamy, że trudność dowodzi poprawności całego modułu.
+Sprawdzono oryginalny deskryptor HomingProgram8019b42c i callback
+HomingBurst801960c4. Próg timera8 jest również w MIPS. Osobny oracle
+/tmp/pe-e19-homing-controller-v1-proof.json:182 przypadki mode1,
+granice signed halfword timer/released, parzystość, pusta/udana alokacja.
+Pełne12 bajtów kontrolera i32 bajty dziecka, wynik i liczba wywołań
+alokatora zgodne z rzeczywistym MIPS M429; normal/SAN identyczne.
+Native kompiluje istniejące pełne e19.c z jedynym aliasem alokatora;
+po obu stronach zastąpiono tylko allocator, pozostały kod rzeczywisty.
+Hashe źródła, helperów, modułu i manifestu w proof.json. Test nie obejmuje
+mode0/mode2, geometrii/renderowania ani całego harmonogramu ataków.
+Żadnej zmiany kodu gry ani balansu; pełny finał nadal niezaliczony.
+
+### E19 z tej gałęzi: porażka i kontrolowane próby uniku
+
+Po dialogu64 E19 zaczęło się przy141947 z148HP, PE5309500/93061120,
+main3500 i dodatkowym1300HP. Right160run, Heal2+Heal1 podniosły HP,
+ale kolejne trafienia dały77HP. Ruch Up100, Up100, Left120, Down100,
+Right120 zakończył się śmiercią przy143355/mode3. /tmp/pe-e19-trained-
+death-v1-proof/proof.json: cold L normal/SAN, pełny JSON/VRAM zgodny
+z live, exit0 bez raportów, L bez zmian. Sesja78718 zakończona quit0.
+
+Read-only LLDB SBValue, bez funkcji i zapisów: pe-e19-storage-read-v2.json
+przy142815 potwierdza100 pustych slotów storage i specialStorage tylko
+515/516 (amunicja/rakiety), bez dodatkowych leków. Pierwszy helper v1
+zatrzymał się na assert nieistniejącego symbolu makra; nie dał danych.
+Nie należy wnioskować o całym magazynie tylko z ekranu Hold equipment.
+Uruchomiono trzy zwykłe taśmy uniku od identycznego wejścia141947
+bez leczenia/ataków przez1000 klatek: /tmp/pe-e19-dodge-v1.py.
+Wszystkie exit0, źródło L bez zmian. Wyniki results.json: left_up i
+left_down HP0/mode3, up_left wróciło do title/mode−1. Brak zwycięstwa.
+Powtórki v2 kończą się wcześniej, po600 klatkach: left_up i left_down
+żyją z43HP, PE33856196 (wystarcza na Heal3), up_left już HP0.
+/tmp/pe-e19-dodge-v2/results.json. To normalne przebiegi prób sterowania,
+bez porównania SAN; nie dowodzą żadnej ogólnej właściwości uników E19.
+Sesja56313, /tmp/pe-e19-left-up-v3-live.py, zimno odtwarza left_up do
+142547, aby wykorzystać to okno leczenia. To próby taktyki, nie zmiany
+gry ani potwierdzone zwycięstwo.
+
 ### M428 strzałami i nowa wygrana M350 bez leków
 
 Sesja78718 od L do punktu124764 powtórzyła oryginalne wejścia, potem

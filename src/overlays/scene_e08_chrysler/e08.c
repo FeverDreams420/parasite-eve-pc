@@ -907,9 +907,9 @@ int SceneE08_UpdatePlayerOrb(void *raw0, void *raw1, void *raw2) {
     orb->trailB[2].y = g_RoomFloorY->y;
     orb->trailB[2].z = orb->trailA[2].z;
     for (i = 0; i < 8; i++) {
-        orb->points[i].x = orb->trailA[2].x - (step.x << 2) + rand() % 100 - 50;
+        orb->points[i].x = orb->trailA[2].x - (step.x * 4) + rand() % 100 - 50;
         orb->points[i].y = orb->trailA[2].y;
-        orb->points[i].z = orb->trailA[2].z - (step.z << 2) + rand() % 100 - 50;
+        orb->points[i].z = orb->trailA[2].z - (step.z * 4) + rand() % 100 - 50;
     }
 
     return 0;
@@ -1058,7 +1058,7 @@ int SceneE08_UpdateRingSprites(void *raw0, void *raw1, void *raw2) {
     s32 step;
 
     q = p;
-    step = rcos(rec->frame << 5) >> 6;
+    step = rcos(rec->frame * 32) >> 6;
     p->size += step;
     p->ticks++;
     p->depth -= 4;
@@ -1199,7 +1199,6 @@ int SceneE08_UpdateSlotsContext(void *raw0, void *raw1, void *raw2) {
     SceneGrabHead * arg0 = raw0;
     RoomFxControl * arg1 = raw1;
     intptr_t *status;
-    int *flags;
     u32 *objectFlags;
 
     status = FieldFx_VarPtr(1);
@@ -1210,8 +1209,7 @@ int SceneE08_UpdateSlotsContext(void *raw0, void *raw1, void *raw2) {
 
         if (arg1->frame == 0xF0) {
             if (FieldFx_GetStatus(arg0) == 3) {
-                flags = *(int **)D_8009D254;
-                flags[0x13] |= 0x4000;
+                g_PlayerEntity->state->flags |= 0x4000u;
 
                 objectFlags = &arg0->actor->state->core_flags;
                 *objectFlags |= 0x80000000;
@@ -1451,7 +1449,7 @@ int SceneE08_DrawParticleSlots(void *raw0, void *raw1, void *raw2) {
         color.b = 0xFF;
         color.g = 0xFF;
         color.r = 0xFF;
-        offset.z <<= 1;
+        offset.z *= 2;
         scale = slots->phase[i] * slots->motionRamp >> 12;
         kind = g_FieldFxSpriteParams.palette;
         palette = g_FieldFxPaletteTable[kind];
@@ -1497,8 +1495,8 @@ int SceneE08_UpdateParticleSlots(void *raw0, void *raw1, void *raw2) {
     for (i = 0; i < 4; ++i) {
         slots->cycle[i] = (s16)((u16)slots->cycle[i] + 1) % 40;
         slots->phase[i] -= 200;
-        slots->offset[i].x = rsin(((s16 *)state)[1] << 3) >> 3;
-        slots->offset[i].y = rcos(((s16 *)state)[1] << 4) >> 3;
+        slots->offset[i].x = rsin(((s16 *)state)[1] * 8) >> 3;
+        slots->offset[i].y = rcos(((s16 *)state)[1] * 16) >> 3;
         oldPhase = (u16)slots->offset[i].z;
         slots->offset[i].x = 0;
         slots->offset[i].y = 0;
@@ -2008,7 +2006,7 @@ int SceneE08_DrawGlowModel(void *raw0, void *raw1, void *raw2) {
     FieldFx_ModelDraw((union FieldTexturedModel *)g_SceneE08GlowModel, &matrix);
     FieldFx_ModelRestoreColors(g_SceneE08GlowModel);
     if (timer->ticks > 10) {
-        size = (timer->ticks - 10) << 9;
+        size = (timer->ticks - 10) * 512;
         if (size > 0x7D00)
             size = 0x7D00;
         FieldFx_SetSpriteTexturePreset(3);
@@ -2483,7 +2481,7 @@ int SceneE08_UpdateTrailGlow(void *raw0, void *raw1, void *raw2) {
     point[1] = effect->trail[0].y;
     z = effect->trail[0].z;
     point[2] = z;
-    if (Geo_PointInPoly(x << 16, z << 16, g_FloorPolygonVertices, g_FloorPolygonVertexCount) == 0) {
+    if (Geo_PointInPoly((s32)((u32)x << 16), (s32)((u32)z << 16), g_FloorPolygonVertices, g_FloorPolygonVertexCount) == 0) {
         phase->state = 2;
     }
     if (FieldFx_IsPlayerWithinRadius(point, 0x320) != 0) {
@@ -2499,9 +2497,9 @@ int SceneE08_InitLayeredSprite(void *raw0, void *raw1, void *raw2) {
     SceneLayeredSpriteState * out = raw2;
     Ovl178Position *position = FieldFx_GetScriptContext();
 
-    out->center[0].fixed = position->x << 16;
-    out->center[1].fixed = position->y << 16;
-    out->center[2].fixed = position->z << 16;
+    out->center[0].fixed = (s32)((u32)position->x << 16);
+    out->center[1].fixed = (s32)((u32)position->y << 16);
+    out->center[2].fixed = (s32)((u32)position->z << 16);
     out->initialSeed.vector.x = 0;
     out->initialSeed.vector.y = 0;
     out->initialSeed.vector.z = 0;
@@ -2679,7 +2677,7 @@ int SceneE08_UpdateLayeredSprite(void *raw0, void *raw1, void *raw2) {
         ++(((SceneLayeredSpriteState *)state)->phase);
         ((SceneLayeredSpriteState *)state)->initialSeed.vector.z += 0x270;
         ((SceneLayeredSpriteState *)state)->velocity[0] -= (((SceneLayeredSpriteState *)state)->drift) * 8;
-        ((SceneLayeredSpriteState *)state)->velocity[2] = rsin((((SceneLayeredSpriteState *)state)->phase) << 6) * 1500;
+        ((SceneLayeredSpriteState *)state)->velocity[2] = rsin((s32)((u32)((SceneLayeredSpriteState *)state)->phase << 6)) * 1500;
     }
     pointValue = ((SceneLayeredSpriteState *)state)->center[0].parts.integer;
     point[0] = pointValue;
@@ -2737,7 +2735,7 @@ int SceneE08_DrawSpinningGlow(void *raw0, void *raw1, void *raw2) {
 
     r = rec;
     ctx = FieldFx_GetScriptContext();
-    idx = ((rec->frame >> 4) << 1) << 1;
+    idx = (rec->frame >> 4) * 4;
     if (idx >= 0xD) {
         idx = 0xC;
     }

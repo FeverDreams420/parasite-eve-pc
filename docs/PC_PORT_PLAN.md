@@ -2,6 +2,54 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### E08: osiem pełnych cykli aktualizacji i naprawa arytmetyki/flag gracza
+
+Permanentny original-m418-chrysler-update (--m418-cycles-update) ładuje
+rzeczywiste assety M418 i wykonuje cztery oryginalne skrypty przez PM,
+po dwa warianty. Kontrolowane fixture:64 macierze kości, prostokąt podłogi
+±4000 i minimalny nagłówek animacji gracza; nie jest to kampania/poza
+fixture nie zmieniano RAM ani zapisów. Slots otrzymuje cue0/1 przez send;
+LayeredSprite parametr drift128/256. Dla drift0 dwie warstwy pozostawały
+w podłodze po900 klatkach; nie zmieniono czasu życia gry w celu wymuszenia
+wygaśnięcia. Z prawidłowymi parametrami wszystkie osiem kończy się state0,
+action4, maski slotów7/f/201/37d/3f zgodne z referencjami skryptów.
+Normal/SAN identyczne klatki zakończenia74,80,97,97,65,301,818,600.
+Sprawdzane są granice banku, licznik kolejki dźwięku oraz flaga gracza.
+Kolejka jest opróżniana bez playback; draw nie jest wywoływane.
+CentreGlow/OrbitParticles z trzeciej listy nie są uruchamiane tymi gałęziami
+skryptu, więc sam ten test nie pokrywa wszystkich callbacków E08.
+/tmp/pe-e08-updates-v1-cycles-proof.json i logi obu profili.
+
+SAN wykrył ujemny shift w UpdatePlayerOrb. W całym istniejącym e08.c
+usunięto takie przesunięcia: bounded16 przez mnożenie, fixed16/phase32
+przez jawne przesunięcie unsigned z zachowaniem32-bitowego wyniku PS1.
+Naprawiono też UpdateSlotsContext: dawne flags[0x13] dotykało innego pola
+po poszerzeniu pointeru; właściwe jest g_PlayerEntity->state->flags.
+Nowy test sprawdza0x4000 po cue1; stary obiekt z poprawionymi shiftami,
+ale dawnym indeksem flag, odpada na tej asercji bez raportu SAN:
+/tmp/pe-e08-playerflag-regression-v1-proof.json. Wcześniejsze probe-v1/v2
+zachowują odpowiednio raport ujemnego shiftu i brak podłogi w testerze;
+próba drift0 i tymczasowy błąd kompilacji fixture też zachowane. Nie są
+zwycięstwem, zgodnością obrazu ani powodem do zmiany mechaniki.
+
+/tmp/pe-e08-update-oracle-v2-proof.json na aktualnym źródle i obiektach
+silnika kandydata:6272 przypadki orba, wszystkie172 bajty efektu i slot;
+756 przypadków bramki, flagi właściciela/gracza, slot i canary poza polami.
+Normal/SAN i oryginalny MIPS M418 zgodne. Orb hookuje tylko ten sam rand
+i StartSlot zwracający NULL; bramka jedynie zlicza dwie funkcje battle,
+bez ich efektów ubocznych. Nie obejmuje renderingu, trafienia po udanym
+przydziale dziecka ani pełnych efektów funkcji battle.
+
+Świeży /tmp/pe-e08-updates-v1:219+219 obiektów, pełny rehash,70/70 regresji,
+10/10 CTestów z wymaganymi obrazami, sześć ścisłych kompilacji trzech
+jednostek E08 bez diagnostyk. PsyZ/SDL nadal nieinstrumentowane; CTest
+aktora wskazuje świeżą fixture, inne niezmienione testy używają binarek build.
+Cold L do144709/E19: normal/SAN exit0 i całe JSON/VRAM zgodne ze starszą
+sesją live,223HP/main1003296; L niezmieniony. /tmp/pe-e08-updates-v1-e19-proof/proof.json.
+Aktualny game i fixture skopiowane do build, stare zachowane; proof installed-build.
+Renderowanie, audio E08, niepokryte callbacki/gałęzie i kampania M418 nadal
+otwarte. E19 nadal niewygrane, pełny port nieukończony.
+
 ### E08/M418: cały moduł w natywnym linku i permanentny test loadera
 
 Do CMake włączono oba dotychczasowe pliki E08 oraz jego oryginalny

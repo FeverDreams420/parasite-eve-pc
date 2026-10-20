@@ -3,6 +3,36 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — panel M144, instalacja Fuse1 i Fuse2
+
+Poprzednia tura była postępem: Eve/BlueDoor/M329, commit11f48be2a.
+Sesja64839 ponownie żywa. Od46683 biegUp238,Left15,Up15 i neutral160
+prowadzi do M144/a8024248/dialog132 przy47111. Cross zamyka132;
+kolejna interakcja dialog8 i potwierdzenie instalują Fuse1/206 ze22.
+Przy47731 slot22 pusty, flag65=541070027. KorektaRight8(run),Up2,
+Cross i potwierdzenie instalują Fuse2/207 ze19. Przy48181 oba sloty puste,
+flag65=541079243; HP111/210,story476,menu null,lock2 w zbliżeniu panelu.
+Nie uruchomiono zasilania; Fuse3 i naprawa pozostają do wykonania.
+
+/tmp/pe-ex-install-fuses-O-v1-verify.py PASS: cała trasa cold O w obu
+profilach exit0, cały JSON/VRAM identyczny między profilami i live.
+Wszystkie50 slotów i4096B rekordów porównane:8:209→13,18:20→0,
+19:20→0 (Junk/Fuse2),22:206→0; rekordy tylko byte426:8→9.
+Wszystkie zmienne względem cold O:1:998→331,65:536870977→541079243,
+66:4→548,67:5→141,74:470→476,82:0→20,97:192→208.
+O i kopie bajtowo niezmienione. Asercje obejmują dialog132, usunięcie obu
+bezpieczników oraz wcześniejsze walki/pickupy. Artefakty
+/tmp/pe-ex-install-fuses-O-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian kodu produkcyjnego/PsyZ i nowych plików repo; SDK/SDL bez
+instrumentacji, brak oracle PS1, dowody/tmp nie są trwałym CTest.
+
+Dalsza bieżąca sesja (jeszcze bez normal/SAN proof): Down40(run) wycofuje
+zbliżenie, powrót do M329 przy48421. Dwa Heal2 poza walką leczą111→171→210
+przy48989, bez zużycia przedmiotów. Down123(run),Right40(run),Cross,
+neutral220 prowadzą do M332/a8063148 przy49456,HP210. Jeszcze bez walki.
+O pozostaje ostatnim trwałym zapisem. Pełny port i kampania EX nieukończone.
+
+
 ### EX — Eve/story476, zużycie Blue Cardkey i wejście M329
 
 Poprzednia tura była postępem: BlueCardkey/Fuse2, commit6cdf22f0a.

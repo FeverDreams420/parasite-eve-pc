@@ -3,6 +3,43 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — M147 wygrane, wspomnienie, pełny inventory i klucz211/story491
+
+Poprzednia tura była postępem: M146/BP, commit1b303377c. Sesja76250
+ponownie żywa. Medicine2/19 leczy73→163 przy20252; dojście do M14720741.
+Pierwsza próba z163HP pokonuje dwa cele, Heal2 nie wystarcza;22585 HP0,
+dwa cele. To niezweryfikowana osobną powtórką porażka; quit/native0.
+Nowa sesja /tmp/pe-ex-m147-preheal-A2-v1-live (exec72173) odtwarza A2,
+BP i M146 do20741. Heal2+Heal1 w eksploracji zwiększają163→223→253
+przy21405, kosztem PE. Zwykły ruch wywołuje21501 cztery cele:
+5:0/153HP i6:31/1/0 po123HP. Cztery kolejki po dwa pojedyncze strzały
+w jeden cel każda kończą23241:enemy0,EXP20,HP77/273. Leczenia w tej
+zwycięskiej walce już nie użyto; ruch między kolejkami, obrażenia i poison
+pozostają oryginalne. Nagrody dają Medicine2/7 do19, inventory znów pełny.
+
+Rozmowa127/128/129 uruchamia wspomnienie (28207 a80663c8), po którym
+powrót29207 do M147/page39 i dalsze40–44. Przy30967 dialog4: klucz
+nie mieści się. Przez Items→Discard→Yes usunięto duplikatCure-M/22;
+nie edytowano save/RAM. Zwykłe korekty pozycji i ponowne podejście do
+pielęgniarki (Up+X,Right−Z) uruchamiają44 ponownie przy32897.
+33457 panel55 i item211 w22;33777story488→491/dialog45. Przy34097
+M147/a80243c8,HP77/273,story491,menu null,lock0,dialogstate0.
+
+/tmp/pe-ex-m147-key-A2-v1-verify.py PASS: pełna trasa cold A2 w obu
+profilach exit0, cały JSON/VRAM identyczny między profilami i live.
+Asercje obejmują heal253, cztery cele/EXP, wspomnienie, powrót39,
+odmowę przy pełnym inventory oraz odbiór211. Historyczne asercje do20741
+z poprzedniej sesji, po tym punkcie wyłącznie zwycięska gałąź.
+Wszystkie50 slotów/4096B rekordów względem cold A2:19:0→7,22:0→211;
+rekordy14:48→67,426:12→0,430:19→39; pozostałe bajty bez zmian.
+Wszystkie zmienne:1:998→125,65:541196235→566362063,67:143→16527,
+74:488→491,82:84→1364; reszta bez zmian. A2/kopie8192B niezmienione.
+Artefakty /tmp/pe-ex-m147-key-A2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ i nowych plików repo; SDK/SDL nieinstrumentowane,
+brak oracle PS1; /tmp nie zastępuje trwałych CTest. A2 ostatni trwały zapis
+sprzed BP; następne użycie klucza i dalszy szpital. Pełny port nieukończony.
+
+
 ### EX — M146 zwycięstwo bez utraty HP po BP
 
 Poprzednia tura była postępem: oryginalne BP, commit6d8da2ac2. Świeża

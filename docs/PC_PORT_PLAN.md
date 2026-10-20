@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — drugi most, Cure-P i zwycięstwo przy fontannie M083
+
+M082: zachodni marsz uruchamia przy101871 niedźwiedzia5:31/104HP,
+pomocnika4:0/13HP i3:1/3:0 po61HP. Lista celów pomija pomocnika.
+Dwie tury Double Action, cztery strzały9→5, HP119→107/123. Rewards
+zamknięte przy103699,enenemy0,menu null,battle9. Zachodnie wyjście
+wczytuje M083/a80081c8 przy104355, bez dalszej utraty HP.
+
+Przy fontannie marsz na północ uruchamia105831 dwa3:31/3:0 po79HP.
+Po gotowości ATB Triangle→Items→Cure-P/slot12→Use kolejkuje przedmiot
+jako pierwszą akcję; druga akcja to strzał. Przy107039 Cure-P zużyte,
+stateFlags&3=3 (AYA_POISON_IMMUNE, jednorazowa odporność),ammo4,
+HP103/123, dwóch przeciwników. Kolejne strzały kończą walkę: łącznie
+cztery naboje5→1, HP107→99. Awans podnosi maxHP123→133,capacity20
+bez zmiany. Zamknięcie nagród i Items→Medicine1/slot17 leczą99→133,
+slot17 pusty. Przy109327 M083/story248,133/133HP,menu null,move_lock0,
+enemy0,battle9; Tool14 i SvVest10 zachowane, Cure-P12 zużyte.
+W całym4096B wyposażenia wobec G tylko bonusdef14:45→46,
+aktywacjaSvVest224:0→19 i ammo426:2→1.
+
+/tmp/pe-ex-m083-victory-G-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live, jedyny G bajtowo i hash bez zmian,
+brak sanitizer/opcode/assertion. Artefakty:
+/tmp/pe-ex-m083-victory-G-v1-{seed.json,checkpoint,proof/proof.json}.
+Osobny replay punktu aktywnego efektu107039 normal/SAN exit0:
+/tmp/pe-ex-m083-curep-v1-verify.py wykonany PASS, cały JSON zgodny z
+historycznym live, VRAM obu profili identyczny (live VRAM punktu107039
+nie zachowano), G bez zmian. Potwierdza aktywną odporność i zużycie,
+nie konkretny przypadek zablokowania późniejszego ataku trucizną.
+SDK/SDL bez instrumentacji. Wyłącznie pad i odczyty; bez zmian kodu,
+RAM, RNG i zapisów. Park/Day2/EX oraz audyt obrazu/audio PS1 nadal
+nieukończone. Kontroler pozostaje w M083 przy109327; następne:
+schody M084 i dalsza droga do telefonu.
+
 ### EX — Tool w M079, pięciu przeciwników M081 i wejście M082
 
 M079: odczyt podłoża /tmp/pe-ex-m079-floor-v1.json (135 trójkątów).

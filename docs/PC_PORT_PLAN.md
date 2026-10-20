@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — powrót ze sklepu i wyjazd z Soho na mapę
+
+M095→M094→M093 zwykłym padem, bez utratyHP. Daniel/dialog100 po sklepie
+zamknięty. Podejścia do auta początkowo blokował jego obrys; odczyt skryptów
+LLDB wyłącznie do odczytu i detach (/tmp/pe-ex-m093-car-K-v1). Aktor6 bada
+północne drzwi: zachodni regionx1569..1934,z-360..-92 i wschodnix1934..2362.
+Podejście do wschodnich daje101; po zamknięciu obejście do[1661,3] i Down80
+uruchamia102. Dialogi102→103→104, następnie wait1200 prowadzi do
+M0000/a8000048 przy57648/story328. Mapa NYC obejrzana, Soho zaznaczone.
+HP181/181,menu null,enemy0. Żaden następny cel jeszcze niewybrany.
+
+/tmp/pe-ex-soho-depart-K-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live, K bajtowo/hash bez zmian. Cały ekwipunek
+względem K różni się tylko slot16 Junk20→Tool22; rekordy4096B bez zmian.
+Dokładne delty wszystkich zmiennych:1:998→93,3:8642560→8896512,
+25:67108882→67108922,146:0→20. Artefakty
+/tmp/pe-ex-soho-depart-K-v1-{seed.json,checkpoint,proof/proof.json},obraz.png.
+SDK/SDL bez instrumentacji; bez nowego oracle PS1 obrazu/audio. Kod
+produkcyjny,RAM/RNG,payloady save bez zmian. Następne: wybór Museum,
+dalsza fabuła Day3; cała kampania i audyt portu nadal nieukończone.
+
+
 ### EX — Tool ze sklepu M095 przy pełnym ekwipunku
 
 Zwykły pad w M095 dochodzi do skrzyni typu7[-407,-1003]. Próby od dolnego

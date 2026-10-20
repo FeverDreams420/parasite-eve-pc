@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M273 z J: wszystkie części wyłączone, przejście do M432 niegotowe
+
+Autentyczne J uruchomiono na kandydacie v4, prywatna karta J-only.
+/tmp/pe-m273-upgraded-J-v3-live.py: zwykłe pady, oryginalne BP/menu,
+CureM+Liberate, pojedyncze strzały M8000 w Double Action. Trafienia
+w część6:74 zamiast wcześniejszych57; część7:89, część5:59.
+Przy52353 części5/6/7 miały999960/999966/999939HP, wszystkie poniżej
+milionowego progu wyłączenia. Przy52443 mode12/live0,397/621HP,
+story720, brak obiektów walki, Medicine3slot27 zachowane; Medicine4
+i CureM zużyte oryginalnymi komendami. Pilot zakończył na pustym player
+po zwolnieniu walki (TypeError narzędzia, bez awarii gry w tym punkcie).
+/tmp/pe-m273-J-victory-v1-proof/proof.json: cold SAN od samego J,
+exit0 bez raportów, pełny JSON/VRAM identyczne, oczekiwane zmiany
+inventory tylko CureM/Medicine4/amunicja, efekty/bonusy broni zachowane,
+źródło i prywatne J bez zmian. Zachowany last-parts-normal.json.
+
+Dalszy zwykły dialog Eve przeszedł do ładowania M432, gdzie kandydat v4
+zakończył exit1: native descriptor missing, slot75, PS1 801990f8.
+Log /tmp/pe-m273-upgraded-J-v3-live/game.log, ostatni snapshot53615.
+Cały finał nie jest ukończony. Następny etap: zidentyfikować kompletny
+oryginalny moduł M432 i naprawić go na miejscu, bez zastępowania sceny.
+
+Zachowano nieudane launchery: J-v1 omyłkowo odziedziczył starszy plik
+wykonywalny (brak M273); J-v2 użył v4, lecz uruchomienie bez PTY zamknęło
+wejście wrappera po28124. V3 poprawia oba błędy narzędzia i używa v4.
+Live10181 poprzedniej gałęzi zamknięty quit/exit0 z G bez zmian.
+Nie wprowadzano zmian źródeł ani parametrów rozgrywki.
+
 ### Ulepszone M8000: checkpoint J przed finałem
 
 Live10181 odebrał wyniki M246 i przeszedł M248/M249, sceny Eve,

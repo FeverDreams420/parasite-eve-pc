@@ -2,6 +2,42 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — próba powrotu, odczyt mapy i zatrzymywanie marszu przy zmianie stanu
+
+Od udanej walki91565 odtworzono nową gałąź od B, bez restore RAM.
+Powrót M309→M305 i próby nawigacji nie dotarły do wyjścia. Read-only
+LLDB odczytał g_FontSelectionState i329B tabeli: active1,codeIndex2,
+code49,selected0,seed31076,20 węzłów; /tmp/pe-chrysler-map-read-v1.json.
+Opcode178 zwraca codeIndex jako numer piętra. To surowy indeks2, nie
+pełny dowód przejścia wszystkich pokoi/pięter. Nazwy font/glyph w tym
+oryginalnym module są historyczne; stan służy także wyborowi map.
+Nie wolno utożsamiać numeru sceny ani kierunku ekranowego z węzłem.
+
+Z M308 powrót do M305/M309/M310 uruchomił kolejną walkę. Medicine1
+slot8 przez oryginalne menu:28→73HP. Podejście na104 przy wyborze celu
+nie dowodzi trafienia podczas Darkness: cel rusza się przed rozliczeniem;
+HP nie spadło po tej parze strzałów. Po wygaśnięciu Darkness trafienia
+zadziałały. Ostatecznie przy100897 M310/story164,HP0,mode3, pozostali
+wrogowie30 i14HP. Nie osiągnięto komisariatu ani nowego Save.
+Kontroler jawnie quit/exit0. /tmp/pe-ex-chrysler-return-attempt-v1-verify.py
+wykonany PASS: zimne normal/SAN exit0, cały końcowy JSON/VRAM zgodny
+z live, źródłowy i prywatny B bez zmian, brak sanitizer/opcode/assertion.
+Pośredni odczyt mapy i leczenia pochodzi z live, nie z osobnego PS1 oracle.
+Artefakty: /tmp/pe-ex-chrysler-return-attempt-v1-{seed.json,checkpoint,proof/proof.json}.
+
+Usprawniono zewnętrzny kontroler /tmp/pe-ex-chrysler-observed-v1.py:
+komenda walk dzieli marsz na8 VBlanków i zatrzymuje się przy zmianie
+sceny, wrogach, zmianie HP lub menu. Zwykłe advance i input gry bez zmian.
+Nowa żywa gałąź od91565: walk320Left wykonał288 i zostawił32,
+zatrzymał się przy pierwszej obserwowanej zmianie M309→M305 przy91853.
+36 kolejnych wpisów inputu po8, poprzednie stany nadal M309, końcowy
+M305, HP72 w każdym. Automatyczne asercje PASS, dowód:
+/tmp/pe-ex-chrysler-observed-v1-live/walk-proof.json. Tego krótkiego
+rozszerzenia nie odtworzono jeszcze osobno normal/SAN. Proces pozostaje
+żywy i czeka na sterowanie. Nie deklaruje się poprawności wszystkich
+warunków zatrzymania na podstawie samego testu zmiany sceny.
+SDK/SDL bez instrumentacji. Kod gry/PsyZ bez zmian; powrót i zapis otwarte.
+
 ### EX — odgałęzienie M303, ponowne spotkanie M310 i odporność na Slow
 
 Po wygranej M309 przejście na południe prowadzi do M310 (map selection22),

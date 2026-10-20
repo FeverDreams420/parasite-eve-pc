@@ -2,6 +2,39 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — powrót z ogrodu, wygrana M358 i wejście do M067
+
+Z M062 odsunięcie od kolizji skrzyni i pad według ścieżki wracają przez
+otwartą bramę do M063 przy132967. Północne wyjście M063 ma inny polygon
+niż odnoga ogrodu: marsz z[−170,2471] na północ wczytuje M358/a8065448
+przy133783. Bez zmiany HP/ekwipunku. Przy134095 starcie6:31/6:2/6:1
+po48HP oraz4:0 z79HP, wszyscydef25. Double Action pokonuje trzy6;
+4 pozostaje poza zasięgiem (1408>1245), anulowanie celowania i dalsze
+podejście zmniejsza odległość do843. Dwa trafienia kończą walkę.
+Pięć nabojów13→8, HP107→102. EXP/awans/nagrody: maxHP115,capacity19,
+Junk20 do nowego slot18, menu zamknięte przy137283; nie potwierdza się
+odebrania wszystkich pozostałych łupów przy pełnym plecaku.
+
+Północny marsz początkowo trafiał na skrzynię typu3 przy[−4546,7408]
+i zamknięty trójkąt9/kind128. Siatka bez przeszkód aktorów dawała zbyt
+bliską trasę. Obejście przez dolne przejście z ręczną korektą narożnika
+prowadzi do M067/a80063c8. Nie naprawiano tego przez wyłączenie kolizji
+ani blokad. Tylko odczyt /tmp/pe-ex-m358-floor-v1.json; planer omijał
+kind128 i skrzynię, lecz nadal wymagał korekty. To ograniczenie pomocy
+nawigacyjnej, nie ukończony autonomiczny pathfinding.
+
+Przy156421 M067/story232,102/115HP,19 miejsc,menu null,move_lock0,
+battle9,enemy0; klucz slot4 i Medicine2 slot8 zachowane. Cure-P nadal
+w skrzyni M062 (var128=13),var84=201326727. Całe4096B wyposażenia wobec
+E różni się tylko bonusdef14:43→45 orazammo426:10→8.
+/tmp/pe-ex-m067-arrival-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON i VRAM identyczny z live, E/F bajtowo i hashe bez zmian,
+brak sanitizer/opcode/assertion. Artefakty:
+/tmp/pe-ex-m067-arrival-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Bez zmian kodu gry, RAM, RNG i save’ów.
+Nie obejmuje jeszcze zdarzeń M067, amfiteatru, całego Day2/EX ani PS1
+obrazu/audio. Kontroler /tmp/pe-ex-zoo-nav-v1-live pozostaje w M067.
+
 ### EX — Cure-P i Medicine2 przez wymianę pełnego plecaka
 
 Z M062 po Defense+2 zwykły pad prowadzi do skrzyni Cure-P; nawigacja

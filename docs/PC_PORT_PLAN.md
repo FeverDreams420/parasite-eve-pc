@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M173: obejście pomostu i wygrana
+
+Od107587 górnego pomostu[4176,-105,2903] zwykłeLeft300normal wychodzi
+poza strefę ponownego zejścia. Down1000normal,Up120normal iRight1200normal
+obchodzą komorę do[4248.62,-105,609.04]. DalszeDown300,Right200 iDown
+uruchamia111299 spotkanie;111499 jeden7:31/156HP,Aya335HP.
+Atak nakładaDarkness i obniżaHP do279. PosiadanyCure-D24 użyty przez
+Items/Use,druga akcja strzela:112903 slot24=0,cel70HP,Aya279.
+
+Następny strzał z reticle564 nie kończy walki; ataki ponawiająDarkness.
+Zwykłe podejścia zmniejszają dystans do267 przy114224,Aya139HP.
+Pojedyncza kula iSquare kończące resztę kolejki prowadzą114616/114796
+do wynikuEXP/selection20,mode2,zero wrogów,139/335HP,ammo7.
+Nie twierdzi się,że dystans267 gwarantuje trafienie dla każdegoRNG.
+NagrodyM173 nieodebrane.
+
+Dwa świeże cold114796 normal/SAN exit0 bez diagnostyki sanitizer/opcode;
+całe JSON i1MiB VRAM równe między profilami oraz zamrożonym live114796.
+Asercje obejmują drabinę,pierwszy cel156HP,Cure-D24 i pozostałe70HP,
+końcowyreticle267. Cały ekwipunek/4096B rekordów i wszystkie zmienne
+względem coldE2:slot23:0→203,bajt426:0→7,
+zmienne1:998→168,3:9428992→12566528,20:0→357,54:1838946→1838947,
+56:0→4,67:18655→2147502303,74:536→568,78:232→179;reszta bez zmian.
+Źródłowy i prywatneE2 niezmienione. Dowód,journal,checkpoint
+/tmp/pe-ex-m173-win-E2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ/RAM/save,ten sam pe-video-clock-v1.
+SDK/SDL nieinstrumentowane,brak niezależnego oraclePS1,/tmp tymczasowe.
+Następny krok:nagrody i dalsza scena za komorą w tej gałęzi EX.
+
+
 ### EX M173: oryginalna drabina na górny pomost
 
 Od88880 kilka prób podejścia wróciło doM168 lub zatrzymało się na

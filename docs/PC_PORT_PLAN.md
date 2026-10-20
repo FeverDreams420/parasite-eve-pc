@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — skrzynia M014 i powrót drugimi drzwiami
+
+Zwykły input po walce otwiera skrzynię type5:0 przy−1306,−2870.
+Oryginalny skrypt losuje item1 lub6; w tym przebiegu GiveItem dodaje6
+w slot8, receipt menu55 zamyka się normalnie, var84 bit1 ustawiony.
+Nie zmieniano RNG ani zawartości skrzyni. Drugie drzwi od strony M014
+wywołują dialog118 i ustawiają var24 bit65536; animacja prowadzi do
+M012 przy37345,42/49HP, move_lock0, var24=0x1030234.
+/tmp/pe-ex-m014-chest-exit-v1-{seed.json,checkpoint,proof/proof.json,
+verify.py}: normal/SAN exit0, pełny JSON/VRAM identyczny z live,
+prywatny A wszystkie8192B niezmienione, brak sanitizer/opcode/assertion.
+Kontynuacja zwykłym inputem otwiera drzwi M012→M016 z Theater Key:
+dialog118 przy38647, wejście M016/0xa8001348 przy38835. To wejście
+jest na razie potwierdzone live; niezależny replay kolejnej trasy pozostaje
+przed nami. Kod gry/PsyZ bez zmian, biblioteki SDK bez instrumentacji;
+pełny EX/Chrysler i porównanie obrazu/audio PS1 nadal niepotwierdzone.
+
 ### EX — M014: walka z trzema przeciwnikami i nagrody
 
 Bez zmian źródeł, cold Continue A i pełny input zdobycia klucza/otwarcia

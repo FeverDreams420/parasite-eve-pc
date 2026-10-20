@@ -3,6 +3,40 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — M332 zwycięstwo i Fuse3 od zimnego O
+
+Poprzednia tura: postęp, instalacja Fuse1/Fuse2 potwierdzona, b7fb4e6ff.
+Sesja64839 ponownie żywa przy49456 M332/HP210. Down80(run),neutral100,
+Right18(run),Down60(run),neutral220 uruchamiają spotkanie. Przy50078
+korpus6:31/237HP i ogon7:0/62HP,PE9372732/23199744,HP210.
+Pierwszy strzał na ogon zużywa amunicję, ale przy50330 oba HP bez zmian;
+nie jest to dowód uszkodzenia ogona ani pełnego cyklu jego regeneracji.
+Po zbliżeniu korpus w zasięgu; dwie akcje po64 zostawiają109 przy50834.
+Po przestawieniu wyboru z ogona na korpus kolejne dwie akcje kończą
+starcie przy51318: enemy0,EXP20,HP179/210. Ta gałąź kończy walkę po
+śmierci korpusu; nie wymagała osobnego dobicia pozostałego ogona.
+Przy51734 menu nagród zamknięte, Cure-M16 w18. Nie twierdzimy, że ten
+jeden przebieg pokrywa wszystkie ataki/odłączanie/odrastanie/render ogona.
+
+LLDB wyłącznie odczyt aktualnej siatki i detach. Nav do[774,-825]
+zatrzymuje się w tolerancji przy[735,-816];Right16,Down4,Cross trafia
+we wąską interakcję. Przy53066 panel55/Fuse3,item208 w19;53314 pole
+M332/a8063148,HP179/210,story476,menu null,lock0. Fuse3 niezainstalowany.
+
+/tmp/pe-ex-fuse3-O-v1-verify.py PASS: pełna trasa cold O,normal/SAN exit0,
+cały JSON/VRAM identyczny między profilami i live. Wszystkie50 slotów
+oraz4096B rekordów porównane:8:209→13,18:20→16,19:20→208,22:206→0;
+rekordy tylko byte426:8→4. Wszystkie zmienne:1:998→329,
+65:536870977→541079499,66:4→548,67:5→141,74:470→476,82:0→84,
+97:192→208. O/kopie8192B bez zmian. Asercje obejmują heal210, start/HP
+korpusu109,EXP/zeroenemy,odbiór208 oraz wcześniejsze etapy.
+Artefakty /tmp/pe-ex-fuse3-O-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ i nowych plików repo; SDK/SDL nieinstrumentowane,
+brak oracle PS1; /tmp nie zastępuje trwałych CTest. O ostatni trwały zapis.
+Następne powrót do panelu, Fuse3, przełącznik/naprawa i nowy zapis.
+Pełny port pozostaje nieukończony.
+
+
 ### EX — panel M144, instalacja Fuse1 i Fuse2
 
 Poprzednia tura była postępem: Eve/BlueDoor/M329, commit11f48be2a.

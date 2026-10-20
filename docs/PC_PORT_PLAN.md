@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — korytarz komisariatu i sekwencja z Benem
+
+Od52304 oryginalne przejścia M051→M043→M042→M041 i powrót
+M042→M043, wyłącznie padem. Kierunki zależą od kamery; kilka prób
+nawigacji wróciło do poprzedniego pokoju. Następnie przejście korytarzem
+w stronę dodatniego Z uruchomiło scenę z Benem. Zaobserwowano strony
+59–71; stronę68 zarejestrowano jedynie w stanie nieaktywnym, dlatego
+nie deklaruje się osobnego dowodu jej aktywnego wyświetlenia. Po71
+oryginalny skrypt zmienił story152→164. Przy70616 M043 (0xa80041c8),
+72/72HP,menu null,move_lock2. Nie zmieniano kodu ani pamięci/save'a.
+
+/tmp/pe-ex-ben-hall-v1-verify.py wykonany: PASS. Niezależne zimne
+normal/SAN exit0, pełny JSON/VRAM zgodny z live, prywatny B bajtowo
+identyczny ze źródłem, brak sanitizer/opcode/assertion. Nadal zachowany
+Offense+2 i M8000 z pojemnością4 po zużyciu Mod Permit.
+Artefakty: /tmp/pe-ex-ben-hall-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Pełny Day2/EX, Chrysler i porównanie
+obrazu/audio z PS1 pozostają niepotwierdzone.
+
 ### EX — wyjście ze zbrojowni po tutorialu
 
 Z checkpointu51442 zwykły input doprowadził Ayę do drzwi M052 i do

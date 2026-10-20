@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — M032: walka, poziom5 i interakcja przełącznika/telefonu
+
+Po113501 zwykła eksploracja M032 wywołuje encounter z dwoma type6:0/1,
+każdy47HP/def8.
+M8000/Double Action na dwa cele kończy walkę bez utratyHP. Oryginalne
+nagrody, awans do poziomu5/maxHP67 i Obtain All Items/End, aktualne38HP.
+Dalsza trasa prowadzi do interakcji actor3 przyx~−16950,z3500; dialog13
+„There's a switch and an emergency phone...”. Zwykłe potwierdzenia
+zamykają dialog, oryginalny skrypt wykonuje swoją sekwencję obiektu;
+przy118995 menu null,move_lock0,story104,38/67HP. Sam ten checkpoint
+nie jest dowodem przejścia przez następną bramę lub zapisu przez telefon.
+Seed/checkpoint: /tmp/pe-ex-m032-switch-v1-{seed.json,checkpoint}.
+Cold normal/SAN exit0; /tmp/pe-ex-m032-switch-v1-verify.py potwierdza
+pełny JSON/VRAM zgodny z live i wszystkie8192B prywatnego A bez zmian,
+brak sanitizer/opcode/assertion. Dowód:
+/tmp/pe-ex-m032-switch-v1-proof/proof.json. SDK/SDL bez instrumentacji.
+Kod gry/PsyZ, RAM i źródłowe karty bez zmian;
+pełny EX/Chrysler oraz porównanie obrazu/audio PS1 nadal otwarte.
+
 ### EX — powrót M334→M031 i wejście M032
 
 Z checkpointu102953 normalne sterowanie wraca z bocznego M334 na

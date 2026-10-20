@@ -3,6 +3,34 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — zimny Continue O, użycie Autopsy Key i wejście M327
+
+/tmp/pe-ex-autopsy-O-loaded-v1-verify.py wykonany PASS: świeży Continue O
+normal/SAN exit0,pełny JSON/VRAM identyczny. Przy12920 M325/a80622c8,
+story470,HP210/210,menu null,enemy0; całe wyposażenie i wszystkie zmienne
+jak File saved41529. O bajtowo niezmieniony. Artefakty
+/tmp/pe-ex-autopsy-O-loaded-v1-{seed.json,proof/proof.json}.
+Nowa sesja /tmp/pe-ex-autopsy-O-nav-v1-live startup-proof PASS pełny JSON/VRAM
+jak cold profile; poprzednia sesja odN zamknięta quit/native exit0.
+
+Wyjście M325 wymagało korekty przy ościeżnicy; zachowano próby ruchu.
+M325→M339→M323, na południe→M321. Od spawnu[-2450,-2300]
+Down1340,Right30,Cross uruchamia135 „Door unlocked”. Dialog134 potwierdza
+usunięcie zbędnego klucza. Przy18278 M327/a80623c8,story470,HP210/210,
+menu null,lock0,enemy0. Slot8:209→0, Fuse1/22 zachowany. Całe pozostałe
+wyposażenie i4096B rekordów jak O. Wszystkie zmienne porównane:
+1:998→321,65:536870977→541065289, pozostałe bez zmian.
+
+/tmp/pe-ex-autopsy-unlock-O-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live,O bajtowo niezmieniony. Asercje obejmują
+135/134,usunięcie klucza i wejście. Artefakty
+/tmp/pe-ex-autopsy-unlock-O-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji,brak niezależnego oracle PS1. Kod produkcyjny,
+RAM/RNG/payloady save bez zmian. O ostatni trwały zapis; następne eksploracja
+M327 i dalsze bezpieczniki. Pełny port pozostaje nieukończony.
+
+
+
 ### EX — Maya, gabinet M325, Autopsy Key i prawdziwy Save O
 
 Z M326 powrót do M321 przez pierwotne drzwi: po korekcieX Left60,Down100,

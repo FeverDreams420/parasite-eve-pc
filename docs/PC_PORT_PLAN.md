@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — kanały M027/M028: dwa kolejne starcia
+
+Z M026 zwykły ruch prowadzi M027/0xa80023c8. Oryginalna animacja
+przejścia wymaga czekania; dalej normalny encounter z trzema type3:0..2,
+każdy16HP/def5. Zwykłe M8000/Double Action, trzech pokonanych, nagrody
+Obtain All Items/End,42/53HP. Następne przejście prowadzi M028/0xa8002448,
+encounter type8:0 HP47/def8 i type7:0/1 HP16/def5,38/53HP przy85215.
+Po pierwszej kolejce ginie type8. Kolejna próba nie obniżaHP pozostałych;
+po zwykłym zbliżeniu Down140 kolejna kolejka pokonuje oba. Nie zmieniano
+zasięgu ani pozycji w RAM; nie stwierdzono jeszcze przyczyny wcześniejszej
+nieskuteczności strzałów. Zachowano także te próby w pełnym seedzie.
+
+Oryginalny ekran awansu daje poziom4/maxHP64; aktualneHP38 zachowane.
+Po odbiorze łupu i End przy87823 menu null, move_lock0 i brak przeciwników.
+Seed/checkpoint: /tmp/pe-ex-sewer-battles-v1-{seed.json,checkpoint}.
+Niezależne cold normal/SAN exit0; /tmp/pe-ex-sewer-battles-v1-verify.py
+potwierdza pełny JSON/VRAM zgodny z live i8192B prywatnego A bez zmian,
+brak sanitizer/opcode/assertion. Dowód:
+/tmp/pe-ex-sewer-battles-v1-proof/proof.json. SDK/SDL bez instrumentacji.
+Kod gry/PsyZ bez zmian. Pełny EX,
+Chrysler, porównanie obrazu/audio PS1 i przyczyna nieskutecznych prób
+strzału pozostają poza zakresem dowodu tego przebiegu.
+
 ### EX — otwór przy fortepianie i zejście do kanałów
 
 Od checkpointu76279 zwykłe podejście do fortepianu/otworu w M319

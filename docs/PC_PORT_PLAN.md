@@ -2,6 +2,35 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — wygrana w M309 po przygotowaniu, nagrody i Slow1
+
+Z żywego checkpointu BP88186 zamknięto menu i weszło do M309 zwykłym
+padem. Czas spędzony w menu zmienił RNG spotkania: przy89429 są
+przeciwnicy type3/sub31 (106HP/def49) oraz type4/sub30 (98HP/def45),
+nie dwa type4 z poprzedniej porażki. Nie jest to kontrolowane porównanie
+wpływu samej zbroi. B Jacket1 zachowuje bonus obrony42.
+Trzy podwójne akcje M8000 zużyły sześć nabojów16→10. Pierwsza zmniejsza
+HP type3 do32, druga zabija go i zmniejsza type4 do57, trzecia kończy
+walkę. Aya zachowuje72HP przez całe obserwowane starcie; nie użyto
+Medicine ani PE. Pierwszy Cross drugiej tury był jeszcze przed gotowością
+ATB, dalsza inspekcja kolejki pozwoliła zatwierdzić obie akcje.
+
+Oryginalne nagrody: awans na wyświetlany poziom7, maksymalneHP72→92,
+Slow1 odblokowane (obserwacja ekranu21), BP87 na ekranie awansu.
+TakeAll odbiera Medicine1 do slot14, End zamyka nagrody. Przy91565
+M309/story164,72/92HP,live_enemies0,menu null,move_lock0, pusta lista
+wrogów; pojemność plecaka16. W całym buforze wyposażenia względem wejścia
+Chryslera dokładnie dwie różnice: record0/byte14 1→42 (BP obrony),
+record13/byte10 16→10 (amunicja). Offense+2 i wcześniejsze Medicine1
+pozostają zachowane. To wygrana tego spotkania, nie ukończenie piętra.
+
+/tmp/pe-ex-chrysler-win-v1-verify.py wykonany PASS: zimne normal/SAN
+exit0, pełny JSON/VRAM zgodny z live, prywatny B bajtowo identyczny ze
+źródłem i historycznym hashem, brak sanitizer/opcode/assertion.
+Artefakty: /tmp/pe-ex-chrysler-win-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Kod gry/PsyZ bez zmian; trwały Save/Continue
+ulepszeń, reszta Chryslera i porównanie PS1 nadal otwarte.
+
 ### EX — legalne przygotowanie przez BP przed walką Chryslera
 
 Po porażce odtworzono zwykły prefix od autentycznego B do86816,

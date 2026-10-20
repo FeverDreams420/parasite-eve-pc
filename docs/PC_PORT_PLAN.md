@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — pościg za Eve, rozmowa M070 i etap248
+
+Z M069 po etapie240 powrót przez[~3500,−7600] wczytuje M072 i
+uruchamia ucieczkę Eve; przy177703 story244,move_lock0. Droga przez
+[~980,1300] i[~3100,3700] wczytuje M070/a8007048. Podejście do sceny
+około[455,−500] uruchamia96,45 (wielostronicowy),97. Po zamknięciu
+rozmów Eve znika z listy aktorów; przy185801 move_lock0,story244,
+brak aktywnych dialogów. Zwykły marsz do wyjścia[~3100,600] wraca do
+M072/a8007148 i ustawia248. Przy187341:94/115HP,capacity19,menu null,
+move_lock0,enemy0,battle9. Cały ekwipunek identyczny z checkpointem240.
+Wszystkie zmienne skryptów względem240 mają dokładnie trzy różnice:
+1:71→70,54:1572962→1573218 (bit0x100),74:240→248.
+
+Pierwszy przebieg weryfikatora zatrzymało skopiowane oczekiwanie var54
+z etapu240; oba replaye już wtedy miały cały JSON zgodny z live.
+Oczekiwanie poprawiono i dodano sprawdzenie dokładnie trzech powyższych
+różnic. /tmp/pe-ex-eve248-v1-verify.py wykonany ponownie PASS:
+normal/SAN exit0, pełny JSON/VRAM identyczny z live, E/F bajtowo i hashe
+bez zmian, brak sanitizer/opcode/assertion. Weryfikator obejmuje też
+obserwowane aktywne96/45/97 i poprzedni zerowy input podczas FMV8.
+Artefakty /tmp/pe-ex-eve248-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Bez zmian kodu gry, RAM, RNG lub save’ów.
+Nie jest to ukończony park/Day2/EX ani porównanie obrazu/audio z PS1.
+Kontroler /tmp/pe-ex-zoo-nav-v1-live pozostaje przy187341 w M072;
+następne: dalsza trasa po248 i telefoniczny zapis postępu.
+
 ### EX — wygrana M067, druga brama i pełny FMV8 do etapu240
 
 Przy156877 M067 uruchamia wariant czterech przeciwników:3:31/3:1 po48HP,

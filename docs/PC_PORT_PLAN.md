@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Nowa gałąź przygotowań: dodatkowa walka M242 i dwa Medicine3
+
+Zapisana gałąź I/J/K wróciła M340→M343→M229→M242. Tym razem M242
+uruchomiło spotkanie320/280/240HP; dawne wejścia nawigacyjne przerwano,
+gdy wykryto walkę. Zwykłe pojedyncze strzały Double Action i Heal3:
+przy61746 wyniki, zero wrogów, Aya337/621HP. Nagrody dwa Medicine3
+i Ammo+15. Pierwsza gałąź zakończyła odbiór przy62558 bez leków:
+/tmp/pe-m242-victory-v1-proof/proof.json, cold I normal/SAN, pełny
+JSON/VRAM identyczny z live, exit0 bez raportów. Gałąź zamknięta quit0.
+
+Osobny zimny start od tego samego I do ekranu nagród62122, potem
+wyłącznie oryginalne menu: Medicine3 za Junk/slot26 i za Kv Vest1/slot4.
+Club1 pozostał, próba oddania go odrzucona przez oryginalną blokadę.
+Po przestawieniu przedmiotów B Jacket1 jest w slocie2, nadal wyposażony;
+M8000 pozostaje slot1. Przy65170 menu zamknięte, field mode9, Aya337HP,
+Medicine3 w slotach4/26/27 i Medicine4 w15/20.
+/tmp/pe-m242-reward-v2-proof/proof.json: cold I normal/SAN do65170,
+pełny JSON/VRAM zgodny z live, obie nagrody potwierdzone, exit0 bez
+raportów. Nie zmieniano kodu gry, pamięci procesu ani plików zapisu.
+
+Bieżąca sesja74239, /tmp/pe-m242-reward-v1, dotarła zwykłym padem
+do M243 przy65735. Przy66225 brak aktywnego spotkania. Pole wins40
+i komunikat training_target_reached w początkowym logu tego kontrolera
+są błędną etykietą używaną do pominięcia dawnej pętli treningowej;
+nie stanowią dowodu40 wygranych. Skrypt poprawiono na ręczny resume,
+wcześniejszy log zachowano. Faktyczny nowy wynik to dwie walki M199
+i jedna M242. Finał E19 i dalsza kampania nadal niezaliczone.
+
 ### Przygotowanie finału: autentyczne EXP i zapasy; E19 nadal niewygrany
 
 Próba E19 z AT4 zakończyła się przy155346 HP0/mode3. Nie potwierdzono

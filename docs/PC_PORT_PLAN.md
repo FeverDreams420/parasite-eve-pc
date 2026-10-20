@@ -2,6 +2,19 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Przygotowana gałąź: ciągłość scen do M271/M272
+
+Sesja74239 przeszła po M249 kolejne dialogi, retrospekcję M367,
+sekwencje samochodu i M271/M272 zwykłymi padami. Bez zmian kodu,
+save ani pamięci procesu. /tmp/pe-m271-trained-story-v1-proof/proof.json:
+zimny I normal/SAN do133752, M271/story680/dialog25, pełny JSON zgodny
+z live, VRAM normal/SAN identyczny (ówczesnego live VRAM nie zachowano).
+Exit0 bez raportów; cztery Medicine3 w4/8/26/27 i dwa Medicine4 w15/20
+zachowane. Bieżące przejście przy147312 w M272 odzyskało621HP przez
+oryginalny skrypt. Przy151552 M271/story714, trwa następny film;
+te późniejsze wejścia nie są jeszcze objęte powyższą powtórką.
+Finał i zapis tej nowej gałęzi przed finałem nadal niepotwierdzone.
+
 ### Przygotowana gałąź: M246 wygrane, cztery Medicine3 i dwa Medicine4
 
 Po M243 bez aktywnego spotkania sesja74239 przeszła M245→M246,

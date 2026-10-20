@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — M018: dziennik Melissy i Rehearse Key
+
+Po zakończeniu zdarzenia M021 wyjście wymaga obejścia ciała; próba
+przejścia wprost zatrzymuje się na oryginalnej kolizji. Right100,
+Down200 obchodzi przeszkodę i wraca M012, bez zmiany geometrii.
+Kolejne drzwi wymagające Theater Key przyz−3500 wywołują dialog118,
+ustawiają bit262144 i prowadzą do M018/0xa8001448 przy55975.
+Interakcja przy−170,240, po obejściu krawędzi stolika, uruchamia
+oryginalne czytanie dziennika: wszystkie aktywne dialogi99..108 obecne
+w states.jsonl. Zwykłe Cross przechodzi kolejne strony, bez pomijania
+skryptu. Story72→84 przy62589, oryginalne GiveItem201/receipt55;
+po zamknięciu przy63017 item201 Rehearse Key w slot11, Aya42/53HP,
+menu null i move_lock0. Pojemność wynosi12 dzięki wcześniejszemu
+awansowi, więc ten przebieg nie pokrywa odmowy odbioru przy pełnym
+plecaku; ten wariant pozostaje otwarty.
+Seed/checkpoint: /tmp/pe-ex-m018-diary-v1-{seed.json,checkpoint}.
+Niezależny cold normal/SAN exit0; /tmp/pe-ex-m018-diary-v1-verify.py
+potwierdza pełny JSON/VRAM identyczny z live, prywatny A wszystkie8192B
+niezmienione, brak sanitizer/opcode/assertion. Wynik:
+/tmp/pe-ex-m018-diary-v1-proof/proof.json. PsyZ/SDL bez instrumentacji.
+Kod gry/PsyZ i zapisy źródłowe bez zmian. Nie deklaruje się pełnego
+EX/Chrysler ani zgodności obrazu/audio z PS1.
+
 ### EX — M021: szafka i zdarzenie z ciałem
 
 Z M016 zwykła trasa wraca do M012 i uruchamia następną losową walkę

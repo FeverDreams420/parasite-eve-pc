@@ -2,6 +2,98 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### E19: dalsze trafienia, kolejny unik i ograniczenia strategii
+
+/tmp/pe-e19-active-dodge-v2-32-proof/proof.json: od tej samej autentycznej
+M do77037, Aya72HP/PEraw12567073, main1001154/secondary1300.
+Cały JSON/VRAM kontrolera i cold normal/SAN identyczny, exit0,
+bez sanitizer/opcode i zmian kart. W ostatnim fragmencie1200 klatek
+podejście do850 w idle i strzały w oknach2 zadały510HP bez leczenia;
+Aya straciła105 kontaktowo i dwa razy84 od pocisków. To najdalsze
+potwierdzone obrażenia tej gałęzi, nie zwycięstwo ani oracle PS1.
+
+/tmp/pe-e19-active-dodge-v2/verification.json zachowuje wszystkie osiem
+prób (dwie śmierci, sześć końcowych stanów żywych), wyłącznie normal.
+/tmp/pe-e19-active-dodge-v3/verification.json: wszystkie osiem badanych
+kontynuacji od77037 zakończyło się śmiercią; jedna zmniejszyła main
+jeszcze do1001052. V3 leczy przy HP<=120 pojedynczym Heal+strzał.
+Nie ma podstaw do uznania krótkiego checkpointu72HP za skuteczną
+strategię finału. Weryfikatory odróżniają śmierć od wyjątku testera;
+nie było innych wyjątków, nie zmieniano źródłowej M/prywatnych kart.
+
+Dlatego odtworzono wcześniejszy fragment i zbadano osiem kierunków
+od76221 (240HP/main1001562) do76541, bez strzałów lub leczenia.
+/tmp/pe-e19-homing-dodge-v2/results.json: Up114, Right72, Down0,
+Left30, UpRight72, DownRight30, UpLeft30, DownLeft240.
+/tmp/pe-e19-homing-dodge-v2-192-proof/proof.json: wybrany DownLeft8384
+zachowuje240HP/main1001562, pełny JSON/VRAM próby i cold normal/SAN
+zgodny, exit0 bez sanitizer/opcode, M/karty bez zmian. To usuwa oba
+trafienia z tej sekwencji inputu; nie dowodzi uniwersalnego uniku.
+
+/tmp/pe-e19-active-dodge-v4/verification.json: kolejne osiem wariantów
+od76541, podejście do850 w idle, jedno leczenie+strzał przy HP<=120.
+Wszystkie ponownie dopuściły chwyt240→1 przy76769, a leczenie zużyło
+większość PE. Końcowe91HP/około24PE, main1256 (w jednym1460 ponad
+milion), bez zwycięstwa; próby wyłącznie normalne, exit0/karty bez zmian.
+Dalszy tester V5 bada większy odstęp1120..1180 podczas idle,
+minimalny dystans wybranego celu1050 i kroki6 zamiast12 klatek,
+bez zmian gry. Jest to hipoteza sterowania do sprawdzenia, nie potwierdzony
+warunek oryginalnego skryptu chwytu.
+
+V5 zakończony: cztery warianty16/32/96/192, wszystkie77743/91HP,
+około24–25PE; main1358,1154,1358,1358 ponad milion. Wszystkie
+ponownie złapane; większy odstęp sam nie rozwiązał problemu.
+/tmp/pe-e19-active-dodge-v5/results.json i pełne states/input/policy.
+To próby wyłącznie normalne, bez błędu testera, exit0/karty bez zmian.
+
+Ważniejsza obserwacja z pełnego śladu V5: tryb2 nie oznacza wyłącznie
+postoju. Przy76667..76679 main szybko przemieszcza się (-132,68)→
+(-397,189), podczas gdy tester podchodzi (838,968)→(743,873).
+Przy76685 main wchodzi16 w dystansie1264; gracz może jeszcze biec,
+ale do76703 zostaje pochwycony we wszystkich czterech kierunkach.
+To nie stoi w sprzeczności z warunkiem odległości w kodzie: istniejący
+RoomLib_GrabOnApproach sprawdza320 jednostek od macierzy kości11,
+w oknie klatek animacji4..11, a nie od początku aktora. Tryb16 najpierw
+uzbraja zbliżenie przez RoomLib_GrabAwaitStance; sam nie dowodzi jeszcze
+pochwycenia. Błąd polityki testera to traktowanie całego trybu2 jako
+spokojnego okna do podejścia i strzału. Następną próbę oprzeć na zmianie
+pozycji/animacji, z unikiem rozpoczynanym przed końcem ruchu bossa.
+Nie wykazano błędu oryginalnej mechaniki ani nie zmieniono gry.
+
+### E19: aktywne warianty ruchu, strzałów i leczenia
+
+V11 z checkpointu74637/365HP dopuszcza strzał w spokojnym trybie2
+od dystansu500 zamiast850; nadal tylko single-shot M8000/Double Action.
+Dalsza elipsa i leczenie nie wystarczyły: śmierć77769, main1001562,
+/tmp/pe-e19-distance-policy-v11-live. Sesja18411 quit0, M/karty bez zmian.
+V11 sprawdzony tylko normalnie, nie jest dowodem sukcesu.
+
+/tmp/pe-e19-active-dodge-v1/verification.json: osiem wariantów od tego
+samego74637 do75837, każdy ordinary-input replay autentycznego M.
+Warianty strzelają w oknie trybu2 i leczą przy HP<=250, poza tym biegną
+w badanym kierunku. Wszystkie exit0, bez wyjątków kontrolera,
+M/prywatne karty bez zmian; manifest haszuje args/input/stany/VRAM.
+Końcowe HP (mainHP ponad milion w nawiasie): Up275(1868),
+Right257(1868), Down309(1868), Left275(1868), UpRight275(1868),
+DownRight345(1664), UpLeft275(1868), DownLeft1(1868).
+Nie jest to test wyłącznie uniku: warianty mogą zużywać PE/amunicję.
+
+/tmp/pe-e19-active-dodge-v1-96-proof/proof.json: wybrana sekwencja
+DownRight ma przy75837 Aya345, PEraw8831863, main1001664,
+secondary1300. Pełny JSON/VRAM z kontrolera i cold normal/SAN zgodny,
+exit0 bez sanitizer/opcode, źródłowa M i prywatne karty bez zmian.
+Poprawiony kandydat pe-e19-blast-shift-v1; ponownie sprawdzone hashe
+zainstalowanych game/fixture odpowiadają manifestowi tego kandydata.
+
+V12 od tego checkpointu podchodzi w idle, lecz leczenie przy76017
+(240HP, Heal2+strzał) nie zapobiegło następującemu chwytowi:300→1HP
+przy76373. Dwa dalsze strzały zmniejszyły main do1001358; śmierć76681.
+/tmp/pe-e19-distance-policy-v12-live, sesja82332 quit0, M/karty bez zmian,
+próba tylko normalna. To dane do poprawy testera, nie wykazany błąd gry.
+Zakończony /tmp/pe-e19-active-dodge-v2-batch.py badał kierunki od75837,
+podejście w idle do850 jednostek i leczenie wyłącznie awaryjne(HP<=60).
+Nie traktować uruchomionego porównania ani jego planu jako sukcesu E19.
+
 ### E19: źródło pocisków i pierwszy zweryfikowany unik
 
 /tmp/pe-e19-ranged-hit-v1-proof/proof.json: read-only watchpoint wskazuje

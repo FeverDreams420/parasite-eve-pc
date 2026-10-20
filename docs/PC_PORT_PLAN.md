@@ -2,6 +2,50 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Przygotowanie finału: autentyczne EXP i zapasy; E19 nadal niewygrany
+
+Próba E19 z AT4 zakończyła się przy155346 HP0/mode3. Nie potwierdzono
+trafienia rakietą ani zwycięstwa. /tmp/pe-e19-AT4-death-v1-proof/proof.json:
+zimny start z J, bieżący kandydat v3 normal/SAN, pełny JSON/VRAM zgodny
+z wcześniejszym live v5, oba procesy exit0 bez raportów. Sesja66562
+została zamknięta po tej porażce; stan151978 poniżej jest historyczny.
+
+Przygotowanie wznowiono z niezmienionego autentycznego I (SHA256
+2d2bbe4a1b30de66b3c1c18d97a95bc18df57dfbe71d4190af598ccddface513),
+prywatne karty, wyłącznie zwykłe wejścia pada. Dwie dodatkowe wygrane
+w M199: /tmp/pe-m199-training-two-wins-v1-proof/proof.json, zimny start
+normal/SAN do28863, pełny JSON zgodny z live, VRAM normal/SAN identyczny,
+exit0 bez raportów. Aya550/621HP. Odczyty LLDB przez SBValue, bez wywołań
+funkcji ani zapisów do procesu: EXP208238 →210664 →213090, przyrost4852;
+poziom zapisany32 (wyświetlany33), BP317 bez zmian. Dowody odczytów:
+/tmp/pe-training-stats-v2.json, v3.json i v4.json. Wariant v1 odczytywał
+nieistniejący symbol makra i jest nieważny. Kolejny próg EXP224026
+odczytano z rzeczywistej tablicy resident w pe-training-exp-read-v1.json.
+
+Poprawiony kontroler /tmp/pe-m199-training-I-v3 zatrzymał automatyczne
+próby po ośmiu pustych powrotach do tego samego pokoju (39467).
+Nie dowodzi to braku innych dostępnych walk ani osiągnięcia celu40 walk.
+W M371 zwykła zamiana Junk w skrzyni dała Medicine4 w slocie20 przy43544;
+wcześniejsze Medicine4/slot15 i Medicine3/slot27 pozostały. To zapasy
+do następnej próby, nie dowód przejścia finału. Powtórka od I do45256:
+/tmp/pe-m371-supplies-v1-proof/proof.json, pełny JSON/VRAM live/normal/SAN
+identyczny, oba exit0 bez raportów, źródłowe I bez zmian. Dobór broni nadal:
+pojedynczy strzał z Double/Triple Action, bez dokładania multishot.
+
+Przy48205 oryginalny telefon M340 potwierdził zapis nowego J w prywatnym
+bu00. /tmp/pe-m371-trained-save-J-v1-source/BASLUS-006620000000J:
+8192 bajty, SHA256 395154cd557cb0f81a21d83b7f7105fa8115c134dd2b61096de2beb8598beb17.
+To osobny zapis przygotowań, nie wcześniejsze J sprzed finału.
+/tmp/pe-m371-trained-save-J-v1-proof/proof.json: zimny I do48513,
+pełny JSON/VRAM live/normal/SAN i bajty zapisanego J identyczne,
+exit0 bez raportów. Pierwsza próba Continue v1 miała błędny harmonogram
+kierunków (brak zwolnienia Down17920), pozostała w menu i nie jest
+dowodem odczytu; artefakty zachowane osobno.
+Poprawiony /tmp/pe-m371-trained-J-continue-v2-proof/proof.json: nowy
+proces wyłącznie z zapisanym J, normal/SAN do20000, rzeczywiste Continue
+do M340/story632, HP550 i oba Medicine4 oraz Medicine3 zachowane.
+Pełny JSON/VRAM normal/SAN identyczny, exit0 bez raportów, J bez zmian.
+
 ### E20/M430: komplet oryginalnego modułu w natywnym buildzie
 
 Włączono wszystkie trzy istniejące pliki SceneE20_CommandEffectSlot,
@@ -45,7 +89,7 @@ Nie jest to oracle geometrii ani renderowania kontrolera.
 /tmp/pe-m430-integration-replay-v1-proof/proof.json: cold J normal/SAN
 do151978, exit0 bez raportów; pełny JSON/VRAM i bajty kart J/K identyczne
 z wcześniejszym live v5. Nadal M429, Aya76HP, boss2684HP, menu główne.
-Live66562 nadal czeka w tym stanie na starszym kandydacie E19 v5.
+Był to stan starszego kandydata E19 v5 przed późniejszą porażką opisaną wyżej.
 Kampania nie dotarła jeszcze do M430. Renderowanie E20 oraz pozostałe
 fazy kontrolera i pełna sekwencja gry nie są zaliczone tymi testami.
 

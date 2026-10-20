@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — powrót M334→M031 i wejście M032
+
+Z checkpointu102953 normalne sterowanie wraca z bocznego M334 na
+główną trasę. Skrzynie wymagają obejścia także od drugiej strony;
+bezpośrednie podejścia zatrzymują się na obiektach, dalszy ruch po
+cofnięciu i obejściu działa. Przy109047 M031. Tam oryginalna prędkość
+76677 różni się od standardowego ruchu, więc długości przytrzymań
+skorygowano według obserwowanych pozycji, bez zmiany timingu lub kodu.
+Lewe wyjście w rejoniex−1400,z900 prowadzi M032/0xa8003148 przy113501,
+story104,38/64HP,menu null,move_lock0. Offense+2 oraz klucze zachowane.
+Seed/checkpoint: /tmp/pe-ex-m032-entry-v1-{seed.json,checkpoint}.
+Cold normal/SAN exit0; /tmp/pe-ex-m032-entry-v1-verify.py potwierdza
+pełny JSON/VRAM zgodny z live, prywatny A wszystkie8192B bez zmian,
+brak sanitizer/opcode/assertion. Wynik:
+/tmp/pe-ex-m032-entry-v1-proof/proof.json. SDK/SDL bez instrumentacji.
+Pełny zapis wejścia obejmuje również korekty trasy. Nie zmieniano RAM/save/kolizji. Pełny EX/Chrysler nadal otwarte.
+
 ### EX — ukryte Offense+2 przy pełnym ekwipunku
 
 Kontynuacja M334 po przełączniku, zwykłe obejście skrzyń i podejście

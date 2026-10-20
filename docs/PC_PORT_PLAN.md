@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Nowy autentyczny zapis L przed finałem: zapis i Continue potwierdzone
+
+Oryginalna scena M271/story716, dwa potwierdzenia zapisu, prywatny slot11:
+przy168154 File saved, przy168342 powrót do listy. Nowe źródło
+/tmp/pe-m271-trained-save-L-v1-source/BASLUS-006620000000L,8192B,
+SHA256 2f310bee3c4af25927ccf993be1129ea532696ea31135215e97d5fb8f565ebe9.
+/tmp/pe-m271-trained-save-L-v1-proof/proof.json: zimny I do168342,
+pełny JSON/VRAM live/normal/SAN i zapisane bajty L identyczne, exit0
+bez raportów. /tmp/pe-m271-trained-L-continue-v1-proof/proof.json:
+osobny nowy proces wyłącznie z L do20000, M271/story716/dialog59,
+pełny JSON/VRAM normal/SAN identyczny, exit0 bez raportów, L bez zmian.
+Cztery Medicine3 w4/8/26/27, dwa Medicine4 w15/20, M8000slot1,
+B Jacket1slot2 zachowane. Nowa sesja59296/PID98703 jest zimnym Continue
+L: /tmp/pe-final-trained-L-v1. Odczyt SBValue bez zapisów/wywołań
+/tmp/pe-m271-cold-L-stats-v1.json potwierdza621/621HP, EXP221913,
+poziom zapisany32, BP17. Sesja74239 zamknięta quit0 po uruchomieniu nowej.
+
+Uwaga do artefaktu odczytu statystyk M246: ponowne użycie helpera
+nadpisało pe-m246-trained-stats-v1.json przy168748 późniejszym HP621.
+Pierwotny odczyt77245/HP419 zachowany w transkrypcie narzędzia;
+pe-m246-trained-stats-v1-overwrite-note.json wyjaśnia nadpisanie,
+późniejszy odczyt skopiowano do pe-m271-trained-stats-v1.json.
+Dowód zwycięstwa M246/HP419 nadal pochodzi z nienaruszonego proof.json
+i pełnych stanów live/normal/SAN, nie z nadpisanego pliku odczytu.
+Finał E19 i pełna kampania nadal niezaliczone.
+
 ### Przygotowana gałąź: ciągłość scen do M271/M272
 
 Sesja74239 przeszła po M249 kolejne dialogi, retrospekcję M367,

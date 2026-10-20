@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — autentyczny zapis F w M064 i zimne Continue
+
+Z M063 marsz do drzwi około[−2400,−1640] i Cross prowadzi do
+M064/a8006248. Telefon: podejście z wejścia do[~758,−215], twarz na
+zachód, Cross→prompt6→Yes→karta1→pusty F/cursor5→FileSaved40.
+Po zamknięciu menu przy83314/story232:92/101HP,move_lock0,battle9,
+17 miejsc i Junk20 wslot16; osiem nabojów zużytych od E.
+
+/tmp/pe-ex-zoo-save-F-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live, wszystkie8192B nowego F identyczne,
+E bajtowo bez zmian i hash zgodny, brak sanitizer/opcode/assertion.
+Artefakty /tmp/pe-ex-zoo-save-F-v1-{seed.json,checkpoint,proof/proof.json}.
+F skopiowano dopiero po PASS do /tmp/pe-ex-zoo-F-v1-source/
+BASLUS-006620000000F; SHA256 w proof.json powyżej. To osobna linia
+zapisów względem historycznych F/G innych przebiegów opisanych niżej.
+
+Osobne zimne Continue z wyłącznie F: przy12560 M064/story232,92/101HP,
+menu null; cały ekwipunek i wszystkie zmienne skryptów zgodne ze stanem
+przy zapisie. /tmp/pe-ex-zoo-F-loaded-v1-verify.py wykonany PASS:
+normal/SAN exit0, cały JSON i VRAM identyczne między profilami, F bez
+zmian i hash zgodny. Artefakty /tmp/pe-ex-zoo-F-loaded-v1-{seed.json,proof/proof.json}.
+SDK/SDL bez instrumentacji, brak porównania PS1 obrazu/audio tego zapisu.
+Nie zmieniano kodu gry, RAM ani payloadów zapisów. Dalszy live użył
+Medicine1 ze slot4 (101/101HP i wolny slot); ten fragment po83314 nie
+jest jeszcze objęty powyższym replayem. Następne: interakcje M064/Zoo Key.
+
 ### EX — wejście zoo, druga walka i dojście do M063
 
 Dalszy zwykły pad po67428: wschodnia alejka do[1141,−1061] rozpoczyna

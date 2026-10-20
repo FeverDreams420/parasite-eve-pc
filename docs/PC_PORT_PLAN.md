@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: wynik M187, cztery Heal2 i pełne HP na wejściu M188
+
+Od21390 cztery Cross60/release240 zamykają EXP i loot do22590 pola.
+Ekwipunek pozostaje bez zmian przy pełnych25 slotach; nie przyznano
+nowego przedmiotu do inventory. Zwykłe menu PE/Heal2 cztery razy:
+23166 HP159,23506 HP219,23846 HP279,24186 HP335. Dwa Circle zamykają
+menu. Right1000,Up20,Right200 (guard stop na zmianie sceny),wait300
+prowadzą25986 do M188/a8028448/story596,335/335HP,ammo4,move_lock0,
+menu null,zero wrogów. Walka M188 jeszcze nieuruchomiona w tej gałęzi.
+
+Dwa świeże pełne odtworzenia25986 od cold F2 normal/SAN exit0,
+bez diagnostyki sanitizer/opcode. Cały JSON i1MiB VRAM identyczne między
+profilami i zamrożonym live. Verifier sprawdza wszystkie cztery wzrosty
+HP,pełny ekwipunek/4096B rekordów i wszystkie zmienne. Względem wyniku
+M187/21390 ekwipunek bez zmian; tylko zmienne1:184→187,
+20:1381→1049957. Źródłowy i prywatne F2 identyczne bajtowo.
+Dowód /tmp/pe-ex-m188-entry-F2-v1-{seed.json,checkpoint,proof/proof.json},
+runner/verifier obok. Bez zmian produkcji/PsyZ/RAM/save payload,ten sam
+pe-video-clock-v1. SDK/SDL nieinstrumentowane,brak oraclePS1,/tmp
+nietrwałe. Następny krok:rzeczywista walka M188 w EX.
+
+
 ### EX M187: przeciwnik225HP pokonany trzema nabojami
 
 Od17850 dalsze ruchy po torach uruchamiają19686 spotkanie,19902 jeden

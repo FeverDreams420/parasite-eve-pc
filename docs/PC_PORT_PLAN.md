@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — autentyczny zapis I po robakach i zimny Continue
+
+Powrót M086→M087 bez nowej walki i bez utraty HP. Podejście do telefonu
+[208,468],facing2060:Cross→prompt6→Yes→karta1→lista37/cursor7→Down
+na pusty I/cursor8→FileSaved40→zamknięcie paneli. Przy30956 M087/story248,
+HP73/181,capacity21,Defense+1slot20 niezużyte,menu null,battle9,lock0.
+/tmp/pe-ex-postworm-I-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM i wszystkie8192B nowego I identyczne z live. Źródłowy H
+bajtowo i hash bez zmian. I SHA256:
+ccde9bb24c32b768f5eea288d68fa283253bb7908b29428e3b567996610f671d.
+Po PASS kopia /tmp/pe-ex-postworm-I-v1-source/BASLUS-006620000000I.
+Seed/checkpoint/proof: /tmp/pe-ex-postworm-I-v1-*.
+
+Osobny proces tylko z I, zwykły Continue/cursor8: przy12680 M087/story248,
+HP73/181,menu null,enemy0. Cały ekwipunek i wszystkie zmienne skryptów
+zgodne z zapisanym stanem. /tmp/pe-ex-postworm-I-loaded-v1-verify.py
+wykonany PASS: normal/SAN exit0,pełny JSON i VRAM zgodne między profilami,
+I bajtowo i hash bez zmian. SDK/SDL bez instrumentacji; brak porównania
+obrazu/audio z PS1. Produkcyjny kod bez zmian. Autentyczny łańcuch EX
+E→F→G→H→I; dalsza kampania i Chrysler nadal wymagają ukończenia.
+
+
 ### EX — zwycięstwo nad czterema robakami M086 z H
 
 Zimny H i zwykły pad, bez zmiany wyposażenia: cztery robaki typu3,

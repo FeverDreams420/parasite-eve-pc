@@ -2,9 +2,29 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Przygotowana gałąź: M427, film40 i zwycięstwo M428 przez Liberate
+
+Identyfikatory sprawdzono dekoderem nazwy sceny: a80822c8=M425,
+a8082348=M426, a80823c8=M427, a8082448=M428. Dwie wcześniejsze etykiety
+M428 przy a80822c8 poprawiono wyżej/w opisie zapisu M. Sekwencja po
+Wayne'em przeszła M426/dialog40..41, film40, M427/story728/dialog42..59.
+/tmp/pe-m427-trained-story-v1-proof/proof.json: cold L normal/SAN
+do117948, story730, film rozpoczęty; pełny JSON zgodny z live,
+VRAM normal/SAN identyczny (ówczesny live VRAM niezachowany), exit0
+bez raportów. Bez zmian kodu gry.
+
+Film zakończony bez skipu. Przy123948 właściwe M428/a8082448,
+dialog60. Przy124764 aktywna walka, boss1001500, Aya621HP, pełne PE.
+Oryginalne menu Liberate, osiem komend; przy127283 gra przeszła do
+M350/a8065048/story731, mode12/live0, nadal621HP. Przy127891 dialog62
+przed dalszą walką. Nie zużyto nowych przedmiotów ani nie zmieniano
+balansu. /tmp/pe-m428-trained-victory-v1-proof/proof.json: cold L
+normal/SAN do127283, pełny JSON/VRAM identyczny z live, oba exit0 bez
+raportów, L bez zmian. Dalszy finał nadal niezaliczony.
+
 ### Przygotowana gałąź: pokład M275, Wayne M276 i grawerowanie
 
-Sesja50642 przeszła dialogi M428 i film38 do M275/a80472c8.
+Sesja50642 przeszła dialogi M425 i film38 do M275/a80472c8.
 Początkowe czekanie i Cross nie posuwały sceny: lock2 oznacza swobodne
 chodzenie. Z pozycji wejścia zwykłe Up80run+Left120run weszły do M276
 przy96096. Dialogi Wayne'a, magazyn otwarty i zamknięty bez transferu;
@@ -34,7 +54,7 @@ nowy proces wyłącznie z M, normal/SAN do20000, M352/story723,621HP,
 pełny JSON/VRAM zgodny, exit0 bez raportów, M bez zmian. To osobne M,
 nie wcześniejsze K; duże leki pozostały zużyte.
 
-Sesja50642 po wyjściu z menu weszła przy81320 do M428/a80822c8,
+Sesja50642 po wyjściu z menu weszła przy81320 do M425/a80822c8,
 story726,621HP; ten późniejszy punkt jeszcze bez osobnego replayu.
 Nie modyfikowano źródeł gry ani pamięci/savów. Dalsze walki, E19
 i pełne zakończenie kampanii nadal niezaliczone.

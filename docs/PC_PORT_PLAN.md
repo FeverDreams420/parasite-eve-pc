@@ -3,6 +3,41 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — właściwe M099, trzeci M100 i bramka dalszej fabuły
+
+Korekta nazewnictwa ostatnich wpisów: hol z tokenem a80201c8 to M103,
+nie M099. Pokój a80094c8, wcześniej błędnie nazwany M098, to właściwe M099.
+Potwierdza to actor0 M100: event2→a80094c8 oraz event1→a80201c8,
+i oryginalne wejścia zależne od poprzedniego pokoju99/103. Surowe tokeny
+w dowodach pozostają poprawne; nazwy dawnych artefaktów /tmp zachowano.
+
+Po ponownym wejściu M108 odczytano aktywne skrypty read-only LLDB/detach:
+/tmp/pe-ex-m108-story400-K-v1. Warunek dalszej sceny wymaga4096 oraz2048
+w bank44 i story400. Powrót M107→M100→M103, rozmowa20 nie ustawia4096.
+Planer trasy omija geometrię, ale może zatrzymać się na NPC; zachowano
+nieudane próby inputu. Powrót schodami i południowe wyjście M100 prowadzą
+do właściwego M099, aktor2[-494,-321].
+
+Po drodze trzeci M100: typ6/97HP/def20 oraz dwa typ5/48HP/def30.
+Cztery pojedyncze strzały w dwóch Double Action kończą walkę przy177861,
+HP178/181,ammo13→9. Oryginalny panel21 potwierdza awans; maxHP181→189,
+capacity nadal21. Pełny ekwipunek, bez nowych slotów po ObtainAll/End.
+M099 rozmowy44–47 ustawiają bank44:2108→67115068 (4096 i67108864).
+Dodatkowa rozmowa48/panel55 zamknięta; bank46 ustawia8. Przy183289
+M099/a80094c8,story400,HP178/189,enemy0,battle9,menu null,lock0.
+
+/tmp/pe-ex-nypd-gate-K-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live, kopie K bajtowo niezmienione.
+Cały ekwipunek, rekordy i wszystkie zmienne sprawdzone; dodatkowe asercje
+obejmują trzecią walkę, panel awansu i nowe flagi. Artefakty
+/tmp/pe-ex-nypd-gate-K-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji, brak niezależnego oracle obrazu/audio PS1.
+Bez zmian kodu produkcyjnego ani edycji RAM/RNG/save. K ostatni trwały
+zapis; następne powrót do drzwi wybierających M115 przy nowych flagach.
+Pełny port pozostaje nieukończony.
+
+
+
 ### EX — prezent M92F, magazyn i etap400 po zbrojowni
 
 Oryginalne rozmowy M108/24–32 otwierają panel5. M92F/szablon148

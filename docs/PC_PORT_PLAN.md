@@ -3,6 +3,30 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — czterech przeciwników M107 i wejście do zbrojowni M108
+
+Po Cathy powrót do M107, droga na południe uruchamia czterech wrogów:
+dwa typ5/137HP/def27 i dwa typ6/48HP/def30. Pierwszy Double Action
+pokonuje oba typ6; przy153695 magazynek17 po automatycznym przeładowaniu
+(z początkowego1). Dwie następne pary pojedynczych strzałów pokonują
+typ5. Przy155007 EXP20,HP95/181,enemy0,ammo13. ObtainAll przy pełnych
+21 slotach nie zmienia ekwipunku; End zamyka nagrody. Nie zaliczono
+nieodebranych przedmiotów. Oryginalne Items→slot12/Medicine2→Use
+leczy95→181/181 i zwalnia12. Po zamknięciu menu dojście do[-450,-3710]
+prowadzi do M108/a8020448, dialog24, przy157919/story392,lock1.
+
+/tmp/pe-ex-armory-entry-K-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live, kopie K bajtowo niezmienione. Porównano
+cały ekwipunek,4096B rekordów oraz wszystkie zmienne; dodatkowe asercje
+obserwacji live obejmują czterech wrogów, przeładowanie i zużycie Medicine2.
+Artefakty /tmp/pe-ex-armory-entry-K-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji, brak niezależnego oracle obrazu/audio PS1.
+Bez zmian kodu produkcyjnego, RAM/RNG lub payloadów save. K nadal ostatni
+trwały zapis. Następne: rozmowy zbrojowni i dalsza fabuła Day3; pełny port
+pozostaje nieukończony.
+
+
+
 ### EX — Cathy, dialogi54–58 w M111
 
 Z M107 przejście przez[0,-2700],[0,-900],[-550,-900] do

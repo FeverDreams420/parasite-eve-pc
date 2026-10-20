@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — powtórka bez inputu w przedziałach FMV12/13
+
+Osobny seed powtarza cały zimnyK→Museum→NYPD384, usuwając Cross
+70132,83512,83782 (zmiana na0; pozostały input bez zmian). Verifier
+sprawdza efektywną maskę pada na początku i na każdej zmianie w całych
+przedziałach69892–72802 i83272–86452: wszędzie0. Obejmują one aktywne
+filmy12/13 i ich końce obserwowane w poprzedniej sesji.
+/tmp/pe-ex-museum-fmv-zero-K-v1-verify.py wykonany PASS: normal/SAN exit0,
+końcowy pełny JSON i VRAM przy120748 dokładnie identyczny między
+profilami i z wcześniejszym live M099/story384/HP181/181. K bajtowo/hash
+bez zmian. Usunięte Cross nie były konieczne do przejścia tej sekwencji.
+
+Artefakty /tmp/pe-ex-museum-fmv-zero-K-v1-{seed.json,input-edit.json,
+proof/proof.json}. Ten test dowodzi zerowego inputu w podanych przedziałach
+i zgodnego końcowego stanu, nie odrębnie każdej klatki filmu ani audio.
+Nie zapisano tu nowych pośrednich checkpointów filmu; pełna kontrola
+klatek/ciągłości i oracle PS1 nadal wymagane. SDK/SDL bez instrumentacji.
+Kod gry i bieżąca sesja live bez zmian, brak zapisów RAM/RNG/payloadów save.
+Dalsza eksploracja NYPD/story384 pozostaje następnym krokiem.
+
+
 ### EX — NYPD po wizycie u Klampa, story384
 
 Na mapie376 Left wybieraCentralPark, następneLeftNYPD (obrazy wyboru

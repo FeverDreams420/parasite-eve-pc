@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — M014: walka z trzema przeciwnikami i nagrody
+
+Bez zmian źródeł, cold Continue A i pełny input zdobycia klucza/otwarcia
+drzwi odtworzono do28284; następnie zwykła eksploracja uruchamia walkę
+M014. Oryginalni przeciwnicy: type7:0 HP13/def5 i type6:0/1 HP16/def5.
+Trzech pokonano M8000 z Double Action; po oryginalnych ekranach EXP,
+awansu i Obtain All Items/End Aya ma42/49HP, move_lock0, menu null,
+wszyscy przeciwnicy usunięci. Klucz i bit otwarcia pozostają zachowane.
+Checkpoint34183: /tmp/pe-ex-m014-battle-v1-checkpoint; pełny seed:
+/tmp/pe-ex-m014-battle-v1-seed.json. Niezależne cold normal/SAN exit0,
+pełny JSON/VRAM identyczny z live, prywatny A wszystkie8192B niezmienione,
+brak sanitizer/opcode/assertion. Weryfikator i wynik:
+/tmp/pe-ex-m014-battle-v1-{verify.py,proof/proof.json}. PsyZ/SDL bez
+instrumentacji; nie jest to dowód pełnego EX ani zgodności obrazu/audio PS1.
+Jednoklatkowe naciśnięcia w kontrolerze czasem nie trafiały w odczyt pada;
+kilkuklatkowe naciśnięcia działają. Nie zmieniano wejścia ani timingu gry.
+
 ### Przygotowanie do Chrysler 77 — oryginalna krzywa EXP
 
 Sprawdzono wszystkie 99 progów EXP i rekordów statystyk z oryginalnego

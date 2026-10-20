@@ -3,6 +3,36 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — M328, leczenie poza walką i zwycięstwo od O
+
+Poprzednia tura stanowiła postęp: zweryfikowane zwycięstwo M327, commit
+b8869be1f. Sesja64839 ponownie potwierdzona żywa. Od26850 obejście stołów
+przez[300,140],[540,460],[800,980] prowadzi do M328/a8062448 przy27834.
+W zwykłym menu PE dwa Heal2:85→145 przy28422 i145→205 przy28642.
+Trzecia próba nie leczy (niedostateczne PE);28862 nadal205, wyjście28926.
+/tmp/pe-ex-m328-entry-heal-O-v1-verify.py PASS: pełna trasa cold O w obu
+profilach, exit0, cały JSON/VRAM zgodny z live, źródłowe/prywatne O bez zmian.
+
+Up300 i Left184 wywołują przy29410 trzy oryginalne cele: dwa typ7/123HP
+oraz typ6:31/167HP. Dwie akcje na typ7:1, następnie typ7:0; pozostaje
+latający6:31. Kolejne pojedyncze strzały M8000 z Double Action kończą walkę
+przy31122: EXP20,enemy0,HP111/210. Oryginalne menu nagród zakończone przy
+31754,menu null,lock0,story470. Nie przybył nowy przedmiot do slotów;
+nie jest to dowód odebrania dowolnych nagród, które nie zmieściłyby się.
+
+/tmp/pe-ex-m328-win-O-v1-verify.py PASS: normal/SAN exit0, cały JSON i VRAM
+identyczny między profilami i live. Wszystkie50 slotów i4096B rekordów
+porównane do cold O:slot8:209→13 (klucz usunięty, nagroda z M327),
+jedyny zmieniony bajt rekordu426:8→9 (amunicja). Wszystkie zmienne:
+1:998→327,65:536870977→541065289,66:4→516,82:0→20,97:192→208.
+O oraz kopie bajtowo niezmienione; SHA jak w poprzednim dowodzie.
+Artefakty /tmp/pe-ex-m328-win-O-v1-{seed.json,checkpoint,proof/proof.json}
+i analogiczne pe-ex-m328-entry-heal-O-v1. Kod produkcyjny i PsyZ bez zmian,
+wyłącznie zwykły input; SDK/SDL bez instrumentacji, brak oracle PS1.
+Dowody /tmp nie zastępują trwałych CTest. O ostatni trwały zapis; Blue Cardkey,
+Fuse2 oraz dalszy szpital pozostają do przejścia w aktualnej gałęzi EX.
+
+
 ### EX — zwycięstwo nad czterema przeciwnikami M327 po Continue O
 
 Poprzednia tura z poradą użytkownika nie posunęła implementacji; jej kontrola

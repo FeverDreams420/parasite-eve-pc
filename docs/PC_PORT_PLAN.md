@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Przygotowana gałąź: M246 wygrane z zachowanymi lekami
+
+Live37815 po zapisaniu G wrócił M340→M343→M229. Przejście sprawdzonych
+obszarów M229 nie uruchomiło spotkania; nie zaliczamy tej trasy jako
+grindu ani nie wnioskujemy, że wszystkie dodatkowe spotkania są niedostępne.
+Oryginalne menu wyposażyło M8000 w slocie1, dalej M242→M243→M245→M246.
+Film22 zakończony bez skipu. W M246 aktywowano spotkanie280/280/240HP.
+
+Pilot używał wyłącznie JSON readback i zwykłych padów. Po śmierci celu
+kierunek podejścia dobierał z bieżącej listy wrogów (poprzednia wersja
+korzystała z pozostawionego aktora; zachowane nieefektywne wejścia nie są
+błędem modułu gry). M8000 oddawało pojedyncze strzały w Double Action.
+Przy39396 pozostał jeden przeciwnik120HP. Heal3+strzał dały242→522HP
+i120→40HP, ostatni strzał zatwierdzony Square. Przy40270 zwycięstwo,
+488/621HP, live_enemies0, mode2, menu20, ammo9. Medicine4 w15 iMedicine3
+w27 zachowane, inne sloty bez zmian. Rekordy wyposażenia zmieniły tylko
+ammo/reserve M8000; nie modyfikowano statystyk ani efektów.
+
+/tmp/pe-m246-prepared-victory-v1-proof/proof.json: cold SAN od E przez
+odbiór Medicine4 i oryginalny zapis G do40270, exit0 bez raportów,
+pełny JSON/VRAM identyczne z normalnym live. E bez zmian, G w obu
+przebiegach bajtowo identyczne. To nie jest oracle retail PS1.
+Po ALL/END live37815 wrócił do pola przy41082,488HP, oba leki nadal
+w plecaku; odcinek wyników po40270 nie ma jeszcze osobnego replayu.
+Dalsza trasa do Eve i zwycięstwo pozostają otwarte. Źródła gry bez zmian.
+
 ### Przygotowanie z E: Medicine4 i nowy autentyczny zapis G
 
 Z E po T-Rexie zwykłe wejścia przeszły M340→M197. Oryginalna boczna

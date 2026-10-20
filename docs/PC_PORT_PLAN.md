@@ -2,6 +2,46 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Przygotowanie broni: Tool z M199 i bonusy M500→M8000
+
+Gałąź H zakończyła walkę porażką przy56465, gdy część5 miała przed
+ostatnim atakiem1000519HP. /tmp/pe-m273-H-defeat-v3-proof.json:
+cold SAN exit0 bez raportów, pełny JSON/VRAM identyczne z normalnym,
+autentyczne H bez zmian. Terminalne replaye zachowane w
+/tmp/pe-m273-H-defeat-v1-proof/. Weryfikatory v1/v2 błędnie wymagały
+live_enemies0; w trybie porażki3 przy HP0 licznik nadal1. V3 sprawdza
+rzeczywisty stan, nie powtarzając zakończonej gry. Live66498 quit/exit0.
+
+Oryginalny skrypt M199 ma nieotwartą skrzynię Tool22 (global88/0x80000000
+nieustawione w G). Nowy live10181 /tmp/pe-museum-tool-G-v1-live.py
+startuje wyłącznie z autentycznego G. M340→M197→M198 uruchomiło dodatkowe
+spotkanie200/200/280HP. Przez oryginalne menu podczas walki wyposażono
+M8000. Wygrana przy24074,318HP,mode2/live0, bez zużycia Medicine4/3.
+/tmp/pe-m198-tool-route-victory-v1-proof/proof.json: cold SAN exit0,
+pełny JSON/VRAM zgodne, G bez zmian. ALL/END przy pełnym plecaku nie
+jest dowodem odebrania Medicine2/Junk; nie zaliczamy ich do nowych zasobów.
+
+W M199 oryginalne CR+2 ze slot20 użyto na B Jacket1: bonus trzeciego
+parametru1→3, suma28→30. To zwolniło miejsce na Tool. Po odczycie samej
+geometrii kolizji przez LLDB SBValue/ReadMemory (bez wywołań funkcji ani
+zapisów) zwykły pad przeszedł przejściem obok gabloty. Przy27363 Tool22
+w20, oba leki zachowane, global88 wysoki bit ustawiony.
+/tmp/pe-m199-tool-pickup-v1-proof/proof.json: cold SAN exit0, pełny
+JSON/VRAM identyczne i kontrola tylko oczekiwanych zmian inventory/rekordów.
+Pomocniczy odczyt /tmp/pe-m199-tool-floor-v1.json, log -floor-v2-lldb.log;
+pierwszy import z myślnikiem w nazwie odrzucony przez LLDB, przed odczytem.
+
+Oryginalne Tune Up: M500 dawca, M8000 odbiorca, Add Parameter Values.
+Tool20 i dawca26 zużyte; bonusy M8000(17,11,6), suma74/69/18 zamiast57/58/12.
+Efekty M8000 pozostają[0,115,0], w tym Double Action; Burst/Rate2 dawcy
+nie przeniesiono. Potwierdzono rekordy i wolne sloty20/26. Aktualny
+live10181 przy28033 w M199,318HP, Medicine4/3 zachowane. Powtórka
+/tmp/pe-m199-M8000-upgrade-v1-proof/proof.json: cold SAN do28033 exit0
+bez raportów, pełny JSON/VRAM identyczne, sprawdzone bonusy odbiorcy,
+wyzerowane bonusy dawcy i zachowane efekty M8000, G bez zmian. To dowód operacji;
+nie oznacza jeszcze wygranej nad Eve ani zgodności obrazu z retail PS1.
+Źródła gry i bazowe karty nie były zmieniane; nadal kandydat v4.
+
 ### M273 z H: wyłączone części6/7, oryginalne Medicine4
 
 Dalszy zwykły pilot z JSON readback i wejściami kontrolera osłabił

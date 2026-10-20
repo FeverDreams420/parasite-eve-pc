@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — sceny po Eve, koniec Day2, Save J i zimny Continue Day3
+
+Kontynuacja zwykłym padem od zwycięstwa45132: dialogi64–70,film10
+(obserwacja47116/frame44/video2,49516/frame275/video0), sceny rozmów
+etap284→288,film11 (61628/frame44/video2,65020/frame507/video0),
+dalsze sceny etap296→308→310 i nocleg M091. W film11 tester naciskał
+Cross między61628–62380; nie uznaje się tej próby za dowód nieprzerwanego
+filmu. Końcowy stan nie dowodzi kompletności każdej klatki ani audio.
+Rozmowy noclegu do83; krótkie8-VBlank Cross czasem nie przesuwały tekstu82,
+30-VBlank potwierdzenie pozwoliło kontynuować, bez zmian gry.
+
+Przy104396 M351/a80650c8/story312,HP odnowione przez oryginalny
+odpoczynek61→181/181. Cross→bonus21→dialog182→Yes→karta1→lista37/
+cursor8→Down do pustegoJ9→FileSaved40 przy106710. Zamknięcie menu
+prowadzi przy106974 do M092/a8009148/story320,HP181/181,enemy0,
+menu null,move_lock3 (rozmowa startowa jeszcze przed nami).
+Wszystkie21 slotów zachowane; Defense+1slot20 niezużyte,ammo9.
+
+/tmp/pe-ex-day3-J-v1-verify.py wykonany PASS: cały zimnyH→robaki→SaveI→
+Eve→sceny→Day3/SaveJ→M092, normal/SAN exit0,pełny JSON/VRAM i wszystkie
+8192B J identyczne z live; H bajtowo/hash bez zmian. J SHA256
+ e02c573cd8da50b26218665ff702c639e11950bab0d42dcc466087e281ee9a31.
+Po PASS źródło /tmp/pe-ex-day3-J-v1-source/BASLUS-006620000000J.
+Artefakty /tmp/pe-ex-day3-J-v1-{seed.json,checkpoint,proof/proof.json}.
+
+Osobny zimny Continue tylko J przy12720 wraca do M351/story312,
+HP181/181,menu null,enemy0. Cały ekwipunek i wszystkie zmienne skryptów
+zgodne ze stanem FileSaved106710 (nie z późniejszym M092/story320).
+/tmp/pe-ex-day3-J-loaded-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM zgodny między profilami, J bajtowo/hash bez zmian.
+SDK/SDL bez instrumentacji, bez nowego oracle PS1. Brak zmian kodu gry,
+RAM/RNG i payloadów zapisów. Bieżący łańcuch EX E→F→G→H→I→J;
+Day3 i dalsza kampania oraz Chrysler pozostają nieukończone.
+
+
 ### EX — Eve/M089 pokonana M8000, bez Revive
 
 Kontynuacja od39628: pierwsze Heal2 wybrane, ale druga akcja nie miała

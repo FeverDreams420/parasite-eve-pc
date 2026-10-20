@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — skuteczny powrót z Chryslera, autentyczny Save C i zimne Continue
+
+Od udanej walki91565 w nowej gałęzi użyto obserwowanego marszu po8
+VBlanków. M309→M305, środek korytarza i południowe wyjście→M297,
+zejście→M290, hol→mapa NYC→NYPD/M046→M043→M042. Bez kolejnej walki
+ani utraty HP. Wcześniejsza próba błędnie szukała wyjścia innymi odnogami.
+Render_StepFontLoad przy codeIndex<3 zwraca255 i ustawia1; dispatcher
+przenosi wtedy do M290. Raw codeIndex2/odczyt opcode178 nie stanowi
+sam w sobie dowodu etykiety numeru piętra widocznej na PS1.
+
+Telefon M042: polygon x486..675,z−813..−729,yaw1536..2560. Po obejściu
+mebli Aya590,z−782,yaw2048, Cross otwiera stronę6. Oryginalna animacja,
+karta1, puste C (cursor2), zapis oraz zamknięcie menu. Przy106245
+M042/story164,72/92HP,menu null,move_lock2. B8192B zachowany,
+nowe C8192B. Cały ekwipunek identyczny ze stanem po wygranej M309.
+/tmp/pe-ex-chrysler-save-C-v1-verify.py wykonany PASS: zimne normal/SAN
+exit0, pełny JSON/VRAM i wszystkie bajty obu plików B/C zgodne z live,
+źródłowy B bez zmian, brak sanitizer/opcode/assertion.
+Artefakty: /tmp/pe-ex-chrysler-save-C-v1-{seed.json,checkpoint,proof/proof.json}.
+Nowy źródłowy save gry: /tmp/pe-ex-chrysler-C-v1-source/BASLUS-006620000000C,
+hash w proof.json. Nie edytowano payloadu. Stary kontroler zamknięty quit0.
+
+Osobny zimny Continue zawiera wyłącznie C. Przy12472 M042/story164,
+72/92HP,menu null,move_lock2; cały ekwipunek i wszystkie zmienne skryptów
+zgodne ze stanem przy zapisie. Otwarty status przy12510 pokazuje poziom7,
+BP87. Zachowane rekordy: B Jacket1 bonus obrony42, M8000 pojemność4
+slotów/amunicja10, plecak16 i Medicine1 z nagrody. Cyfry level/BP sprawdzone
+wizualnie, nie OCR. /tmp/pe-ex-chrysler-C-loaded-v1-verify.py wykonany PASS:
+normal/SAN exit0, cały JSON/VRAM zgodny z live, jedyny C bajtowo bez zmian
+i zgodny z hashem dowodu zapisu, brak sanitizer/opcode/assertion.
+Artefakty: /tmp/pe-ex-chrysler-C-loaded-v1-{seed.json,checkpoint,proof/proof.json}.
+Żywy kontroler /tmp/pe-ex-chrysler-C-continue-v1.py czeka przy12510/status.
+SDK/SDL bez instrumentacji. Kod gry/PsyZ bez zmian. Trwałość tej operacji
+BP i nagród potwierdzona; odprawa Bakera, dalszy Day2/EX i Chrysler otwarte.
+
 ### EX — próba powrotu, odczyt mapy i zatrzymywanie marszu przy zmianie stanu
 
 Od udanej walki91565 odtworzono nową gałąź od B, bez restore RAM.

@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Kampania E19: druga salwa oraz krótszy start od autentycznego M
+
+Zachowana sesja56313 była żywa przy144899,34HP. Zwykłe menu DoubleAction
+z dwiema Heal2 podniosło HP do154 przy145651. Salwa zużyła dwa naboje
+(z przeładowaniem) i zdjęła dalsze204HP: main1003296→1003092 przy146098,
+Aya28HP. Dwie Heal2 dały148HP przy146790. Up+Rightrun120 i Rightrun62
+bez trafienia; późniejsze Up+Leftrun120 dostało84 obrażeń, zostawiając64HP.
+Nie jest to skuteczny pełny unik ani powód do zmiany parametrów bossa.
+
+/tmp/pe-e19-second-salvo-v1-proof/proof.json: cold autentyczny L do147188
+na aktualnym kandydacie pe-e08-orbit-v1, normal/SAN exit0, całe JSON
+oraz VRAM zgodne także ze starszą sesją live,64HP/main1003092.
+L i obie prywatne karty niezmienione; bez sanitizer/opcode. Łącznie boss
+stracił408HP, drugi przeciwnik nadal1300HP; walka niewygrana.
+Dalszy normal-only Heal2+strzał z reticle3426 przy zasięgu1245 kończy
+śmiercią147614/HP0/mode3, boss bez dalszych obrażeń. Zachowano stan,
+VRAM i cały input w /tmp/pe-e19-second-salvo-v1-death. Sesja56313
+zamknięta quit/exit0, nie ma już oczekującego procesu tej próby.
+
+Zamiast ponownie odtwarzać wcześniejsze walki uruchomiono autentyczny
+M po Eve, SHA64fdec4d8f90d5692f1d91c2dce49273fdbf66d78eb74911c575fc2d6816de58.
+Continue M→plansza Day6 (Cross)→M425/dialogi i film38→M275→Up80run,
+Left120run i oryginalna sekwencja wejścia do M276. Lock2 na M275 oznacza
+swobodne chodzenie, więc samo czekanie nie postępuje. Przy27216 M276,
+story726,621HP. /tmp/pe-m276-from-M-v1-proof/proof.json: pełne JSON/VRAM
+live/normal/SAN identyczne, exit0, M i prywatne karty niezmienione,
+bez sanitizer/opcode. Nie obejmuje dalszych rozmów, BP ani walk finału.
+Początkowy runner from-M-v1 dostał EOF na stdin po20000; oba jego
+procesy zakończone. Zastąpiono go osobnym from-M-v2 z PTY, bez
+nadpisywania artefaktów. Sesja97025 pozostaje na wejściu do kabiny,
+plik /tmp/pe-e19-from-M-v2-live.py; przed użyciem sprawdzić uchwyt.
+Kod gry i balans bez zmian; pełna kampania nadal otwarta. Kolejny krok:
+przygotowanie sprzętu/BP zwykłym menu oraz bezpieczniejsze przejście finału.
+
 ### E08: brakujące gałęzie CentreGlow/OrbitParticles i poprawka wyrównania
 
 Permanentny original-m418-chrysler-slots (--m418-slots-draw) używa

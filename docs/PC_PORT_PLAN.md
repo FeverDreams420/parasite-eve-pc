@@ -3,6 +3,38 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — Fuse3, naprawa przewodów i oświetlone M142/story488
+
+Poprzednia tura była postępem: M332/Fuse3, commitffaa35c19. Sesja64839
+ponownie żywa. Powrót M332→M329→M144 bez kolejnej walki/utraty HP.
+Interakcja i potwierdzenie dialog8 instalują208 ze19 przy54990.
+Lewy przełącznik: dialog9, potwierdzenie,55620 flag65=541130699/0x2040ffcb;
+zielona kontrolka obejrzana. To jeszcze nie pełne zasilanie.
+/tmp/pe-ex-power-O-v1-verify.py PASS: normal/SAN exit0, pełny JSON/VRAM
+zgodny z live. Artefakty /tmp/pe-ex-power-O-v1-{seed.json,checkpoint,proof/proof.json}.
+
+Kolejna interakcja: Toggle power off, ponowne podejście i druga opcja
+Repair wires. Przy56544 flag65=0x20417fcb:bit65536=1,32768=0.
+Po korekcie położenia i ponownym Toggle power on przy57564 automatycznie
+M142/a8024148,story476→488,HP179/210,menu null,lock0. Obraz rzeczywiście
+pokazuje oświetlony korytarz. Nie testowano jeszcze przejazdu windy w tej gałęzi.
+
+/tmp/pe-ex-power-repaired-O-v1-verify.py PASS: pełna trasa cold O w obu
+profilach exit0, cały JSON i VRAM identyczny między profilami i live.
+Początkowy weryfikator omyłkowo zmienił historyczną asercję38607 na488;
+poprawiono ją z powrotem na476 i sprawdzono zakończone wyniki bez zmiany gry.
+Wszystkie50 slotów/4096B rekordów porównane:8:209→13,18:20→16,
+19:20→0 (Junk/Fuse2/Fuse3),22:206→0; rekordy tylko byte426:8→4.
+Wszystkie zmienne względem cold O:1:998→144,65:536870977→541196235,
+66:4→548,67:5→141,74:470→488,82:0→84,97:192→208.
+Źródłowe/prywatne8192B O niezmienione. Artefakty
+/tmp/pe-ex-power-repaired-O-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ i nowych plików repo, tylko zwykły input;
+SDK/SDL nieinstrumentowane, brak oracle PS1, dowody/tmp nie są trwałym CTest.
+O ostatni trwały zapis; potrzebny nowy zapis i dalsza winda/szpital.
+Pełny port pozostaje nieukończony.
+
+
 ### EX — M332 zwycięstwo i Fuse3 od zimnego O
 
 Poprzednia tura: postęp, instalacja Fuse1/Fuse2 potwierdzona, b7fb4e6ff.

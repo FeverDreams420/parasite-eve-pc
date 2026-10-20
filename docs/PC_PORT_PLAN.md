@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — Mod Permit, slot M8000 i zakończenie tutorialu zbrojowni
+
+Kontynuacja poprawionej gałęzi z42560. Oryginalny receipt wyposażenia
+potwierdza M16A1 (item121,record6/token262). Po dialog47 normalna lista
+przedmiotów: wybrano Mod Permit55, lewa kolumna/wiersz7, zamiast innego
+przedmiotu. Dialog49 i menu13 otwierają „Add slot?”. Anulowano wybór
+początkowego M16A1; następnie wybrano M8000,wiersz3 i zatwierdzono.
+Mod Permit znika z plecaka, rekord13 M8000 ma dokładnie jedną zmianę
+względem42560:byte20,3→4 (pojemność slotów). Wszystkie pozostałe31B
+tego rekordu identyczne. Offense+2 item30 pozostaje wslot4; nie użyto go.
+
+Oryginalne dalsze dialogi i przejście demonstracyjne wracają do M052.
+Menu usług56 ma pięć opcji: Store equipment,Store item,Discard junk,
+Give BP,Leave. Wybór Discard junk bez junk uruchamia58 i wraca56;
+nie jest to zawieszenie lub niewrażliwość na kierunki. Wybranie piątej
+opcji Leave kończy sekwencję i story144→152 przy51082. Przy51442 M052,
+72/72HP,menu null,move_lock2. Nie deklaruje się wszystkich usług zbrojowni,
+transakcji magazynu lub wszystkich wariantów tutorialu.
+Seed/checkpoint: /tmp/pe-ex-armory-tutorial-v1-{seed.json,checkpoint}.
+/tmp/pe-ex-armory-tutorial-v1-verify.py: normal/SAN exit0, pełny JSON/VRAM
+zgodny z live, dokładna zmiana rekordu13 potwierdzona, Mod Permit zużyty,
+Offense+2 zachowany, prywatny B8192B bez zmian, brak sanitizer/opcode/
+assertion. Dowód: /tmp/pe-ex-armory-tutorial-v1-proof/proof.json.
+SDK/SDL bez instrumentacji. Kod gry/PsyZ i źródłowy B bez zmian;
+pełny EX/Chrysler oraz porównanie obrazu/audio PS1 pozostają otwarte.
+
 ### EX — właściwa zbrojownia M052, pełny plecak i odbiór sprzętu
 
 W M052 dialog25 identyfikuje Wayne’a; dalsza oryginalna sekwencja25..39

@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Ulepszone M8000: checkpoint J przed finałem
+
+Live10181 odebrał wyniki M246 i przeszedł M248/M249, sceny Eve,
+retrospekcję M367, samochód i M271/M272. Zwykłe pady, bez skipów filmów.
+W M272 oryginalny skrypt przywrócił HP192→621 (ostatni odczyt aktora
+przy122519). Oryginalne menu zapisało nowy J w pustym slocie9/No10;
+G oraz I zachowane. Aktualny live133923, M271/story716, menuNone,
+lock1 podczas sceny; M8000slot1 z bonusami17/11/6 i Double Action,
+Medicine4slot15, Medicine3slot27, CureMslot13 i Cure-Pslot20 zachowane.
+
+Źródło /tmp/pe-m271-upgraded-save-J-v1-source/BASLUS-006620000000J,
+8192B, SHA256 44956cd28e34eafbef88e644ac1c6a2871ddcea9389e1983b06606ad33810608.
+/tmp/pe-m271-upgraded-save-J-v1-proof/proof.json: cold SAN od G do133923,
+exit0 bez raportów, pełny JSON/VRAM identyczne, G niezmienione, pliki I/J
+bajtowo zgodne z normalnym. /tmp/pe-m271-continue-J-v1-proof.json:
+zimne Continue z samego J, normal/SAN exit0, pełny JSON/VRAM identyczne,
+ekwipunek/story716/dialogue59 zachowane, źródło i prywatne karty bez zmian.
+Nadal kandydat v4, bez zmian źródeł. To dowód checkpointu i powtarzalności
+natywnej, nie zwycięstwa finałowego ani zgodności z retail PS1.
+
 ### Ulepszone M8000: dalsza trasa i dwie wygrane
 
 Live10181 po zapisaniu I wrócił przez M343/M229/M242. W M243

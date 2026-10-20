@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M273 z przygotowanego L wygrane; kolejna walka M432 rozpoczęta
+
+Nowy zimny L powtórzył wcześniejszy zwycięski harmonogram J, z osobnym
+wyborem slotu L w Continue. Do52443 wyłączył części5/6:999960/999966,
+ostatnia7 miała1000740, Aya244HP. /tmp/pe-m273-trained-retry-v2-proof/
+proof.json: normal/SAN pełny JSON/VRAM zgodny, exit0 bez raportów.
+To jeszcze nie było zwycięstwo. Sesja50642/PID99089 wznowiona przez
+zimne odtworzenie tego samego przebiegu, /tmp/pe-m273-trained-retry-v2-live.
+Medicine4/slot20 i strzał podniosły HP244→565, część7 740→651 ponad
+próg miliona. Dalsze pojedyncze strzały:473→295; Heal3 dało313→593HP.
+Zwykłe Right40run+Up40run zbliżyły Ayę, ponowne celowanie pokazało
+rzeczywisty zasięg335 (lista celów mode0 jest pozostałością ostatniego
+celowania i nie powinna sterować podejściem bez odświeżenia). Strzały
+295→117, następnie wszystkie części wyłączone.
+
+Przy55519 M273 mode12/live0/story720, Aya470HP. Cztery Medicine3
+w4/8/26/27 zachowane, oba Medicine4 i CureM zużyte przez menu gry.
+/tmp/pe-m273-trained-victory-v3-proof/proof.json: cold L normal/SAN,
+pełny JSON/VRAM identyczny z live, exit0 bez raportów, L niezmienione.
+Dalszy dialog wszedł do M432/a8083148/story721; przy57975 aktywna walka,
+boss2200 ponad próg miliona, Aya401HP. Ten późniejszy punkt nie jest
+jeszcze objęty powyższym proof. Kod gry i balans bez zmian. E19 i pełna
+kampania pozostają niezaliczone.
+
 ### Próba M273 z przygotowanego L: porażka, bez zaliczenia finału
 
 Sesja59296 przeszła z L do M273. Po dialogach pierwsze strzały,

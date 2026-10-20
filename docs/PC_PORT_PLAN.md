@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — zimny G przez alejki M076/M077, most i wejście do M078
+
+Z oryginalnego Continue G wyjście M075→M074, zachodnia odnoga przez
+[−7680,−4180]/[−8500,−3100] wczytuje M076/a8007348. Sprawdzono też
+powrót M076→M074 i ponowne wejście. Tylko odczyt podłoża:
+/tmp/pe-ex-m076-floor-v1.json (185 trójkątów), pe-ex-m077-floor-v1.json
+(162). Planer pomija kind128; kontroler wysyła pad co8 VBlanków.
+Trasa M076 do M077 ukończona po502 krokach bez ręcznej korekty;
+M077 do skrzyni po762 krokach, bez utraty HP/walk.
+
+Skrzynia M077 przy[~−113,373] daje Ammo+15 (ekran55), flaga85/1.
+Zachodnie wyjście do M080/a8008048 działa po odsunięciu od kolizji
+skrzyni; sam planer nie uwzględniał tej przeszkody aktora. M080: Sv. Vest1
+z oryginalnej skrzyni trafia do wolnego slot10/ref263/rekord7. Panel
+pokazuje Defense19,PEnergy16,Critical19 i kieszeń+1. B Jacket1 pozostaje
+wyposażony. W całym buforze aktywacja rekordu zmienia tylko byte224:0→19.
+
+Walka na moście:5:31/104HP/def25,6:0/48HP/def25 i pomocniczy4:0/13HP,
+który nie jest na liście celów. Najpierw6 i jedno trafienie5 (104→37),
+następna tura przeładowuje i pokonuje5. Trzy strzały, ammo2→17 po
+przeładowaniu; HP115 bez zmian. Awans zwiększa maxHP123 i capacity20;
+Junk20 do slot19. Rewards→End i zachodnie wyjście wczytują M078/a8007448.
+Przy37606/story248:115/123HP,menu null,move_lock0,battle9,enemy0.
+Cały4096B bufor wobec G różni się tylko byte224:0→19 i ammo426:2→17;
+pozostałe statystyki i wyposażone indeksy bez zmian. Var85=17,var136=0.
+
+/tmp/pe-ex-m078-arrival-G-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM zgodny z live, jedyny G bajtowo i hash bez zmian,
+brak sanitizer/opcode/assertion. Artefakty:
+/tmp/pe-ex-m078-arrival-G-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Bez zmian kodu gry, RAM, RNG i save’ów.
+Nie jest to ukończony park/Day2/EX ani porównanie obrazu/audio PS1.
+Kontroler /tmp/pe-ex-posteve-G-nav-v1-live pozostaje w M078 przy37606.
+
 ### EX — M074/M075, niedźwiedź i trwały zapis G po etapie248
 
 Dalszy pad przechodzi schody M072 przez[678,93]→[~640,−200]→[~1100,−500],

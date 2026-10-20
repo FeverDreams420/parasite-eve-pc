@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — Maeda105, Daniel98/99 i wejście do apteki M097
+
+Z M093/story328 zwykły pad podchodzi do Maedy: dialog105; ponowne
+zagadnięcie daje ponownie105, nie106. Obejście południowego przodu auta
+prowadzi do Daniela, dialog98→99 zamknięty. HP181/181 bez zmian.
+Południowo-wschodnie wyjście przy122381 wczytuje M096/a8009348.
+Kamera M096: Up w przybliżeniu-X,Down+X,Right+Z; pierwsze błędne kroki
+zachowane. Obejście NPC i podejście[~1090,~300] uruchamia122, a przy127021
+M097/a80093c8/story328,HP181/181,enemy0,menu null,move_lock2,
+pozycja wejściowa[975,-2427]. Ekwipunek/slota i cały4096B bufor rekordów
+identyczne z poprzednim checkpointem, niczego w aptece jeszcze nie odebrano.
+
+/tmp/pe-ex-pharmacy-entry-H-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON i VRAM identyczne z live; H bajtowo/hash bez zmian. Log live
+zawiera105/98/99/122 i HP181 we wszystkich obserwacjach tego odcinka.
+Artefakty /tmp/pe-ex-pharmacy-entry-H-v1-{seed.json,checkpoint,proof/proof.json},
+obraz /tmp/pe-ex-pharmacy-entry-H-v1.png obejrzany. SDK/SDL bez
+instrumentacji; brak nowego porównania PS1 obrazu/audio. Kod produkcji,
+RAM/RNG i payloady save bez zmian. Następne: zawartość apteki i dalszy Day3.
+
+
 ### EX — M092 skrzynia i rozmowa otwierająca Soho/story328
 
 Po Save J/M092 rozmowa35 zamknięta zwykłym Cross. move_lock2 pozostaje,

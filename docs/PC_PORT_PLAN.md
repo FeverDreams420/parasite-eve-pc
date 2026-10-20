@@ -2,6 +2,71 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Kontynuacja EX za kulisami — przebieg w toku
+
+Kandydat pe-video-clock-v1, bez zmian źródeł. Zewnętrzny kontroler
+/tmp/pe-ex-backstage-v1-live odtwarza cały cold Clear Data i zwykły input
+do potwierdzonego66106, bez snapshotów RAM. Trasa oparta na wcześniejszym
+normalnym replayu nie była wyrównana z pozycją Ayi i zatrzymywała się na
+ścianie sceny; żadnej kolizji nie zmieniono. Odczyty tylko do obserwacji
+/tmp/pe-ex-m005-{camera,script}-v1 zachowują oryginalne polygony wyjść.
+Prawidłowe wyjście za kulisy: M005 aktor3, polygon x2123..2684,z169..873,
+prowadzi do M009/0xa80004c8. Zwykłe Left1000 z x−25,z432 osiąga M009
+przy70666, a stabilny checkpoint70906 zachowuje45HP.
+
+W M009 /tmp/pe-ex-m009-{camera,script}-v1 pokazuje oryginalny event
+przy uszkodzonej podłodze. Right700 dochodzi do dialogu77; Cross przechodzi
+przez78 i wybór79 „Jump down/Forget it”. Zwykłe potwierdzenie pierwszej
+opcji ustawia story48 i wykonuje oryginalną animację skoku. Przy72710
+działa M011/0xa80010c8, dialog80, Aya45HP, bez zmiany danych lub kodu.
+Po dialogach80/81 znika dziewczynka, story56, sterowanie odblokowane.
+Zwykłe Up900 prowadzi do M012/0xa8001148/story57 przy77226.
+/tmp/pe-ex-backstage-entry-v1-proof/proof.json: niezależne cold
+normal/SAN/live pełnego JSON/VRAM identyczne, oba exit0, bez
+sanitizer/opcode/assertion, Clear Data i prywatne karty bez zmian.
+
+Dalszy normal-only przebieg uruchamia film4 przemiany szczura bez
+przewijania (końcowy frame561), przechodzi do walki M013/story64.
+Przy82026 szczur ma17HP/def5, Aya45HP, M8000 ammo2. Zwykła kolejka
+ataku z Double Action kończy walkę jednym nabojem (ammo1); przy82290
+oryginalny ekran nagród20, potem powrót M012/dialog83. Zamknięcie83
+ustawia story72 i odblokowuje eksplorację. Nie uznano przejściowego
+braku aktora podczas filmu za śmierć gracza.
+
+Up1400/Left250/Up140 z korytarza i Cross otwiera oryginalne drzwi
+M020/0xa8002048 przy87028,45HP. Pierwsza próba podejścia do biurka
+zatrzymała testera na kolizji mebli; właściwa trasa obchodzi je od dołu.
+Oryginalny polygon telefonu actor5: x−150..22,z108..265, yaw1536..2560.
+Cross z x−6,z116 uruchamia dialog114, następnie zwykły wybór „Will you
+save your progress? Yes”. Po animacji telefonu wybrano kartę1 i12 razy
+Up z zapamiętanego slotu13/M do pustego slotu1/A. Oryginalne Save
+przy89250 pokazuje „File saved”, EX Round2/Level1/45HP/Day1. Utworzony
+BASLUS-006620000000A ma8192 bajty, SHA256
+9cb7e4b48873babeb92dfaf7599262249bb300e14f48bc93d0196a7c47d05e9f.
+Clear Data M zachowuje wcześniejsze412d9806…; źródło i karta użytkownika
+nie były kartą roboczą. Proces live quit0. Zamrożony nowy zapis:
+/tmp/pe-ex-phone-A-v1-source, seed:/tmp/pe-ex-phone-save-v1-seed.json,
+checkpoint:/tmp/pe-ex-phone-save-v1-checkpoint. Niezależne cold normal/SAN
+całego przebiegu do89250 mają identyczne pełne JSON/VRAM i8192 bajty
+nowego A jak live, oba exit0, bez sanitizer/opcode/assertion, M bez zmian:
+/tmp/pe-ex-phone-save-v1-proof/proof.json. Obejmuje to film4, walkę,
+dialog po walce, wejście M020 i rzeczywisty zapis.
+
+Osobny zimny proces /tmp/pe-ex-phone-continue-v1-live ma na karcie wyłącznie
+kopię nowego A, bez Clear Data M. Zwykły Continue, karta1, slot1 i „File
+loaded” prowadzą przy12360 do M020/story72/45HP/move_lock0. Cały inventory
+(slots,4096 bajtów rekordów, oba wyposażone sloty) i wszystkie zmienne
+skryptowe są identyczne z checkpointem zapisu. Powrót jest przy oryginalnej
+pozycji telefonu14,149, a nie z przywrócenia RAM. Live quit0 i A bez zmian.
+/tmp/pe-ex-phone-continue-v1-seed.json zachowuje input; niezależne cold
+normal/SAN tej końcówki potwierdziły pełne JSON/VRAM identyczne z live,
+exit0, brak sanitizer/opcode/assertion, nowy A bez zmian:
+/tmp/pe-ex-phone-continue-v1-proof/proof.json. Wszystkie trzy checkpointy
+tego odcinka (wejście korytarza, zapis, zimny Continue) sprawdza
+/tmp/pe-ex-phone-verify-v1.py, wszystkie PASS. Kod gry i PsyZ bez zmian;
+zainstalowane binaria nadal mają hashe pe-video-clock-v1. Pełne EX,
+Chrysler i pozostały zakres portu pozostają nieukończone.
+
 ### Zimny odczyt Clear Data i rzeczywisty start EX Round 2
 
 Bez zmian kodu lub danych zapisów zainstalowany pe-video-clock-v1

@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — schody komisariatu i wejście do zbrojowni M055
+
+Z M043 zwykły ruch korytarzem i lewym wyjściem przyz~−2100 prowadzi
+na dolny poziom M051/0xa80050c8 przy23441. Dalsza trasa środkiem
+korytarza do drzwi przyx−490,z~−1030, normalna animacja drzwi i wejście
+M055/0xa80052c8 przy24934. Obraz pokazuje zbrojownię z Torresem i Wayne’em.
+Story144,72/72HP,menu null,move_lock2,ekwipunek zachowany. Rozmowy,
+wydanie sprzętu i usługi zbrojowni pozostają do sprawdzenia; samo wejście
+nie dowodzi ich działania. Read-only skrypty M043/M051 zachowane w
+/tmp/pe-ex-m{043,051}-script-v1. Nie zmieniano schodów, kolizji lub inputu.
+Seed/checkpoint: /tmp/pe-ex-armory-entry-v1-{seed.json,checkpoint}.
+Cold normal/SAN exit0; /tmp/pe-ex-armory-entry-v1-verify.py potwierdza
+pełny JSON/VRAM zgodny z live, wszystkie8192B prywatnego B bez zmian,
+brak sanitizer/opcode/assertion. Dowód:
+/tmp/pe-ex-armory-entry-v1-proof/proof.json. SDK/SDL bez instrumentacji.
+Pełny drugi dzień/EX/Chrysler i zgodność
+obrazu/audio PS1 pozostają niepotwierdzone.
+
 ### EX — komisariat: drzwi M041→M042→M043
 
 Po odprawie zwykły ruch w gabinecie i przejście przez polygon wyjścia

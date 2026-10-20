@@ -3,6 +3,34 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — M154 zwycięstwo przy258HP
+
+Poprzednia tura była postępem:M153,commit10340aa50. Sesja87367 ponownie
+żywa. Heal2 w eksploracji leczy221→281 przy30378. Od aktualnej pozycji
+zachodnia trasa Left75(run),Up148(run),Right120(run),Up140(run) prowadzi
+31161 do M154/a8025248. Podejście Right70(run),Up114(run) uruchamia
+31845 trzy cele:7:31/237HP,8:0/62HP i9:1/167HP. Dwie akcje eliminują9:1.
+Korpus tworzy8:1/62HP; przy32293 pozostałe trzy cele,Aya274HP.
+Dwie akcje w korpus zostawiają57 przy32653,Aya258. Następna kolejka
+wybiera korpus, potem8:0 z przejściem przez listę celów. Przy33049
+EXP20,enemy0,HP258/283. W samej walce nie użytoPE ani przedmiotów.
+Nagrody zamknięte33929:story496,menu null,lock0. Nie przybył nowy
+przedmiot do slotów. Telefon i dalsza eksploracja jeszcze niezrealizowane.
+
+/tmp/pe-ex-m154-win-B2-v1-verify.py PASS: pełna trasa cold B2 w obu
+profilach exit0, cały JSON/VRAM identyczny między profilami i live.
+Pełne50 slotów/4096B rekordów względem B2:19:0→16,22:0→6;
+rekordy tylko426:4→2. Wszystkie zmienne:1:998→153,19:0→5,
+65:667025391→801243119,66:572→1020,67:16527→18575,
+74:494→496,82:5460→21844;pozostałe bez zmian. Asercje obejmująheal281,
+trzy cele, śmierć9, korpus57, EXP/zeroenemy oraz wcześniejsze etapy.
+B2/kopie8192B niezmienione. Artefakty
+/tmp/pe-ex-m154-win-B2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ i nowych plików repo;SDK/SDL nieinstrumentowane,
+brak oracle PS1;/tmp nie zastępuje trwałych CTest. B2 ostatni trwały zapis;
+dalej telefon i szpital. Pełny port nieukończony.
+
+
 ### EX — M153 wygrane przy221HP, Medicine1
 
 Poprzednia tura była postępem:M153wejście,commitb7893b47b. Sesja87367

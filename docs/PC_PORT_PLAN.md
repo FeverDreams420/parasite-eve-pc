@@ -2,6 +2,45 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+
+### EX — Cathy, dialogi54–58 w M111
+
+Z M107 przejście przez[0,-2700],[0,-900],[-550,-900] do
+M111/a80210c8; dialog54. Podejście do Cathy około[-399,339] i Cross
+uruchamia55–58. Przy150319 story392,HP178/181,enemy0,battle9,
+menu null,lock0; dialog58 zamknięty. Zmienna44:60→2108, czyli
+ustawiona flaga2048. Ekwipunek i rekordy identyczne z checkpointem M107.
+
+/tmp/pe-ex-cathy-K-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON oraz VRAM identyczne z live, kopie K bajtowo niezmienione.
+Artefakty /tmp/pe-ex-cathy-K-v1-{seed.json,checkpoint,proof/proof.json}.
+Test od zimnego K obejmuje obie walki M100, leczenie oraz rozmowę Cathy.
+SDK/SDL bez instrumentacji; zgodność obu profili nie dowodzi zgodności
+obrazu/audio z PS1. Bez zmian produkcyjnych ani edycji RAM/save.
+K pozostaje ostatnim trwałym zapisem; następne: powrót M107 i zbrojownia.
+Pełny Day3, Chrysler i audyt całego portu pozostają nieukończone.
+
+
+
+### EX — drugie starcie M100 i dojście do M107
+
+Od holu M099 ponownie przejście schodami do M100. Zachowano także
+omyłkowe wejście do M098 i powrót w rzeczywistym strumieniu inputu.
+Drugie spotkanie: typ6:31/97HP/def20 oraz dwa typ5/48HP/def30.
+Dwie kolejki Double Action, cztery pojedyncze strzały: wszyscy pokonani,
+HP181→178/181, magazynek5→1. EXP20, ObtainAll odbiera Junk20 do
+wolnego slot8 po wcześniejszym Medicine2. End zamyka panel nagród.
+Przy145970 M107/a80203c8/story392, enemy0,battle9,menu null,lock0.
+
+/tmp/pe-ex-m107-arrival-K-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON i VRAM identyczne z live; prywatne kopie K bajtowo niezmienione.
+Od zimnego K wyłącznie slot8:7→20,16:20→22,17:20→205 oraz ammo426:9→1;
+wszystkie zmienne skryptowe porównane, delty w proof.json. Artefakty
+/tmp/pe-ex-m107-arrival-K-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji, brak niezależnego oracle obrazu/audio PS1.
+Bez zmian kodu produkcyjnego ani edycji RAM/RNG/payloadów save.
+
+
 ### EX — Medicine2 po M100 i powrót do holu NYPD
 
 Oryginalne Items→slot8/Medicine2→Use: HP118→181/181,slot8 wyzerowany,

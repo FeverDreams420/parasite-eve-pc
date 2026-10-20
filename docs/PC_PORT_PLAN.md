@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — spotkanie z dziewczynką w M031 i przejście do M334
+
+Z checkpointu87823 zwykły ruch przez M028 prowadzi M031/0xa80030c8
+przy89643; oryginalna scena dialog10/11 z dziewczynką. Po zamknięciu11
+sterowanie jest już odblokowane; dodatkowe potwierdzenia i wait nie
+wywołują kolejnych stron. Ruch Up200 potwierdza normalne przemieszczanie
+Ayi, a dalej przejście tunelem i prawym wyjściem przyz~2800 prowadzi do
+M334/0xa8063248. Przy93853 menu null, move_lock0, Aya38/64HP,
+story104. Read-only skrypty zachowane /tmp/pe-ex-m031-script-v1;
+nie zmieniano animacji, kolizji lub prędkości poruszania w kanale.
+Seed/checkpoint: /tmp/pe-ex-sewer-girl-v1-{seed.json,checkpoint}.
+Cold normal/SAN exit0; /tmp/pe-ex-sewer-girl-v1-verify.py potwierdza
+pełny JSON/VRAM zgodny z live, prywatny A wszystkie8192B bez zmian,
+brak sanitizer/opcode/assertion. Dowód:
+/tmp/pe-ex-sewer-girl-v1-proof/proof.json. SDK/SDL bez instrumentacji.
+To odcinek EX bez nowych zmian kodu, nie dowód
+pełnego Chrysler ani porównania obrazu/audio PS1.
+
 ### EX — kanały M027/M028: dwa kolejne starcia
 
 Z M026 zwykły ruch prowadzi M027/0xa80023c8. Oryginalna animacja

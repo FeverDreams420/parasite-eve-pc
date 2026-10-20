@@ -3,6 +3,36 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — M153 wygrane przy221HP, Medicine1
+
+Poprzednia tura była postępem:M153wejście,commitb7893b47b. Sesja87367
+ponownie żywa. Up80(run) wywołuje27594 trzy cele:4:31/237HP,5:0/62HP,
+6:0/167HP. Pierwsza kolejka po dwaRight wybiera6:0; dwie akcje kończą go,
+przy28330 brak6. W tym czasie korpus tworzy5:1/62HP. Następne dwie akcje
+w4:31 zostawiają57HP przy28690; Aya221/283. Trzecia kolejka wybiera
+korpus, potem5:0. Przy29086 EXP20,enemy0,HP221/283; pozostałe5 zakończone
+przez oryginalny przebieg śmierci/ostrzału. Nie zakładamy jednego wspólnego
+zachowania wszystkich wariantów spawnera. W tej walce brak leczenia/PE.
+
+Nagrody zamknięte29966: M153/a80251c8,story496,HP221/283,menu null,
+lock0. Medicine1/item6 w22; Cure-M/16 w19 z M152 zachowany.
+Nie było nowego awansu w tym konkretnym rozliczeniu. MaxPE462 już przed
+M153; historyczny panel20/Haste dotyczy innej gałęzi, nie tej wygranej.
+
+/tmp/pe-ex-m153-win-B2-v1-verify.py PASS: pełna trasa cold B2 w obu
+profilach exit0, cały JSON/VRAM identyczny między profilami i live.
+Pełne50 slotów/4096B rekordów względem B2:19:0→16,22:0→6;
+rekordy tylko426:4→8. Wszystkie zmienne:1:998→152,19:0→1,
+65:667025391→801243119,66:572→956,67:16527→18575,
+74:494→496,82:5460→21844;pozostałe bez zmian. Asercje obejmują trzy
+początkowe cele, śmierć6, korpus57,EXP/zeroenemy oraz wcześniejszą trasę.
+B2/kopie8192B niezmienione. Artefakty
+/tmp/pe-ex-m153-win-B2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ i nowych plików repo;SDK/SDL nieinstrumentowane,
+brak oracle PS1;/tmp nie zastępuje trwałych CTest. B2 ostatni trwały zapis;
+dalej M154 i pozostały szpital. Pełny port nieukończony.
+
+
 ### EX — Medicine3, Research Kennel i wejście M153
 
 Poprzednia tura była postępem:M152,commit260a7af42. Sesja87367 ponownie

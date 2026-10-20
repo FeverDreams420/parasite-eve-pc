@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — M016: ukryte pomieszczenie i N Protector
+
+Kontynuacja tego samego cold Continue A, zwykłym inputem. M016 ma
+kamerę obróconą o90°; trasa ustalona z pozycji i read-only cameraBasis,
+bez zmiany kolizji. Interakcja przy−690,850 uruchamia dialog84,
+oryginalną animację otwarcia szafy, ustawia var24 bit8388608 i spawnuje
+ukrytą skrzynię type5:0. Przejście przez otwór działa w obie strony przez
+oryginalne animacje/ResolveCurrentPosition; wymaga czasu na zakończenie
+animacji, nie skracano jej ani nie zdejmowano move_lock ręcznie.
+Ukryta skrzynia daje N Protector, oryginalny ekran parametrów menu5,
+po zamknięciu slot9=260 i var84 bit4. Przy41789 Aya42/49HP, menu null,
+move_lock0. /tmp/pe-ex-m016-hidden-v1-{seed.json,checkpoint,
+proof/proof.json,verify.py}: cold normal/SAN exit0, pełny JSON/VRAM
+identyczny z live, prywatny A wszystkie8192B niezmienione, brak błędów
+sanitizer/opcode/assertion. SDK/SDL bez instrumentacji.
+Dalszy live powrót do głównej części pokoju i zwykła skrzynia dodają
+item41 do slot10, receipt55 zamknięty, var84=7 przy43340. To ostatnie
+odebranie wymaga jeszcze niezależnego replayu. Kod gry/PsyZ bez zmian;
+pełny EX/Chrysler oraz zgodność obrazu/audio PS1 nadal niepotwierdzone.
+
 ### EX — skrzynia M014 i powrót drugimi drzwiami
 
 Zwykły input po walce otwiera skrzynię type5:0 przy−1306,−2870.

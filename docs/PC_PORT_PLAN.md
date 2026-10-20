@@ -2,12 +2,33 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
-### EX — schody komisariatu i wejście do zbrojowni M055
+### EX — korekta identyfikacji M055 i przejście do M052
+
+Próby interakcji w M055 uruchamiały dialog211 wielokrotnie, bez wydania
+sprzętu. Obraz aktywnego dialogu /tmp/pe-ex-armory-dialog211-v1.png
+pokazuje podpis „Cop” i tekst o obserwowaniu zwierząt podczas przerwy.
+Nie była to rozmowa z Torresem. Poprawiono wcześniejszy opis M055;
+nie przypisuje się tego dowodu zbrojowni. Żadnego kodu nie zmieniano.
+
+Zwykłe zamknięcie dialogu i wyjście wraca M051 przy29509. Dalsza trasa
+korytarzem do drugich drzwi przyx−450,z−3700 prowadzi M052/0xa8005148
+przy31715,story144,72/72HP,menu null,move_lock2. Ekwipunek bez zmian.
+Seed/checkpoint: /tmp/pe-ex-precinct-m052-v1-{seed.json,checkpoint}.
+Cold normal/SAN exit0; /tmp/pe-ex-precinct-m052-v1-verify.py potwierdza
+pełny JSON/VRAM zgodny z live, prywatny B wszystkie8192B bez zmian,
+brak sanitizer/opcode/assertion. Dowód:
+/tmp/pe-ex-precinct-m052-v1-proof/proof.json. SDK/SDL bez instrumentacji.
+Rozmowa i usługi Torresa nadal wymagają dowodu;
+pełny EX/Chrysler i obraz/audio PS1 nadal niepotwierdzone.
+
+### EX — schody komisariatu i wejście do pomieszczenia M055
 
 Z M043 zwykły ruch korytarzem i lewym wyjściem przyz~−2100 prowadzi
 na dolny poziom M051/0xa80050c8 przy23441. Dalsza trasa środkiem
 korytarza do drzwi przyx−490,z~−1030, normalna animacja drzwi i wejście
-M055/0xa80052c8 przy24934. Obraz pokazuje zbrojownię z Torresem i Wayne’em.
+M055/0xa80052c8 przy24934. Pierwotne rozpoznanie tego obrazu jako zbrojowni było błędne; dalszy
+dialog211 i obecność zwierząt potwierdzają inny pokój. Nazwa plików
+armory-entry pozostała historyczna, nie dowodzi usług Torresa.
 Story144,72/72HP,menu null,move_lock2,ekwipunek zachowany. Rozmowy,
 wydanie sprzętu i usługi zbrojowni pozostają do sprawdzenia; samo wejście
 nie dowodzi ich działania. Read-only skrypty M043/M051 zachowane w

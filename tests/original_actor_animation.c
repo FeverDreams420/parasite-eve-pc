@@ -13541,6 +13541,31 @@ static int original_scene_texture_pages(PeDisc *disc)
     return 1;
 }
 
+static int original_credit_video_clock(PeDisc *disc)
+{
+    g_CdImage=disc;glyph_pending=glyph_poll_retry=0;fx_image_io=1;
+    if(Asset_OpenPeImage() || CdRom_LoadBootAudio() ||
+       !SDL_Init(SDL_INIT_EVENTS))return 0;
+    Boot_InitSystem();Boot_InitMemoryLayout();Psyz_AudioDestroy();
+    if(!SDL_SetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_AUDIO_CLOCK","video",true))return 0;
+    g_BootDisplayPlaybackFilePath="FMV1/FMV000.STR";
+    if(BootDisplay_InitPlaybackFile())return 0;
+    g_BootDisplayPlaybackEndPos=g_BootDisplayPlaybackStartPos+12;
+    if(BootDisplay_StartPlayback())return 0;
+    Psyz_AudioPause();
+    s32 position=g_BootDisplayPlaybackCurrentPos;
+    for(unsigned i=0;i<8;++i)VSync(0);
+    if(g_BootDisplayPlaybackCurrentPos!=position)return 0;
+    Psyz_AudioUnpause();
+    for(unsigned i=0;i<256 && !g_BootDisplayPlaybackEnded;++i)VSync(0);
+    int valid=g_BootDisplayPlaybackEnded && g_BootDisplayState>=0 &&
+        g_BootDisplayPlaybackCurrentPos>=g_BootDisplayPlaybackStartPos &&
+        BootDisplay_WaitForCdAndRestoreCallbacks()==0;
+    Psyz_AudioDestroy();
+    if(valid)puts("Original credits video clock: paused XA does not advance; real mounted-image XA reaches EOF through VBlank without an audio device");
+    return valid;
+}
+
 static int original_credit_playback(PeDisc *disc)
 {
     g_CdImage=disc;glyph_pending=glyph_poll_retry=0;fx_image_io=1;
@@ -18078,6 +18103,11 @@ int main(int argc, char **argv)
     if(argc==3 && !strcmp(argv[1],"--native-melissa"))return original_native_bootstrap(argv[2],4);
     if(argc==3 && !strcmp(argv[1],"--native-field-control"))return original_native_bootstrap(argv[2],1);
     if(argc==3 && !strcmp(argv[1],"--native-bootstrap"))return original_native_bootstrap(argv[2],0);
+    if(argc==2 && !strcmp(argv[1],"--credits-video-clock")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;
+        int result=original_credit_video_clock(&disc);pe_disc_close(&disc);return result?0:155;
+    }
     if(argc==2 && !strcmp(argv[1],"--credits-playback")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;

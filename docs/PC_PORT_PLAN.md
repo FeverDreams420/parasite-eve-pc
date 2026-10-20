@@ -2,6 +2,80 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Deterministyczny zegar audio VBlank i pierwszy zapis Clear Data
+
+W istniejących sdl3_audio.c/sdl3_common.h własnego PsyZ dodano jawny tryb
+PSYZ_AUDIO_CLOCK=video. Nie otwiera urządzenia SDL; blokujący video VSync
+pobiera próbki SPU z całkowitą resztą NTSC60000/1001 lub PAL50. Query
+nie pobiera próbek, pause zatrzymuje zegar, destroy/reinit zeruje resztę.
+Zwykły tryb urządzenia pozostaje domyślny. Runner zakończenia wybiera
+video jawnie; samo PSYZ_HEADLESS nie wybiera tego zegara.
+
+/tmp/pe-video-clock-v1-probe-proof.json: normal oraz instrumentowane
+ASan/UBSan/function audio.c z atrapą pull liczą dokładnie44144100 próbek
+stereo dla60000 blanków NTSC; sprawdzono PAL, przełączanie norm, pauzę,
+wznowienie i ponowny init, z nieistniejącym sterownikiem audio. To test
+zegara, nie jakości miksera. Istniejący fixture rozszerzono o
+--credits-video-clock: prawdziwe sektory XA z callbacku istniejącego
+modułu osiągają EOF przez VSync, pauza zachowuje pozycję. Normal/SAN
+exit0 bez urządzenia: /tmp/pe-video-clock-v1-XA/proof.json. Archiwum
+PsyZ/SDL użyte przez grę pozostaje nieinstrumentowane.
+
+Kandydat pe-video-clock-v1 ma438 świeżych obiektów gry/fixture,70/70
+regresji i12/12 wybranych CTestów w każdym profilu. Pełny zestaw PsyZ
+nie jest zielony: porównanie /tmp/pe-video-clock-v1-sdk-comparison
+z niezmienionym c54ef1a (podmienione wyłącznie audio/gpu obiekty w tym
+samym archiwum i te same obiekty testów, prywatne katalogi/expected/res)
+ma357 PASS/4 FAIL/1 SKIP baseline i358/3/1 po zmianie. Wspólne błędy:
+wait_event_blocks_until_rcnt2_interrupt, hw_vblank_trap_event_fires_once_per_vblank,
+move_image_internal_res; baseline dodatkowo rcnt3_event_fires_once_per_vblank.
+To nierozwiązane ograniczenia zegara IRQ i hi-res w software headless;
+nie uznano ich za PASS. Pierwsze uruchomienie porównania z niewłaściwego
+katalogu przerwało się przy teardown testowych plików bu; poprawne
+porównanie używa wyłącznie prywatnych katalogów. Pliki BASLUS-00662
+użytkownika zachowały rozmiary i wcześniejsze daty; testowe nazwy
+BASLUS-00000PSYZ zostały usunięte przez własny teardown.
+
+Przebudowa PsyZ użyła wcześniejszego katalogu CMake
+/tmp/pe-m324-psyz-v1-normal, nadpisując tam bibliotekę. Nie zachował się
+jej poprzedni plik o hashu5be0c790a21f5abd26c649d757dbcbda9fab0f7b564a03bec489a06fab5ae946;
+stare dowody rehash dokumentują stan w chwili instalacji, ale ich ścieżka
+archiwum nie jest już niezmienna. Binaria wcześniejszych kandydatów
+pozostały zachowane. Nowe archiwum zamrożono osobno w
+/tmp/pe-video-clock-v1-sdk/libpsyz.a; dalsze linkowanie korzysta z tej kopii.
+
+Normal-only /tmp/pe-ending-video-v1-live od prawdziwego M i pełnego inputu
+osiąga przy160000 M431/0xa80830c8/story756, oryginalny ekran3017BP po
+napisach. Zwykłe Cross prowadzi do wyboru karty i zapisu Clear Data.
+Przy160820 gra pokazuje „File saved” i EX Round2/Level1/HP45/45.
+UI użył istniejącego slotu13/M (nie pustego slotu1; wcześniejsza interpretacja
+położenia kursora była błędna), zastępując prywatny M plikiem
+BASLUS-006620000001M. To rzeczywisty zapis gry, bez edycji bajtów.
+SHA256 clear:412d9806dbae710409e18133bed137d26e219f60d46174a5bdb70bb5aed851c8.
+Źródłowy M pozostaje64fdec4d8f90d5692f1d91c2dce49273fdbf66d78eb74911c575fc2d6816de58.
+Pełny seed:/tmp/pe-clear-save-video-v1-seed.json, checkpoint z kartą:
+/tmp/pe-clear-save-video-v1-checkpoint. Niezależny cold normal/SAN
+potwierdził całe JSON/VRAM i wszystkie8192 bajty Clear Data identyczne
+z live, oba exit0 bez sanitizer/opcode/assertion, źródłowy M bez zmian:
+/tmp/pe-clear-save-video-v1-proof/proof.json. Obejmuje to E19/E20,
+ucieczkę, epilog, filmy44/45/46, pełne napisy XA i rzeczywisty zapis.
+Nie jest dowodem całego New Game→end ani porównaniem obrazu/audio PS1.
+Karta użytkownika nie jest kartą używaną przez kampanię.
+Po zamknięciu dialogu zapisu i wyjściu do tytułu przy162540 działa menu
+EX Game/New Game/Continue/Tutorial. Pomocniczy renderer z /tmp wcześniej
+interpretował RGB24 jak RGB15; poprawiono go, nie kod gry. Powrót przez
+intro FMV1 i tytuł jest normal-only, jeszcze bez osobnego zimnego dowodu.
+Native kończy quit0; stary kontroler potem zgłasza brak prywatnego M,
+bo jego historyczna asercja zabraniała także legalnego zapisu Clear Data.
+Nie uznano tej asercji testera za awarię gry; niezależne cold normal/SAN
+potwierdziły nowy plik przed wyjściem.
+
+PsyZ a7ad398 zapisany we własnym forku. Zainstalowany kandydat ma dowód
+/tmp/pe-video-clock-v1-installed-build-proof.json, gra SHA256
+301088f613bf0d42f3297c0b2bfbe5ddfe30685cee0f67d381af603ecf09ca73.
+Następne kroki: zimny odczyt Clear Data/EX start, dalszy pełny zakres
+EX/Chrysler oraz otwarte błędy SDK IRQ/hi-res; ten checkpoint nie kończy portu.
+
 ### Napisy końcowe — naprawa startu XA bez wcześniej otwartego audio
 
 Zakończenie po filmie46 ujawniło rzeczywisty abort w istniejącym

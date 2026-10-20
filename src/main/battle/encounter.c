@@ -357,7 +357,7 @@ void Battle_Update(void) {
                     g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.g = green;
                     g_BattleAtbMarkers[g_ActiveDrawSlot].sprite.color.bytes.b = blue;
                 }
-                if ((Pad_GetMenuPressedBitOrDisabled() << 0x18) == 0) {
+                if ((u8)Pad_GetMenuPressedBitOrDisabled() == 0) {
                     opened = 0;
                     if (g_FieldPadPressed & 0x200) {
                         g_BattleItemMenuState = 0;
@@ -419,7 +419,7 @@ void Battle_Update(void) {
         if ((player->animLastFrame == player->animPrev.parts.integer) && (player->actionMode < 4U)) {
             if (g_BattleHitActionPending == 0) {
                 Entity_SetActionMode(player, g_ActiveActor->actionMode12);
-                if (!(g_DiscChangeFlags & 1) && ((Pad_GetMenuPressedBitOrDisabled() << 0x18) == 0) && (g_BattleModeState == 0) && (g_ActiveActor->action->turnWord & 0x8000) && (g_BattlePendingEnemySpawn != 0)) {
+                if (!(g_DiscChangeFlags & 1) && ((u8)Pad_GetMenuPressedBitOrDisabled() == 0) && (g_BattleModeState == 0) && (g_ActiveActor->action->turnWord & 0x8000) && (g_BattlePendingEnemySpawn != 0)) {
                     Battle_RollEnemySpawn(g_BattlePendingEnemySpawn);
                     g_BattlePendingEnemySpawn = 0;
                 }

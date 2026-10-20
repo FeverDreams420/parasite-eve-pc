@@ -121,9 +121,9 @@ s32 RoomM273_SweepArcCallback(int mode, void *data, intptr_t argument) {
         callState = state;
         day = g_FieldFxCurrentAge - 1;
         count = 0x10;
-        rotationValue = day << 7;
+        rotationValue = (u32)day << 7;
         rotation.z = rotationValue;
-        packed = g_RoomM273Trig[(day << 6) & 0xFC0].word;
+        packed = g_RoomM273Trig[((u32)day << 6) & 0xFC0].word;
         FieldFx_DrawStarFan((GteShortVector *)callState, 0x100, 0x100, count, (GteRotation *)&rotation,
         (s16)packed + 0x400,
         (s16)packed + 0x400,

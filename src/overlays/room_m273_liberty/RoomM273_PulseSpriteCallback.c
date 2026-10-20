@@ -19,8 +19,8 @@ int RoomM273_PulseSpriteCallback(int mode, void *data, intptr_t argument) {
         if (g_FieldFxCurrentAge >= 16) return 1;
     } else if (mode == 2) {
         frame = g_FieldFxCurrentAge - 1;
-        sizeOffset = (frame << 8) & 0x3F00;
-        shadeOffset = (frame << 9) & 0x3E00;
+        sizeOffset = ((u32)frame << 8) & 0x3F00;
+        shadeOffset = ((u32)frame << 9) & 0x3E00;
         sizeSample = ((RoomM273TrigEntry *)((char *)g_RoomM273Trig + sizeOffset))->low;
         sample = *(int *)((char *)g_RoomM273Trig + shadeOffset);
         frame = 4;

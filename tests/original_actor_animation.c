@@ -17426,6 +17426,19 @@ int main(int argc, char **argv)
            grab.placement.pending_action!=module[0x8019a8e1-0x8018efe8])return fprintf(stderr,"M273 native grab tail failed\n"),1;
         g_RoomM273GrabClass.execute((PmSlotHeader *)&grab);g_RoomM273GrabClass.stop((PmSlotHeader *)&grab);g_RoomM273GrabClass.unload();
         if(signal!=0 || grab.status!=4)return fprintf(stderr,"M273 native grab release failed\n"),1;
+        /* An event may expire while its visual task is still running. Keep
+         * all four controllers live through a missing event acknowledgement. */
+        FieldActorState boss_state={0};RenderMatrix matrices[45]={0};
+        boss.state=&boss_state;boss.render_object.matrices=matrices;
+        FieldFxObjectPrefix owner={0};owner.actor=&boss;
+        FieldFxObjectPrefix *saved_owner=g_FieldFxOwner;g_FieldFxOwner=&owner;
+        FieldFxTaskProgram *controlled[]={&g_RoomM273GrabEffects,&g_RoomM273HandTrailEffects,&g_RoomM273SweepEffects,&g_RoomM273SwayEffects};
+        for(unsigned i=0;i<4;++i){
+            if(controlled[i]->table.callbacks[7](0,NULL,0)<0 ||
+               controlled[i]->table.callbacks[7](1,NULL,0)!=0 || boss_state.action_state!=NULL)
+                return fprintf(stderr,"M273 expired event controller %u failed\n",i),1;
+        }
+        g_FieldFxOwner=saved_owner;
         g_PlayerEntity=saved_player;
         puts("Original M273 complete descriptor set, authored task scripts, sine table and full work-area reload passed");return 0;
     }

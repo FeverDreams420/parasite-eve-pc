@@ -2,6 +2,57 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M273: wygasanie eventu po Liberate, chwyt, Sway i Heal3
+
+Dalszy live58354 na7503b3a0e zakończył się SIGSEGV po42448,
+przy advance60 bez inputu. Native crash report i SAN potwierdzają
+odczyt NULL w RoomM273_GrabEffectController: aktywny event animacji
+wygasł, podczas gdy wizualny kontroler nadal działał. Zachowana
+reprodukcja /tmp/pe-m273-post-liberate-crash-v1/ zawiera input, stan,
+VRAM, native-crash.ips, native-exit.json oraz SAN/exit.json i game.log.
+
+Naprawiono istniejące kontrolery M273: potwierdzenia fazy eventu
+są warunkowe przy nieobecnym rekordzie, ale logika czasu i rysowania
+kontynuuje działanie. Test --m273-load wywołuje teraz wszystkie cztery
+kontrolery przez prawdziwą tabelę callbacków z wygasłym eventem.
+Nie pominięto chwytu ani nie zmieniono obrażeń, HP lub AI.
+
+Dłuższy SAN odsłonił dwie kolejne operacje niezdefiniowane w C:
+encounter.c:360 (przesunięcie -1 dla zablokowanego menu) i m273.c:2911
+(klatka -1 przy rysowaniu świeżego efektu). W obu warunkach menu
+sprawdzany jest teraz bezpośrednio u8, dokładnie ten sam dolny bajt
+co po PS1 SLL24. Maskowane indeksy trig w czterech plikach M273
+używają przesunięć u32; signed dane zachowują wymagany wynik low32.
+Nieudane próby zachowane: /tmp/pe-m273-grab-release-v1-proof/ oraz
+/tmp/pe-m273-sway-v2-proof/ wraz z SAN logami i exit.json.
+
+Po poprawkach F-only cold replay normal i SAN do44495: exit0 bez
+raportów, pełny JSON/VRAM identyczne ze sobą i wcześniejszym normalnym
+przebiegiem. Przeszły crash path, cały chwyt (364→154HP), odzyskanie
+sterowania, Medicine3+strzał w jednej turze (154→334, ammo9→8,
+cel7 1000335→1000263), Haste i atak Sway/tryb15. Po dwóch dalszych
+pojedynczych strzałach cel7 1000119, ammo6; Aya67HP.
+/tmp/pe-m273-sway-v3-{normal,san}-proof/proof.json, źródłowe i prywatne
+F niezmienione. Test sprawdza w zamrożonym logu obserwację trybu15.
+
+Oryginalne menu wybrało Heal3, Square zatwierdził częściową kolejkę
+bez strzału poza zasięgiem. Przy44888 HP67→347, ammo6, pełny JSON/VRAM
+cold SAN identyczne, exit0 bez raportów, F bez zmian:
+/tmp/pe-m273-heal3-v3-proof/proof.json. Są to porównania natywne/SAN,
+nie oracle obrazu/dźwięku PS1. Nie udowodniono jeszcze zwycięstwa.
+
+Świeży kandydat /tmp/pe-m273-event-lifetime-v3-*:416 obiektów,
+645 zależności ponownie zahashowanych,70/70 regresji exit0,
+7/7 asset CTests bez SKIP. -build-manifest.json, -verification.json,
+-source-check.json, -ctest-assets.log, -regressions.log. PsyZ/SDL
+nadal nieinstrumentowane. Build w repo odpowiada temu kandydatowi.
+
+Starsze lives65674 i98144 zamknięto quit/exit0, karty bez zmian.
+Aktualny live22716, /tmp/pe-m273-event-lifetime-v3-live.py, odtworzony
+od F do44888 na świeżym kandydacie, kontynuuje walkę. Przy45123 Aya347,
+rozpoczął się kolejny chwyt Eve; odcinek po44888 nie ma jeszcze
+niezależnego replayu. Pełna kampania i pozostałe warianty nadal otwarte.
+
 ### M273 podłączone: wejście do walki Eve i Liberate
 
 Cały istniejący moduł M273 jest linkowany natywnie: cztery oryginalne

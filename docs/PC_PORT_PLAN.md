@@ -3,6 +3,40 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — pięć celów M126, zwycięstwo i rozliczenie poziomów
+
+Poprzednia tura była postępem: winda/M127, commit104a0bba7. Sesja64839
+ponownie żywa. Od59924 Left90(run),Right120(run)→M126/a8022348 przy60354.
+Próba dojścia do telefonu Up280,Right112 uruchamia spotkanie60746.
+Pięć typ7 (31,3,2,1,0), każdy123HP/def41, Aya179/210, PE pełne.
+Po dwóch zabitych i Heal2 pozostają trzy; po kolejnym Heal2 dwa.
+Bezpośredni ostrzał przy72HP kończy pierwszą próbę HP0 przy63638.
+Nie zaliczono tej próby jako zwycięstwa; sesja zamknięta quit/native0,
+źródłowe/prywatne O zachowane. Nie wykazano awarii runtime.
+
+Nowa sesja /tmp/pe-ex-m126-retry-O-v1-live,exec33141 odtwarza zwykłe wejścia
+od O do63378/72HP. Zamiast dwóch strzałów Heal2+strzał zostawiają49HP;
+kolejne Heal2+strzał zabijają7:31, przy64534 ostatni7:2 i91HP.
+Po salwie wroga przy64746 Aya19HP, ATB9000; dwie pojedyncze akcje kończą
+starcie65038:enemy0,EXP20,13HP. Rozliczenie zwiększa maxHP210→273,
+przy65678 menu nagród zamknięte,story488,lock1 (końcowe domknięcie walki).
+Późniejszy live65918 ma lock0; tego dodatkowego punktu nie objął replay.
+Brak nowego przedmiotu w slotach. Telefon/zapis nadal niezrealizowane.
+
+/tmp/pe-ex-m126-win-O-v1-verify.py PASS: pełna trasa cold O w obu profilach
+exit0, cały JSON/VRAM zgodny między profilami i live. Weryfikator początkowo
+oczekiwał lock0 zbyt wcześnie; poprawiono na rzeczywiste lock1 dla65678,
+bez zmiany gry. Historyczne asercje z pierwszej sesji ograniczone do63378,
+potem tylko nowa gałąź. Wszystkie50 slotów/4096B rekordów porównane do O:
+8:209→13,18:20→16,19:20→0,22:206→0; rekordy tylko byte426:8→12.
+Wszystkie zmienne:1:998→127,17:65→321,65:536870977→541196235,
+66:4→548,67:5→143,74:470→488,82:0→84,97:192→208. O i kopie bez zmian.
+Artefakty /tmp/pe-ex-m126-win-O-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ i nowych plików repo; SDK/SDL nieinstrumentowane,
+brak oracle PS1; dowód/tmp nie zastępuje trwałych CTest. O ostatni trwały
+zapis. Następne leczenie, telefon i dalszy szpital. Pełny port nieukończony.
+
+
 ### EX — działająca winda M132 i powrót M127 po naprawie
 
 Poprzednia tura była postępem: pełne zasilanie/story488, commita589bbac7.

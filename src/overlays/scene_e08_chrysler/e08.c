@@ -1903,41 +1903,36 @@ int SceneE08_UpdateOrbitParticles(void *raw0, void *raw1, void *raw2) {
     void * unused = raw0;
     RoomFxControl * condition_arg = raw1;
     SceneE08OrbitParticles * effect = raw2;
-    /* The byte cursor and loop-limit base remain pinned for matching. */
     RoomFxControl *condition = condition_arg;
-    char *base = (char *)effect;
-    char *state = base;
     int random;
-    unsigned i = 0;
+    unsigned i;
 
-    do {
-        if (((SceneE08OrbitParticles *)state)->active[0] == 0) {
+    for (i = 0; i < 32; ++i) {
+        if (effect->active[i] == 0) {
             if (rand() % 30 == 0 && condition->frame < 50) {
-                ((SceneE08OrbitParticles *)state)->active[0] = 1;
-                ((SceneE08OrbitParticles *)state)->frame[0] = 0;
+                effect->active[i] = 1;
+                effect->frame[i] = 0;
                 effect->angle[i] = rand() % 4096;
                 effect->size[i] = 0x7e8;
                 effect->radius[i] = 0x7e8;
                 random = rand();
-                ((SceneE08OrbitParticles *)state)->radialSpeed[0] = 0;
-                ((SceneE08OrbitParticles *)state)->angularSpeed[0] = random % 20 + 40;
+                effect->radialSpeed[i] = 0;
+                effect->angularSpeed[i] = random % 20 + 40;
             }
         } else {
-            ((SceneE08OrbitParticles *)state)->frame[0] += 1;
-            effect->angle[i] += ((SceneE08OrbitParticles *)state)->angularSpeed[0];
-            effect->radius[i] -= ((SceneE08OrbitParticles *)state)->radialSpeed[0];
-            ((SceneE08OrbitParticles *)state)->radialSpeed[0] += 2;
+            effect->frame[i] += 1;
+            effect->angle[i] += effect->angularSpeed[i];
+            effect->radius[i] -= effect->radialSpeed[i];
+            effect->radialSpeed[i] += 2;
             effect->size[i] -= 40;
             if (effect->size[i] < 0) {
                 effect->size[i] = 0;
             }
             if (effect->radius[i] < 0) {
-                ((SceneE08OrbitParticles *)state)->active[0] = 0;
+                effect->active[i] = 0;
             }
         }
-        i++;
-        state++;
-    } while (state < base + 32);
+    }
 
     if (condition->frame >= 121) {
         condition->state = 2;

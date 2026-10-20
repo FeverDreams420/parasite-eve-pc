@@ -2,6 +2,43 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### E08: brakujące gałęzie CentreGlow/OrbitParticles i poprawka wyrównania
+
+Permanentny original-m418-chrysler-slots (--m418-slots-draw) używa
+rzeczywistych zasobów M418 i oryginalnych list inicjalizacji/update/draw.
+Dwa jawnie kontrolowane skrypty fixture uruchamiają kontekst oraz slot1
+lub7, po dwa seedy; nie zmieniają oryginalnych skryptów gry. Sprawdzane
+są te same OT/pakiety/canary, widoczność VRAM, maski3/81 i zakończenie
+co w teście retail; wszystkie cztery kończą się frame125/state0/action4.
+Dodatkowe28 próbek VRAM, razem83 z ośmioma cyklami retail, jest
+identyczne normal/SAN. Nadal nie jest to kampania ani oracle obrazu PS1.
+
+Test ujawnił UB w istniejącym UpdateOrbitParticles: przesuwany o bajt
+wskaźnik był rzutowany na wyrównaną strukturę, mimo dostępu do tablic
+bajtowych. Naprawiono w miejscu na active/frame/radialSpeed/angularSpeed[i],
+zachowując kolejność obliczeń, narrowing i rand. Stary obiekt z nową
+fixture i UBSAN_OPTIONS=halt_on_error=1 kończy exit134 na wyrównaniu;
+/tmp/pe-e08-orbit-v1-before-fix.log. Pierwsza próba bez halt miała exit0,
+ale raporty UB; nie jest zaliczeniem testu ani dowodem SAN-clean.
+
+/tmp/pe-e08-orbit-oracle-v1-proof.json:280 kontrolowanych stanów,
+wszystkie320 bajtów cząstek, cały slot i liczba losowań zgodne między
+USA MIPS a normal/SAN. Hookowany tylko identyczny deterministyczny rand;
+pozostałe instrukcje oryginalnej funkcji wykonuje Unicorn. To oracle
+aktualizacji, nie obrazu lub audio.
+
+Świeży kandydat /tmp/pe-e08-orbit-v1:219+219 obiektów z ponownym
+haszowaniem pełnych zależności,70/70 regresji,12/12 CTestów w obu
+profilach, sześć ścisłych kompilacji E08 bez diagnostyk. Fixture i gra
+pochodzą z tego samego manifestu. Pozostałe niezmienione binarki testów
+assetów z build; biblioteki PsyZ/SDL nadal nieinstrumentowane. Dowody:
+*-build-manifest.json, *-verification.json, *-effects-proof.json,
+*-strict-proof.json, logi *-ctest-{normal,san}.log. Zainstalowano normalne
+game/fixture w build, wcześniejsze binarki zachowano; *-installed-build-proof.json.
+Nie powtarzano pełnej kampanii ani cold replay E19 w tym kandydacie.
+Audio, pełne pokrycie parametrów/gałęzi i przejście M418 nadal otwarte;
+E19 niewygrane, pełny port nieukończony.
+
 ### E08: headless GPU, pełne cykle rysowania i rzeczywiste tekstury
 
 Dodano original-m418-chrysler-draw (--m418-cycles-draw) w istniejącym

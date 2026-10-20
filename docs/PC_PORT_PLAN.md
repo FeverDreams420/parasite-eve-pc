@@ -2,6 +2,59 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### E19: integracja kompletnego modułu, ponowna weryfikacja walk
+
+Istniejące e19.c/e19_class.c i wspólny grab_await_stance są włączone
+do natywnego linkowania. room_load rejestruje dziewięć oryginalnych
+rekordów M429; dane programów i stałe odtworzono z pełnego pokoju.
+Zmiany pozostają w istniejących plikach. To integracja kodu, jeszcze
+nie dowód działającej walki ani zgodności obrazu z PS1.
+
+Podczas kontroli poprawiono pomylenie core_flags (PS1 +0) i flags
+(PS1 +0x4c) właściciela efektów E18/E22. Dotychczasowe udane taśmy
+walk zachowują wartość historyczną, ale wymagają nowego przejścia.
+/tmp/pe-m429-entry-v1: cold J, stara taśma do142000; normal exit0,
+ekran tytułowy, SAN zatrzymany na ujemnym przesunięciu e22.c:1207.
+Nie jest to zaliczone wejście do M429. Zapis przesunięcia zastąpiono
+równoważnym mnożeniem; kandydat v4 wymaga świeżych testów i replay.
+Artefakty v1/v2/v3 zachowane, bez modyfikowania zapisów lub balansu.
+
+/tmp/pe-m429-native-v4: świeżo skompilowane 213 obiektów normal i213 SAN;
+E19 bez ostrzeżeń. Siedem wymaganych asset CTest exit0.
+Pełne70 regresji normal/SAN exit0, zależności i426 obiektów ponownie
+zahashowane: /tmp/pe-m429-native-v4-verification.json i-build-proof.json.
+/tmp/pe-m429-replay-v2/proof.json: cold J do61448 exit0 w obu wariantach,
+bez raportów sanitizerów, pełny JSON/VRAM identyczne, źródłowe J bez zmian.
+M432/story721: Aya64/621HP, boss1000414/1002200, live_enemies1/mode0.
+Poprawiony efekt wykonuje się; stara taśma nie daje już zwycięstwa.
+Następna próba wymaga zwykłego leczenia i nowej sekwencji padów,
+bez zmiany parametrów walki. Wejście do M429 nadal niepotwierdzone.
+
+Nowa próba /tmp/pe-m432-corrected-v1-live: przy61448 Aya64HP,
+oryginalne menu kolejkuje dwa Heal3 w Double Action. Przy64254 pełne621HP.
+Podejście Up20/Right20 z biegiem daje cel w zasięgu985; pojedyncze
+strzały zadają94 każdy. Przy66570 wygrana mode12/live_enemies0,
+Aya345/621HP, Medicine3slot27 zachowane. Źródło J bez zmian.
+/tmp/pe-m432-corrected-v1-proof/proof.json: osobne cold normal iSAN,
+exit0 bez raportów, pełny JSON/VRAM zgodny z live i między wariantami.
+Live87269 zamknięte quit/exit0. Dalsza próba M428 odtwarza zwykłe pady
+po wygranej z przesunięciem czasu5122; wejście i wynik wymagają kontroli.
+
+/tmp/pe-m428-corrected-v1-live osiągnęło M428 przy130874, pełne621HP.
+Osiem tur pojedynczych strzałów Double Action: przy134322 boss999996,
+mode7, Aya337HP. Poprawione efekty faktycznie zadają obrażenia.
+/tmp/pe-m428-corrected-v1-proof/proof.json: cold normal/SAN exit0,
+pełny JSON/VRAM identyczne, bez raportów. Medicine3 zachowane.
+Przy134922 przejście do M350 z337HP, bez automatycznego leczenia.
+
+Pierwsza próba M350 na v4: Heal3, potem Liberate po regeneracji PE;
+część3 wyłączona, Medicine3 zużyte przy100HP (do280HP), kolejne Heal3
+iHeal2. Przy145219 rzeczywisty snapshot HP0/mode3; boss1000060,
+niezaliczone zwycięstwo. Błędy pilota obejmowały strzały z dużej
+odległości i zbyt późne leczenie. Live25136 zamknięte quit/exit0;
+taśma i stan zachowane. Następna gałąź zatrzymuje się przy133953,
+przed ostatnią turą M428, aby użyć leczenia przed przejściem do M350.
+
 ### M350: udana druga próba, następny brak M429/E19
 
 Pierwsza gałąź live47676 po długich nieskutecznych podejściach zużyła

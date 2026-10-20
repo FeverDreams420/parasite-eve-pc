@@ -11,6 +11,6 @@ extern RenderColor g_SceneE19EmberParticleColor;
 extern RenderColor g_SceneE19EmberFlareColor;
 extern u8 g_SceneE19EmberFlareColorTrack[];
 
-extern int SceneE19_EmberFlareParticleCallback(int mode, RoomOrbitTrailParticle *p);
+extern int SceneE19_EmberFlareParticleCallback(int mode, void *memory, intptr_t argument);
 
 #endif

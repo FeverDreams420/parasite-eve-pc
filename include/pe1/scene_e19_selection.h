@@ -4,7 +4,7 @@
 #include "common.h"
 #include "pe1/battle_setup.h"
 #include "pe1/field_actor.h"
-#include "pe1/field_actor_script_state.h"
+
 #include "pe1/player_entity.h"
 #include "pe1/render_object.h"
 
@@ -14,10 +14,10 @@
 
 /* View of the partner actor's script state: the byte record at 0x18 is the
  * substate the scene flips between 1, 2 and 4. */
-typedef FieldActorScriptState SceneE19ActorState;
+typedef FieldActorState SceneE19ActorState;
 
 typedef struct SceneE19SelectionTail {
-    /* 0x00 */ u8 pad00[4];
+    /* 0x00 */ void (*callback)();
     /* 0x04 */ int *signal;
     /* 0x08 */ u8 pad08[8];
 } SceneE19SelectionTail;
@@ -31,12 +31,13 @@ typedef struct SceneE19Selection {
     /* 0x40 */ int savedZ;
 } SceneE19Selection;
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneE19Selection, matrix) == 0x1C,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneE19Selection, matrix) == 16 + 3 * sizeof(void *),
                   scene_e19_selection_matrix_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneE19Selection, savedZ) == 0x40,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneE19Selection, savedZ) == 52 + 3 * sizeof(void *),
                   scene_e19_selection_saved_z_offset);
 
-void SceneE19_ResetPlayerMotion();
-int SceneE19_GrabRelease();
+void SceneE19_ResetPlayerMotion(void *unused, unsigned char *state);
+struct PmSlotHeader;
+int SceneE19_GrabRelease(struct PmSlotHeader *raw);
 
 #endif

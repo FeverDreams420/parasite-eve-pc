@@ -182,7 +182,7 @@ int SceneE18_FlankParticleCallback(int mode, void *memory, intptr_t argument) {
             range = particle->width / 4;
             if (distance < range) {
                 g_PlayerEntity->state->flags |= 0x4000;
-                ANIM_OWNER_AS(SceneE18Actor)->instance->state->flags |= 0x80000000;
+                ANIM_OWNER_AS(SceneE18Actor)->instance->state->core_flags |= 0x80000000;
                 particle->leader = 0;
             }
         }
@@ -366,7 +366,7 @@ int SceneE18_PulseRingCallback(int mode, void *memory, intptr_t argument) {
             if (Math_IntSqrt(dx * dx + dz * dz) < (ring->radius * 3) >> 3) {
                 ring->last = 0;
                 g_PlayerEntity->state->flags |= 0x4000;
-                instance->state->flags |= 0x80000000;
+                instance->state->core_flags |= 0x80000000;
             }
             if (ring->size < 0x40)
                 ring->last = 0;

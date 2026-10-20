@@ -639,11 +639,11 @@ int SceneE22_EmberDrift(int mode, void *state, intptr_t argument) {
                 Battle_InitEntityColors();
             if (burst->timer == 0x19 && g_FieldFxTaskContext->flags) {
                 channel = ANIM_OWNER_AS(FieldFxObjectPrefix);
-                if ((channel->actor->state->flags & 0x3F000000) == 0x01000000) {
+                if ((channel->actor->state->core_flags & 0x3F000000) == 0x01000000) {
                     g_PlayerEntity->state->flags |= 0x4000;
-                    channel->actor->state->flags =
-                        (channel->actor->state->flags & 0xC0FFFFFF) | 0x19000000;
-                    channel->actor->state->flags |= 0x80000000;
+                    channel->actor->state->core_flags =
+                        (channel->actor->state->core_flags & 0xC0FFFFFF) | 0x19000000;
+                    channel->actor->state->core_flags |= 0x80000000;
                 }
             }
             if (burst->timer < 0x20) break;
@@ -919,11 +919,11 @@ int SceneE22_EmberColumn(int mode, void *state, intptr_t argument) {
             Battle_InitEntityColors();
         if (g_FieldFxCurrentAge == 0x1D && g_FieldFxTaskContext->flags) {
             channel = ANIM_OWNER_AS(FieldFxObjectPrefix);
-            if ((channel->actor->state->flags & 0x3F000000) == 0x01000000) {
+            if ((channel->actor->state->core_flags & 0x3F000000) == 0x01000000) {
                 g_PlayerEntity->state->flags |= 0x4000;
-                channel->actor->state->flags =
-                    (channel->actor->state->flags & 0xC0FFFFFF) | 0x19000000;
-                channel->actor->state->flags |= 0x80000000;
+                channel->actor->state->core_flags =
+                    (channel->actor->state->core_flags & 0xC0FFFFFF) | 0x19000000;
+                channel->actor->state->core_flags |= 0x80000000;
             }
         }
         if (g_FieldFxCurrentAge < 0x20) break;
@@ -1204,7 +1204,7 @@ int SceneE22_SwirlRing(int mode, void *state, intptr_t argument) {
             if (timer == 1)
                 FieldFx_DrawScreenTint((unsigned char *)&color, 0x80, 2, 8);
             else if (timer < 6)
-                FieldFx_DrawScreenTint((unsigned char *)&color, rsin(((timer - 2) << 10) / 3) / 32, 1, 8);
+                FieldFx_DrawScreenTint((unsigned char *)&color, rsin(((timer - 2) * 1024) / 3) / 32, 1, 8);
             glow = swirl->glow;
             g_FieldFxSpriteParams.depth = 0x20;
             FieldFx_DrawRingBand(&position, 0x44C, 0x5DC, 0x18, 0, swirl->ring, swirl->ring, 0,
@@ -1963,11 +1963,11 @@ int SceneE22_QuakeBlast(int mode, void *state, intptr_t argument) {
         fx->timer++;
         if (fx->timer == 6 && FieldFx_IsPlayerWithinRadius(fx, target->radius) && g_FieldFxTaskContext->flags) {
             channel = ANIM_OWNER_AS(FieldFxObjectPrefix);
-            if ((channel->actor->state->flags & 0x3F000000) == 0x01000000) {
+            if ((channel->actor->state->core_flags & 0x3F000000) == 0x01000000) {
                 g_PlayerEntity->state->flags |= 0x4000;
-                channel->actor->state->flags =
-                    (channel->actor->state->flags & 0xC0FFFFFF) | 0x21000000;
-                channel->actor->state->flags |= 0x80000000;
+                channel->actor->state->core_flags =
+                    (channel->actor->state->core_flags & 0xC0FFFFFF) | 0x21000000;
+                channel->actor->state->core_flags |= 0x80000000;
             }
         }
         if (fx->timer < 7) {

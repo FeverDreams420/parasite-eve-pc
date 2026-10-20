@@ -41,6 +41,7 @@ FieldFxObjectPrefix *g_FieldFxOwner;
 int g_FieldFxAltPaletteFlag;
 int g_DrawPacketOffset;
 s16 g_FieldFxLoadedTexturePage;
+u16 g_FieldFxRandomPhaseCounter;
 
 void FieldFx_TransformMatrixPoint(RoomFxTransformOwner *owner, int index,
                                   const GteShortVector *input, GteShortVector *output) {

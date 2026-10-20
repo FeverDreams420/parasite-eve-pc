@@ -2,6 +2,7 @@
 #include "../../overlays/room_m273_liberty/room_m273.h"
 #include "../../overlays/scene_e22_liberty/scene_e22_shared.h"
 #include "../../overlays/scene_e18_cruiser/e18_emitters_externs.h"
+#include "../../overlays/scene_e19_cruiser/e19_externs.h"
 #include "pe1/room_trail_burst.h"
 #include "pe1/room_ground_eruption.h"
 #include "pe1/room_floor_walker.h"
@@ -693,6 +694,17 @@ int Scene_LoadRoom(unsigned int roomId)
             if (slot == 140 && record[i].u.handlerAddress == 0x80195720u) native = &g_RoomSeekingTrailProgram;
             if (slot == 141 && record[i].u.handlerAddress == 0x801957e4u) native = &g_RoomScatterTrailProgram;
         }
+        if(map+1==429) {
+            if(slot==75 && record[i].u.handlerAddress==0x8019b28cu) native=&g_RoomActorClassTable[2];
+            if(slot==80 && record[i].u.handlerAddress==0x8019b324u) native=&g_SceneE19GrabClass;
+            if(slot==179 && record[i].u.handlerAddress==0x8019b630u) native=&g_SceneE19JitterSparkProgram;
+            if(slot==177 && record[i].u.handlerAddress==0x8019b578u) native=&g_SceneE19GlintRibbonProgram;
+            if(slot==178 && record[i].u.handlerAddress==0x8019b5e4u) native=&g_SceneE19TwinGlowProgram;
+            if(slot==146 && record[i].u.handlerAddress==0x8019b42cu) native=&g_SceneE19HomingProgram;
+            if(slot==145 && record[i].u.handlerAddress==0x8019b380u) native=&g_SceneE19BlastProgram;
+            if(slot==148 && record[i].u.handlerAddress==0x8019b524u) native=&g_SceneE19OrbitProgram;
+            if(slot==147 && record[i].u.handlerAddress==0x8019b4acu) native=&g_SceneE19EmberProgram;
+        }
         if(map+1==428) {
             if(slot==75 && record[i].u.handlerAddress==0x8019403cu) native=&g_RoomActorClassTable[2];
             if(slot==78 && record[i].u.handlerAddress==0x80194090u) native=&g_RoomActorClassTable[0];
@@ -965,6 +977,18 @@ int Scene_LoadRoom(unsigned int roomId)
     record = SceneAsset_ResolveOffset(room, directory->scripts & 0x3FFFFF);
     for (i = 0; i < directory->scripts >> 22; i++) {
         slot = record[i].source.bytes.slot;
+        if(map+1==429) {
+            if(slot==75) {g_PmCmdHandlerTable[75]=&g_RoomActorClassTable[2];SceneE19_ResetModule();}
+            else if(slot==80) g_PmCmdHandlerTable[80]=&g_SceneE19GrabClass;
+            else if(slot==179) g_FieldFxTaskPrograms[94]=&g_SceneE19JitterSparkProgram;
+            else if(slot==177) g_FieldFxTaskPrograms[92]=&g_SceneE19GlintRibbonProgram;
+            else if(slot==178) g_FieldFxTaskPrograms[93]=&g_SceneE19TwinGlowProgram;
+            else if(slot==146) g_FieldFxTaskPrograms[61]=&g_SceneE19HomingProgram;
+            else if(slot==145) g_FieldFxTaskPrograms[60]=&g_SceneE19BlastProgram;
+            else if(slot==148) g_FieldFxTaskPrograms[63]=&g_SceneE19OrbitProgram;
+            else if(slot==147) g_FieldFxTaskPrograms[62]=&g_SceneE19EmberProgram;
+            continue;
+        }
         if(map+1==428) {
             if(slot==75) {g_PmCmdHandlerTable[75]=&g_RoomActorClassTable[2];SceneE18_ResetModule();}
             else if(slot==78) g_PmCmdHandlerTable[78]=&g_RoomActorClassTable[0];

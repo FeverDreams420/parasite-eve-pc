@@ -36,15 +36,17 @@ typedef struct SceneGrabTrigger {
     /* 0x0C */ SceneGrabControl control;
 } SceneGrabTrigger;
 
-PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneGrabTrigger, control.signal) == 0x10,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneGrabTrigger, control.signal) == 8 + 2 * sizeof(void *),
                   scene_grab_signal_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneGrabTrigger, control.player_matrix) == 0x1C,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneGrabTrigger, control.player_matrix) == 16 + 3 * sizeof(void *),
                   scene_grab_matrix_offset);
-PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneGrabTrigger, control.grabbed) == 0x44,
+PE1_STATIC_ASSERT(PE1_OFFSETOF(SceneGrabTrigger, control.grabbed) == 56 + 3 * sizeof(void *),
                   scene_grab_flag_offset);
 
 s32 SceneE19_ResetGrabTarget(char *obj);
-void SceneE19_GrabSequence();
-void SceneE19_RunAfterFrame37();
+struct SceneE19Selection;
+void SceneE19_GrabSequence(struct SceneE19Selection *selection);
+struct SceneE19FrameGateEntity;
+void SceneE19_RunAfterFrame37(struct SceneE19FrameGateEntity *entity);
 
 #endif

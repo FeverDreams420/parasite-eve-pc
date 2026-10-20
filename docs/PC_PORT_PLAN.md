@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — schody NYPD i zwycięstwo nad trzema przeciwnikami M100
+
+Po kluczu tester przypadkowo wyszedł na mapę (etap392), wrócił zwykłym
+wyborem NYPD. Od wejścia holu Up120/Left440/Up700 prowadzą schodami do
+M100/a8020048 przy128945,spawn[309,-2401]. Left200/Down500/Down112
+uruchamiają przy129757 trzech przeciwników:6:31/97HP/def20 i5:1/5:0
+po48HP/def30. To inny wariant niż starsza trasa dwóch wrogów.
+Po wait600 HP181→160. Pierwszy Double Action cel5:0,Right→5:1:
+dwa strzały pokonują oba,HP160→118. Drugi Double Action dwa trafienia
+w6:31 kończy walkę, magazynek9→5,HP118/181. Bez PE/leczenia/Revive.
+
+Przy131733 EXP20, następnie loot12/ObtainAll i End. Przy132543
+M100/story392,enemy0,battle9,menu null,move_lock0,HP118/181. Wszystkie
+sloty zachowane wobec odbioru LockerKey2, brak nowych przedmiotów przy
+pełnym21-slotowym ekwipunku; nie zalicza się wszystkich nagród jako zebranych.
+Cały4096B bufor wyposażenia różni się od K tylko ammo426:9→5.
+
+/tmp/pe-ex-m100-win-K-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live; K bajtowo/hash bez zmian. Dokładne
+sloty,rekordy i wszystkie delty zmiennych w proof.json. Artefakty
+/tmp/pe-ex-m100-win-K-v1-{seed.json,checkpoint,proof/proof.json},obraz.png.
+SDK/SDL bez instrumentacji; brak nowego oracle PS1, pełne FMV nieobjęte
+tym dowodem. Bez zmian kodu produkcji,RAM/RNG,payloadów save. Następne:
+leczenie,zapis i dalszy korytarz NYPD; pełny Day3 i port nieukończone.
+
+
 ### EX — odzyskanie Locker Key2 po odmowie przy pełnym ekwipunku
 
 Wstępne rozmowy NYPD zakończyły się19 bez klucza, bo21 slotów pełne.

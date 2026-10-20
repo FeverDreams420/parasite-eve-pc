@@ -3,6 +3,39 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — Mayoke, lobby szpitala i autentyczny Save/Continue N
+
+M125: początkowe krótkie podejścia nie uruchamiały rozmowy; korekta pozycji
+przed wejściem iRight500 prowadzą do21–28,story460→464. Mayoke/item204
+trafia do wolnego21. Przy52378 dialog zamknięty,lock0;Up552→M126/a8022348,
+przy53430 lobby bez dialogów. HP210/210,capacity23.
+
+Telefon wymaga dojścia wokół geometrii recepcji. Bezpośredni ruch zatrzymał
+się przy[2314,1255]; trasa po istniejącej podłodze[2300,1040],[1440,1040],
+[1360,1100],[1353,1111] i obrótUp otwierają6/Save. Karta1→pustyN/index13,
+File saved57840, zamknięcie58152. M126/story464,menu null,lock0,enemy0.
+Całe wyposażenie jak M poza Mayoke21:0→204. Od wejścia przed szpital
+zmienne1:999→998,65:0→536870912,74:460→464; wszystkie porównane.
+
+/tmp/pe-ex-hospital-save-N-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live, wszystkie8192B N zgodne między profilami
+i live,M bajtowo niezmieniony. N źródło
+/tmp/pe-ex-hospital-save-N-v1-source/BASLUS-006620000000N,
+SHA256 c136d9ffc7d28beba998a1ce1c90cb661c9b21ae9538872bd1d3b85a6a851646.
+Artefakty /tmp/pe-ex-hospital-save-N-v1-{seed.json,checkpoint,proof/proof.json}.
+
+/tmp/pe-ex-hospital-N-loaded-v1-verify.py wykonany PASS: świeży Continue N
+normal/SAN exit0,pełny JSON/VRAM identyczny. Przy12880 M126/story464,
+HP210/210,menu null,enemy0. Wszystkie sloty,4096B rekordów,capacity,
+wyposażone pozycje i wszystkie zmienne identyczne ze stanem File saved57840.
+N bajtowo niezmieniony; artefakty /tmp/pe-ex-hospital-N-loaded-v1-{seed.json,
+proof/proof.json}. SDK/SDL bez instrumentacji,brak niezależnego oracle PS1.
+Kod produkcji,RAM/RNG/payloady save bez zmian. N potwierdzonym punktem
+trwałej kontynuacji; obecny live odM nadal w lobby po SaveN. Następne
+kolejne pomieszczenia szpitala; pełny port pozostaje nieukończony.
+
+
+
 ### EX — Day4 od Continue M do szpitala M125
 
 Zimny M→Cross→M098/124–131,story432→440. Wyjście oryginalną trasą

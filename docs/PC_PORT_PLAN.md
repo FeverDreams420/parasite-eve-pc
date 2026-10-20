@@ -2,6 +2,39 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: zimny D2 → koniec Dnia4 → Save E2 → mapa Dnia5
+
+Nowy live wyłącznie z autentycznym D2/Continue12920 przechodzi M042→M041
+przy14234. Rozmowa z Maedą/Danielem prowadzi18354 doM362/a8065148,
+story536;18374 HP161→320. Oryginalna karta Dnia5 i pytanie o zapis,
+port36→37 wskazuje D2/index3,Down wybiera pustyE2/index4.21206 menu40
+potwierdza zapis. Trzy anulowania (FileSaved→lista→port→wyjście) dają
+21986/22586 M000/a8000048/story544,mapę,320/320HP,menuNULL.
+
+Dwa świeże cold22586 normal/SAN exit0 bez diagnostyki sanitizer/opcode;
+całe JSON i1MiB VRAM równe między profilami oraz zamrożonym live22586.
+Cały ekwipunek i wszystkie zmienne sprawdzone względem coldD2:ekwipunek
+bez zmian,zmienne3:9428992→12566528,74:534→544,310:1066324→1340022;
+reszta bez zmian. Wszystkie8192B E2 równe źródło/live/normal/SAN,
+D2 bez zmian. Źródło
+/tmp/pe-ex-day5-save-E2-v1-source/BASLUS-006620000000E,
+SHA2562354ada998b022e71ff6a821daac97a8aaa3d8f3dd5366682777e3320e96c875.
+Dowód /tmp/pe-ex-day5-map-D2-v1-proof/proof.json,journal i checkpoint
+/tmp/pe-ex-day5-map-D2-v1-{seed.json,checkpoint}.
+
+Dwa świeże coldContinueE2-only12920 normal/SAN exit0 wracają poprawnie
+do kartyM362/story536,320HP,menuNULL,zero wrogów. E2 zapisuje kartę dnia,
+nie gotową mapę. Wszystkie zmienne i cały ekwipunek równeSave21206;
+całe JSON i1MiB VRAM równe między profilami. Źródłowy i prywatneE2
+niezmienione. /tmp/pe-ex-day5-E2-loaded-v1-{seed.json,proof/proof.json}.
+Brak osobnego liveVRAMcoldE2. LiveD2 zamknięte quit0.
+
+Wyłącznie zwykły input,prawdziwe zapisy,bez zmian produkcji/PsyZ/RAM/save
+payloadów;ten sam pe-video-clock-v1. SDK/SDL nieinstrumentowane,brak
+niezależnego oraclePS1,/tmp tymczasowe. Następny krok:ContinueE2,
+odmowa ponownego zapisu na karcie dnia i eksploracja Dnia5.
+
+
 ### EX: telefon NYPD, Save D2 i zimny Continue
 
 Od87820 M046/story534 zwykły ruch potwierdza, że move_lock2 pozwala

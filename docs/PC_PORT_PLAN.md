@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — wejście zoo, druga walka i dojście do M063
+
+Dalszy zwykły pad po67428: wschodnia alejka do[1141,−1061] rozpoczyna
+przejście, przy70408 M060/a8006048; po wygaszeniu fade widoczna brama
+Central Park Zoo. Środkowa północna droga prowadzi przy73064 do
+M061/a80060c8. Podejście zachodnie wymaga najpierw ominięcia narożnika
+przy wejściu: Right prowadzi do[−3,233,−2294], potem Up do[−1439,233,−2229],
+UpRight do[−2254,233,−1195]. Nie pomijano kolizji.
+
+Przy77110 nowe starcie z trzema5:31/5:1/5:0, każdy48HP/def25.
+Double Action wybiera dwa różne cele, następna tura ostatni; trzy naboje,
+bez utraty HP. Rewards pokazuje awans: maksymalne HP92→101 przy
+obecnym92; pojemność16→17. TakeAll zabiera jeden Junk20 do nowego
+slot16. Dwa pozostałe Junk nie mieszczą się; End kończy menu bez ich
+odebrania. Nie twierdzi się, że zebrano wszystkie łupy tej walki.
+
+Dalszy zachodni marsz prowadzi do M063/a80061c8; przy79902/story232,
+92/101HP,menu null,move_lock0,battle9,enemy0. Sloty0..15 jak po pierwszej
+walce, dodatkowy slot16=20. Względem autentycznego E jedyna różnica całego
+4096B wyposażenia to offset426,ammo10→2 (łącznie osiem strzałów obu walk).
+/tmp/pe-ex-zoo-route-v1-verify.py wykonany PASS: zimne normal/SAN exit0,
+pełny JSON/VRAM zgodny z live, jedyny E bajtowo bez zmian i hash zgodny,
+brak sanitizer/opcode/assertion. Artefakty:
+/tmp/pe-ex-zoo-route-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Bez zmian kodu gry, RAM, RNG lub save’ów.
+To postęp konkretnej trasy; park/Day2/EX i zgodność obrazu/audio PS1
+pozostają nieukończone. Następne: M064, telefon i Zoo Key.
+
 ### EX — pierwsza wygrana walka w parku z zapisu E
 
 Odczyt wyłącznie do odczytu siatki59 trójkątów i oryginalnego skryptu

@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — NYPD po wizycie u Klampa, story384
+
+Na mapie376 Left wybieraCentralPark, następneLeftNYPD (obrazy wyboru
+sprawdzone). Cross uruchamia M037 i rozmowę46–51. Po zamknięciu51
+powrót na mapę/story384; kolejneCross wybiera NYPD. Przy115498
+M099/a80201c8/story384/dialog8. Rozmowy8–19 zamknięte. Przy120748
+M099/story384,HP181/181,menu null,enemy0,move_lock0,dialog19/state0;
+obraz holu NYPD obejrzany. To początek dalszych wydarzeń NYPD, nie koniecDay3.
+
+/tmp/pe-ex-nypd384-K-v1-verify.py wykonany PASS: cały zimnyK→sklep→Museum→
+mapa→NYPD, normal/SAN exit0,pełny JSON i VRAM identyczny z live;
+K bajtowo/hash bez zmian. Ekwipunek względem K tylko slot16 Junk20→Tool22,
+rekordy4096B bez zmian. Dokładne delty wszystkich zmiennych:
+1:998→999,3:8642560→8904704,25:67108882→67108922,34:17→33,
+74:328→384,146:0→20. Artefakty
+/tmp/pe-ex-nypd384-K-v1-{seed.json,checkpoint,proof/proof.json},obraz.png.
+SDK/SDL bez instrumentacji; pełne FMV12/13 oraz zgodność PS1 obrazu/audio
+nadal nieudowodnione. Możliwa następna powtórka bez Cross podczas tych
+filmów, z asercją zerowego inputu; dalej eksploracja NYPD. Bez zmian kodu
+gry,RAM/RNG,payloadów zapisów. Pełny port pozostaje nieukończony.
+
+
 ### EX — koniec wizyty Klampa i mapa/story376
 
 Zwykły input kontynuuje długą oryginalną rozmowę M367 po filmie12,

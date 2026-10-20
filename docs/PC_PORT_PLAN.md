@@ -3,6 +3,33 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — Maya/story492, użycie211 i wejście M148
+
+Poprzednia tura była postępem: M147/klucz, commit49dede992. Sesja72173
+ponownie żywa przy34097. Powrót M147→M14634987→M12636235, bez walki
+lub utraty HP. Z lobby Down115(run),Left70(run)→M127/dialog46 przy36660.
+Zwykłe Cross kończą rozmowę;38860 story491→492,klucz211 nadal w22.
+Od[67,-1248] Left240(normal),Up93(normal),Cross uruchamiają134 przy39453.
+Potwierdzenie usuwa211 z22. DalszeUp100 zatrzymuje się przy panelu;
+przejście wymaga powrotu pod drewniane drzwi:Down24(run),Left40(run).
+Przy40377 M148/a8024448,story492,HP77/273,menu null,lock0,enemy0.
+Nie zmieniano triggerów ani kolizji; wcześniejsze nieudane kroki zachowane.
+
+/tmp/pe-ex-m148-unlock-A2-v1-verify.py PASS: cała trasa cold A2 w obu
+profilach exit0, cały JSON/VRAM identyczny między profilami i live.
+Asercje obejmują46,story492,134,usunięcie211 i M148 oraz wcześniejsze
+walki/wspomnienie/odzyskanie klucza po pełnym inventory. Pełne50 slotów
+oraz4096B rekordów porównane do cold A2:19:0→7;22 znów0 po cyklu
+Cure-M→211→zużycie; rekordy tylko14:48→67,426:12→0,430:19→39.
+Wszystkie zmienne:1:998→127,65:541196235→599916527,66:548→572,
+67:143→16527,74:488→492,82:84→1364; pozostałe bez zmian. A2/kopie
+8192B niezmienione. Artefakty
+/tmp/pe-ex-m148-unlock-A2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ i nowych plików repo; SDK/SDL nieinstrumentowane,
+brak oracle PS1, dowody/tmp nie są trwałym CTest. A2 ostatni trwały zapis
+sprzed BP; dalej przygotowanie i M149. Pełny port pozostaje nieukończony.
+
+
 ### EX — M147 wygrane, wspomnienie, pełny inventory i klucz211/story491
 
 Poprzednia tura była postępem: M146/BP, commit1b303377c. Sesja76250

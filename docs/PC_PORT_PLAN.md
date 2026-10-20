@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: zapis F2 w metrze i świeże Continue
+
+Telefon M184/dialog6 → Cross do port36/170474 → Cross do plików37/171094,
+kursor0,4 na źródłowym E2. Down wybiera pusty slot0,5; Cross zapisuje
+nowy F2.171752 selection40 pokazuje File saved,139/335HP,Day5/Level24,
+story596. Źródłowe E2 nie zostało nadpisane. Nowy autentyczny plik:
+/tmp/pe-ex-subway-save-F2-v1-source/BASLUS-006620000000F,8192B,
+SHA256 7a8f95fa3174f1da5b85b76d678046726966e74a5c7532ae097ef709bd0a2742.
+
+Pełny cold E2→FileSaved171752 normal/SAN exit0,bez diagnostyki;
+cały JSON i1MiB VRAM równe live i profilom,nowy F identyczny wszystkimi
+8192B. Cały ekwipunek równy169854; wszystkie zmienne sprawdzone,
+tylko1:183→998. Dowód /tmp/pe-ex-subway-save-F2-v1-{seed.json,
+checkpoint,proof/proof.json}. Dodatkowo dwa świeże cold Continue z samym
+F2,pięć Down na liście,cap12920: M184/a8028248,story596,139HP,
+menu null,move_lock0,combat.mode0 bez wrogów. Cały ekwipunek i wszystkie
+zmienne równe FileSaved171752; pełny JSON i VRAM zgodne między profilami,
+F2 źródłowy i prywatne kopie niezmienione. Dowód /tmp/pe-ex-subway-F2-loaded-v1-
+{seed.json,proof/proof.json}. Pierwsza próba przygotowania seed nie obsłużyła
+flagi --headless bez argumentu i zakończyła się przed startem gry; poprawiono
+wyłącznie skrypt /tmp. Ruch po Continue nie był częścią tego testu.
+Ten sam pe-video-clock-v1,bez zmian produkcji/PsyZ/RAM/save payload;
+SDK/SDL nieinstrumentowane,brak oraclePS1,/tmp nietrwałe. Następne:
+kontynuacja z F2 i dalsza rozgrywka metra.
+
+
 ### EX: peron M183, pełny ekwipunek i telefon M184
 
 Od157594 przejście przez M182 daje159774 M183/a80281c8. Pojemnik

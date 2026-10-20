@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — Tool w M079, pięciu przeciwników M081 i wejście M082
+
+M079: odczyt podłoża /tmp/pe-ex-m079-floor-v1.json (135 trójkątów).
+Planer z marginesem55 dwukrotnie osiągnął limit przy ścinaniu zakrętów;
+zwykły pad obchodził je szerszym łukiem, bez utraty HP. Północna pętla
+prowadzi do[~0,200], podejście na południe i Cross otwierają skrzynię:
+Tool22 do wolnego slot14, ekran55, flaga85/8,var135=0. Tool zachowany,
+niezużyty. Planer z marginesem90 ukończył resztę zachodniej pętli po344
+krokach i wczytał M081/a80080c8. To poprawa pomocy /tmp, bez zmian gry.
+
+M081 ma24 trójkąty (/tmp/pe-ex-m081-floor-v1.json). Trasa z marginesem90
+po460 krokach zatrzymuje się przy walce przy94255. Wariant3:31/3:4/3:3/
+3:2/3:1, każdy48HP/def25. Trzy tury Double Action, sześć strzałów15→9,
+pięciu pokonanych; HP123→119/123. Brak awansu,capacity20. Po zamknięciu
+EXP/TakeAll/End przy96635 enemy0,menu null,battle9; nie potwierdza się
+odebrania wszystkich nagród do pełnego plecaka. Podejście do południowego
+wyjścia wczytuje M082/a8008148. Przy98143/story248,119/123HP,move_lock0,
+menu null,enemy0,battle9, Tool14 zachowany. Wszystkie4096B wyposażenia
+wobec G mają tylko bonusdef14:45→46, aktywacjaSvVest224:0→19,
+ammo426:2→9. Var85=29,var134/135/136=0.
+
+/tmp/pe-ex-m082-arrival-G-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON i VRAM identyczne z live, jedyny G bajtowo i hash bez zmian,
+brak sanitizer/opcode/assertion. Artefakty:
+/tmp/pe-ex-m082-arrival-G-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Wyłącznie pad i odczyty, bez zmian kodu gry,
+RAM, RNG i zapisów. Nie jest to ukończony park/Day2/EX ani porównanie
+PS1 obrazu/audio. Kontroler pozostaje w M082 przy98143; następne:
+przejście drugiego mostu i dalsza fabuła.
+
 ### EX — M078: dwa cele, leczenie, Defense+1 i wejście M079
 
 Dalszy marsz z M078 uruchamia przy38134 wariant4:31/4:0, obaj61HP/def25.

@@ -3,6 +3,43 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — diagnoza Revive i zweryfikowane zwycięstwo Sheeva
+
+Korekta poprzedniego podejrzenia: Revive działa. Read-only LLDB breakpointy
+encounter.c636/638/641/655 pokazują przy52539 HP0→97,mode3→0.
+Watchpoint HP wykazał następne trafienie przy53113:97→−11 (u16=65525),
+Entity_ResolveDropTable→Menu_MainUpdate, następnie clamp0/mode3. Poprzedni
+wait1200 pozostawiał574 vblanki bez sterowania po wskrzeszeniu i kończył
+się drugą śmiercią. To nie dowód awarii Revive; produkcji nie zmieniano.
+/tmp/pe-revive-trace-v4-verify.py PASS, /tmp/pe-revive-trace-v4-proof.json:
+końcowy JSON/VRAM jak oryginalna przegrana, źródłowy L niezmieniony,
+debugger/native exit0. Wcześniejsza v2 diagnostyka użyła niedostępnej metody
+SBWatchpoint; v4 używa watchpoint command callback bez wyjątków. Pole
+player_core z v1–v3 było nieważnym odczytem typu i nie stanowi dowodu;
+v4 go pomija. Poprawne dowody HP pochodzą z g_ActiveActor i watchpointu.
+
+Nowa sesja /tmp/pe-ex-sheeva-revive-L-v1-live odtwarza ten sam prefix
+zimnego L do52540/97HP, zużytyRevive20. Stara sesja GameOver zamknięta0.
+Natychmiastowe wznowienie inputu: ruchLeft280,wait80, kolejne ataki;
+po trafieniu HP25. Barrier i strzał uszkadzają ostatnią głowę, następnie
+ruch między Double Action umożliwia końcowe cztery trafienia. Przy54864
+EXP20,enemy0,HP25/195,ammo8. Oryginalne panele awansu podnoszą maxHP210
+oraz capacity23. ObtainAll daje szablon70 do20 (przejściowa wartość70
+przy55944); po zamknięciu nagród rekord9,slot20=265. Przy56214 scena
+M044/a8004248,story432,HP25/210,menu null,battle9. Dalszej sceny jeszcze
+nie zakończono. Całe sloty jak L poza20:18→265; rekordy jak L poza
+ammo426:3→8 oraz nowym32B rekordem9. Wszystkie zmienne sprawdzone.
+
+/tmp/pe-ex-sheeva-win-L-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live,L bajtowo niezmieniony. Obejmuje prefix
+zimnego L, leczenie M112, M121/M122 i wygraną Sheeva z prawdziwym Revive.
+Artefakty /tmp/pe-ex-sheeva-win-L-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji,brak niezależnego oracle PS1. Kod produkcyjny,
+RAM/RNG/payloady save bez edycji. L ostatni trwały zapis; live25/210HP.
+Następne scena po Sheevie i zakończenie Day3; pełny port pozostaje otwarty.
+
+
+
 ### EX — M124/M123 i powtarzalna śmierć mimo zużycia Revive
 
 Z M122 wejście[375,-600]→M124/a8022248, przejście na zachód→M044/95–96,

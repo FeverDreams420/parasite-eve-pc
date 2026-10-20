@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — zakończenie pierwszego dnia i oryginalny zapis B
+
+Po aligatorze ordinary Cross przechodzi zakończenie: M359/0xa80654c8,
+story112, dialogi135..144; M037/0xa80033c8,story120, dialogi2..13;
+następna scena/story128 i przejście M351/0xa80650c8. Numerów scen nie
+należy utożsamiać z kolejnością fabuły. Oryginalne zakończenie dnia
+odnawiaHP24→72 (max72), pokazuje ekran bonusów21, dialog182 i SaveUI36.
+Wybrano card1, pusty slot B (37 cursor1), bez nadpisywania A. Przy151237
+menu40 „File saved”, nowyB8192B obok niezmienionego A8192B. Bez edycji
+save/RAM, bez kodu zastępującego sekwencję zakończenia.
+Seed/checkpoint: /tmp/pe-ex-day1-save-v1-{seed.json,checkpoint}.
+Cold normal/SAN exit0; /tmp/pe-ex-day1-save-v1-verify.py potwierdza pełny
+JSON/VRAM zgodny z live oraz wszystkie8192B obu kart A/B identyczne
+między live/normal/SAN, źródłowy A bez zmian, brak sanitizer/opcode/assertion.
+Dowód: /tmp/pe-ex-day1-save-v1-proof/proof.json; autentyczny B skopiowano
+do /tmp/pe-ex-day1-B-v1-source. SDK/SDL bez instrumentacji.
+Ten odcinek obejmuje końcówkę EX Day1; cały cold EX od Clear Data do
+pierwszego phone A jest udokumentowany oddzielnie. Nie deklaruje się
+jeszcze cold Continue B, dalszych dni EX lub pełnego Chrysler/PS1 obrazu/audio.
+
 ### EX — aligator: ogon, druga faza i zwycięstwo
 
 Z checkpointu132121 zwykłe potwierdzenie dialog8 uruchamia walkę.

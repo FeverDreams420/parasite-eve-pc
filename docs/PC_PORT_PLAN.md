@@ -2,6 +2,64 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M350: wygrana nową trasą i odtwarzalne próby E19
+
+Kontynuacja szybszej trasy M428 przy52500/507HP pokonuje M350 przy57976,
+przechodzi do M349/0xa80644c8 i zachowuje302HP. Oryginalne Liberate,
+siódmy automatyczny atak i pojedynczy strzał w skrzydło, następnie zwykłe
+single-shot/Double Action oraz dwa Heal3 z dodatkowym strzałem. Bez edycji
+RAM, save'a, statystyk, dropów lub mechaniki. Pełne args/input/stany:
+/tmp/pe-m350-fast-actions-v2-live. Pierwszy kontroler V1 zgłosił przy54820
+„target selection failed”, gdy przejściowo nie było celów; gra zamknięta
+quit0. V2 odtwarza identyczny początek i obsługuje brak celu przez anulowanie
+lub zakończenie kolejki leczenia. Jest to poprawka zewnętrznego testera.
+
+/tmp/pe-m350-fast-actions-v2-proof/{proof.json,checkpoint-verification.json}:
+zimne normal/SAN identyczne z przebiegiem live — cały JSON i VRAM,
+57976/302HP, exit0 bez sanitizer/opcode. Źródłowy M i prywatne karty bez
+zmian. Nadal ten sam kandydat pe-e19-blast-shift-v1; nie zmieniano źródeł
+gry, PsyZ ani plików testowych repo. Biblioteki PsyZ/SDL nieinstrumentowane.
+
+Alternatywa bez Liberate także wygrywa:58684/M349/370HP, cztery Heal3,
+ostatnie aktywne PE25656575. Dowód normal/SAN/live całego JSON/VRAM:
+/tmp/pe-m350-no-liberate-v1-proof/{proof.json,checkpoint-verification.json}.
+Koszt to większe zużycie amunicji:15 w magazynku i14 w zapasie wobec
+14+32 po trasie z Liberate. Korpus bez Liberate zachowuje1500HP;
+zaobserwowane900HP w poprzedniej trasie nie oznacza stałego resetu
+niezależnie od wcześniejszych obrażeń. Odczyt tylko do obserwacji
+/tmp/pe-inventory-read-v1.json potwierdza pusty magazyn Wayne'a i brak
+przedmiotów zapewniających nieograniczoną amunicję. Zerowe liczniki puli
+amunicji nie są dostępnymi skrzynkami. Dalsza główna trasa używa Liberate.
+
+E19 zaczyna się przy58824/302HP, PE12369716 i14 nabojach w magazynku.
+Stanie i szybkie akcje kończą się śmiercią przy62692; to nie jest wygrana.
+Próba ruchu przeciwnie do wskazówek zegara osiąga63832/19HP i główny
+przeciwnik1001868, po czym kończy się zwykłym quit0. Ten niewygrany
+checkpoint ma osobne identyczne normal/SAN/live JSON/VRAM i niezmienione
+karty: /tmp/pe-e19-fast-actions-v2-checkpoint-proof/checkpoint-verification.json.
+Odczyt rzeczywistej podłogi E19 wykazał43 płaskie trójkąty i nieregularny
+obszar, nie wcześniejszy przybliżony prostokąt; komplet vertices i log
+odczytu w /tmp/pe-e19-floor-read-v1.{json,log}. Nie zmieniano RAM gry.
+
+Zewnętrzny planer porównuje dziewięć kierunków zwykłego pada, za każdym
+razem odtwarzając prawdziwy M i cały wybrany input. Nie wczytuje snapshotów
+RAM ani nie zmienia stanu gry. Pierwsze600 klatek UpRight zachowuje302HP
+i zadaje204 obrażenia, omijając oba trafienia doskoku. Po czterech odcinkach:
+61260/295HP, główny1002786, drugi1300. Osobny cold normal/SAN/live cały
+JSON/VRAM zgodny, karty niezmienione, exit0: /tmp/pe-e19-planner-v1-proof/
+checkpoint-verification.json. Weryfikator wszystkich czterech nowych
+checkpointów: /tmp/pe-current-routes-verify-v1.py, wszystkie PASS.
+Dwanaście dalszych odcinków /tmp/pe-e19-planner-v2 kończy się przy
+68548/253HP, główny1000644, drugi1300; pełny input w last-seed.json.
+Osobne zimne normal/SAN są identyczne z live w całym JSON/VRAM, exit0,
+bez sanitizer/opcode, karty niezmienione: /tmp/pe-e19-planner-v2-proof/
+checkpoint-verification.json. /tmp/pe-current-routes-verify-v2.py sprawdza
+wszystkie pięć checkpointów, wszystkie PASS.
+Wszystkie dziewięć wariantów na odcinek odtwarza kampanię od M, kończy
+quit0 i zachowuje karty. To nadal próba walki, nie dowód zwycięstwa ani
+zgodności pełnego obrazu/audio z PS1. Pojedynczy strzał
+z Double Action pozostaje podstawą — nie dodano bonusu wielokrotnego strzału.
+
 ### M428: oryginalne trafienia oraz szybsza natywna trasa z507HP
 
 Referencja USA przeszła zwykłym wejściem dialogi M426/M427 i filmy39/40
@@ -50,10 +108,10 @@ natywny jest zamknięty, przy dalszym odtwarzaniu łączyć args z inputem,
 nie wracać automatycznie do słabszej trasy lub dawnych prób E19.
 
 Referencja PS1 nadal żyje (PID36091/uchwyt60200, AI25171/GDB25170),
-obecnie początek M350 po zwycięstwie,394HP, story731, pauza przy34919.
-Status sprawdzony: paused1/running1, advance_remaining0,
-frames_remaining4965082. To nadal zwykła kampania z tego samego M.
-M350 w tej nowej trasie i E19 pozostają niewygrane; brak dowodu pełnego
+obecnie początek M350 po zwycięstwie i600 klatkach oczekiwania,394HP,
+story731, dialog62, pauza przy35519. Status ponownie sprawdzony:
+paused1/running1, advance_remaining0, frames_remaining4964482. To nadal zwykła kampania z tego samego M.
+Historycznie M350 w tej nowej trasie i E19 pozostawały niewygrane; brak dowodu pełnego
 finału, audio lub obrazu walk. Nie zmieniano źródeł gry ani dodawano plików repo.
 
 ### Oryginał USA: M425→M275→M276 i zgodne grawerowanie Wayne'a

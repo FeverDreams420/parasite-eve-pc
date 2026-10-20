@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — Cure-P i Medicine2 przez wymianę pełnego plecaka
+
+Z M062 po Defense+2 zwykły pad prowadzi do skrzyni Cure-P; nawigacja
+zatrzymuje się przy jej kolizji[1698,1647], Cross odbiera13 do wolnego
+slot8. Przy126997 oryginalny ekran55 pokazuje Cure-P. Zamknięcie, marsz
+do drugiej skrzyni[917,1769], Cross: tekst3 „Your inventory is full”,
+następnie „Would you like to exchange items?”→Yes→oryginalna lista
+Items. Wybór lewego wiersza4/slot8 zamienia powielone Cure-P13 na
+Medicine2/ID7; pozostałe Cure-P wslot12 zachowane.
+
+Przy128639 M062/story232,107/107HP,capacity18,menu null,move_lock0,
+enemy0,battle9. Zmienna84=201326727 (0x0c000087), zmienna128=13:
+zastąpione Cure-P pozostaje w skrzyni. Nie uznaje się wszystkich skrzyń
+za opróżnione. Bonus B Jacket1 nadal45, M8000ammo13; cały bufor
+wyposażenia bez zmian względem poprzedniego dowodu Defense+2.
+
+/tmp/pe-ex-zoo-chests-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON i VRAM identyczny z live; E/F bajtowo i hashe bez zmian,
+brak sanitizer/opcode/assertion. Input zawiera wyłącznie zmiany pada
+po skompresowaniu kolejnych identycznych wartości; brak zmian RAM,
+RNG, kodu gry lub save’ów. Artefakty:
+/tmp/pe-ex-zoo-chests-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Nie jest to ukończony park/Day2/EX ani
+porównanie obrazu/audio PS1. Zaplanowana trasa powrotna zachowana w
+/tmp/pe-ex-zoo-return-path-v1.json; jeszcze niewykonana.
+
 ### EX — czwarta wygrana, Defense+2 i zewnętrzna nawigacja
 
 Za bramą M062 przy93415 rozpoczyna się starcie6:31/6:1/6:0, każdy44HP,

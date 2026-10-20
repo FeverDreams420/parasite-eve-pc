@@ -2,6 +2,45 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — ulepszenia M084, przejście M085 i autentyczny zapis H/M087
+
+Oryginalne schody M083 wczytują M084/a8008248; odczyt podłoża M083
+/tmp/pe-ex-m083-floor-v1.json (49 trójkątów ze skosami), pad bez zmian
+kolizji. Lewa skrzynia M084 daje45/CR Evade+1 do12; Items→Use→B Jacket1
+zwiększa bonus CR Evade3→4. Prawa skrzynia wylosowała41/Defense+1,
+nie Tool22 ze starszej trasy; użycie na B Jacket1 zwiększa obronę46→47.
+Oba przedmioty zużyte,var85=125,var137/138=0 (obie skrzynie opróżnione).
+Marsz środkiem schodów wczytuje M085/a80082c8, północna droga do M087/
+a80083c8. Bez walki M085; nie uznaje się jej za sprawdzoną tym odcinkiem.
+
+Podejście do telefonu M087 uruchamia3:31/83HP i4:3/4:2/4:1 po48HP,
+wszyscydef25. Pięć strzałów, przeładowanie1→18, końcowy magazynek14.
+HP133→132/133. Zamknięcie nagród przy121717: Junk20 do12/17,
+capacity20 bez zmiany,enemy0,menu null,battle9. Telefon z[~203,486]
+facing~2048:prompt6→Yes→karta1→pusty H/cursor7→FileSaved40→zamknięcie.
+Przy124064 M087/story248,132/133HP,move_lock0,menu null,enemy0,battle9.
+W całym4096B wyposażenia wobec G tylko bonusdef14:45→47,CREvade18:3→4,
+aktywacjaSvVest224:0→19 i ammo426:2→14. Tool14 i Medicine2slot8 zachowane.
+
+/tmp/pe-ex-m087-save-H-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM i wszystkie8192B H identyczne z live; G bajtowo i hash
+bez zmian, brak sanitizer/opcode/assertion. Artefakty:
+/tmp/pe-ex-m087-save-H-v1-{seed.json,checkpoint,proof/proof.json}.
+H skopiowano po PASS do /tmp/pe-ex-m087-H-v1-source/BASLUS-006620000000H,
+hash H w proof.json. Bieżący autentyczny łańcuch EX: E→F→G→H.
+
+Osobne zimne Continue tylko H przy12640: M087/story248,132/133HP,
+menu null; cały ekwipunek i wszystkie zmienne skryptów zgodne z zapisem.
+/tmp/pe-ex-m087-H-loaded-v1-verify.py wykonany PASS: normal/SAN exit0,
+cały JSON/VRAM zgodny między profilami, H bajtowo i hash bez zmian.
+Nowy live /tmp/pe-ex-m087-H-nav-v2-live identyczny z tym zimnym stanem
+(startup-proof.json); stary długi kontroler G zamknięty0. Zewnętrzny nav v2
+ma tolerancję45 i stop po48 krokach bez poprawy odległości, aby ograniczyć
+oscylacje; skompilowany i sprawdzony start, nowych reguł nav jeszcze nie
+wykonano w ruchu. SDK/SDL bez instrumentacji. Bez zmian kodu gry, RAM,
+RNG lub payloadów zapisów. Park/Day2/EX i audyt PS1 obrazu/audio nadal
+nieukończone; następne: dalsza trasa z M087.
+
 ### EX — drugi most, Cure-P i zwycięstwo przy fontannie M083
 
 M082: zachodni marsz uruchamia przy101871 niedźwiedzia5:31/104HP,

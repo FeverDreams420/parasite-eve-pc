@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — brama M032, scena Eve M033 i pełny film6 do M034
+
+Po checkpoint118995 zwykły ruch Right230/Up140 przechodzi przez bramę
+do M033/0xa80031c8 przy119365; zatem sama interakcja M032 ma także
+dowód dalszego przejścia. W M033 podejście tunelem uruchamia oryginalną
+sekwencję Eve: dialogi15..24 przechodzą zwykłym Cross, animacje/camera
+bez zmian. Film6 rozpoczęty przy127321; od tego checkpointu wyłącznie
+wait2400+2400, bez pad inputu. Film kończy się na744, gra przechodzi
+do M034/0xa8003248/story108, przy132121 aktywny dialog8 przed bossem.
+Aya38/67HP. To stan przed walką (mode7,move_lock5), nie zwycięstwo.
+Pierwotny skrypt ma osobne cele korpusu/ogona; odczyt battle_detail
+pokazuje type3 HP1000167/def279 i type4 HP1000111/def8. Nie używano
+ich wartości do edycji gry. Walka pozostaje do rozegrania.
+Seed/checkpoint: /tmp/pe-ex-alligator-entry-v1-{seed.json,checkpoint}.
+Cold normal/SAN exit0; /tmp/pe-ex-alligator-entry-v1-verify.py potwierdza
+pełny JSON/VRAM zgodny z live, zakończony movie_frame744/video_state0,
+prywatny A wszystkie8192B bez zmian, brak sanitizer/opcode/assertion.
+Dowód: /tmp/pe-ex-alligator-entry-v1-proof/proof.json. SDK/SDL bez
+instrumentacji. Bez zmian kodu gry/PsyZ, RAM i zapisów.
+Pełny EX/Chrysler i porównanie obrazu/audio PS1 nadal niepotwierdzone.
+
 ### EX — M032: walka, poziom5 i interakcja przełącznika/telefonu
 
 Po113501 zwykła eksploracja M032 wywołuje encounter z dwoma type6:0/1,

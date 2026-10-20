@@ -2,6 +2,49 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### Gałąź od M: Wayne, sprawdzenie BP, zwycięstwo M428 i skrzydło M350
+
+Sesja97025 ponownie potwierdzona żywa. Wayne: magazyn bez transferów,
+Nothing w Hold equipment/Hold items, grawerowanie M8000 i B Jacket1
+z zachowaniem nazw (Start dwa razy). Porównanie wszystkich4096 bajtów
+rekordów przed/po zmienia tylko flags0→0x10 w rekordach0 i13;
+base/bonus/tail pozostają identyczne. Ekwipunek nie zawiera leków ani
+niezużytych przedmiotów wzmacniających. Menu pokazuje17BP; próba
+podniesienia ataku M8000 nie powiodła się, ponieważ oryginalne
+Menu_SpendBonusPoints wymaga100BP za przyjęty krok. Nie wydano BP;
+cały inventory po wyjściu z dialogu identyczny z punktem po Wayne.
+Nie przyznawano punktów ani nie zmieniano kosztów. Dowód przygotowań:
+/tmp/pe-m350-from-M-wing-v1-preparation-proof.json.
+
+Right50run+Down80run i oryginalne wyjście prowadzą do M426. Dialogi,
+filmy39/40 bez skipu, M427→M428/story730. Po uwzględnieniu wcześniejszej
+nieudanej gałęzi Liberate w M428 zachowano PE na M350. Pojedyncze
+strzały DoubleAction; jeden z dwóch strzałów tury z reticle1296 był poza
+zasięgiem1245, więc zdjęto tylko94 zamiast188HP. Przy51464 atak
+sprowadził Ayę do1HP; dwie Heal3 dały561HP przy52150. Następne strzały
+kończą M428 przy53766: boss999996/mode18; przejście M35054366,
+447HP/story731. Bez nowych leków lub zmian kodu gry/balansu.
+
+/tmp/pe-m428-from-M-v1-proof/proof.json: cold M do54366, aktualny
+pe-e08-orbit-v1, normal/SAN exit0, pełne JSON/VRAM zgodne z live,
+M i prywatne karty niezmienione, bez sanitizer/opcode. To nowa krótka
+trasa od M, nie dowód zakończenia finału. M8000 nadal pojedynczy strzał
+z DoubleAction; nie zastosowano wielokrotnego strzału.
+
+M350: przed pierwszą turą oryginalna regeneracja przy54790 osiągnęła
+pełne93061120PE,447HP. Liberate i ósma komenda strzału; po animacji
+skrzydło1000001/body1000900, HP447 przy57616. Down+Rightrun70
+kosztowało136HP, ale reticle skrzydła721. Dwa strzały doprowadziły do
+58010: skrzydło0HP/mode7, ciało1000900/mode5, Aya108HP, PE24583203.
+Strzelanie w miejscu nie jest skutecznym unikiem; dalsza walka wymaga
+leczenia i ruchu. /tmp/pe-m350-from-M-wing-v1-proof/proof.json: ponowny
+cold M do58010, pełne live/normal/SAN JSON i VRAM identyczne, exit0,
+bez sanitizer/opcode, źródło i prywatne M niezmienione. Sloty ekwipunku
+identyczne z Continue; amunicja w rekordach naturalnie zużyta.
+Sesja97025 pozostaje na58010 w oryginalnym kontrolerze headless
+/tmp/pe-e19-from-M-v2-live.py; przed kontynuacją sprawdzić uchwyt.
+Ciało M350 i E19 nadal niewygrane w tej gałęzi, pełna kampania otwarta.
+
 ### Kampania E19: druga salwa oraz krótszy start od autentycznego M
 
 Zachowana sesja56313 była żywa przy144899,34HP. Zwykłe menu DoubleAction

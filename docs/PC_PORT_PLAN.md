@@ -2,6 +2,37 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M167: trzech przeciwników pokonanych, Darkness i Barrier
+
+Cztery poloweHeal2 po wejściuM166 zwiększają113→173→233→293→335HP
+(z limitem). ZwykłeLeft prowadzi51350 doM167/a80263c8,51654 trigger,
+51854 trzy7:31/7:30/7:29 po156HP,Aya335,ammo5. Pierwsza para kul
+pokonuje7:31,52718 dwa cele,335HP. Podejście i druga para pokonują7:30,
+53476 jeden cel,279HP. Pierwsza próba ostatniej salwy i reload nie
+uszkadzają7:29. Dalsze ataki nakładająDarkness:54998 niska maska0x10.
+
+Próba wyboru nieodblokowanego jeszczeMedic wybrałaBarrier (row2,col0).
+55734 ma aktywne0x200;statusDarkness pozostaje. Obraz menu potwierdza
+brakMedic na tym poziomie. Nie zmieniano dostępnościPE ani zasięgu.
+Zwykłe podejścia i reticle56860:dystans252,ostatnia para kul kończy
+57340/57520 ekranemEXP/selection20,mode2,zero wrogów,Aya191/335,
+ammo13. Ten test dowodzi skutecznego ostrzału z bliska przyDarkness,
+nie gwarantowanej trafialności przy252 dla każdego RNG. Nagrody nieodebrane.
+
+Dwa świeże cold57520 normal/SAN exit0 bez diagnostyki sanitizer/opcode;
+całe JSON i1MiB VRAM równe między profilami i zamrożonym live57520.
+Asercje obejmują335HP przed walką,3→2→1 cel,Darkness,Barrier i reticle252.
+Cały ekwipunek/4096B rekordów i wszystkie zmienne względem coldE2:
+slot23 Narita203 pozostaje jedyną zmianą slotów,bajt426:0→13,
+zmienne1:998→166,3:9428992→12566528,20:0→5,55:0→4,56:0→6,
+67:18655→2147502303,74:536→568,78:232→8;reszta bez zmian.
+Źródłowy i prywatneE2 niezmienione. Dowód/journal/checkpoint
+/tmp/pe-ex-sewer-m167-E2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ/RAM/save,ten sam pe-video-clock-v1.
+SDK/SDL nieinstrumentowane,brak niezależnego oraclePS1,/tmp tymczasowe.
+Następny krok:nagrody i dalsze przejścia kanałów EX.
+
+
 ### EX: nagrody M163 → Maeda/Narita → kanały M166/story568
 
 Od31112 wyniki i ObtainAll/End prowadzą32312 do swobodnegoM163,

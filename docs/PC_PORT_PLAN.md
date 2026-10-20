@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — pierwsza wygrana walka w parku z zapisu E
+
+Odczyt wyłącznie do odczytu siatki59 trójkątów i oryginalnego skryptu
+wyjść: /tmp/pe-ex-park-floor-v1.json oraz pe-ex-park-street-script-v1/.
+Po obejściu przeszkód wejście przy65228 uruchamia pięciu przeciwników:
+5:31,5:4,5:2,5:1 po44HP/def25 oraz6:3 z61HP/def25. Nie jest to ten
+sam dwuwrogowy wariant opisywany w starszych odcinkach planu.
+
+Zwykły Cross wybiera najpierw6:3; po jego pokonaniu kolejne dwie tury
+Double Action rozdzielają cele 5:2/5:4, następnie5:1/5:31. Pięć zużytych
+nabojów: jedyna różnica całego4096B wyposażenia to offset426,10→5.
+HP pozostaje92/92 przez całą walkę. Oryginalne Rewards→TakeAll→End
+przy67428 zamyka menu, battle_mode9, enemy0,move_lock0,story232,
+scena a80054c8. Medicine1 trafia do wcześniej pustych slotów4/8/10;
+pozostałe sloty bez zmian. Nie zmieniano kodu, RAM, zapisów ani RNG.
+
+/tmp/pe-ex-park-win-v1-verify.py wykonany PASS: zimne normal/SAN exit0,
+pełny JSON oraz VRAM zgodne z checkpointem live, jedyna karta E bajtowo
+bez zmian i zgodna z wcześniejszym hashem, brak sanitizer/opcode/assertion.
+Artefakty /tmp/pe-ex-park-win-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Dowód dotyczy konkretnej wygranej i nagród,
+nie całego parku/Day2/EX ani porównania obrazu/audio z oryginalnym PS1.
+
 ### EX — wyjaśnienie flagi ślizgania po krawędzi
 
 Poprzednie move_lock8 nie jest samodzielnym dowodem blokady inputu.

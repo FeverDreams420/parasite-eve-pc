@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M273 z H: wyłączone części6/7, oryginalne Medicine4
+
+Dalszy zwykły pilot z JSON readback i wejściami kontrolera osłabił
+część7 1001274→999978. Przy50503 dostępny pozostał tylko cel5;
+część6 nadal999988, część5 1001317. Wcześniej przy48496 Aya73HP,
+oryginalna kolejka Medicine4+strzał wykonała leczenie73→473HP,
+przeładowanie pustego M8000 i jeden strzał. Slot15 wyczyszczony,
+Medicine3 w27 nadal obecne. To pierwsze udowodnione użycie zdobytego
+Medicine4 w tej gałęzi, bez edycji przedmiotu, HP ani zapisu.
+
+/tmp/pe-m273-H-parts67-v1-proof/proof.json: cold SAN od samego H do50503
+exit0 bez raportów, pełny JSON/VRAM równe normalnemu live, HP404,
+ammo5, jedyny cel[5], odporność stiffness0xc0, slot15 pusty i27=8,
+źródłowa oraz prywatna karta H niezmienione. Jest to porównanie natywne/SAN,
+nie oracle retail PS1 i nie zwycięstwo. Pozostałych części nie pominięto.
+
+Dalszy live użył Medicine3 i leczenia PE. Pierwotny pilot czekał na koniec
+trybu11 przed każdym strzałem; obserwacja powtarzanych trafień69HP
+spowodowała zmianę wyłącznie wejść: skrócenie przerw i wcześniejsze
+leczenie. Odcinek po50503 nie ma jeszcze niezależnego replayu.
+AT4 w aktualnym H ma ammo0/reserve0; pojemność1 nie oznacza gotowej
+rakiety. Nie traktowano go jako dostępnego sposobu zakończenia walki.
+
+Aktualny live66498: frame54914, HP219, część5 1000855HP. Oba leki zużyte
+przez zwykłe menu, źródło H bez zmian. Cały finał i pełny zakres portu
+pozostają otwarte. Źródła gry nie zmieniły się w tej próbie.
+
 ### M273 z H: część6 wyłączona, pełne HP i leki zachowane
 
 Na v4 dalsze pojedyncze strzały Double Action obniżyły część6

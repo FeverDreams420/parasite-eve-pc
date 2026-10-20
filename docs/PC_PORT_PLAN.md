@@ -50,6 +50,26 @@ Brak zwycięstwa; proces66562 czeka na wejście. Przed przypisaniem
 wszystkich trudności taktyce należy też porównać warunki trafień efektów
 E19 z oryginałem, zwłaszcza Blast/Ember i obsługę właściciela efektu.
 
+Audyt trafień E19 na obiektach v5: /tmp/pe-e19-hit-v1-proof.json,
+1440 przypadków rzeczywistego SceneE19_HomingParticleCallback mode1/
+state2 (leżący pocisk): flagi owner core/owner battle/player battle,
+aktywność tasku, timery−32768/−1/0/22/23/32767, osiem odległości
+wokół promienia200 i trzy promienie kolizji Ayi. /tmp/pe-e19-blast-hit-v1-
+proof.json:1260 przypadków rzeczywistego SceneE19_Blast mode1/state3,
+timery17/30/31, granice pasm1200/1700/2400, dodatnie/ujemne odległości,
+te same warianty flag i promieni. Pula cząstek pusta, więc test obejmuje
+także rzeczywisty allocator zwracający NULL, a nie generowanie iskier.
+
+Oba testy: oryginalny pełny pokój i resident FX engine w MIPS kontra
+faktyczne funkcje native normal/SAN, bez hooków. Rzeczywisty helper
+FieldFx_IsPlayerWithinRadius wykonuje się po obu stronach. Zgodne
+wszystkie bajty stanu, core_flags i flags właściciela, flags Ayi,
+wynik callbacku; dla Blast również glow i przejście state3→4.
+Zapisane hashe helperów, executable i manifestu buildu. Nie wykryto
+różnicy warunków tych trafień. Nie rozszerzać tego dowodu na lot pocisku,
+inne stany efektu, grab, obraz ani całą walkę. Live66562 nadal151978,
+76HP, menu główne; podczas testów nie zmieniano pamięci procesu gry.
+
 ### E19: integracja kompletnego modułu, ponowna weryfikacja walk
 
 Istniejące e19.c/e19_class.c i wspólny grab_await_stance są włączone

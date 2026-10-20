@@ -70,6 +70,18 @@ różnicy warunków tych trafień. Nie rozszerzać tego dowodu na lot pocisku,
 inne stany efektu, grab, obraz ani całą walkę. Live66562 nadal151978,
 76HP, menu główne; podczas testów nie zmieniano pamięci procesu gry.
 
+Audyt dalszego modułu /tmp/pe-m430-module-audit-v1.json: M430 to E20,
+pełne istniejące trzy pliki FlareParticle/HoverOrbController/
+CommandEffectSlot (597 linii), obecnie niewłączone do buildu.
+Disc2: start98764/scratch33/texture90/room136. Historyczny prefiks0x1800
+SHA1 cb847aba4aa80d900b766aa03ca9e306edc140e8 zgodny z YAML; deskryptor
+leży jednak za nim, przy80190824 (offset183c), więc prefiks nie obejmuje
+całego programu i danych. Jedyny rekord to slot188: callback8018f750,
+stan196 bajtów PS1, initializer801906ec, script801907e0. To istniejące
+HoverOrbController i CommandEffectSlot, z FlareParticle jako callbackiem
+puli. M431 ma zero rekordów handlerów; nie oznacza to przetestowania
+tej sceny. Integracja E20 i przejście kampanii przez M430 nadal otwarte.
+
 ### E19: integracja kompletnego modułu, ponowna weryfikacja walk
 
 Istniejące e19.c/e19_class.c i wspólny grab_await_stance są włączone

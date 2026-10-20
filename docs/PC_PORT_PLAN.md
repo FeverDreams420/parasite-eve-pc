@@ -3,6 +3,41 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — M146 zwycięstwo bez utraty HP po BP
+
+Poprzednia tura była postępem: oryginalne BP, commit6d8da2ac2. Świeża
+sesja upgrade-nav-v2 odtwarza A2 i BP do15192. Trasa Down28,Left52(run),
+Up88(run) ponownie wywołuje pięć celów M126. Pierwszy pokonany; próba
+Heal2 zbyt późno kończy HP0 i czterema celami przy16572. Quit/native0.
+/tmp/pe-ex-upgraded-lobby-death-A2-v1-verify.py PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live, A2/kopie bez zmian. To powtarzalna
+porażka rozgrywki, nie zwycięstwo ani błąd runtime. Artefakty
+/tmp/pe-ex-upgraded-lobby-death-A2-v1-{seed.json,checkpoint,proof/proof.json}.
+
+Sesja /tmp/pe-ex-hospital-A2-upgrade-nav-v3-live (exec76250) znów od15192.
+Inna zwykła trasa: Up100(normal),Left52(run),Up120(run),neutral240→M146
+przy15704 bez ponownego spotkania lobby. Down160(run),Right104(run),
+neutral200 wywołują przy15968 dwa cele:7:31/167HP i6:0/153HP.
+W wyborze celówRight wybiera naziemnego7:31; dwie akcje ulepszonegoM8000
+eliminują go przy16624. Następne dwie akcje w6:0 kończą walkę17016:
+EXP20,enemy0,HP73/273 (bez utraty HP w całym spotkaniu).
+Odbiór nagród:Medicine2/7 w19,Cure-M/16 w22. Oryginalne prowadzenie
+postaci i rozmowa106/107/36/37/109/38;19648 wolneM146/a8024348,
+story488,HP73/273,menu null,lock0. Nie potwierdzono wszystkich ataków obu
+przeciwników ani niezależnej zgodności obrazu/audio z PS1.
+
+/tmp/pe-ex-m146-win-A2-v1-verify.py PASS: cała trasa cold A2 w obu
+profilach exit0, cały JSON/VRAM identyczny między profilami i live.
+Pełne50 slotów i4096B rekordów porównane do cold A2:19:0→7,22:0→16;
+rekordy tylko14:48→67,426:12→8,430:19→39. Wszystkie zmienne:
+1:998→126,65:541196235→549584843,82:84→340; pozostałe bez zmian.
+A2/kopie8192B niezmienione. Artefakty
+/tmp/pe-ex-m146-win-A2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ i nowych plików repo; SDK/SDL nieinstrumentowane,
+/tmp nie zastępuje trwałych CTest. A2 ostatni trwały zapis sprzed BP.
+Dalej leczenie Medicine2, M147 i klucz; pełny port nieukończony.
+
+
 ### EX — M146 próba i oryginalne ulepszenia BP od A2
 
 Poprzednia tura była postępem: Save/Continue A2, commit03f58fb8c.

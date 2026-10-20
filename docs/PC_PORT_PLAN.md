@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: M176 → M180, tory, M181 i schody M182
+
+Po wyłączeniu zasilania150916 zwykłe Down160,Left320,Up424 (guard stop)
+i wait600 dają152420 M180/a8028048,story592→596. Up400,wait180,
+Up720,Right1600,Down750,wait180,Right168 (guard stop) i wait300
+prowadzą156718 do M181/a80280c8. Up576 (guard stop),wait300 daje
+157594 M182/a8028148. Swobodne sterowanie,zero wrogów,139/335HP,
+ammo7; cała trasa bez walki i utraty HP.
+
+Dwa świeże pełne odtworzenia157594 od cold E2 normal/SAN exit0,
+bez diagnostyki sanitizer/opcode. Cały JSON i1MiB VRAM identyczne
+między profilami i z zamrożonym live. Cały ekwipunek równy150916;
+wszystkie zmienne sprawdzone,względem150916 tylko1:176→181,
+74:592→596. Verifier sprawdza pośrednie M180/M181 oraz zero wrogów
+139HP we wszystkich obserwacjach tej trasy. Źródłowy i prywatne E2
+identyczne bajtowo. Dowód /tmp/pe-ex-m182-entry-E2-v1-{seed.json,
+checkpoint,proof/proof.json},runner/verifier obok. Bez zmian produkcji,
+PsyZ,RAM/save; ten sam pe-video-clock-v1. SDK/SDL nieinstrumentowane,
+brak oraclePS1,/tmp nietrwałe. Następne:peron M183 i telefon M184;
+nie potwierdzono jeszcze ich w tej gałęzi EX na obecnym kandydacie.
+
+
 ### EX M176: pompy, film20 i wyłączenie głównego zasilania
 
 Od137704 zwykłe podejście wokół pulpitu:Right200,Up80,Cross,

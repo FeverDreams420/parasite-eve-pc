@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: peron M183, pełny ekwipunek i telefon M184
+
+Od157594 przejście przez M182 daje159774 M183/a80281c8. Pojemnik
+przy pełnych25 slotach zgłasza dialog3 wymiany. Odmowa i dalsze ruchy
+dają164284 M184/a8028248. Drugi pojemnik także otwiera wymianę;
+wejście do inventory selection1 przy167222 anulowane Circle przy167242.
+Cały ekwipunek pozostaje identyczny,żaden przedmiot nie został wymieniony.
+Journal obejmuje ruchy podczas aktywnego dialogu (nie przesuwają Ayi)
+oraz nieudane podejścia do telefonu. Korekta pozycji doX=-205,Z=-3675,
+facing Up i Cross uruchamia169674/169854 dialog6 telefonu.
+HP139/335,ammo7,zero wrogów,story596. Nie wykonano jeszcze nowego zapisu.
+
+Dwa świeże pełne odtworzenia169854 od cold E2 normal/SAN exit0,
+bez diagnostyki sanitizer/opcode. Pełny JSON i1MiB VRAM identyczne
+między profilami i zamrożonym live. Cały ekwipunek/4096B rekordów
+sprawdzony,względem157594 bez zmian. Wszystkie zmienne sprawdzone;
+tylko1:181→183,54:56508259→56508258. Źródłowy i prywatne E2 identyczne
+bajtowo. Dowód /tmp/pe-ex-m184-phone-E2-v1-{seed.json,checkpoint,
+proof/proof.json},runner/verifier obok. Bez zmian produkcji/PsyZ/RAM/save,
+ten sam pe-video-clock-v1. SDK/SDL nieinstrumentowane,brak oraclePS1,
+/tmp nietrwałe. Następny krok:nowy zapis F2 przez telefon i cold Continue.
+
+
 ### EX: M176 → M180, tory, M181 i schody M182
 
 Po wyłączeniu zasilania150916 zwykłe Down160,Left320,Up424 (guard stop)

@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — wybór Museum i sekwencja Klampa do story368 po filmie12
+
+Z mapy po Soho dwa Left wybierają Museum (obraz sprawdzony),Cross→M038/
+dialog37 przy58942. Dialogi37–45 prowadzą do mapy/story352; ponowne
+Cross wczytuje M239/story360 i rozmowy115–117. Przejście do M367/
+a80434c8/story368, rozmowy123–134; movie12 aktywny przy70132 i zakończony
+przy72802/frame554/video0. Tester wysłał Cross70132–70162 podczas filmu,
+więc nie zalicza tej trasy jako dowodu pełnego nieprzerwanego FMV.
+Dalsze rozmowy136–139; przy73612 M367/story368,HP181/181,menu null,
+enemy0,dialog139/state2 w drugim textboxie. Obraz rozmowy obejrzany.
+To nie koniec wizyty ani całego Day3.
+
+/tmp/pe-ex-museum368-K-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live, K bajtowo/hash bez zmian. Ekwipunek
+względem K tylko slot16 Junk20→Tool22, wszystkie4096B rekordów bez zmian.
+Dokładne delty wszystkich zmiennych:1:998→239,3:8642560→8896512,
+25:67108882→67108922,34:17→32,74:328→368,146:0→20. Artefakty
+/tmp/pe-ex-museum368-K-v1-{seed.json,checkpoint,proof/proof.json},obraz.png.
+SDK/SDL bez instrumentacji, brak nowego oracle PS1 obrazu/audio. Bez zmian
+kodu gry,RAM/RNG,payloadów save. Następne: dalsze rozmowy po filmie12.
+
+
 ### EX — powrót ze sklepu i wyjazd z Soho na mapę
 
 M095→M094→M093 zwykłym padem, bez utratyHP. Daniel/dialog100 po sklepie

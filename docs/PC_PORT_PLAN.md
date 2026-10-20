@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: nagrody M173, M433 i film 19 → M174
+
+Z wyniku114796 zwykłe cztery Cross60/release240 odbierają nagrody:
+115996 pole M173,139/335HP,ammo7,Cure-D14 w slocie24.
+Down360 prowadzi116356 do M433/a80831c8; po600 klatkach story576.
+Up300,Right850 i oczekiwanie1300 uruchamiają dialog8. Cross przechodzi
+przez dialog10 do filmu19. Po dalszych oczekiwaniach123546 osiąga
+M174/a8027248,story584,dialog20,state2,move_lock1. Scena nieukończona.
+
+Dwa świeże pełne odtworzenia od cold E2 do123546 normal/SAN kończą exit0,
+bez diagnostyki sanitizer/opcode. Cały JSON i1MiB VRAM są równe między
+profilami i zamrożonym live. Verifier sprawdza wszystkie sloty,4096B
+rekordów i wszystkie zmienne skryptowe. Względem wyniku M173 zmieniają
+się tylko slot24:0→14 oraz zmienne1:168→433,20:357→1381,74:568→584.
+Źródłowy i prywatne E2 pozostają identyczne bajtowo.
+Dowód: /tmp/pe-ex-m174-entry-E2-v1-{seed.json,checkpoint,proof/proof.json};
+runner i verifier obok. Ten sam pe-video-clock-v1,bez zmian produkcji,
+PsyZ,RAM ani zapisów. SDK/SDL nieinstrumentowane,brak niezależnego oracle
+PS1; dowody /tmp są tymczasowe i nie stanowią trwałego CTest.
+Następny krok: dialog i dalsza rozgrywka M174 w tej gałęzi EX.
+
+
 ### EX M173: obejście pomostu i wygrana
 
 Od107587 górnego pomostu[4176,-105,2903] zwykłeLeft300normal wychodzi

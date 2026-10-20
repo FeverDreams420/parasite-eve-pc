@@ -3,6 +3,38 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — Day4 od Continue M do szpitala M125
+
+Zimny M→Cross→M098/124–131,story432→440. Wyjście oryginalną trasą
+[-1250,0],[-1120,150],[-950,330],[-850,600],[-850,900],[-800,1100],
+[-610,1200]→M099→M100→M103→mapa. Zachowano próbę wybrania Museum
+(zoom), obrót opcji mapy i powrót NYPD; nie twierdzimy, że odwiedzono
+muzeum/Chrysler. Szpital przy440 jeszcze nieodblokowany.
+
+NYPD schody M103→M100, północ przez[9,1099],Right350→M116.
+M116 przez[700,110],[700,-680],[800,-1000]→M115;Left510,Up1648→M121.
+Up280,Right130,Up80→M117/a80213c8. Dodatkowe Up60 z[195,-848]
+uruchamia136; rozmowy136–152 i panel55 zamknięte40311 kończą na mapie,
+story448. Ekwipunek bez zmian. W EX Left zNYPD wybiera najpierwChrysler10,
+następnyLeft Hospital6; obraz mapy obejrzany. Cross→M039/a80034c8/52–62,
+po scenie mapa456, następnyCross→M125/a80222c8/story460.
+Przy48307 HP210/210,enemy0,battle0,menu null,lock0,dialogi zamknięte.
+Obejrzany obraz /tmp/pe-ex-hospital-arrival-M-v1.png pokazuje Ayę przed
+szpitalem; wnętrze nie jest jeszcze objęte tym odcinkiem.
+
+/tmp/pe-ex-hospital-arrival-M-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live,M bajtowo niezmieniony. Całe50 slotów,
+4096B rekordów,capacity23 i wyposażone pozycje identyczne z zapisem M.
+Wszystkie zmienne sprawdzone:1:998→999,3:8904704→9428992,
+44:71702588→72751164,46:1466572→1990860,74:432→460.
+Asercje obejmują spotkanie440,laboratorium136,mapę448,podróż52 i456.
+Artefakty /tmp/pe-ex-hospital-arrival-M-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji,brak niezależnego oracle PS1. Kod produkcji,
+RAM/RNG/payloady save bez zmian. M ostatni trwały zapis; liveM125210HP.
+Następne wnętrze szpitala i dalszy Day4; pełny port pozostaje nieukończony.
+
+
+
 ### EX — zakończenie Day3, autentyczny zapis M i zimny Continue
 
 Po Sheevie ruch na północ M044 uruchamia107/108/96/110–123.

@@ -2,6 +2,22 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — otwór przy fortepianie i zejście do kanałów
+
+Od checkpointu76279 zwykłe podejście do fortepianu/otworu w M319
+wywołuje dialog134. Potwierdzenie pierwszej opcji wykonuje oryginalną
+animację i przejście M026/0xa8002348, story104 przy78487. Zejście nie
+jest natychmiastowe: move_lock1 podczas animacji, po wait600 przy79087
+move_lock0, Aya42/53HP, menu null. Nie zdejmowano blokady ręcznie,
+nie zmieniano skryptu ani kolizji. Obraz pokazuje Ayę w tunelu kanałów.
+Seed/checkpoint: /tmp/pe-ex-sewer-entry-v1-{seed.json,checkpoint}.
+Niezależny cold normal/SAN exit0; /tmp/pe-ex-sewer-entry-v1-verify.py
+potwierdza pełny JSON/VRAM zgodny z live i wszystkie8192B prywatnego A
+bez zmian, brak sanitizer/opcode/assertion. Dowód:
+/tmp/pe-ex-sewer-entry-v1-proof/proof.json. SDK/SDL bez instrumentacji.
+To lokalny odcinek EX, nie dowód
+pełnego Chrysler ani porównania obrazu/audio PS1. Kod gry/PsyZ bez zmian.
+
 ### EX — sala prób: film5, druga walka z Eve i wizja
 
 Z checkpointu dziennika63017 kontynuowano zwykłym inputem. Powrót M012,

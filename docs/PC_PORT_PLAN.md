@@ -3,6 +3,43 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — górny NYPD, walka M115 i prawdziwy zapis L
+
+Z M100 po scenie Bena powrót do M107/111 nie prowadzi dalej; północne
+drzwi M107 odpowiadają157 (zamknięte). Rzeczywista droga: M100 na północ,
+przy[8,1309] Right130,Up900 do[333,3559],Down940,Right230→M116.
+M116 kamera Up=−X,Right=+Z: spawn[-1655,500]; trzeba najpierw zbliżyć
+się do z135, potem przejść do[700,110],[700,-680],[800,-1000].
+Scena M121/a80220c8, dialogi74,76,75, wraca do M115/a80212c8.
+
+M115 Left prowadzi ku ujemnemuZ, ale po spotkaniu zachowane odchylenie
+pozycji wymaga korekty. Spotkanie206312: sześć obiektów, trzy typ5/109HP/
+def25 i trzy typ6/100HP/def27. Trzy Double Action/sześć pojedynczych
+strzałów kończy wszystkie przy208632,HP80/189,ammo9→3. Typ6 nie był
+na pierwszej liście celów; nie twierdzimy, że oddzielnie ostrzelano każdy
+obiekt. ObtainAll/End przy pełnych21 slotach nie zmienia ekwipunku.
+Dojście po korekcieX do drzwi[28..151,-4194..-4083]→M112/a8021148.
+
+Telefon[-1497..-1422,792..903], yaw3072, Cross→6. Trasa omija biurko
+przez[-1000,1020],[-1320,1040],[-1460,1020],[-1480,860]; read-only
+LLDB/detach podłogi /tmp/pe-ex-m112-floor-K-v1.json, bez zmian kolizji.
+Oryginalne Save→karta1→pusty L/index11→File saved przy215089,
+zamknięcie menu215401. M112/story400,HP80/189,enemy0,lock0.
+
+/tmp/pe-ex-nypd-save-L-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live oraz wszystkie8192B nowego L identyczne
+w obu profilach i live. K bajtowo niezmieniony. Całe sloty/rekordy i wszystkie
+zmienne porównane; asercje sceny74, sześciu wrogów, wygranej i File saved.
+L: /tmp/pe-ex-nypd-save-L-v1-source/BASLUS-006620000000L,
+SHA256 d50d65295c8b0571f4c1b3904bf41a6561fc23217dcdc402abaf2a97dfd42dbe.
+Artefakty /tmp/pe-ex-nypd-save-L-v1-{seed.json,checkpoint,proof/proof.json},
+obraz /tmp/pe-ex-nypd-save-L-v1.png obejrzany. SDK/SDL bez instrumentacji,
+brak niezależnego oracle obrazu/audio PS1. Kod produkcji,RAM/RNG,
+payloady save bez edycji. Zimny Continue L jeszcze niezweryfikowany;
+to następny krok przed dalszym NYPD. Pełny port pozostaje nieukończony.
+
+
+
 ### EX — scena Bena i Sheevy M115 po bramce M099
 
 Wyjście z właściwego M099 na północ uruchamia M115/a80212c8.

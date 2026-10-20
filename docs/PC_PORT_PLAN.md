@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: powrót przez M188 i wygrana M186
+
+Od47810 M189 Down700,Down/run152 prowadzą48862 M188. Dalsze
+Down/run408 daje49470/49670 M186/a8028348,pełne437HP. Down/run240
+uruchamia50110 spotkanie:4:31/225HP i5:30/29 po156HP. Pierwsze dwie
+kule po reload0→18 pudłują pod Darkness. Zwykłe podejście UpRight/run80
+zbliża50934 cel30 do224;dwa strzały zabijają go,51294 dwa wrogie aktory,
+Aya362HP,ammo14. Następne dwa strzały zabijają29:51686 pozostaje4/225HP.
+
+Cel4 chwilowo poza listą celów;anulowanie iUp/run260 aktywują go na387.
+Dwa strzały dają52418 27HP,Aya320,ammo10. Kolejne podejście z1958,
+pojedynczy strzał iSquare kończą53198 EXP/selection20,mode2,zero wrogów,
+320/437HP,ammo9. Nagrody nieodebrane,klucz219slot24 zachowany.
+
+Dwa świeże pełne cold53198 normal/SAN na pe-control-aim-v1 exit0,
+bez diagnostyki sanitizer/opcode. Cały JSON i1MiB VRAM identyczne
+między profilami i zamrożonym live. Verifier sprawdza trzy cele,224,
+pozostałe2/1 i27HP,wynik,pełne inventory/4096B rekordów i wszystkie
+zmienne. Względem47810 tylko rekord426:0→9,zmienne1:190→188,
+78:129→134;reszta bez zmian. Źródłowy i prywatne F2 identyczne bajtowo.
+Dowód /tmp/pe-ex-m186-win-F2-v1-{seed.json,checkpoint,proof/proof.json},
+runner/verifier obok. Bez zmian produkcji/PsyZ/RAM/save payload;
+SDK/SDL nieinstrumentowane,brak oraclePS1,/tmp nietrwałe.
+Następne:nagrody,dalszy powrót do telefonu,zapis G2.
+
+
 ### EX: Subway Gate Key, story600 i powrót przez most
 
 Od41550 M189 dodatkoweLeft200/Up300 i późniejszeRight/run500,

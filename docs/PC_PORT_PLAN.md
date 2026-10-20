@@ -3,6 +3,32 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — zwycięstwo nad czterema przeciwnikami M327 po Continue O
+
+Poprzednia tura z poradą użytkownika nie posunęła implementacji; jej kontrola
+potwierdziła tylko zakończenie procesu retry-v2. Ponowiona próba v3 korzysta
+z tego samego oryginalnego O i wejść pada. Dwie wcześniejsze próby zakończyły
+się śmiercią; zmiana priorytetu na naziemne typ5 pozwoliła wygrać bez nowych
+ulepszeń. Przy22502 HP206/210, dwa typ5 po123HP i dwa typ6 po153HP.
+Dwie pojedyncze akcje M8000 eliminują typ5; po obu przy23234 HP148.
+Heal2 i strzał w ramach Double Action, następnie kolejne akcje, pokonują
+pozostałych. Przy25978 enemy0 i EXP20; odebrano nagrody, przy26850
+M327/a80623c8,story470,HP85/210,menu null,lock0. Nie stwierdzono awarii.
+
+/tmp/pe-ex-m327-win-O-v1-verify.py PASS: pełna powtórka od zimnego O,
+normal/SAN exit0, cały JSON i VRAM identyczny między profilami i live.
+Cały ekwipunek sprawdzony względem cold O: slot8 AutopsyKey209→nagroda13;
+rekordy4096B zmieniły wyłącznie bajt426:8→16 (amunicja broni).
+Wszystkie zmienne porównane:1:998→321,65:536870977→541065289,82:0→4.
+O oraz jego kopie testowe bajtowo niezmienione, SHA256
+1dc8f314022dd668b39f18b63eb522d4dd4337bf19e69f00d9e1277a2b1566bc.
+Artefakty /tmp/pe-ex-m327-win-O-v1-{seed.json,checkpoint,proof/proof.json}.
+Kod gry/PsyZ, RAM/RNG i payload zapisu bez modyfikacji. SDK/SDL bez
+instrumentacji; zgodność obu profili nie stanowi oracle obrazu/audio PS1.
+Dowód jest tymczasowy w /tmp, nie trwały test CTest. O pozostaje ostatnim
+trwałym zapisem; dalsza eksploracja szpitala i pełny zakres portu nieukończone.
+
+
 ### EX — zimny Continue O, użycie Autopsy Key i wejście M327
 
 /tmp/pe-ex-autopsy-O-loaded-v1-verify.py wykonany PASS: świeży Continue O

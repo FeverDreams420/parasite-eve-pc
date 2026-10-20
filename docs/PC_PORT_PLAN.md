@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — aligator: ogon, druga faza i zwycięstwo
+
+Z checkpointu132121 zwykłe potwierdzenie dialog8 uruchamia walkę.
+Pierwsze strzały w korpus def279 zadają minimalne obrażenia; po kilku
+próbach HP1000167→1000164, Aya38→24HP podczas manewrów. Nie zmieniano
+balansu ani statystyk. Wstępne podejrzenie braku targetu ogona nie
+potwierdziło się: control.targets zawiera oba cele type3 i4, chociaż
+live_enemies liczy tylko korpus (ogon ma mode0). Right w targetingu
+wybiera ogon def8, zwykły Double Action go niszczy. Oryginalny skrypt
+przechodzi M344/0xa8064448: korpus zachowujeHP1000164, obrona wynosi6.
+Kolejna kolejka z automatycznym przeładowaniem zostawiaHP1000006;
+następny atak kończy walkę przy135309. Bez sanitizer/opcode/assertion
+w live, bez ręcznej zmiany pól lub nowego kodu gry.
+
+Oryginalne ekrany nagród, awans do poziomu6/maxHP72 i Obtain All Items/
+End przy136301:24/72HP,menu null,brak przeciwników. move_lock1 nadal
+należy do zakończenia skryptu; nie oznacza jeszcze swobodnej eksploracji.
+Seed/checkpoint: /tmp/pe-ex-alligator-victory-v1-{seed.json,checkpoint}.
+Cold normal/SAN exit0; /tmp/pe-ex-alligator-victory-v1-verify.py
+potwierdza pełny JSON/VRAM zgodny z live i wszystkie8192B prywatnego A
+bez zmian, brak sanitizer/opcode/assertion. Dowód:
+/tmp/pe-ex-alligator-victory-v1-proof/proof.json. SDK/SDL bez instrumentacji.
+Dalszy live wait wywołuje dialog25; po jego
+zamknięciu137637 gra przechodzi do kolejnej sceny/story112/dialog135.
+Ten dalszy dialog wymaga jeszcze niezależnego replayu. Pełny EX/Chrysler
+oraz porównanie obrazu/audio PS1 nadal niepotwierdzone.
+
 ### EX — brama M032, scena Eve M033 i pełny film6 do M034
 
 Po checkpoint118995 zwykły ruch Right230/Up140 przechodzi przez bramę

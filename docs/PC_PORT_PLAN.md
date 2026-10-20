@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M188: Barrier i Cure-D potwierdzone, strategia nadal niewystarczająca
+
+Trzecia próba od25986,nowy /tmp/pe-ex-m188-attempt3-F2-live:na pierwszej
+pełnej turze PE/Barrier,row2left,Square kończy kolejkę.27476 oraz28320
+Aya nadal335HP; Barrier bit0x200 przy27476,PE spada do4640738.
+Przedwczesne Cross przyATB5880 nie otwierają celu. Kolejna para strzałów
+pudłuje pod Darkness; korpus nadal1000699. Items/slot24/Cure-D + pojedynczy
+strzał daje29332 korpus1000611,Aya192HP,battle ammo1,slot24pusty;
+Darkness zostało ponownie nałożone. Bariera wyczerpuje dostępne PE.
+To dowód działania ochrony/statusu,nie poprawa skuteczności względem
+próby2 ani zwycięstwo. Dalsza walka pozostaje otwarta.
+
+Dwa świeże cold29332 normal/SAN exit0,bez diagnostyki sanitizer/opcode.
+Cały JSON i1MiB VRAM identyczne profilom i zamrożonemu live. Cały inventory,
+4096B rekordów i wszystkie zmienne sprawdzone. Względem FileSavedF2:
+slot24:14→0,rekord426:7→2 (battle ammo1),zmienne1=187,11=74,
+20=1049957,78=129;reszta bez zmian. Końcowe move_lock5 odpowiada aktualnej
+akcji; pierwsze asercje0/4 skorygowano do odczytanego5,bez zmian gry.
+Źródłowy i prywatne F2 identyczne bajtowo. Dowód /tmp/pe-ex-m188-barrier-F2-v1-
+{seed.json,checkpoint,proof/proof.json},runner/verifier obok. Bez zmian
+produkcji/PsyZ/RAM/save payload,ten sam kandydat. SDK/SDL nieinstrumentowane,
+brak oraclePS1,/tmp nietrwałe. Następne:lepsze przygotowanie z F2,
+wcześniejsze wydanie dostępnych BP/leczenie przed bossem i ochrona
+Darkness we właściwej turze; nie powtarzać tej sekwencji jako rozwiązania.
+
+
 ### EX M188: druga próba zadaje528HP, nadal porażka
 
 Nowy kontroler /tmp/pe-ex-m188-attempt2-F2-live odtwarza wejście25986.

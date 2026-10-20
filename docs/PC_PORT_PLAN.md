@@ -2,6 +2,22 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### E19: sterownik SpinRayBurst zgodny w trybie aktualizacji
+
+/tmp/pe-e19-spin-controller-v1-proof.json: 1456 przypadków callbacku
+80196ccc/tryb1 na oryginalnych instrukcjach M429 i natywnie normal/SAN.
+Porównano pełne4 bajty sterownika,27 slotów dzieci po16 bajtów, zwrot,
+liczbę przydziałów i wywołań rand oraz końcową fazę scatter. Cztery polityki
+alokatora: wszystkie odrzucone, wszystkie udane, co drugi odrzucony,
+tylko pierwszy udany. Timery obejmują start, okresy emisji,47/48 i signed16
+wrap; blades obejmuje ujemne/zero/dodatnie; faza0/3/7/65535.
+Hooki MIPS dotyczą tylko alokatora i identycznego strumienia rand.
+Natywnie cały istniejący e19.c przekompilowano jedynie z aliasem alokatora;
+Psyz_Rand zastępuje helper (linker zgłasza duplikat, faktyczne użycie
+potwierdza zgodna liczba losowań i pełne dane dzieci). Scatter jest rzeczywisty
+po obu stronach. Źródła gry bez zmian; brak dowodu trybu0, renderingu
+lub harmonogramu całego programu. E19 i kampania nadal nieukończone.
+
 ### E19: aktualizacja SpinRay zgodna z oryginalnym MIPS
 
 /tmp/pe-e19-spin-update-v1-proof.json: 1008 przypadków trybu1 oryginalnego

@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### E19: dojście w zasięg i pierwsza salwa tej gałęzi
+
+Sesja56313: przy143123/113HP Heal2+strzał (poza zasięgiem) podniósł
+HP do173 przy143569. Right+Downrun200 doprowadziło do143769 bez
+kolejnego trafienia; świeży reticle143797 pokazał672 jednostki zasięgu.
+Dwa pojedyncze strzały DoubleAction: main1003500→1003296, magazynek3→1,
+Aya173→103HP przy144073. Następnie dwie Heal2 w jednej turze dały223HP
+przy144709, PE10047194, ATB288; drugi przeciwnik nadal1300HP.
+/tmp/pe-e19-close-salvo-v1-proof/proof.json: cold L normal/SAN exit0,
+pełne końcowe JSON i VRAM identyczne także z zachowaną sesją live;
+bez raportów sanitizer/opcode, źródło L i obie prywatne kopie niezmienione.
+Skrypty /tmp/pe-e19-close-salvo-v1-{proof,verify}.py. Jest to powtarzalność
+natywna, nie niezależny dowód zgodności całej walki z PS1.
+Późniejszy Downrun190 do144899:223→34HP, PE16717429, main bez zmian;
+ten ruch na razie normal-only. Sesja pozostaje na sterowaniu, walka
+niewygrana. Kod gry, balans, RAM i zapis nie były modyfikowane.
+
 ### E19: sterownik SpinRayBurst zgodny w trybie aktualizacji
 
 /tmp/pe-e19-spin-controller-v1-proof.json: 1456 przypadków callbacku

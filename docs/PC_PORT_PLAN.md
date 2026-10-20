@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — otwarcie sklepu i wejście do M095 z zimnego K
+
+Z M093 południowe obejście samochodu i zachód wczytują M094/a8009248.
+Tester kilka razy wrócił przez wschodni region wyjścia, myląc kierunki
+kamery. Odczyt skryptów LLDB tylko do odczytu i detach: wejściowy region
+powrotu do M093 ma x4088..5738,z-716..-139. W M094 rawDown64 prowadzi-X;
+po ponownym wejściu prawidłowy marsz na zachód dociera do drzwi.
+Oryginalna sekwencja109–114 uruchomiona i zamknięta; flag25/32 ustawiona.
+Z[-86,-289] rawLeft128/80 i wait240 wczytują M095/a80092c8 przy33282.
+HP181/181,story328,menu null,enemy0. Obraz wnętrza obejrzany.
+Żaden przedmiot sklepu nieodebrany; wszystkie50 slotów i4096B wyposażenia
+identyczne z K. Dokładne delty wszystkich zmiennych względem zimnego K:
+1:998→94,25:67108882→67108922 (bity0x08 i0x20).
+
+/tmp/pe-ex-gunshop-entry-K-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON i VRAM identyczny z live, K bajtowo/hash bez zmian. Artefakty
+/tmp/pe-ex-gunshop-entry-K-v1-{seed.json,checkpoint,proof/proof.json},obraz.png.
+Odczyt skryptów /tmp/pe-ex-m094-script-K-v1; pierwszy import LLDB odrzucony
+przez myślniki w nazwie modułu, ponowny z nazwą underscore poprawny i detach.
+SDK/SDL bez instrumentacji, brak nowego oracle PS1 obrazu/audio. Kod gry,
+RAM/RNG i payloady save bez zmian. Następne: zawartość sklepu i dalszy Day3.
+
+
 ### EX — zimny Continue K i powrót z apteki do Soho
 
 /tmp/pe-ex-pharmacy-K-loaded-v1-verify.py wykonany PASS: osobne procesy

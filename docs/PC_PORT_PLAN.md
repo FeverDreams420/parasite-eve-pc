@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX G2: ruch po Continue i brama metra → mapa miasta
+
+Nowy /tmp/pe-ex-subway-G2-nav-v1-live od samodzielnego G2/cold12920.
+Down60 rzeczywiście przesuwa Ayę. Podejście do panelu M184 wyświetla
+Out of order/dialog25. Po zamknięciu Down/run320 daje14285 M183.
+Nieudane podejścia trafiają w pojemnik przy pełnych26 slotach;dialog3
+odmówiony Down/Cross dopiero17323. Cross/Circle nie zamykały tego wyboru;
+ruchy podczas aktywnego dialogu nie przesuwały Ayi. Bez wymiany przedmiotów.
+
+Odczyt skryptów M184/M183 LLDB wyłącznie read/detach wskazał oryginalną
+bramę M183 przyX[-188,269],Z[3384,3501],warunekitem219.
+Od17623 Down120normal,Right/run90,Up/run200,Cross otwiera przejście;
+18353/18653 mapa miasta/a8000048,story600,320/437HP. Cały inventory
+bez zmian,GateKey219 nadalslot24;klucz nie jest zużywany przez skrypt.
+Journal obejmuje nieudane podejścia,bez teleportów i zmian RAM/RNG.
+
+Dwa świeże pełne cold18653 normal/SAN pe-control-aim-v1 exit0,
+bez diagnostyki sanitizer/opcode. Cały JSON i1MiB VRAM identyczne
+między profilami i zamrożonym live. Verifier sprawdza ruch po Continue,
+całe inventory/4096B rekordów i wszystkie zmienne względem G2:
+1:998→183,3:12566528→16769024,54:58605410→192823138,reszta bez zmian.
+Źródłowy/prywatne G2 niezmienione. Dowód /tmp/pe-ex-subway-exit-G2-v1-
+{seed.json,checkpoint,proof/proof.json},runner/verifier obok.
+Bez zmian produkcji/PsyZ/save payload;SDK/SDL nieinstrumentowane,
+brak oraclePS1,/tmp nietrwałe. Następne:dalsza kampania z mapy Day5,
+w tym Warehouse/Museum zgodnie z oryginalnymi warunkami.
+
+
 ### EX: powrót do telefonu, autentyczny G2 i cold Continue
 
 Nagrody M186 zamknięte54398; Cure-D14 w slocie25. Powrót prowadzi

@@ -2,6 +2,35 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: pająk M156/M380 pokonany, Aya72HP
+
+Kontynuacja autentycznego C2 i zwykłego journalu54308 używa zachowanego
+Cure-M18 przed podejściem, potem Heal2 i pojedynczej kuli. Pierwsza forma
+629HP spada poniżej autorskiego offsetu1000000;56284 mode7,56304 mode8,
+56364 M380/a8068048,Aya62/283,druga forma1000559HP,ammo10.
+Nie edytowano HP, flag, RNG, pamięci ani zapisów. Oryginalne menu PE
+pozwala stosować Heal2 i Haste; Haste usunęło blokadę Stiffness i umożliwiło
+podejście. Salwy M8000 z Double Action:druga forma462→268→74HP.
+Pojedyncza kula z dystansu904 i Square do zakończenia drugiej akcji
+uruchamia62424 mode7;62824 ekranEXP/selection20,mode2,zero żywych
+przeciwników,Aya72/283,ammo3. To zwycięstwo obu form EX, nie całej gry.
+
+Świeże cold62824 × normal/SAN:exit0 bez diagnostyki sanitizer/opcode,
+całe JSON równe między profilami i zamrożonym live62824; pełne1MiB VRAM
+równe między profilami i zachowanym live. Weryfikator sprawdza cały
+ekwipunek i wszystkie zmienne względem wejścia48506:slot18:16→0,
+rekord bajt426:2→3,zmienne1:155→156,11:2→10;reszta bez zmian.
+Źródło i obie prywatne kopie C2 bajtowo niezmienione.
+/tmp/pe-ex-spider-win-C2-v1-{seed.json,checkpoint,proof/proof.json}.
+Pośrednie cold56364 normal/SAN także exit0; główny dowód obejmuje cały
+prefix do zwycięstwa. Nadal pe-video-clock-v1,bez zmian źródeł gry/PsyZ.
+SAN bez archiwów SDK/SDL; brak niezależnego oracle PS1. /tmp tymczasowe.
+
+Dalsze potwierdzenia wyników/rewards w live prowadzą64364 doM381,
+maxHP320,Aya72. Ten dalszy punkt nie ma jeszcze osobnej pary cold,
+więc odbiór nagrody i dalsza scena wymagają kolejnej weryfikacji.
+
+
 ### EX M156: pierwsza forma629→34HP, jeszcze bez zwycięstwa
 
 Dwie normal-only gałęzie od wejścia C2 na dach badały zwykły input.

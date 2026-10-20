@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M273: Heal2 i ataki po wyłączeniu pierwszej części
+
+Dalsza taśma v4 do47914 przeszła cold SAN: exit0 bez raportów,
+pełny JSON/VRAM identyczne z normalnym live, F niezmienione.
+/tmp/pe-m273-heal2-attacks-v4-proof/proof.json. Obserwowano Heal2+
+pojedynczy strzał (168→228HP, cel7 1001274→1001202), tryb14→15,
+kolejne dwa strzały i dłuższy tryb13. Końcowo Aya133HP, ammo5,
+cel7 1000986HP, cel6 1001452HP; boss niepokonany.
+
+Live33138 zamknięto quit/exit0 przy47914 po zamrożeniu dowodu.
+Najlepszy niesiony pancerz pozostaje wyposażony: B Jacket1,
+łączne statystyki44/49/28; pozostałe niesione pancerze mają niższą
+obronę i P.Energy. Nie wykonano zmiany ekwipunku ani danych zapisu.
+Nowa osobna próba /tmp/pe-m273-target7-v1-live.py odtwarza autentyczne
+F oraz te same300BP do wejścia walki38866. Ma sprawdzić wcześniejsze
+skupienie obrażeń na części7. Nie zalicza się jej jeszcze jako dowodu
+kolejnego etapu; wcześniejsze nieudane próby i ich artefakty zachowane.
+
 ### M273: pierwsza część wyłączona, przeładowanie i dalsze leczenie
 
 Na kandydacie v4 zwykła walka od F z wydanymi BP dotarła do46151.

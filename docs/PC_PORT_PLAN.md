@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — zimny Continue K i powrót z apteki do Soho
+
+/tmp/pe-ex-pharmacy-K-loaded-v1-verify.py wykonany PASS: osobne procesy
+normal/SAN tylko z autentycznym K,cap12760 M097/story328,HP181/181,
+menu null,enemy0. Pełny JSON/VRAM zgodny między profilami; cały ekwipunek
+oraz wszystkie zmienne skryptów zgodne ze stanem FileSaved143935.
+K bajtowo/hash bez zmian. Nowy /tmp/pe-ex-pharmacy-K-nav-v1-live startuje
+identycznym JSON/VRAM (startup-proof.json); stara długa sesja H zamknięta0.
+
+Zwykły pad z zimnego K wychodzi przez M097→M096→M093. Pierwsza trasa
+A* zatrzymała się na narożniku przy[704,-2140]; Up90/Right110/Down280
+obchodzi go i wczytuje M096. Tam obejście NPC i zachodnie wyjście, przy
+19414 M093/a80091c8/story328,HP181/181,menu null,enemy0. Wszystkie50
+slotów i4096B wyposażenia identyczne z K. Spośród wszystkich zmiennych
+skryptów zmienia się tylko1:998→96 (zmiana sceny).
+
+/tmp/pe-ex-soho-return-K-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny także z live, K bajtowo/hash bez zmian.
+Artefakty /tmp/pe-ex-soho-return-K-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji; brak nowego oracle PS1 obrazu/audio. Bez
+zmian kodu produkcyjnego, RAM/RNG i payloadów zapisów. Dalsze Soho,
+Day3 i cały port pozostają nieukończone.
+
+
 ### EX — autentyczny zapis K w aptece
 
 Sterownik najpierw pomylił telefon M097 z M112 i poszedł w niewłaściwą

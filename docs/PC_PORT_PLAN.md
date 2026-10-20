@@ -2,6 +2,60 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### M428: oryginalne trafienia oraz szybsza natywna trasa z507HP
+
+Referencja USA przeszła zwykłym wejściem dialogi M426/M427 i filmy39/40
+(Start do przewinięcia) do M428/0xa8082448. Bez patchowania RAM,
+statystyk lub kart. /tmp/pe-reference-day6-M-v1/to-m428-states.jsonl,
+m428-battle-start.json oraz niezmienne prefiksy m428-start-input.jsonl
+32774 i m428-firstsalvo-input.jsonl32974 przechowują tę trasę.
+
+verify-firstsalvo.py/firstsalvo-proof.json: w oryginale main2:0 ma
+HP/limit1001500, obronę50, stateFlags117836032/statusFlags5506389,
+jak w aktualnym porcie. Pierwsza para osobnych strzałów Double Action:
+1001500→1001406→1001312, czyli94+94; amunicja9→7, moc broni74,
+zasięg1245. Zimne native normal/SAN do50008 mają identyczny cały
+JSON/VRAM i te same188 obrażeń/7 naboi. Exit0, bez sanitizer/opcode,
+M i prywatne karty bez zmian. To porównanie konkretnych parametrów
+oraz pierwszej salwy, nie synchronizacja całej walki, animacji lub RNG.
+
+verify-m428-win.py/m428-win-proof.json: oryginał pokonał M428 siedmioma
+parami zwykłych strzałów (14 naboi), bez PE/lekarstw, kończąc394HP;
+main999996, przejście M350/0xa8065048 i story731. Zamrożony input34918.
+Poprzedni natywny styl wybierania akcji także wygrywa na bieżącym kandydacie:
+świeże normal/SAN do54366 identyczne JSON/VRAM,447HP. W ekwipunku
+PS1/PC różni się tylko załadowana amunicja rekordu13 (13 wobec10),
+nie statystyki, modyfikatory lub sloty. Liczba trafień/krytyków i rytm akcji
+nie były wyrównane, więc różnego HP i amunicji nie uznano za błąd portu
+ani za pełną równoważność walk. Oryginał nie potrzebował Heal3 w tej próbie.
+
+Po obserwacji oryginału nowy zewnętrzny tester natywny wybiera strzały
+zaraz po gotowości ATB, bez poprzednich długich przerw i bez ograniczania
+strzałów wyłącznie do trybu2. Nadal tylko single-shot M8000 i Double Action,
+próg awaryjnego Heal3 przy350HP. Wygrał M428 z507HP bez żadnego leczenia
+lub Haste. W V1 tester zgłosił KeyError('player_hp') przy51850, gdy w
+przejściu chwilowo nie istnieje aktor Ayi. Sama gra wyszła quit0; błąd
+hostowego testera i cały przebieg zachowane, nie jest to porażka gry.
+V2 obsługuje brak HP i odtwarza identyczne wejście; po wait650 osiąga
+52500/M350/story731/507HP. Następnie zamknięty quit0, bez zmiany kart.
+
+/tmp/pe-m428-fast-actions-v1-proof/proof.json i *-verify.py: cały JSON/VRAM
+poprawionego kontrolera V2, cold normal i SAN identyczny przy52500,
+exit0 bez sanitizer/opcode, M/prywatne karty bez zmian. PE było pełne w
+ostatnich stanach aktywnej walki M428; przy52500 battle_detail.player
+jest już null podczas przygotowania nowej walki, więc nie przypisano mu
+nieodczytanego PE. Nowy punkt startowy do M350 ma507HP, zamiast starszych
+447HP. Args i pełny input w /tmp/pe-m428-fast-actions-v2-live; proces
+natywny jest zamknięty, przy dalszym odtwarzaniu łączyć args z inputem,
+nie wracać automatycznie do słabszej trasy lub dawnych prób E19.
+
+Referencja PS1 nadal żyje (PID36091/uchwyt60200, AI25171/GDB25170),
+obecnie początek M350 po zwycięstwie,394HP, story731, pauza przy34919.
+Status sprawdzony: paused1/running1, advance_remaining0,
+frames_remaining4965082. To nadal zwykła kampania z tego samego M.
+M350 w tej nowej trasie i E19 pozostają niewygrane; brak dowodu pełnego
+finału, audio lub obrazu walk. Nie zmieniano źródeł gry ani dodawano plików repo.
+
 ### Oryginał USA: M425→M275→M276 i zgodne grawerowanie Wayne'a
 
 Kontynuowano istniejący proces referencyjny, nie restart: zwykłe Cross
@@ -52,7 +106,7 @@ Dzięki temu dalsze sterowanie emulatora nie unieważnia hashy wejścia
 wcześniejszych checkpointów.
 
 Referencja nadal żyje: PID36091/uchwyt60200, AI25171/GDB25170,
-obecnie M276/0xa8047348,621HP, dialog25 po grawerowaniu, pauza przy
+historycznie M276/0xa8047348,621HP, dialog25 po grawerowaniu, pauza przy
 21265 (21264 zwykłych klatek inputu). Przed użyciem odpytać uchwyt/status;
 nie uruchamiać drugiej instancji tylko dlatego, że skończyła się obserwacja.
 Dalsza trasa prowadzi przez M426/M427 do walki M428; E19 nadal niewygrane.

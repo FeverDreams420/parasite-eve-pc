@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — Eve/M089 pokonana M8000, bez Revive
+
+Kontynuacja od39628: pierwsze Heal2 wybrane, ale druga akcja nie miała
+celu (Eve chwilowo nietargetowalna). Tester anulował obie akcje; HP nie
+wzrosło, PE niezużyte. Nie zalicza się tej próby jako leczenia. Po odczekaniu
+Eve targetowalna/dystans283 przy41884. Ponowne Use P.E.→Heal2→Aya,
+druga akcja strzał: przy42616 HP130 (72+60 i obrażenia),ammo15,
+Eve1000378HP. Kolejne trzy Double Action/two single shots obniżają
+oryginalne specjalne HP poniżej progu zakończenia scenariusza.
+
+Przy45132 M089/story272,enemy0,battle12,HP61/181,dialog64/state2,
+menu null; obraz końcowej rozmowy obejrzany. Siedem zużytych nabojów
+16→9; cały4096B bufor wyposażenia zmienia tylko offset426. Wszystkie
+sloty ekwipunku identyczne z wejściem, bez zużycia Revive/przedmiotów
+leczących i bez zmiany M8000/B Jacket1. Oryginalna gra, bez zmian RAM/RNG.
+
+/tmp/pe-ex-m089-win-H-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON/VRAM identyczny z live; H bajtowo i hash bez zmian. Artefakty
+/tmp/pe-ex-m089-win-H-v1-{seed.json,checkpoint,proof/proof.json}, obraz
+/tmp/pe-ex-m089-win-H-v1.png. SDK/SDL bez instrumentacji. Zgodność
+obrazu/audio z PS1 nadal nieudowodniona. Kod produkcyjny bez zmian.
+Następne: oryginalne sceny po walce, nocleg i zapis przejścia do Day3.
+
+
 ### EX — powrót przez M086, powóz M088 i wejście do Eve/M089
 
 Po Save I zwykły pad wraca z telefonu na wschód M087→M086. Zachodni

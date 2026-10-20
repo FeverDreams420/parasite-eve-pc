@@ -3,6 +3,36 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — Medicine3, Research Kennel i wejście M153
+
+Poprzednia tura była postępem:M152,commit260a7af42. Sesja87367 ponownie
+żywa. Pierwsze podejście do skrzynki minęło cel po zmianie kamery;
+po pomiarze ruchu poprawka do około[745,-690],kierunek+X,Cross odbiera
+Medicine3/8 do22,panel55 przy22546/22786. Items→Use zwiększaHP50→230,
+slot22→0;23686 pole. Nie zmieniono RAM/save ani parametrów leczenia.
+
+Nav po istniejącej siatce zatrzymuje się przy[273,761];korektaDown30,
+Left90 uruchamia86/87. Pierwsze próby panelu poza właściwym miejscem
+nie zmieniają flag. Po dalszymLeft12 iUp4,Cross otwiera osłonę:
+26622 global65=801243119 (bit134217728). Left4,Cross uruchamia przełącznik:
+26946 global66=956 (bit128),oryginalne odblokowanie wyjścia.
+Right200(run),Up68(run),neutral300→27514 M153/a80251c8,story496,
+HP230/283,menu null,lock0,enemy0. WalkiM153 jeszcze nie uruchomiono.
+
+/tmp/pe-ex-m153-entry-B2-v1-verify.py PASS: pełna trasa cold B2 w obu
+profilach exit0,cały JSON/VRAM identyczny między profilami i live.
+Pełne50 slotów/4096B rekordów względem B2:19:0→16 (łupM152),22 ponownie0
+po Medicine3,rekordy tylko426:4→14. Wszystkie zmienne:
+1:998→152,65:667025391→801243119,66:572→956,67:16527→18575,
+74:494→496,82:5460→21844;pozostałe bez zmian. Asercje obejmująMedicine3
+w22 i jego zużycie/heal230,osłonę/przełącznik, M153 i poprzednie starcie.
+B2/kopie8192B niezmienione. Artefakty
+/tmp/pe-ex-m153-entry-B2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ i nowych plików repo;SDK/SDL nieinstrumentowane,
+brak oracle PS1;/tmp nie zastępuje trwałych CTest. B2 ostatni trwały zapis;
+dalszy szpital i pełny port pozostają nieukończone.
+
+
 ### EX — M152 wygrane, dodatkowy cel i przeładowanie
 
 Poprzednia tura była postępem:13F/M152,commitc2070d0c6. Sesja87367

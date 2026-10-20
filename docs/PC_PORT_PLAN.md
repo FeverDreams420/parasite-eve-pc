@@ -2,6 +2,74 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### E19: źródło pocisków i pierwszy zweryfikowany unik
+
+/tmp/pe-e19-ranged-hit-v1-proof/proof.json: read-only watchpoint wskazuje
+SceneE19_HomingParticleCallback. Przy74090 flaga trafienia z lecącego
+pocisku(state1/timer18);74092 HP435→309. Przy74170 flaga z pocisku
+na ziemi(state2/timer19);74172 HP309→225. Oba pochodzą z main2:31,
+tryb11, power205/category0/type0. To odrębne trafienia od wcześniejszego
+kontaktu trybów7/9. Pełny końcowy JSON/VRAM przy74177 zgodny między
+obserwacją a cold normal/SAN bez debuggera; JSON również zgodny z V7.
+Źródłowa M i prywatne karty bez zmian, sesja16345 quit0; debugger odłączony,
+obserwowany PID30381 zakończony. Brak dowodu błędu mechaniki tych trafień.
+
+Zamiast dalszego zgadywania test /tmp/pe-e19-homing-dodge-v1.py porównuje
+osiem kierunków biegu, każdy od tego samego autentycznego Continue M:
+przedział73997→74317, bez menu lub edycji pamięci/zapisu. Wyniki HP:
+Up435, Right309, Down267, Left225, UpRight309, DownRight225,
+UpLeft435, DownLeft267. Każdy exit0 i niezmienione M/karty.
+/tmp/pe-e19-homing-dodge-up-v1-proof/proof.json potwierdza wybrany Up
+(button8208) także pełnym JSON/VRAM normal/SAN. Aya zachowuje435HP
+zamiast225; main1001970/secondary1300. Nie jest to zwycięstwo E19.
+
+V8 próbujący skracać dystans do emitera zginął przy75521/main1001868;
+sesja29853 quit0. V9 nie wystartował z powodu błędnego parsera flagi
+--headless w zewnętrznym testerze (exit1, bez postępu gry); poprawiony
+V10 poprawnie odtworzył unik do74317/435HP. Dalsza elipsa V10 dopuściła
+chwyt do1HP; po zwykłym leczeniu/strzałach checkpoint77325/24HP,
+main1001562, bez zwycięstwa. V10 sprawdzony tylko normalnie,
+sesja46602 quit0. Artefakty wszystkich prób zachowane, bez zmian źródeł gry.
+/tmp/pe-e19-grab-dodge-v1.py porównał osiem kierunków od74317 do74637.
+Wyniki HP: Up281, Right281, Down1, Left365, UpRight281, DownRight281,
+UpLeft246, DownLeft330. Wszystkie exit0 i niezmienione M/karty.
+Najlepszy z badanych wariantów to Left8320: traci70HP, ale nie kończy
+z HP1; nadal main1001970/secondary1300. To test skończonego zestawu
+kierunków, nie dowód optymalnego uniku. /tmp/pe-e19-grab-dodge-left-v1-proof/proof.json potwierdza również
+ten drugi fragment pełnym JSON/VRAM normal/SAN i zgodnością z próbą
+porównawczą, bez sanitizer/opcode, M i prywatne karty bez zmian.
+Końcowy powtarzalny checkpoint74637 ma365HP i main1001970/secondary1300;
+pozostaje do dokończenia walka, nie należy podstawiać wcześniejszego
+checkpointu77325/24HP z porażkowej strategii V10. Wszystkie opisane sesje
+live i procesy porównawcze są zakończone, dalszą próbę zacząć od tego
+zweryfikowanego inputu, bez edycji stanu gry.
+
+### E19: nieudane próby V5–V7 i dokładniejszy zapis sterowania
+
+V5 na poprawionym kandydacie zginął przy77301, main1001664;
+leczenie Heal1+strzał nie wystarczyło. Przy zachodniej ścianie tester
+odwracał kierunek, a potem zbliżał się do miejsca skoku bossa.
+Sesja88526 zamknięta quit0, źródłowa M i prywatna karta bez zmian.
+
+V6 od autentycznego replayu do73781 stosuje stałą elipsę i oryginalne
+Haste, bez zmian gry. Dotarł do77549, ale zginął; main1001562,
+secondary1300. /tmp/pe-e19-distance-policy-v6-death-proof/proof.json:
+cały końcowy JSON i VRAM live/normal/SAN identyczne na kandydacie
+pe-e19-blast-shift-v1, oba cold replaye exit0 bez sanitizer/opcode,
+M i prywatne karty bez zmian. To powtarzalna porażka, nie zwycięstwo.
+Sesja50942 zamknięta quit0. Haste nie okazało się wystarczającą strategią.
+
+V7 bez Haste skraca naciśnięcia menu do4+4 klatek i zapisuje pełny
+JSON każdego kroku: /tmp/pe-e19-distance-policy-v7-live/states.jsonl.
+Dwie osobne akcje strzału poprawnie zmniejszyły main o204HP.
+Wielokrotny strzał nie jest traktowany jako ulepszenie: kampania nadal
+używa single-shot M8000 i Double Action. Próba zginęła przy77045,
+main1001562; sesja54867 quit0, M/karty bez zmian. V7 na tym etapie
+sprawdzony tylko normalnie. Ruch odpowiada kierunkom pada; trafienia
+w trybach10/11 występują również daleko od głównego aktora, więc
+wcześniejsza diagnoza kontaktu z prób69938/70000 nie wyjaśnia ich.
+Potrzebna osobna obserwacja źródła tych trafień, bez zmiany mechaniki.
+
 ### E19 Blast: naprawa rzeczywistego UB wykrytego przez dłuższy replay
 
 Pierwsze odtworzenie checkpointu V4 do76581 nie przeszło SAN:
@@ -37,8 +105,8 @@ quit0. Tester V5 używa pe-e19-blast-shift-v1-game, odtwarza ten sam
 checkpoint76581, poprawia jedynie własny próg wyboru leczenia PE>=60
 (zamiast100); nie zmienia gry. /tmp/pe-e19-distance-policy-v5.py,
 prywatne karty i args w *-v5-live, komendy run N/quit. Sesja88526
-potwierdziła start76581/75HP na poprawionym buildzie; przed użyciem
-ponownie sprawdzić uchwyt. Do dalszej próby
+potwierdziła start76581/75HP na poprawionym buildzie; późniejszą porażkę
+i zamknięcie opisano powyżej. Do dalszej próby
 pozostaje1664HP głównego ciała, drugie nadal1300; brak dowodu pełnego finału.
 
 ### E19: źródła trafień, sterowanie po stanie i ponad połowa HP bossa

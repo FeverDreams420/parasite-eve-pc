@@ -1,5 +1,37 @@
 # Plan implementacji pełnego portu Parasite Eve na PC
 
+## Aktualny potwierdzony stan — 21 października 2026
+
+### EX: bez ponownej walki w M154 → klucz → okręt/FMV15 → dach M156
+
+Kontynuacja zwykłego journalu C2 od29780/story500 obeszła meble górą.
+Odczyt geometrii LLDB był tylko do odczytu, z detach. Pad prowadził przez
+okolice[1180,-1140],[960,-1800],[700,-2020],[400,-2140],[220,-2120]
+do[-190.61,-782.68] przy31504; nie wyłączano kolizji. Cały odcinek
+29780–48506 ma zero przeciwników i283HP (poza sceną okrętu bez aktora
+Aya). To skuteczna alternatywa dla dawnych tras H z ponownym spotkaniem.
+
+Interakcja drzwi:31792 dialog134,32092 slot19=0, klucz218 zużyty.
+32782 okręt a80470c8/story502; dialogi uruchomiły FMV15 przy34042.
+Wait6000 bez pada35182–41182 pozwolił filmowi zakończyć się naturalnie:
+41182 M155/a80252c8/story504/video_state0. Panel po prawej stronie
+kabiny otwiera dialog118 przy47186. Potwierdzenie i wyjście prowadzą
+48506 doM156/a8025348,283/283HP,menuNULL/lock0,zero przeciwników.
+Magazynek M8000 nadal2; rekordy sprzętu niezmienione.
+
+Świeże cold replaye normal/SAN exit0, bez diagnostyki sanitizerów lub
+niepowiązanych opcode. Całe JSON i1MiB VRAM równe między profilami
+oraz zamrożonym live48506. Weryfikator sprawdza cały ekwipunek i wszystkie
+zmienne: względem coldC2 slot19:16→0, zmienne1:998→155,
+65:801243119→1874984943,66:1020→2044,67:18575→18655,74:496→504.
+Pozostałe bez zmian. Źródłowe C2 i prywatne kopie bajtowo niezmienione.
+Dowód /tmp/pe-ex-hospital-roof-C2-v1-proof/proof.json; pełny journal
+/tmp/pe-ex-hospital-roof-C2-v1-seed.json, checkpoint obok. Nadal ten sam
+kandydat pe-video-clock-v1, bez zmian źródeł gry/PsyZ, RAM lub payloadów
+zapisów. SAN nie obejmuje archiwów SDK/SDL; brak niezależnego oracle PS1.
+Końcowa zgodność VRAM nie dowodzi zgodności wszystkich klatek FMV/audio.
+Artefakty /tmp są tymczasowe; walka na dachu z tej gałęzi jeszcze otwarta.
+
 ## Aktualny potwierdzony stan — 20 października 2026
 
 ### EX: Continue C2 → pełny ekwipunek → Elevator Key, story500

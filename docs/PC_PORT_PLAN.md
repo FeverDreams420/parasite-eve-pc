@@ -4,6 +4,20 @@
 
 ### Przygotowanie broni: Tool z M199 i bonusy M500→M8000
 
+Aktualizacja: oryginalne Heal3 podniosło HP318→598. Zwykłym padem
+wrócono M199→M198→M197→M340 bez kolejnej walki i zapisano ulepszony
+ekwipunek w nowym slocie I (indeks8), zachowując G. Przy32119 pole
+bez blokady/menu, Medicine4/3 i CureM zachowane. Źródło:
+/tmp/pe-m340-upgraded-save-I-v1-source/BASLUS-006620000000I,
+8192B, SHA256 2d2bbe4a1b30de66b3c1c18d97a95bc18df57dfbe71d4190af598ccddface513.
+/tmp/pe-m340-upgraded-save-I-v1-proof/proof.json: cold SAN od G,
+exit0 bez raportów, pełny JSON/VRAM i nowy plik I identyczne z normalnym.
+/tmp/pe-m340-continue-I-v1-proof.json: zimne Continue wyłącznie z I,
+normal/SAN exit0, pełny JSON/VRAM zgodne, HP598, ekwipunek i etap fabuły
+zachowane, źródło I bez zmian. Nadal ten sam kandydat v4, bez zmian źródeł.
+W doborze broni utrzymujemy pojedynczy strzał i Double/Triple Action;
+wielostrzał dzieli obrażenia i zwiększa zużycie amunicji.
+
 Gałąź H zakończyła walkę porażką przy56465, gdy część5 miała przed
 ostatnim atakiem1000519HP. /tmp/pe-m273-H-defeat-v3-proof.json:
 cold SAN exit0 bez raportów, pełny JSON/VRAM identyczne z normalnym,

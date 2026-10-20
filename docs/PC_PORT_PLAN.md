@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M188: korpus poniżej progu, Aya przeżywa160HP
+
+Na pe-control-aim-v1 nowa próba z bonusem pancerza89,po zwykłym Cure-P
+usuwa zatrucie. Pomiar położenia potwierdza tę kamerę:Up zwiększaX,
+Right zmniejszaZ. Ruchy ukośne dobierano z aim_position i aktualnej Ayi.
+30408 korpus1000259,Aya203HP. Pierwsza dalsza próba przekracza próg,
+ale31044 kończy GameOver;nie jest zwycięstwem.
+
+Nowy cold prefix do30408 (/tmp/pe-ex-m188-aim-heal-F2-v1-live),bez RAM
+lub teleportu. Zwykłe Heal2 + strzał iRight/run300 daje31112 Aya263HP,
+korpus1000171. Dwa dalsze strzały na reticle1585 pudłują. Podejście i
+ponowienie przy31606/reticle1117 daje31886 korpus999995,Aya160HP,
+ammo12.32086 oryginalne menu root otwarte przy pełnym ATB,Darkness,
+cztery aktory bossa nadal obecne. Nie potwierdzono jeszcze drugiej fazy
+ani wygranej. Ten punkt umożliwia dalszą walkę żywej Ayi.
+
+Dwa świeże pełne odtworzenia32086 od F2 normal/SAN exit0,bez diagnostyki
+sanitizer/opcode. Pełny JSON i1MiB VRAM identyczne profilom i zamrożonemu
+live. Wszystkie sloty/4096B rekordów i zmienne sprawdzone względem F2:
+slot8:13→0,rekord14:67→89,426:7→12;zmienne1=187,11=74,
+20=1049957,78=129,reszta bez zmian. BP36 potwierdzone polem JSON.
+Źródłowe i prywatne F2 identyczne bajtowo. Dowód
+/tmp/pe-ex-m188-threshold-F2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ/RAM/save payload w tym odcinku; SDK/SDL
+nieinstrumentowane,brak oraclePS1,/tmp nietrwałe. Następne:leczenie/
+Cure-D z otwartego menu i dalszy skrypt po przekroczeniu progu.
+
+
 ### Raport headless: rzeczywisty punkt celowania i BP
 
 Istniejący src/main/boot/init.c rozszerzony na miejscu,bez nowych plików

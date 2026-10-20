@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — odprawa Bakera i podróż do muzeum po Continue C
+
+Autentyczne zimne Continue C, dalszy zwykły pad w M042, obejście mebli
+i drzwi do M041. Wejście uruchamia77; po zamknięciu dialogu skrypt wymaga
+podejścia do biurka, samo czekanie/Cross nie rozpoczyna odprawy. Podejście
+uruchamia78..85, przejście story164→166 i M047/konferencję88..106.
+Po106 story184, powrót do M041/dialogi107..122,125, potem M042.
+Nie deklaruje się aktywnego pokazania stron86/87/123/124 ani wariantów
+nieobecnych w tej gałęzi. Przy35502 M042/story184,72/92HP,menu null,
+move_lock2, ekwipunek w całości zgodny z C. /tmp/pe-ex-baker-briefing-v1-verify.py
+wykonany PASS: zimne normal/SAN exit0, pełny JSON/VRAM zgodny z live,
+wyłącznie C na karcie, bajtowo bez zmian, brak sanitizer/opcode/assertion.
+Artefakty: /tmp/pe-ex-baker-briefing-v1-{seed.json,checkpoint,proof/proof.json}.
+
+Dalej oryginalne drzwi M042→M043→M046→mapa NYC. Muzeum jest teraz
+aktywnym celem (strona3). Pierwszy Right wybiera Museum; kolejny Carnegie,
+więc wrócono Left do Museum. Potwierdzenie uruchamia scenę przejazdu z
+Danielem, dialog15..25 o doktorze Klampie, story184→192 i powrót mapy.
+Ponowne potwierdzenie Museum prowadzi do zewnętrznej sceny M191
+(0xa80290c8),story200; dialogi24..27 przy wejściu zamknięte. Przy47360
+M191/story200,72/92HP,menu null,move_lock2. To przyjazd i rozmowa na
+zewnątrz, nie dowód wnętrza muzeum ani wizyty u Klampa.
+/tmp/pe-ex-museum-arrival-v1-verify.py wykonany PASS: zimne normal/SAN
+exit0, pełny JSON/VRAM zgodny z live, ekwipunek identyczny z C,
+jedyny C bajtowo bez zmian i zgodny z hashem dowodu zapisu, brak
+sanitizer/opcode/assertion. Artefakty:
+/tmp/pe-ex-museum-arrival-v1-{seed.json,checkpoint,proof/proof.json}.
+SDK/SDL bez instrumentacji. Kod gry/PsyZ bez zmian. Pełny Day2/EX,
+wnętrze muzeum i porównanie obrazu/audio z PS1 pozostają otwarte.
+
 ### EX — skuteczny powrót z Chryslera, autentyczny Save C i zimne Continue
 
 Od udanej walki91565 w nowej gałęzi użyto obserwowanego marszu po8

@@ -15486,6 +15486,7 @@ static int original_native_control(const char *executable)
         int wrote=input && SDL_WriteIO(input,command,length)==length;if(input)SDL_CloseIO(input);
         int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);SDL_DestroyProcess(child);
         int expected=trial<6?0:2;int ok=wrote && output && status==expected && strstr(output,"\"event\":\"control\",\"vblanks\":2") && strstr(output,"\"control\":{");
+        if(output && !strstr(output,"\"bonus_points\":"))ok=0;
         if(output && (strstr(output,"runtime error:") || strstr(output,"AddressSanitizer") || strstr(output,"Unbound original")))ok=0;
         if(trial==0 && (!strstr(output,"\"event\":\"control\",\"vblanks\":4") || !strstr(output,"\"event\":\"frame_limit\",\"vblanks\":8")))ok=0;
         if(trial>=3 && trial<6 && !strstr(output,"\"event\":\"control\",\"vblanks\":4"))ok=0;

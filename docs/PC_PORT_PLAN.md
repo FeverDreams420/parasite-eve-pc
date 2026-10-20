@@ -2,6 +2,45 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### Raport headless: rzeczywisty punkt celowania i BP
+
+Istniejący src/main/boot/init.c rozszerzony na miejscu,bez nowych plików
+źródłowych:control.bonus_points oraz targets[].aim_position=[x,y,z]
+z oryginalnego renderObject.target_x/y/z (całkowite jednostki świata,
+nie16.16). Battle_BuildTargetList i Battle_CalcDistToPlayer używają właśnie
+tego punktu zamiast początku aktora; ma to znaczenie dla segmentów bossa.
+Raport tylko odczytuje pamięć. Istniejące distance/angle nadal są wartościami
+zapamiętanej listy celów,nie muszą odpowiadać aktualnemu punktowi po animacji;
+sterowanie ma używać aktualnego aim_position i pozycji Ayi. Bez zmian walki.
+Istniejący test native-control wymaga pola BP we wszystkich15 przypadkach
+advance/quit/EOF/błędnego inputu. Nie przeniesiono żadnej funkcji.
+
+Nowy kandydat /tmp/pe-control-aim-v1:438 świeżych obiektów219/profil,
+rehash zależności/archiwów/exe,70/70 regresji oraz12/12 wybranych CTest
+na profil,bez diagnostyki sanitizer. Wszystkie wcześniejsze pola replay
+head2/phone/medicine i VRAM równe referencjom; nowe pola ignorowane tylko
+przy porównaniu ze starszym schematem. Pełny JSON normal/SAN nadal równy.
+SDK/SDL to te same zamrożone nieinstrumentowane archiwa,PsyZ a7ad398;
+wcześniejsze znane błędy pełnego SDK nie są rozwiązane przez ten test.
+
+Dwa świeże M188/cold F2→30336 normal/SAN:pełny JSON z nowymi polami
+zgodny między profilami,BP36. Aim[-1164,-850,-7014] różni się od początku
+aktora. Po usunięciu tylko nowych pól cały JSON równy poprzedniemu
+kandydatowi; cały1MiB VRAM równy poprzedniemu i między profilami.
+Prywatne i źródłowy F2 niezmienione. Dowody /tmp/pe-control-aim-v1-
+{build-proof.json,verification.json,effects-proof.json,m188-proof/proof.json,
+installed-build-proof.json}; runner/verifier obok. Dowody /tmp nietrwałe,
+brak oraclePS1. M188 nadal niepokonane w tej gałęzi EX.
+
+Lokalne build/parasite-eve-pc i build/test-original-actor-animation
+zastąpione zweryfikowanymi normal; poprzednie kopie zachowane w /tmp.
+Game SHA256 5b8bd84b4fe72a4cdc8860b4714da641c02e475840e234474147ccb93f54fc14.
+Fixture SHA256 7255e2ea2d46c31f73cef239ca8e4c5fbd4d58f42b9bc02c989e7de134aa60ff.
+Następne przejście ma używać nowego kandydata i bieżącego punktu celowania;
+wszystkie wcześniejsze dowody pe-video-clock-v1 pozostają dowodami tamtego
+kandydata,nie całej kampanii nowego builda.
+
+
 ### EX M188 z obroną132: Cure-P i reload, nadal bez zwycięstwa
 
 Kontynuacja28100 z bonusem pancerza89 uruchamia28436 spotkanie.

@@ -170,15 +170,21 @@ static void Boot_PollHost(void) {
             (unsigned)g_BattleRemainingActions,(unsigned)g_BattleActionQueueCount);
         const Combatant *player=(g_GameStateFlags&2) && g_PlayerEntity?(const Combatant *)g_PlayerEntity->state:NULL;
         if(player && player->action)printf("%d",(int)player->action->range);else printf("null");
-        printf(",\"targets\":[");
+        printf(",\"bonus_points\":%u,\"targets\":[",(unsigned)g_AyaSaveState.bonus_points);
         int count=(g_GameStateFlags&2)?g_BattleTargetCount:0;
         if(count<0)count=0;if(count>BATTLE_TARGET_CAPACITY)count=BATTLE_TARGET_CAPACITY;
         for(int i=0;i<count;++i){
             const FieldActor *target=(const FieldActor *)g_BattleTargetList[i].actor,*found=NULL;
             for(const FieldActor *actor=g_FieldActorListHead;actor;actor=actor->next)if(actor==target){found=actor;break;}
             if(i)printf(",");
-            if(found)printf("{\"type\":%u,\"sub\":%u,\"distance\":%d,\"angle\":%d}",
-                found->type_id,found->sub_id,g_BattleTargetList[i].dist,g_BattleTargetList[i].angle);
+            if(found){
+                const BattleEntity *aim=g_BattleTargetList[i].actor;
+                /* The original targeting code uses this rendered aim point,
+                 * which can differ from the actor origin for articulated bosses. */
+                printf("{\"type\":%u,\"sub\":%u,\"distance\":%d,\"angle\":%d,\"aim_position\":[%d,%d,%d]}",
+                    found->type_id,found->sub_id,g_BattleTargetList[i].dist,g_BattleTargetList[i].angle,
+                    aim->renderObject.target_x,aim->renderObject.target_y,aim->renderObject.target_z);
+            }
             else printf("null");
         }
         printf("]}");

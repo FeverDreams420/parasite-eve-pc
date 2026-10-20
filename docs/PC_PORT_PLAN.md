@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### EX — wyjaśnienie flagi ślizgania po krawędzi
+
+Poprzednie move_lock8 nie jest samodzielnym dowodem blokady inputu.
+W istniejącym field/actor_collision.c Entity_SlideOnRamp ustawia bit8,
+a Entity_UpdateAndRender obsługuje go jako poprzednią krawędź ślizgu
+oraz czyści przy braku ruchu. Zwykły Left80 przesuwa Ayę
+[634,0,−7824]→[447,0,−7800], dalszy Left500→[−502,0,−7499].
+Up200 i zwolnienie40 kończą przy41232,[−611,0,−7011],move_lock0.
+Nie zmieniano kolizji ani sterowania, RAM lub save’a.
+
+/tmp/pe-ex-park-slide-v1-verify.py wykonany PASS: normal/SAN exit0,
+pełny JSON identyczny ze stanem live41232, VRAM obu replayów identyczny
+(między profilami; historycznego live VRAM41232 nie zachowano).
+HP92/92, cały ekwipunek zgodny z E, karta E i hash bez zmian.
+/tmp/pe-ex-park-slide-v1-{seed.json,live-state.json,proof/proof.json}.
+SDK/SDL bez instrumentacji; nie jest to dowód obrazu PS1 ani ukończenia
+parku. Dalsze próby dojścia trafiają na krawędź przy[−3121,0,−4030];
+DownRight200 odsuwa Ayę do[−2734,0,−4341],move_lock0. Trasa wymaga
+obejścia przeszkody, nie pominięcia oryginalnej kolizji.
+
 ### EX — obserwowany marsz po pierwszej alejce
 
 Kontynuacja E po wejściu do M374: Up500, następne Up zatrzymane

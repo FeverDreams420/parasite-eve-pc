@@ -2,6 +2,57 @@
 
 ## Aktualny potwierdzony stan — 20 października 2026
 
+### E08: oryginalne dane grafiki i współdzielone pola; naprawione dwa offsety PS1
+
+W istniejącym e08.c odtworzono46 rekordów stałych i pamięci roboczej:
+sprite'y, kolory, seedy, skale, rampy, bufory geometrii, parametry pierścieni
+i kończyn; model jest pełnym natywnym pointerem początkowo NULL.
+Historia922b7188a zachowała pełne adresy65 aliasów, których późniejsza
+lista symboli już nie zawierała. Pola wskazują kanoniczne rekordy zamiast
+osobnych zmiennych. Dwa originy X/Z współdzielą ostatnie4 bajty sprite'ów
+przez16-bajtową unię C, tak jak oryginalne adresy9956c/9957c. Signed depth
+i volatile clut zachowują typ dostępu. Żadnej funkcji nie przeniesiono.
+InitRingSprites/InitRingEffect używają rzeczywistych tablic rekordów;
+usunięto odzyskiwanie początku struktury przez stałe przesunięcie12 bajtów.
+
+/tmp/pe-e08-graphics-v4-proof.json: pełne początkowe bajty46 rekordów
+zgodne z M418 (native pointery przeliczone),65 offsetów aliasów zgodnych,
+normal/SAN identyczne; test mutacji potwierdza wspólne pola origin/depth.
+Całe oba istniejące pliki E08 linkują się w helperze ze świeżymi obiektami
+silnika; brak niepodłączonych symboli SceneE08. Nie jest to jeszcze link gry.
+/tmp/pe-e08-rings-v2-proof.json: oba oryginalne inicjalizatory80190f0c
+oraz801923d8 i rzeczywisty builder geometrii, bez hooków. Pełne stany
+16/24B z canary, wszystkie5 znormalizowanych24B rekordów i2304 bajty
+buforów zgodne z MIPS oraz normal/SAN. Rysowanie nie jest objęte.
+Aktualne cztery skrypty/12 list/cztery rozmiary ponownie zweryfikowano
+w skompilowanych obiektach: /tmp/pe-e08-graphics-v4-data-proof.json.
+
+Naprawiono też dwa pozostałe dostępy zależne od PS1: InitFadeSlots pomija
+natywny pointer, a nie4 bajty; InitLayeredSpriteContext zeruje hitTimer/
+hitRequest przez pola. Dawne offsety2a/2c na64-bit modyfikowały asset
+oraz reload, pozostawiając timery niezainicjalizowane. Test na rzeczywistym
+inicjalizatorze sprawdza asset=-1/reload30/timer0/request0, kopię macierzy
+i pointer właściciela, następnie poprawny origin czterech FadeSlots.
+Używa poprawnego pustego kontenera assetów i rzeczywistych lookupów,
+bez hooków. Stary obiekt graphics-v2 odpada na tej samej asercji,
+nowy v4 przechodzi normal/SAN; /tmp/pe-e08-context-regression-v1-proof.json.
+Pierwszy helper nie zawierał fieldfx_state.h, kolejny podał niewłaściwy
+NULL zamiast kontenera i zatrzymał się w asset lookup. Przebiegi zachowane,
+opis /tmp/pe-e08-graphics-v4-helper-failures.json; nie zmieniano lookupów
+produkcji w celu obejścia wadliwego stanu testera.
+
+Świeży /tmp/pe-e08-graphics-v4:216 normal+216 SAN obiektów zlinkowanej
+gry/fixture, rehash całości,70/70 regresji exit0 i8/8 CTestów (siedem
+assetowych oraz M430). E08 kompilowany osobno w obu profilach bez
+diagnostyk i z błędami typów jako errors. Helpery linkują te same świeże
+obiekty silnika; PsyZ/SDL nadal nieinstrumentowane. CTest aktora używa
+świeżej fixture, pozostałe niezmienione binarki testowe z build. Artefakty
+pośrednich graphics-v1/v2/v3 zachowane; końcowe dowody wskazują v4.
+E08 nadal poza linkiem gry. Pozostają cztery klasy PM, reset/reload,
+bindingi loadera i rzeczywiste wykonanie wszystkich skryptów z assetami,
+obrazy/audio i kampania M418. Dane, inicjalizatory i poprawny link helpera
+nie dowodzą całego działania Chrysler Building. Build użytkownika nadal v3.
+
 ### E08: komplet czterech skryptów i dwunastu list w istniejącym e08.c
 
 Z pełnego M418 odtworzono cztery oryginalne skrypty,12 list init/draw/update

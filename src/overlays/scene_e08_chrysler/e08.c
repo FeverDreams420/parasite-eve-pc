@@ -33,10 +33,10 @@
 #include "pe1/scene_ring_sprites.h"
 
 #include "../room_lib/room_lib.h"
-#include "e08_externs.h"
 #include "scene_e08.h"
 #include "scene_e08_modules.h"
 #include "scene_particle_slots.h"
+#include "e08_externs.h"
 
 typedef RenderMatrix SceneE08MatrixFields;
 
@@ -605,7 +605,7 @@ int SceneE08_InitFadeSlots(void *raw0, void *raw1, void *raw2) {
     void * unused1 = raw1;
     SceneEmitterSlots * slots = raw2;
     unsigned int i;
-    SceneActorPositionTail *origin = (SceneActorPositionTail *)((s32 *)FieldFx_GetScriptContext() + 1);
+    SceneActorPositionTail *origin = (SceneActorPositionTail *)((char *)FieldFx_GetScriptContext() + sizeof(void *));
 
     slots->activeSlots = 4;
     for (i = 0; i < 4; ++i) {
@@ -897,12 +897,11 @@ int SceneE08_InitRingSprites(void *raw0, void *raw1, void *raw2) {
     void * unused0 = raw0;
     void * unused1 = raw1;
     SceneRingSpritesState * effect = raw2;
-    u8 *mid = g_SceneE08RingSpritesRing0Mode;
     u8 *source;
     int width;
     FieldRingGeometry *base;
     int first;
-    base = (FieldRingGeometry *)(mid - 12);
+    base = &g_SceneE08RingSpritesRings[0];
     width = 128;
     first = 300;
     effect->size = first;
@@ -1485,14 +1484,13 @@ int SceneE08_InitRingEffect(void *raw0, void *raw1, void *raw2) {
     void * unused0 = raw0;
     void * unused1 = raw1;
     SceneE08RingEffectState * effect = raw2;
-    u8 *mid = (u8 *)&g_SceneE08RingEffectRing0Mode;
     u8 *source;
     FieldRingGeometry *ring;
-    FieldRingGeometry *record = (FieldRingGeometry *)((u8 *)&g_SceneE08RingEffectRing0Mode - PE1_OFFSETOF(FieldRingGeometry, mode));
+    FieldRingGeometry *record = &g_SceneE08RingEffectRings[0];
     int intensity = 0x80;
     int span;
 
-    ring = (FieldRingGeometry *)(mid - PE1_OFFSETOF(FieldRingGeometry, mode));
+    ring = &g_SceneE08RingEffectRings[0];
     effect->rotation[0] = 0;
     effect->rotation[1] = 0;
     effect->rotation[2] = 0;
@@ -2201,8 +2199,8 @@ int SceneE08_InitLayeredSpriteContext(void *raw0, void *raw1, void *raw2) {
     two = 2;
     /* hitTimer and hitRequest: as field stores GCC would sink them past
      * the global stores below. */
-    *(s16 *)((char *)state + 0x2A) = 0;
-    *(s16 *)((char *)state + 0x2C) = 0;
+    state->hitTimer = 0;
+    state->hitRequest = 0;
     g_SceneE08TrailGlowSpriteOffset = scratch;
     g_SceneE08TrailGlowFloorSprite.offset = -100;
     g_SceneE08TrailGlowFloorSprite.g = 16;
@@ -2690,7 +2688,7 @@ int SceneE08_DrawSpinningGlow(void *raw0, void *raw1, void *raw2) {
     vsrc.z = 0x1000;
     vdst = vsrc;
     ScaleMatrix(&buf, &vdst);
-    FieldFx_InterpolateColorRamp(&g_SceneE08SpinningGlowRamp, arg1->frame, (u8 *)&g_SceneE08SpinningGlowSprite);
+    FieldFx_InterpolateColorRamp(g_SceneE08SpinningGlowRamp, arg1->frame, (u8 *)&g_SceneE08SpinningGlowSprite);
     buf.t[0] = r->x;
     buf.t[1] = r->y;
     buf.t[2] = r->z;
@@ -3203,3 +3201,52 @@ u16 g_SceneE08FadeSpawnLayout[] = {
     602,
     0xffff
 };
+
+/* Original USA M418 graphics constants and shared mutable records. */
+FieldGlowSprite g_SceneE08GlowRingsSprite = {0,0,0,0,0,0,0,0,0,0,{0,0,0,0}};
+FieldGlowSprite g_SceneE08ParticleClusterSprite = {0,0,0,0,0,0,0,0,0,0,{0,0,0,0}};
+FieldGlowSprite g_SceneE08GlowSpritesSprite = {0,0,0,0,0,0,0,0,0,0,{0,0,0,0}};
+FieldGlowSprite g_SceneE08RingSpritesFlashSprite = {0,0,0,0,0,0,0,0,0,0,{0,0,0,0}};
+FieldGlowSprite g_SceneE08RingSpritesGlowSprite = {0,0,0,0,0,0,0,0,0,0,{0,0,0,0}};
+FieldGlowSprite g_SceneE08PlayerOrbPointSprite = {0,0,0,0,0,0,0,0,0,0,{0,0,0,0}};
+FieldGlowSprite g_SceneE08GlowModelHaloSprite = {0,0,0,0,0,0,0,0,0,0,{0,96,0,46}};
+FieldGlowSprite g_SceneE08LayeredUnusedSprite = {0,0,0,0,0,0,0,0,0,0,{0,0,0,0}};
+FieldGlowSprite g_SceneE08TrailGlowFloorSprite = {0,0,0,0,0,0,0,0,0,0,{0,0,0,0}};
+FieldGlowSprite g_SceneE08ArmGlowSprite = {0,0,0,0,0,0,0,0,0,0,{0,0,0,0}};
+FieldGlowSprite g_SceneE08GlowModelUnusedSpriteRecord = {0};
+FieldGlowSprite g_SceneE08CentreGlowSpriteRecord = {0};
+FieldGlowSprite g_SceneE08TrailGlowSpriteRecord = {0};
+SceneE08PositionedSprite g_SceneE08LayeredSpriteStorage = {0};
+SceneE08PositionedSprite g_SceneE08SpinningGlowStorage = {0};
+SceneE08LayeredColors g_SceneE08LayeredUnusedColors = {0};
+RoomFxSeed8 g_SceneE08GlowRingsRotationSeed = {.bytes={0,0,0,0,0,0,0,0}};
+GteRotation g_SceneE08PlayerOrbRotationSeed = {0,0,0,0};
+GteRotation g_SceneE08RingSpritesRotation = {1024,0,0,0};
+RenderColor g_SceneE08PlayerOrbTrailBColor = {16,16,16,0};
+RenderColor g_SceneE08ArmGlowHeadColor = {32,64,128,0};
+RenderColor g_SceneE08ArmGlowTailColor = {64,32,128,0};
+RenderColor g_SceneE08ParticleSlotColorInit = {128,128,128,0};
+GteShortVector g_SceneE08ParticleSlotOffsetInit = {0,0,0,0};
+GteVector g_SceneE08PlayerOrbPointScale = {400,400,400,0};
+GteVector g_SceneE08RingSpritesFlashScale = {1800,1800,1800,0};
+GteVector g_SceneE08RingSpritesGlowScale = {2400,2400,2400,0};
+RoomFxVec4 g_SceneE08LayeredSpriteScale = {1224,1224,1224,0};
+SceneE08FourBytes g_SceneE08ScreenFadeColor = {{255,255,255,0}};
+u8 g_SceneE08GlowRingsGlowRamp[16] = {128,200,64,10,200,200,64,10,100,255,32,10,0,0,0,255};
+u8 g_SceneE08GlowRingsRingRamp[16] = {64,200,64,10,200,100,64,10,200,255,32,10,0,0,0,255};
+u8 g_SceneE08PlayerOrbRamp[40] = {255,255,0,14,255,255,128,8,80,80,255,30,0,0,0,200,0,0,0,255,127,127,0,14,127,127,64,8,40,40,127,30,0,0,0,100,0,0,0,255};
+u8 g_SceneE08RadialRibbonsRamp[20] = {136,32,255,7,64,128,160,4,40,40,64,10,0,0,0,200,0,0,0,255};
+u8 g_SceneE08SpiralRibbonsRamp[40] = {136,32,255,8,64,178,160,8,40,40,128,30,0,0,0,200,0,0,0,255,0,32,200,14,32,64,128,8,40,40,64,10,28,64,20,10,0,0,0,255};
+u8 g_SceneE08OrbitParticlesRamp[24] = {0,0,0,10,0,32,100,14,120,255,255,8,255,255,255,10,28,64,20,10,0,0,0,255};
+u8 g_SceneE08GlowModelRamp[24] = {0,0,50,10,0,50,100,14,150,100,200,8,255,255,255,255,28,64,20,10,0,0,0,255};
+u8 g_SceneE08LimbBeamsHeadRamp[20] = {64,128,255,1,64,128,255,10,240,160,128,10,0,0,128,10,0,0,0,255};
+u8 g_SceneE08LimbBeamsTailRamp[20] = {0,0,0,1,0,0,0,5,128,240,240,10,16,64,128,10,0,0,0,255};
+u8 g_SceneE08SpinningGlowRamp[16] = {50,64,0,14,100,90,0,10,64,64,64,255,0,0,0,255};
+u8 g_SceneE08RingSpritesSource[256] = {0};
+u8 g_SceneE08RingEffectSource[2048] = {0};
+s16 g_SceneE08LimbBeamUnusedAngles[12] = {0};
+u16 g_SceneE08LimbBeamAngles[10] = {0};
+SceneLimbBeamShape g_SceneE08LimbBeamOffsets[10] = {0};
+SceneRingShade g_SceneE08RingSpritesRings[2] = {0};
+FieldRingGeometry g_SceneE08RingEffectRings[3] = {0};
+char *g_SceneE08GlowModel = NULL;

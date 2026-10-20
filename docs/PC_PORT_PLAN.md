@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M188: aktywna walka i Heal2, bez zwycięstwa
+
+Od25986 Right240,Up96 uruchamia26522 spotkanie.26822 cztery aktory:
+korpus5:31/1000699HP oraz6:30/167,7:29/167,8:28/251. Wysoka wartość
+korpusu to rzeczywisty stan skryptu,nie zmodyfikowane HP. Po ATB dwie
+kolejki Double Action po dwa pojedyncze strzały:27486 korpus1000523,
+27962 korpus1000347,ammo0,Aya111HP. Próba Right w target selection
+nie zmienia dostępnego celu (korpus). Nie potwierdzono jeszcze drugiej fazy.
+Zwykłe PE/Heal2 iSquare zakończenie kolejki dają28634 HP171; kolejny
+atak28694 obniża do87HP. Walka trwa,cztery aktory,zero zwycięstwa.
+
+Dwa świeże pełne odtworzenia28694 od cold F2 normal/SAN exit0,
+bez diagnostyki sanitizer/opcode. Cały JSON i1MiB VRAM identyczne między
+profilami i zamrożonym live. Verifier sprawdza kolejne HP korpusu,
+Heal2→171HP,końcowe87HP/ammo0,cały ekwipunek/4096B rekordów i wszystkie
+zmienne. Względem wejścia25986 tylko rekord426:4→0,zmienne11:10→74,
+78:128→131. Źródłowy i prywatne F2 identyczne bajtowo.
+Dowód /tmp/pe-ex-m188-battle-F2-v1-{seed.json,checkpoint,proof/proof.json},
+runner/verifier obok. Bez zmian produkcji/PsyZ/RAM/save payload;
+ten sam pe-video-clock-v1. SDK/SDL nieinstrumentowane,brak oraclePS1,
+/tmp nietrwałe. Następne:dalsza walka lub lepsza zwykła strategia z F2;
+nie zmieniać mechaniki/statystyk w celu ułatwienia testu.
+
+
 ### EX: wynik M187, cztery Heal2 i pełne HP na wejściu M188
 
 Od21390 cztery Cross60/release240 zamykają EXP i loot do22590 pola.

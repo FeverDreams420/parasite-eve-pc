@@ -3,6 +3,32 @@
 ## Aktualny potwierdzony stan — 20 października 2026
 
 
+### EX — Continue B2, wybór13F, M150/M151 i wejście M152
+
+Poprzednia tura była postępem: Save/ContinueB2,commit46cb6457d. Nowa sesja
+/tmp/pe-ex-hospital-B2-nav-v1-live (exec87367) od świeżegoB2/12920.
+Z telefonu Down28(normal),Left105(run),Down52(run),Left30(run) prowadzą
+13375 do M127 bez walki. Przycisk windy przy[-270,-1235],Cross;
+przejście przez[~270,-1010] prowadzi13998 do M132. Przy panelu pierwsza
+próba kończy się przy[-225,-157.5], bez dialogu. DodatkoweLeft4(normal)
+iCross uruchamiają117 „Select Floor” przy14446;dwaDown wybierają13thFloor
+(rzeczywisty obraz obejrzany),Cross i jazda. Wyjście15630→M150/a8025048,
+story494→496,HP225/273. Poboczny widok M151/a80250c8 przy16089,
+powrót16653 doM150. Zbliżenie do drzwi i oryginalna animacja→M152/a8025148
+przy17010,pole/lock0,enemy0. WalkiM152 jeszcze nie uruchomiono.
+
+/tmp/pe-ex-13f-B2-v1-verify.py PASS: pełna trasa cold B2 w obu profilach
+exit0, cały JSON/VRAM identyczny między profilami i live. Całe inventory,
+50slotów/4096B rekordów,HP225/273 niezmienione. Wszystkie zmienne względem
+coldB2:1:998→150,66:572→828,74:494→496; pozostałe bez zmian.
+Asercje obejmują117,13F/M150,M151,powrót iM152. B2/kopie8192B niezmienione,
+SHA jak poprzednio. Artefakty
+/tmp/pe-ex-13f-B2-v1-{seed.json,checkpoint,proof/proof.json}.
+Bez zmian produkcji/PsyZ i nowych plików repo;SDK/SDL nieinstrumentowane,
+brak oracle PS1;dowody/tmp nie są trwałym CTest. B2 ostatni trwały zapis;
+dalsza walka i piętra szpitala oraz pełny port pozostają nieukończone.
+
+
 ### EX — powtórne lobby wygrane, autentyczny Save/Continue B2/story494
 
 Poprzednia tura była postępem:M149/494,commiteda6f71fc. Sesja72173

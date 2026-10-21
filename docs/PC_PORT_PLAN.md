@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX B3: ukończone piętro36, wejście na37
+
+Bez zmian kodu na pe-m392-bind-v1. Od91028:M30591640,M29292190,
+M30492690 (lewe wejście -1635,-187), Left145/Up250 daje code9/a8069448
+93385. M29694075, endpoint94795 M297/a80493c8,piętro37. Brak walk,
+HP455/671,BP2,menuNULL,lock0,zero wrogów,trzy klucze,sześć Medicine3.
+
+PASS `/tmp/pe-ex-chrysler-floor37-B3-v1-proof/proof.json`: zimne replaye tylko
+z autentycznego B3, normal/SAN exit0 bez raportów; cały JSON i1MiB VRAM
+zgodne również z obserwowanym przebiegiem. Pełny ekwipunek identyczny
+z91028; wszystkie zmienne poza4:36→37,18:3482→3480,78:47→236 identyczne.
+Źródłowy i prywatne B8192B niezmienione. Seed/checkpoint/runner/verifier obok.
+Read/detach układu37:selected3,count25,seed1140;
+`/tmp/pe-chrysler-floor37-table-B3-v1.json`, plan -route obok wymaga wykonania.
+Piętro37 dopiero rozpoczęte. Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane,
+brak oracle PS1. Pełny zakres portu pozostaje otwarty.
+
 ### EX B3: ukończone piętro35, wejście na36
 
 Bez zmian kodu na pe-m392-bind-v1. Z72742:M30673354,code10 73964/74604,

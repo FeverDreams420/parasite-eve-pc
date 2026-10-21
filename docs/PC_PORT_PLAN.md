@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: M232/M233 wygrane i wejście M234
+
+Bez zmian kodu, `pe-control-aim-v1`: M232 losuje dwa cele5:31/30 po279HP. Pojedyncze strzały w Double Action wygrywają241539 bez strat HP,452/573HP. Przejście M233 uruchamia447HP/def69 i335HP/def99. Dwa Heal3 i zwykłe strzały wygrywają249662,Aya385/573HP. Po nagrodach obejście na północ/zachód prowadzi do M234252567 (`a8043248`),menuNULL,move_lock0,brak przeciwników,story608,BP1100. Bez zmian RAM/RNG/save i balansu.
+
+Względem238943 pełny inventory zmienia wyłącznie rekord amunicji426:9→6; zmienne wyłącznie1=233,22=340,78=45. `/tmp/pe-ex-museum-m234-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live252567,pełne inventory/zmienne i pośrednie walki/HP sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Dalsza droga z M234 do telefonu i Museum/kampania/EX nadal otwarte.
+
+
 ### EX Museum: zwycięstwo M231, Detox i wejście M232
 
 Bez zmian kodu, `pe-control-aim-v1`: ruch M231 uruchamia cel4:31,545HP/def109 i raptora3:30,391HP/def65. Zwykłe podejścia,pojedyncze strzały w Double Action,trzy Heal3 i Detox wygrywają236673,Aya452/573HP. Detox usuwa truciznę:232687 flags&3=1,234037 flags&3=0. Raptor pokonany pierwszy. Bez edycji RAM/RNG/save i zmian balansu. Po nagrodach północne przejście prowadzi do M232238943 (`a8043148`),menuNULL,move_lock0,brak przeciwników,story608,BP1100.

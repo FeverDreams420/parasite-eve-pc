@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A2: początek piętra30, dwie walki
+
+Bez zmian kodu na pe-m392-bind-v1. Z169947 wejście do code23/a80691c8
+170559 od razu uruchamia pięciu wrogów. Wygrana przy461HP; read/detach
+łupu id6,dwa id1,dwa id7. M392/a8069148 przy174411: czterech wrogów
+pokonanych przy415HP; łup id16,id1. Endpoint176643 w M392 na piętrze30:
+HP415/671,BP2,menuNULL,lock0,zero wrogów,oba klucze i pięć Medicine3.
+Pełny plecak29; przed bossem wciąż trzeba zwolnić miejsce na klucz.
+
+PASS `/tmp/pe-ex-chrysler-mid30-A2-v1-proof/proof.json`: zimne replaye
+tylko z autentycznego A2, normal/SAN exit0 bez raportów; cały JSON i1MiB
+VRAM zgodne również z obserwowanym przebiegiem. Pełny ekwipunek identyczny
+z169947; wszystkie zmienne poza5:20→23,18:1024883→3122033 identyczne.
+Źródłowy i prywatne A8192B niezmienione, SHA256 obu binariów sprawdzone.
+Seed/checkpoint/runner/verifier obok. Dowody /tmp nietrwałe,
+SDK/SDL nieinstrumentowane, brak oracle PS1. Następne wyjście23 z M392;
+piętro30 i boss nieukończone, pełny zakres portu nadal otwarty.
+
 ### EX A2: ukończone piętro29, wejście na piętro30
 
 Bez zmian kodu na pe-m392-bind-v1. Z150969: M306151581, M392152191/152831,

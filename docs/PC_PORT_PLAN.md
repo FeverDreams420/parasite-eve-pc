@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX gałąź L: M242 wygrane i drugi Medicine3
+
+Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live29869 od55333:
+field Heal3 237→517,wyjście M344→M343,zachodnie drzwi do M22958124.
+Zwykła trasa przez M229 bez spotkania doprowadziła M24259694.
+Down100,Left88 uruchomiło447HP/def69 i dwa335HP/def99.
+Oślepienie sprawiło,że serie na silnym celu przy67HP nie trafiły;
+HP spadło do27 przy62254. Heal3 odnowiło HP (po atakach277);
+po ustaniu Darkness silny cel zginął63474. Drugie combat Heal3
+przy211HP dało479HP po atakach; podejście do ostatniego celu i strzały
+zakończyły walkę67154 przy341/589HP. Leki niezużyte.
+
+Loot SEL: Medicine3 było pierwsze na liście. Cross/Right,Down1/Cross
+zamieniły N Vest(258)slot1 na Medicine3raw8. END przy68462,M242,
+menuNULL,lock0,mode9,BP1156. Zapas:Medicine4slot0,Medicine3slot1 i26.
+Wyposażone M8000/B Jacket1 bez zmian. Względem końca Klampa wyłącznie
+slot1:258→8,rekord amunicji426:16→13; zmienne1:343→229,
+22:1364→5460,34:185→186,78:239→134.
+
+Pełny cold replay od L: `/tmp/pe-ex-m242-supplies-L2-v1-proof/proof.json`
+PASS,pełny JSON i1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń
+sanitizerów,źródłowy i prywatne L bez zmian. SDK/SDL bez instrumentacji,
+brak oracle PS1,dowody /tmp nie są trwałym CTest. Live29869 czeka68462
+w `/tmp/pe-ex-museum-L2-nav-v1-live`. Dalej KlampKey door/M243 i boss;
+dodatkowe Medicine4 oraz dwa Medicine3 zachować na przygotowania.
+Pełna kampania EX i cały cel nadal nieukończone.
+
+
 ### EX: cold L → Klamp Key z zachowanym Medicine4
 
 Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Nowy controller29869,

@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+
+### EX T-Rex: zweryfikowana próba walki i Medicine 4, bez zwycięstwa
+
+Kandydat pozostaje `pe-control-aim-v1` (kod produkcyjny bez zmian).
+Cold Continue z autentycznego L i zwykłe wejścia pada odtworzyły dojście
+przez obie fazy Triceratopsa do M256, a następnie próbę walki z T-Rexem.
+Przy 97331: M256/a8045348, story632, Aya244/604HP, T-Rex2957/3359HP,
+def109, BP218. Medicine4 ze slotu0 zużyto przez oryginalne menu;
+Medicine3 w slocie26 zachowane. Pełny ekwipunek odpowiada sprawdzonemu
+wejściu94558 z dokładnie dwiema zmianami: slot0 raw9→0 oraz bajt426
+rekordów sprzętu9→4 (amunicja). Wszystkie zmienne skryptowe bez zmian.
+Pełny JSON i cały 1MiB VRAM: normal=SAN=live. Oba przebiegi exit0,
+bez diagnostyki sanitizera; wszystkie8192 bajty źródłowego L niezmienione.
+Dowód: `/tmp/pe-ex-trex-medicine-L2-v1-proof/proof.json`, runner i verifier
+`/tmp/pe-ex-trex-medicine-L2-v1-{proof,verify}.py`, seed i checkpoint obok.
+SDK/SDL pozostają nieinstrumentowane; brak niezależnej referencji PS1.
+
+Próba nie pokonała T-Rexa. Początkowe ustawienie i orbitowanie w wąskim
+pasie po lewej stronie nadal dopuszczają trafienia160/240HP. Nie zaliczać
+tego jako dowodu poprawnych uników ani ukończonej walki. Live kontroler
+`/tmp/pe-ex-trex-distance-L2-v1.py` pozostaje na97331, combat.mode1;
+trzeba poprawić sterowanie lub przygotować Ayę przez normalną rozgrywkę.
+Nie zmieniano obrażeń, zachowania bossa, RAM ani zapisów gry.
+
+
 ### EX: po Triceratopsie oryginalna scena odnowienia HP i wejście T-Rexa
 
 Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live29869 od90699:

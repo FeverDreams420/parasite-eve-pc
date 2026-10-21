@@ -2,6 +2,46 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### B4: powrót na41 i pierwsza walka mocniejszą Ayą
+
+Bez zmian kodu,pe-m436-bind-v2. Z Continue B14328 zwykły pad wraca
+M340→M19215694→mapa16826,Left3 wybiera Chrysler10,M29017762.
+Pierwsze podejścia do przycisku nie były potrzebne: otwarte drzwi windy
+Left22/Up45 prowadzą do M29319836. Panel Right28/Down13/normalDown,
+Cross,39Up:oryginalny ekran pokazuje40th floor. Potwierdzenie i wyjście
+M29222761,M33523191; zapamiętany układ40 ma count21,seed25164,
+read-only `/tmp/pe-chrysler-floor40-B4-table-v1.json`.
+Przez code21/10/20/23/20/22/10/21 do pokoju bossa28481;
+Up470 bez odrodzenia pokonanego bossa daje M29729251,piętro41.
+
+PASS `/tmp/pe-ex-chrysler-floor41-B4-v1-proof/proof.json`:
+pełny cold B normal/SAN/live JSON i1MiBVRAM identyczne,oba exit0 bez
+raportów,B8192B źródłowe/prywatne niezmienione. Pełne inventory i character
+identyczne zContinue14328,wszystkie512vars poza1:998→999,4:1→41,
+5:0→20,6:1→40 identyczne. HP644/763,level35,BP47,atak147,
+pięć Medicine3 zachowane. Runner/seed/checkpoint obok,pełny verifier
+`/tmp/pe-ex-chrysler-B4-verify-v1.py floor`.
+
+Read-only układ41,count20,selected9,seed25164 zapisany w
+`/tmp/pe-chrysler-floor41-B4-table-v1.json`. Plan od slot9:action20→
+5/code23,23→6/code15,22→10/code9,22→14/code19,23→15/code3,
+23→16/code20,20→12/code23,23→13/code20,20→4/code1.
+Wykonano pierwsze przejście Up312: M407/a80803c8 przy29863 uruchamia
+trzech420/420/460HP,def85/85/88. Single shots DoubleAction wygrywają
+przy32447,HP487/763. Nagroda read-only:EXP363 i dwaMedicine2/id7;
+pozostawione przez END,bo inventory pełne. Endpoint33903:M407,mode9,
+menuNULL,lock0,EXP301018,pulaPE30,magazynek16→6,bez zużycia leków HP.
+
+PASS `/tmp/pe-ex-chrysler-first41-B4-v1-proof/proof.json`:
+pełny cold normal/SAN/live JSON i1MiBVRAM identyczne,oba exit0 bez
+raportów,B niezmienione. Pełny inventory tylko clip426:16→6,character
+wyłącznieEXP+363,HP644→487,pulaPE0→30;512vars tylko18:0→4,
+78:156→13. Verifier `.../pe-ex-chrysler-B4-verify-v1.py first`.
+Live `/tmp/pe-ex-museum-B4-loaded-v1-live`,kontroler75878/native26158,
+zatrzymany33903. Dalsza trasa41 oraz42–50 wymaga wykonania w tej gałęzi;
+nie uznawać planu za przejście piętra. SDK/SDL nieinstrumentowane,
+brak oraclePS1,dowody/tmp nietrwałe. Boss50 i cały port nadal otwarte.
+
 ### Wytrenowana gałąź: autentyczny zapis B4 i zweryfikowane Continue
 
 Po potwierdzonym level35/BP153606 oryginalny pad wrócił

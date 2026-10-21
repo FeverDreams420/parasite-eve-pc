@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum M199: dwa raptory pokonane
+
+Bez zmian kodu, `pe-control-aim-v1`: zwykła nawigacja M198 do drzwi przy[−1540,−275],Cross i oryginalny dialog181/23 prowadzą do walki M199 z dwoma raptorami6:31/30 po391HP. Pojedyncze strzały w Double Action zadają po91; oba cele pokonane112409,EXP,zero przeciwników,Aya276/532HP. W tej walce bez leczenia,edycji RAM/RNG/save ani zmian balansu. Pełne inventory względem M198105881 zmienia wyłącznie rekord amunicji426:10→0; zmienne wyłącznie1=198,34=60,36=3,37=4,42=128,78=54. Story608 zachowane.
+
+`/tmp/pe-ex-museum-m199-win-G2-v1-proof/proof.json`: pełny replay od zimnego G2,normal/SAN exit0,pełny JSON i VRAM identyczne z live112409,pełne inventory/zmienne i pośrednie HP celów sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1 i trwałego CTest. Nagrody i dalsza droga Museum pozostają do przejścia; cała kampania/EX nieukończone.
+
+
 ### EX: wejście Museum i przejścia M192 → M196 → M197 → M198
 
 Bez zmian kodu, `pe-control-aim-v1`: pełny replay od G2, przez Warehouse/mapę, prowadzi do M19298413,schodów i holu M196102253. Oryginalny skrypt zmienia story600→608. Zamknięta bramka holu wyświetla dialog24 (102703),Cross go zamyka; zachodnie drzwi prowadzą do M197103663,obejście ekspozycji i Cross do M198105881 (`a8029448`). Nagranie obejmuje także korektę błędnego pierwszego podejścia do schodów M192. Aya353/532HP,BP914,brak menu/przeciwników/blokady,pełny inventory identyczny z mapą97409. Zmienne różnią się wyłącznie1=197,34=50,36=1,42=1,74=608.

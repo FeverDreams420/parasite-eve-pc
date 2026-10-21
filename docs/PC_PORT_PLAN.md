@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### A4 prep: pierwszy nowy łup i wejście na42
+
+Bez zmian kodu na pe-anim-event-null-v1. Od24000:M29325064,
+oryginalny selektor40 potwierdzony obrazem po39Up,M29227989,
+M33528419,code21 28991,code10 29551,code20 30191,code23 30781,
+code20 31359,code22 31949,code10 32519,code21 33159,boss40room33709.
+Up470 przechodzi bez respawnu do41 M29734479. Pierwszy pokój M30635091
+różni się od starej gałęzi. Read-only mapa:seed32416,count16,selected7,
+`/tmp/pe-chrysler-floor41-table-prep-v1.json`,plan -route obok.
+M306→code23 35701,trigger35781 trzech type3 po420HP,wynik39981:
+HP543/671 po Heal3/ruchu/single-shot,bez zużycia leków.
+Read/detach `/tmp/pe-prep41-battle1-reward-v1.txt`:7/9/7,EXP345.
+ALL zbiera dwa Medicine2 i Medicine4,eksploracja41213. Następnie
+M41041668,M29242208,M29442708,M30743208,code9 43858,M29644548,
+endpoint45268:M297/a80493c8,piętro42,HP543/671,BP2,mode9,menuNULL,lock0.
+Zapas:Med2 slot8/13,Med4 slot12,Med3 slot28;wolne15/18/20/26.
+
+PASS `/tmp/pe-ex-chrysler-A4-prep-floor42-v1-proof/proof.json`:
+cały zimny A4 normal/SAN/live JSON i1MiB VRAM identyczny,exit0 bez
+diagnostyki,SHA gry sprawdzone. W dotychczasowym inventory snapshot
+względem24000 slot8:0→7,12:0→9,13:0→7 i magazynek426:14→17,
+reszta pól identyczna. Wszystkie512 zmiennych poza4:40→42,5:25→20,
+6:1→40,18:0→5,78:55→250 identyczne. Źródłowy/prywatne A4 niezmienione.
+Seed/checkpoint/runner/verifier obok;żywy prep-v1 zatrzymany45268.
+
+Luka diagnostyczna ujawniona przy audycie: src/main/boot/init.c drukuje
+sloty i128 rekordów ekwipunku,ale nie dziewięć specjalnych rekordów amunicji
+z g_KeyItemRecords,storage/specialStorage ani level/EXP/stat allocation.
+Historyczne określenie pełny inventory dotyczyło pól istniejącego snapshotu,
+nie pełnej widoczności wszystkich danych gracza. Odcinek nie dowodzi tych
+pominiętych pól. Następny krok: rozszerzyć istniejący snapshot i testy,
+świeży kandydat/regresje oraz odtworzenie przygotowanej gałęzi,zanim dalsze
+zbieranie zapasów. Potem piętra42–49 i boss50. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe,pełny port nieukończony.
+
 ### A4 prep: siedem wolnych slotów i polowe Heal1
 
 Bez zmian produkcyjnych na pe-anim-event-null-v1. Kontroler prep-v1

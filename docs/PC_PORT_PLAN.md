@@ -2,6 +2,38 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### A4 prep: piętra45–46 i wejście na47 bez zużycia leków
+
+Na pe-state-visibility-v1 bez zmian kodu. Od102947 piętro45 bez walk:
+M305103559,M292104109,M304104609,code9 105304,M296105994,
+M297106714/piętro46,HP671. Układ46 read-only: selected8,count17,
+seed32416; `/tmp/pe-chrysler-floor46-table-prep-v1.json` i route obok.
+M307107326,code22 107906,trigger107986 jeden type5/sub31 HP460.
+Oryginalne single shots i repozycjonowanie po utracie celu; wynik109734
+HP507,read/detach:id2(15nabojów),EXP133. Przy110350 amunicja już dodana,
+kursor END; zamknięcie110658. M307111150,M292111780,M294112280,
+M306112780,code9 113440,trigger113608 dwóch. Heal3/ruch/focus,
+repozycjonowanie ostatniego celu: wynik119064 HP585,brak łupu,EXP266.
+Eksploracja119680,M296120244,endpoint120964 M297/a80493c8,piętro47,
+HP585/671,BP2,mode9,menuNULL,lock0,zero wrogów. Żaden lek niezużyty:
+Medicine2 slot13/15/18/20/26,Medicine4 slot12,Medicine3 slot28;
+slot8 wolny. Magazynek1,rezerwa345.
+
+PASS `/tmp/pe-ex-chrysler-A4-prep-floor47-state-v1-proof/proof.json`:
+cały zimny A4 normal/SAN/live checkpoint JSON i1MiB VRAM identyczne,
+oba exit0 bez raportów,sprawdzone SHA kandydatów i niezmienione źródłowe
+oraz prywatne karty8192B. Pełny inventory względem102947 identyczny
+poza magazynkiem0→1 i rezerwą348→345;15łupu oznacza17 zużytych nabojów.
+Character różni się wyłącznie EXP250729→251128(+399),HP671→585,
+pe_bonus3489→3505. Wszystkie512 zmiennych poza4:45→47,18:998→9189,
+78:41→36 identyczne. Seed/checkpoint/runner/verifier obok.
+Żywy prep-v2 zatrzymany120964,kontroler96861,pid82271. Układ47 odczytany
+bez zapisu:selected3,count18,seed32416;
+`/tmp/pe-chrysler-floor47-table-prep-v1.json`,route obok wymaga wykonania.
+Następnie47–49,przygotowanie do boss50 i pozostały pełny zakres.
+SDK/SDL nieinstrumentowane,brak oracle PS1,dowody/tmp nietrwałe,
+pełny port nadal nieukończony.
+
 ### A4 prep: całe44, polowe Medicine2 i pełne HP na45
 
 Na pe-state-visibility-v1 bez zmian kodu. Od79866:code23 80478,

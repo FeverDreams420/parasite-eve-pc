@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum M210: wstrząs, dialog i pełne zwycięstwo
+
+Bez zmian kodu, `pe-control-aim-v1`: ruch M209 wyzwala oryginalny wstrząs/dialog182,po zamknięciu przejście do M210 (`a8041048`)155937. Dalszy dialog23 zamknięty,krótki ruch do strefy x≈1005..1114 uruchamia trzech przeciwników5:31/30/29 po335HP/def99. Pojedyncze strzały w Double Action zadają po59,dwa Heal3 stabilizują HP po224 i191. Zwycięstwo163248,EXP,zero przeciwników,Aya421/547HP,oryginalny move_lock5 w wynikach. Bez edycji RAM/RNG/save i balansu.
+
+Pełny inventory identyczny z M209154897 (amunicja po pełnym przeładowaniu i strzałach także wraca do rekordu426=11); zmienne różnią wyłącznie1=209,34=66. `/tmp/pe-ex-museum-m210-win-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live163248,pełne inventory/zmienne i pośrednie dialog/HP sprawdzone,G niezmieniony,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Nagrody i dalsza droga Museum/kampanii/EX nadal otwarte.
+
+
 ### EX Museum: M207 wygrane, wejście M209
 
 Bez zmian kodu, `pe-control-aim-v1`: po nagrodach M206 zwykła droga prowadzi do M207149474 (`a80403c8`). Ruch uruchamia trzy cele5:31/30/29 po279HP; pojedyncze strzały w Double Action i jedno podejście do ostatniego celu kończą walkę153097,EXP,zero przeciwników,Aya364/547HP bez strat HP w M207. Po nagrodach Up prowadzi do M209154897 (`a80404c8`),brak menu/przeciwników/blokady,story608,BP1028.

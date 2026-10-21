@@ -2,6 +2,91 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### Dwa pancerze: SvProtector odebrany, reset PE fatigue potwierdzony
+
+Na tym samym pe-glyph-visibility-v1 kontynuowano autentyczny C4.
+Skan samych stałych op167 nie rozstrzygał lokalizacji pancerzy:
+M227 przekazuje przedmiot przez local[1]=170, a GiveItem używa local[10].
+Ponowny odczyt oryginalnego skryptu i stanu C potwierdził nieodebraną
+skrzynię: global87/0x80000=0, pozycja(−1090,−288,613).
+Trasa M340→M34317832→M22620800→M22727916; zwykła walka M226
+wygrana23928, EXP2688, bez utratyHP. Podejście do skrzyni uruchomiło
+M227 trzech wrogów28060; wygrana30140, EXP3300, HP509→503.
+Oba łupy pozostawiono END. Próby nawigacji zatrzymywały się na geometrii;
+nie zmieniano kolizji ani pozycji. Powrót z M226 do M343 wymaga obejścia
+wschodniej barierki przez x1750/z1380 i x1400/z1360.
+
+Pierwsze podejścia do skrzyni nie uruchamiały odbioru. Odczyty LLDB
+obserwowały aktora, jego lokale i kontakty; breakpointy i pauzy odłączono,
+bez zapisów do RAM gry. Nieudany breakpoint w zoptymalizowanym kodzie
+nie został uznany za dowód braku handlera. Porównano wcześniejsze udane
+podejście. Zwykły powrót pod wejście, następnie runUp120/Left32/Up8,
+Cross, Left80/Up90/Right75/Up8/Cross dał panel36766 i SvProtector do
+slot29, value260/record4. Pozycja Ayi przy sukcesie około(−955,607),
+wcześniej około(−954,606); nie ma dowodu błędu gry w tych nieudanych
+podejściach. Menu zamknięte36874, global87=0x80000. Nowy rekord ma
+base38/35/30 i bonus1/1/0, razem39DEF/36PEDEF/30critical. Zachowano
+wyposażony B Jacket1 (132DEF/49PEDEF), M8000ATK149 i siedem Medicine3.
+
+PASS `/tmp/pe-ex-museum-svprotector-C4-v1-proof/proof.json`:
+pełny cold C normal/SAN/live JSON i1MiBVRAM identyczne, oba exit0 bez
+diagnostyki, C8192B źródłowe/prywatne niezmienione. Jawny cały inventory,
+character i512vars: nowy rekord4/slot29, clip2→6,reserve242→223,
+EXP+5988,HP509→503,pulaPE0→40, zmienne tylko1/21/22/78/87.
+
+Powrót do M229 uruchomił jedno spotkanie type4:31/447HP przy42586.
+W rzeczywistej walce oryginalne Heal3+pojedynczy strzał odnowiły
+HP503→765, kosztowały500PE, zostawiając275HP przeciwnika. Początkowa
+regeneracja level36 to116503/27432 (step/divisor). Po zmęczeniu43574
+112063/27099. Menu Armor wymaga Cross z panelu nagłówka5 do listy7;
+wcześniejsze poruszanie się po panelu6 przeglądało modyfikatory, nie
+wybierało pancerza. To błąd sterownika, bez poprawki gry.
+Oryginalny wybór SvProtector i potwierdzenie44430 zmieniły armor6→29.
+Snapshot44510 miał step114943/divisor27315 po ponownym naliczaniu
+zmęczenia, a słabszy pancerz przepuścił144HP. Bieg w prawo oddalił Ayę;
+przy44670 HP621,PE102961010/max110362624,ATB9000,step112063/div27099.
+Po oryginalnym menu i wyborze B Jacket1 dokładny snapshot44952:
+armor29→6, step116503/div27432, ATB0. IlośćPE, maksPE, bieżąceHP621,
+275HP wroga i battleframe410 identyczne. Reset parametrów jest więc
+zmierzony przy samej zmianie pancerza; nie jest refillem PE i kosztuje turę.
+
+PASS `/tmp/pe-ex-museum-armor-fatigue-C4-v1-proof/proof.json`:
+niezależne pełne cold normal/SAN dla obu44670/44952 zgodne z live,
+cały JSON i1MiBVRAM, native exit0 bez diagnostyki, C8192B niezmienione.
+Jawny cały inventory przed/po różni tylko armor_slot; character tylko
+opóźnione savedHP765→621, wszystkie512vars i rekord przeciwnika identyczne.
+Pierwszy runner baseline został poprawnie odrzucony przez grę za wejście
+zaplanowane po granicy kontrolnej; baseline-v2 obcina przyszłe zdarzenia.
+Poprawnych końcowych44952 nie powtarzano bez potrzeby. Runner/verifier,
+seed/checkpoint oraz oba katalogi profili w/tmp pod tym samym prefiksem.
+
+Z B Jacket1 przywróconym wygrana45432/HP535, EXP1829. Ammo30 z łupu
+pominięto przez END, bez zużycia leków. Powrót bez dalszych walk do
+telefonu M34049780; zapis w pustym D1 utworzony52850, zamknięcie53414.
+PASS `/tmp/pe-ex-museum-armor-save-D4-v1-proof/proof.json`: pełny cold
+normal/SAN/live JSON/1MiBVRAM i wygenerowany D8192B identyczne,
+oba exit0 bez diagnostyki, źródłowe/prywatne C niezmienione. Względem
+36874 tylko clip6→3, cache ammo242→223, EXP411376→413205,
+HP503→535,pulaPE40→42 i zmienne1/22/78. D:
+`/tmp/pe-ex-museum-armor-save-D4-v1-source/BASLUS-006620000000D`, SHA256
+`dfe31bcf769c639a6a33333237ddaeb7ff9a2d91050461d783fb8393cbc71127`.
+
+PASS `/tmp/pe-ex-museum-armor-D4-continue-v1-proof/proof.json`:
+wyłącznie nowy D1, trzy Down/Cross, zimne14392/M340. Normal/SAN cały
+JSON i1MiBVRAM identyczne, inventory/character/512vars dokładnie zgodne
+z telefonem; oba exit0, bez diagnostyki, źródłowe/prywatne D niezmienione.
+Nowe live Continue również w całości zgodne z oboma profilami JSON/VRAM;
+receipt `/tmp/pe-ex-museum-armor-D4-continue-v1-proof/live-reference.json`.
+Kontroler13572/native99467, root `/tmp/pe-ex-museum-D4-loaded-v1-live`,
+zatrzymany14392. Poprzedni60865 zakończony native exit0, C niezmienione.
+Dalszy bezpieczny punkt: level36,EXP413205,HP535/765,BP729,
+M8000ATK149,B Jacket1slot6,SvProtectorslot29,siedemMedicine3,reserve223.
+SvProtector jest słabszy i nadal wymaga ulepszenia/zastąpienia do walki
+z bossem. Nie zużywać żadnego z tych pancerzy jako donora zwykłego Tool.
+Boss50/Chrysler77 i pełny port pozostają otwarte. Bez zmian kodu gry,
+RNG/pamięci/zapisów; SDK/SDL nieinstrumentowane,brak oraclePS1,
+dowody/tmp nietrwałe.
+
 ### Wytrenowany C4: oryginalny zapis i zimne Continue zweryfikowane
 
 PASS `/tmp/pe-ex-museum-trained-save-C4-v1-proof/proof.json`:

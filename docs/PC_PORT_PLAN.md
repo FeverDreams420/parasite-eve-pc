@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: pierwsza walka43 wygrana, dojście do drugiego M305
+
+Bez zmian kodu na pe-m410-bind-v1. Od75239:code22 75851,
+walka z dwoma przeciwnikami od75923. Skupienie strzałów na jednym
+celu i ruch między akcjami dały zwycięstwo przy454HP. Wynik78667,
+menuEXP20,read/detach łupu:same zera. Menu zamknięte79283.
+Code21 79684,M30580234,M41080784,M30581374.
+Endpoint81374 a80602c8,HP454/671,BP2,mode9,menuNULL,lock0,zero wrogów;
+Medicine3 w slot12 i cztery klucze zachowane.
+
+PASS `/tmp/pe-ex-chrysler-mid43-A4-v1-proof/proof.json`: pełny zimny
+A4 normal/SAN/live zgodny całym JSON i1MiB VRAM,exit0 bez raportów,
+SHA gry sprawdzone. Cały ekwipunek poza amunicją426:12→2 identyczny
+z75239; wszystkie zmienne poza18:37→101,78:7→138 identyczne.
+Źródłowy i prywatne A8192B niezmienione. Seed/checkpoint/runner/verifier
+obok. Dalsza część43 i piętra44–77 do sprawdzenia. Dowody /tmp nietrwałe,
+SDK/SDL nieinstrumentowane, brak oracle PS1. Pełny port nadal otwarty.
+
 ### EX A4: ukończone piętro42, wejście na43
 
 Bez zmian kodu na pe-m410-bind-v1. Od69917:M29470401,

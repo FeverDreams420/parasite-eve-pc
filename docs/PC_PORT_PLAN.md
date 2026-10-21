@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum M221: scena, Darkness/Cure-D i zwycięstwo
+
+Bez zmian kodu, `pe-control-aim-v1`: zwykłe obejście sali uruchamia oryginalną scenę i przeciwnika5:31,447HP/def69. Pojedyncze strzały w Double Action zadają po91. Po169HP zwykłe Heal3 stabilizuje Ayę; przeciwnik nakłada Darkness (200063,flags&0x30=0x10),Cure-D/raw14 ze slot25 usuwa status (201267,flags&0x30=0). Kolejny strzał i kończąca seria wygrywają201799,EXP,zero przeciwników,Aya278/561HP,oryginalny move_lock5 w wynikach. Jedno Heal3 i jedno Cure-D,bez edycji RAM/RNG/save i zmian balansu.
+
+Względem196277 pełny inventory zmienia wyłącznie slot25:14→0 i rekord amunicji426:1→13; wszystkie zmienne skryptowe identyczne. `/tmp/pe-ex-museum-m221-win-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live201799,pełne inventory/zmienne oraz pośrednie HP/status sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Nagrody i dalsze Museum/kampania/EX nadal otwarte.
+
+
 ### EX Museum: zwycięstwo M220 i wejście M221
 
 Bez zmian kodu, `pe-control-aim-v1`: ruch M220 uruchamia trzy cele3:31/30/29 po279HP/def55. Pojedyncze strzały w Double Action po105 kończą walkę193657,EXP,zero przeciwników,Aya365/561HP bez strat HP. Po nagrodach korekta podejścia do wschodniego przejścia przyx≈1670,z<240 prowadzi do M221196277 (`a80420c8`),menuNULL,move_lock0,brak przeciwników,story608,BP1052.

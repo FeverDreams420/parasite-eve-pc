@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### Boss50: naprawiony pusty aktywny rekord animacji
+
+Poprawka w istniejącym src/main/battle/context.c, bez nowych źródeł.
+Read-only LLDB przy231066→231146 potwierdza Entity_TriggerAnimEvent:
+core.kind2,activeNULL,record0.state4,selectedRecord1. Wywołanie przez
+Script_RunEntityCommand. Ślad `/tmp/pe-boss50-crash-lldb-v1/attached.txt`.
+Oryginał USA8002fdf4..fdfc odczytuje active->state, a8002fe44..fe50
+zeruje stan przez active i sam wskaźnik, także gdy aktywny rekord jest pusty.
+Natywnie warunek zakończenia zachowuje sprawdzanie inline records[slot];
+odczyt/zapis przez active wykonuje tylko przy niepustym wskaźniku.
+Zachowane wynik1,reset trybu bazowego i kroku animacji; pozostałe rekordy
+bez zmian. 144 przypadki parent/self,mode0/1,slot0..5,active/null,
+finished/pending w istniejącym tests/original_actor_animation.c;
+CTest original-game-animation-event-completion w istniejącym CMakeLists.
+Oba profile PASS,brak sanitizer diagnostics.
+
+Świeży kandydat `/tmp/pe-anim-event-null-v1`:438 obiektów219/profil,
+70/70 regresji,12/12 wybranych CTest/profil plus nowy test/profil PASS.
+Build/manifest/regressions/checks i raporty obok. Dokładna stara sekwencja
+crasha teraz dochodzi231146 bez błędu: `/tmp/pe-ex-chrysler-boss50-start-fixed-A4-v1-proof/proof.json`.
+Cały JSON/1MiB VRAM normal==SAN,exit0,HP552,dwóch wrogów1002498/1200,
+pełny ekwipunek zgodny z wejściem; zmienne tylko7:270→782,
+11:123338→254410,18:2873702→0,78:105→14. A4 źródłowy/prywatny niezmieniony.
+SHA normal0e50319f4aa114f8777752899b5cfd14b06191f05ca2547d16a0f0f1c4e24da8,
+SANe19b85544bd52de1dad8c339bfc3ed1b9e713403e1ef4b27b67832d649b11d6a.
+Dowody /tmp nietrwałe,SDK/SDL nieinstrumentowane,brak oracle pikseli PS1.
+Boss50 nadal żyje; pełny port nadal otwarty.
+
 ### EX A4: boss50 — odtworzony crash zdarzenia animacji
 
 Na pe-m410-bind-v1 wejście228178,trigger228282,jeden wróg type3/sub31

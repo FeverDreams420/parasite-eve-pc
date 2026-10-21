@@ -137,11 +137,15 @@ int Entity_TriggerAnimEvent(BattleEntity *entity, u8 slot)
         break;
     }
     }
-    if (core->active->state == 4 || core->records[slot].state == 4) {
+    /* A completed inline record can outlive the active event (notably on
+     * a child using its parent's animation). PS1 reads/writes address zero
+     * here; native code keeps the completion without touching that address. */
+    if ((core->active && core->active->state == 4) || core->records[slot].state == 4) {
         Entity_SetActionMode(actor, (u16)(s8)core->baseMode);
         actor->animStep = 0x10000;
         result = 1;
-        core->active->state = 0;
+        if (core->active)
+            core->active->state = 0;
         core->active = 0;
     }
     return result;

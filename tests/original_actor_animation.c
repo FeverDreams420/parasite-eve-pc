@@ -17088,6 +17088,34 @@ static int original_sewer_twelve_assets(void)
 
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--anim-event-completion")){
+        RenderAnimationDataHeader animation={0};animation.frame_count=8;
+        void *old_animation=g_GameState.bank_rows[0][2];
+        u32 old_flags=g_GameStateFlags;g_GameStateFlags=2;
+        g_GameState.bank_rows[0][2]=&animation;
+        unsigned cases=0;
+        for(unsigned kind=0;kind<3;++kind)for(unsigned mode=0;mode<2;++mode)
+        for(unsigned slot=0;slot<6;++slot)for(unsigned finished=0;finished<2;++finished)
+        for(unsigned active=0;active<2;++active){
+            EntityAnimEventCore core={0};BattleEntity entity={0},parent={0};
+            core.kind=kind==0?0:kind==1?2:4;core.baseMode=2;
+            core.records[slot].state=finished?4:0;
+            core.active=active?&core.records[slot]:NULL;
+            entity.core=&core;entity.parent=kind?&parent:NULL;
+            BattleEntity *actor=kind?&parent:&entity;actor->actionMode=mode;
+            actor->animStep=123;actor->animFrame=0;
+            EntityAnimEventCore before=core;
+            int result=Entity_TriggerAnimEvent(&entity,slot);
+            if(result!=(int)finished || actor->actionMode!=(finished?2:mode) ||
+               actor->animStep!=(finished?65536:123))return 1;
+            if(finished){if(active)before.records[slot].state=0;before.active=NULL;}
+            if(memcmp(&core,&before,sizeof(core)))return 1;
+            ++cases;
+        }
+        g_GameState.bank_rows[0][2]=old_animation;g_GameStateFlags=old_flags;
+        printf("Original animation event completion: %u parent/self, idle, active/null and finished/pending cases passed\n",cases);
+        return 0;
+    }
     if(argc==2 && !strcmp(argv[1],"--sewer-twelve"))return original_sewer_twelve_assets()?0:1;
     if(argc==2 && !strcmp(argv[1],"--hospital-spark"))return original_hospital_spark_particle_states() && original_hospital_spark_assets()?0:1;
     if(argc==2 && !strcmp(argv[1],"--chrysler-particles"))return original_chrysler_particle_assets()?0:1;

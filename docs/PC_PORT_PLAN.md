@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: pierwsza walka na piętrze 11 — M386
+
+Bez zmian produkcyjnych. Z potwierdzonego 25129 przejście przez M306
+prowadzi do M386/a8068348 przy 26351. Walka z trzema przeciwnikami
+zakończona przy użyciu zwykłego pada, bez utraty HP. Przed zamknięciem
+łupu odczyt LLDB `target variable g_BattleRewardSlots` / detach potwierdził
+trzy wpisy amunicji id1, pozostałe puste. Po ALL/END dalsze przejście
+prowadzi 30653 do M384/a8068248. Aya 556/671 HP, BP2, Key1 i sześć
+Medicine3 zachowane. Pełny ekwipunek względem 25129 różni się wyłącznie
+bajtem amunicji 426:16→13; wszystkie zmienne poza 5:20→22 i 18:1→5
+identyczne. Menu NULL, lock0, zero żywych wrogów; faza walki 9 zachowana
+w telemetryce po jej zakończeniu.
+
+PASS `/tmp/pe-ex-chrysler-m386-win-O1-v1-proof/proof.json`: niezależne
+zimne replaye tylko z O1, normal/SAN exit0 bez raportów, pełny JSON oraz
+1MiB VRAM normal=SAN=live30653. Źródłowy i prywatne zapisy O po 8192B
+bez zmian. Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1; dowody /tmp nietrwałe. Dalsze piętra i cały cel portu
+pozostają nieukończone. Najpierw Chrysler, przed finałem Eve.
+
 ### EX O1: zimny powrót windą i zachowana wygrana bossa
 
 Na niezmienionym pe-control-aim-v1,cold tylkoO13200,zwykły pad

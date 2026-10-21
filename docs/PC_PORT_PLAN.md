@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### Boss50: pierwsza pełna próba kończy się porażką Ayi
+
+Na pe-anim-event-null-v1 kontroler v9 zimno odtwarza231146 dokładnie
+całym JSON/VRAM jak zweryfikowany replay. Dalej strzały do głównego,
+Heal3 i ruch; przy232818 type4/sub30 zastąpiony type3/sub29 HP1004200.
+Przy234350 Aya85HP,główny1001769. Medicine4(slot13)+Medicine3(slot15)
+wykonane,ale kolejne trafienia redukują HP do156 przy235558.
+Heal3/strzał obniża głównego do1001688,HP93 przy236166.
+Dwa Medicine2(slot12/26) podnoszą HP do265 przy237558;
+kolejny silny atak zostawia45HP przy237726. Ostatni Medicine2(slot28)
+i Cure-P(slot1) nie ratują próby:238922 HP0,mode3,dwóch żywych wrogów
+1001688/1004200. To porażka,nie zwycięstwo ani crash.
+
+PASS `/tmp/pe-ex-chrysler-boss50-attempt1-A4-v1-proof/proof.json`:
+zapisany przebieg porażki normal/SAN/live zgodny całym JSON/1MiB VRAM,
+exit0 bez diagnostyki. Cały ekwipunek względem231146 poza slotami
+1/12/13/15/26/28→0 i amunicją426:5→10 identyczny;
+wszystkie512 zmiennych skryptowych identyczne. A4 źródłowy/prywatne
+niezmienione. Nowy błąd procesu nie wystąpił po poprzedniej poprawce.
+Wąska arena: cel uniku x1200 zatrzymywał ruch w pobliżu x524;
+próba nie dowodzi nieuniknionych ataków. Następna próba wymaga lepszej
+trasy uników i późniejszego Liberate po pojawieniu dodatkowego wroga.
+Seed/checkpoint/runner/verifier obok. Dowody /tmp nietrwałe,
+SDK/SDL nieinstrumentowane,brak oracle PS1,pełny port otwarty.
+
 ### Boss50: naprawiony pusty aktywny rekord animacji
 
 Poprawka w istniejącym src/main/battle/context.c, bez nowych źródeł.

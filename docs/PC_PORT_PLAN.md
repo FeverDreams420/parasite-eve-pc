@@ -3,6 +3,41 @@
 ## Aktualny potwierdzony stan — 21 października 2026
 
 
+### EX po T-Rexie: autentyczny zapis M i niezależny cold Continue
+
+Bez zmian produkcyjnych,`pe-control-aim-v1`. Z M371153196 zwykły ruch
+Down40,Down280,Left230,Down30,Left36,Down20 z korektą dojścia do drzwi
+dał M340/a8064048 przy154432. Telefon:Down130,normalDown20/Left30,
+Cross→dialog6,oryginalne Cross/port36/Cross/files37 wskazało L(slot11).
+Down do pustego M(slot12),Cross→FileSaved40 przy156238. Aya442/621HP,
+BP218,story632. Pełny ekwipunek identyczny z odbiorem łupu153196,
+wszystkie zmienne identyczne poza1:256→998; L zachowane.
+
+Nowy `/tmp/pe-ex-post-trex-save-M2-v1-source/BASLUS-006620000000M`,
+8192B,SHA256 `1080385c61a2458e5076616aa2efd7c0c25a4ffc31d83a7c0ff0050d60666ec5`.
+Pełny cold replay od L przez trening,bossów,łup i zapis: PASS
+`/tmp/pe-ex-post-trex-save-M2-v1-proof/proof.json`. Pełny JSON i1MiB VRAM
+normal=SAN=live,wszystkie8192B utworzonego M normal=SAN=live/source,
+oryginalny L bez zmian,oba exit0 bez raportów sanitizera.
+
+Osobny cold Continue z wyłącznie M na prywatnej karcie,slot12,13200:
+M340/a8064048,story632,Aya442/621HP,BP218,menuNULL,lock0,dialogi
+zamknięte. Cały ekwipunek i wszystkie zmienne równe FileSaved; nowe
+M8000dynamic270slot0 zachowane,wyposażone ulepszone M8000dynamic269slot5
+oraz B Jacket1slot6 bez zmian. Pełny JSON/VRAM normal=SAN,oba exit0,
+źródłowe/prywatne8192B M identyczne. PASS:
+`/tmp/pe-ex-post-trex-M2-loaded-v1-proof/proof.json`.
+Runner/verifier/seed/checkpoint przy odpowiednich prefiksach /tmp.
+SDK/SDL nieinstrumentowane,brak oracle PS1,dowody /tmp nie są CTest.
+
+Długi kontroler po zapisie zamknięty quit exit0. Nowy
+`/tmp/pe-ex-post-trex-M2-nav-v1.py` odtworzył z samego M13200 i pozostaje
+w `/tmp/pe-ex-post-trex-M2-nav-v1-live` w wolnym sterowaniu M340.
+Następne: dalsza kampania EX od tego autentycznego zapisu. Pełny cel
+nadal otwarty; zapis po bossie nie dowodzi ukończenia dalszej zawartości.
+
+
+
 ### EX T-Rex pokonany: pełny cold replay zwycięstwa,łup M8000 i M371
 
 Na niezmienionym `pe-control-aim-v1` wygrano T-Rexa M2563359HP/def109.

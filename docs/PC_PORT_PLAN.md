@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: M225 Heal3, okno M227, gzyms M228 i zejście M229
+
+Bez zmian kodu, `pe-control-aim-v1`: zwykłe Heal3 w polu M225291→571/573HP. Droga na zachód prowadzi M227218883 (`a80423c8`),dialog45 o zamkniętych drzwiach. Podejście do rozbitego okna i krótkie Up uruchamiają wybór47,oryginalne potwierdzenia prowadzą do M228221003 (`a8042448`). Dialog48,przejście po gzymsie,wybór zejścia i pełna animacja kończą się dialog52; po zamknięciu i ruchu w lewo M229225243 (`a80424c8`),571/573HP,menuNULL,move_lock0,brak przeciwników,story608.
+
+Pełny inventory identyczny z216884; zmienne różnią wyłącznie1=228,34=130,36=11. `/tmp/pe-ex-museum-m229-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live225243,pełne inventory/zmienne i pośrednie dialogi/przejścia/HP sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Walka M229 i dalsze Museum/kampania/EX nadal otwarte.
+
+
 ### EX Museum: zwycięstwo M224 i wejście M225
 
 Bez zmian kodu, `pe-control-aim-v1`: zwykły ruch M224 uruchamia cel4:31,447HP/def69. Pięć pojedynczych strzałów w Double Action po92 pokonuje cel214665,Aya291/573HP,bez leczenia w M224. Po nagrodach południowe wyjście prowadzi do M225216884 (`a80422c8`),menuNULL,move_lock0,brak przeciwników,story608,BP1100. Ekwipunek pełny,bez nowego przedmiotu z nagród.

@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### B4: ukończone42, wejście na43 z zachowaniem leków
+
+Bez zmian kodu,pe-m436-bind-v2. Po61157/M409/slot3 każdy kolejny
+punkt sprawdzano read-only indeksem g_FontSelectionState; rzeczywista
+trasa:3/code21→4/code10→5/code17→10/code21→11/code22→
+16/code18→20/code9→24/code16→25/code20→21/code9→12/code1.
+Right65→M40661523,ponowne spotkanie61611 wygrane63119,
+HP584/763 po leczeniu PE. Nagrody zamknięte64543,EXP+160.
+Right280→M30565115;Right120/Down110→M40965645,
+Down90/Right150→M40866185,Right145/Down110→M30666740.
+Tym razem właściwe Down260 zamiast Up w M306 wybiera22→slot20,
+M40567300. Down340→M30467940;Down130/Right170,Down60/Right45
+obchodzą obrócony wariant i wybierają23→M43268945/slot25.
+Right130/Up160→M40569535/slot21,Up340→M29670175,
+Up420→M29770895:oryginalna zmienna4=43,powodzenie schodów na43.
+
+PASS `/tmp/pe-ex-chrysler-floor43-B4-v1-proof/proof.json`:
+pełny zimny B normal/SAN/live JSON i1MiBVRAM identyczne,oba exit0
+bez diagnostyki,źródłowy i prywatneB8192B niezmienione. Pełny inventory
+względem61157 tylko clip426:7→2 i rezerwa393→399 (łup amunicji);
+character tylkoEXP301725→301885,HP534→584,pulaPE86→98.
+Wszystkie512vars poza4:42→43,5:21→20,18:42→59,78:57→67
+identyczne. Pięć Medicine3 niezużyte,BP47,maxHP763,level35 zachowane.
+Runner/seed/checkpoint/verifier przy prefiksie. To potwierdza ukończenie42
+w wytrenowanej gałęzi B;43 dopiero rozpoczęte,boss50 i pełny port otwarte.
+
+Read-only43:count19,selected11/code2,seed25164,
+`/tmp/pe-chrysler-floor43-B4-table-v1.json`. Plan od11 zapisany w
+`/tmp/pe-chrysler-floor43-B4-route-v2.json` wymaga wykonania;
+v1 z błędnym start6 nie jest planem bieżącego stanu. Live
+`/tmp/pe-ex-museum-B4-loaded-v1-live`,kontroler75878/native26158,
+zatrzymany70895,mode9/menuNULL/lock0/zero wrogów,HP584/763.
+SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+
 ### B4: trzy wygrane na42, boczna trasa i anulowanie pustej listy łupów
 
 Bez zmian produkcji,pe-m436-bind-v2. Od43521/M297 zwykły pad eksploruje

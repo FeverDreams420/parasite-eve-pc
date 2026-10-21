@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: obie gałęzie drabiny M212 i zwycięstwo M218
+
+Bez zmian kodu, `pe-control-aim-v1`: obejście przeszkody i Cross przy drabinie M212 uruchamiają dialog42 (177203). Wybór Down prowadzi do M211178459 (`a80410c8`); Up/Cross wraca do M212178993. Ponowne podejście i domyślny wybór prowadzą do M213181130 (`a80411c8`),oryginalne drzwi do M218181683 (`a8041448`). Ruch uruchamia cel3:31,391HP/def65; pięć pojedynczych strzałów w Double Action (po95) wygrywa183803,EXP,zero przeciwników,Aya397/561HP,move_lock5 w wynikach. Bez leczenia/edycji RAM/RNG/save i zmian balansu.
+
+Względem175424 pełny inventory zmienia wyłącznie rekord amunicji426:2→15; zmienne wyłącznie1=213,78=85. `/tmp/pe-ex-museum-m218-win-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live183803,pełne inventory/zmienne i pośrednie dialog/przejścia/HP sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Nagrody i dalsza droga Museum/kampanii/EX nadal otwarte.
+
+
 ### EX Museum: powrót M210, walka M207, przejścia M214/M216 → M212
 
 Bez zmian kodu, `pe-control-aim-v1`: zwykłe wyjście M210→M207166501,powtórne starcie z trzema celami279HP wygrane170657 przy421/561HP bez utraty HP. Po nagrodach obejście podstawy schodów i oryginalne wschodnie drzwi prowadzą do M214172607 (`a8041248`),dalej M216173757 (`a8041348`). Obejście uszkodzonego pomostu bez zmian kolizji prowadzi do M212175424 (`a8041148`),421/561HP,menuNULL,move_lock0,brak przeciwników. Full Cure i oba klucze zachowane.

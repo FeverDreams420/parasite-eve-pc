@@ -2,6 +2,50 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Chrysler N3: boss piętra10 pokonany i potwierdzone piętro11
+
+Bez zmian produkcyjnych,ten sam pe-control-aim-v1. Kontroler/tmp v1
+zatrzymał się przy181839 na KeyError player_hp: pole jest nieobecne
+w przejściowym stanie ładowania. Native quit exit0,karty zachowane.
+Poprawiono wyłącznie guard/tmp na get(),pełny input scalono do
+`/tmp/pe-ex-chrysler-recovery-N3-v1-seed.json`. Nowy kontroler
+`/tmp/pe-ex-chrysler-N3-nav-v2.py`,prywatny katalog z sufiksem-live,
+zimno odtworzył181839 i wait300 oddał HP611. Nie wczytywano RAM snapshotu.
+Stary v1 terminalny; aktywny v2 czeka przy196802.
+
+Z181631/tej samej zapisanej trasy kolejne M298,M308,M299/M299,M309,
+M311,M299,M308,M298,M310,M292,M294,M311,M298 prowadzą193048
+M291/a80490c8. Dodatkowa wygrana M311189808 bez strat,zachowane611HP.
+Boss uruchomiony193152,pełny skład193452:typ3/sub31 HP1001000/def60,
+części6/5 HP1017854/def40,część4 HP1200000/def60. Są to oryginalne
+liczniki skryptowe; nie zmieniano ich ani obrażeń. Zwykły pojedynczy
+ostrzał/Double Action zakończył194952 zwycięstwem,mode2,EXPselection20,
+zero wrogów,534/671HP. Nagrody zamknięte196152. Bez leków i PE w tej
+walce; sześć Medicine3 zachowanych. Pełne inventory identyczne z177675,
+wszystkie zmienne poza7:0→2,11:458→8650,18:901043→1,78:146→183 identyczne.
+PASS `/tmp/pe-ex-chrysler-boss10-win-N3-v1-proof/proof.json`.
+
+Dalsze zwykłe przejście przez wyjście M291 daje196802 M297/a80493c8,
+oryginalny licznik10→11,534/671HP,BP2,menuNULL,lock0,zero wrogów.
+Pełne inventory identyczne z196152,wszystkie zmienne poza4:10→11
+identyczne. PASS `/tmp/pe-ex-chrysler-floor11-N3-v1-proof/proof.json`.
+Oba dowody: pełne niezależne zimne replaye od muzealnego N3,
+normal/SAN exit0 bez raportów,pełny JSON/1MiB VRAM normal=SAN=live
+odpowiedniego końca,źródłowy/prywatne N3 8192B bez zmian.
+Seed/checkpoint/runner/verifier przy obu prefiksach. SDK/SDL
+nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+
+Ekwipunek nie zwiększył się po bossie; NIE deklarować odbioru klucza
+lub innych nagród przed sprawdzeniem oryginalnych warunków i stanu.
+Potwierdzone są zwycięstwo,flagi i wejście wyżej. Tabela piętra11
+read/detach `/tmp/pe-chrysler-floor11-table-N3-v1.json`:codeIndex11,
+code73,selected14,count23; plan w pliku z sufiksem-route zawiera15
+niewykonanych przejść. Od tego zakresu tabela nazw scen ma kolejną
+paletę; nie zakładać identycznych portów nowych wariantów bez kontroli.
+Następne: sprawdzić klucz/nagrodę i możliwość trwałego zapisu oraz
+kontynuować piętra. Dalszy Chrysler,EX i cały port nadal otwarte.
+
+
 ### EX Chrysler N3: piętro9→10,trzy wygrane i Heal3 bez zużycia leków
 
 Na niezmienionym pe-control-aim-v1 od157767 zwykły pad prowadzi

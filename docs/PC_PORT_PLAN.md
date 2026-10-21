@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: ukończone piętro13, wejście na14
+
+Bez zmian produkcji. Z53434 M387 wyjście21 prowadzi53971 do M386.
+Pięciu przeciwników pokonanych zwykłym padem bez utraty HP; read/detach
+łupu potwierdza pięć wpisów amunicji id1, pozostałe puste. Dalej:
+M38956827, M38657367, M38457922, M30758612, M38459160,
+M38859850, M38560408, M29461048, M38561548, M38962188,
+M29662778 i schody63498 M297/a80493c8,piętro14. Aya539/671HP,
+BP2,menuNULL,lock0,zero żywych wrogów. Key1 i sześć Medicine3 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-floor14-O1-v1-proof/proof.json`: pełne
+niezależne zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live63498. Cały ekwipunek względem53434
+różni się tylko amunicją426:9→4; wszystkie zmienne poza4:13→14,
+18:157→223,78:177→82 identyczne. Źródłowy i prywatne O8192B bez zmian.
+Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe. Następne: piętro14 i dalszy
+Chrysler przed finałem; pełny zakres portu nadal otwarty.
+
 ### EX O1: dwie walki na piętrze13, odcinek do M387
 
 Bez zmian produkcji. Świeży read/detach układu13: code56,selected20,

@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX gałąź L: M243 wygrane,przygotowane M245 z Medicine4
+
+Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live29869 od68462
+użył KlampKey/dialog41 i wszedł M24369597. Oryginalne BP menu:
+M8000/Attack,11punktów po100BP,bonus39→50,łączny atak96→107,BP56.
+Field Heal3 341→589. Up100 uruchomiło typ3/sub31 545HP/def109;
+podejście w zasięg,pociski po66:545→413→281→149→17. Pojedynczy
+zlecony Cross+Square zakończył walkę; po truciznie135HP. Nagrody
+zamknięte75407,bez zużycia leku podczas walki. Po niej field Heal3
+135→415,Medicine3slot1 415→589,zamknięto menu76271.
+
+Schody M243→M24577976 (po korekcie podejścia z końcowej pozycji walki),
+Up45/Left60,punkt78281:M245(a80442c8),589/589HP,BP56,menuNULL,lock0,
+mode9,bez wrogów. Medicine4slot0 iMedicine3slot26 zachowane,slot1 pusty.
+Względem końca M24268462:slot1:8→0,rekord amunicji426:13→4,
+bonusAttack430:39→50,reszta inventory identyczna. Zmienne wyłącznie
+1:229→243,22:5460→21844,37:133→197,78:134→159.
+
+Pełny cold replay od L: `/tmp/pe-ex-triceratops-ready-L2-v1-proof/proof.json`
+PASS,pełny JSON i1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń
+sanitizerów,źródłowy i prywatne L bez zmian. SDK/SDL bez instrumentacji,
+brak oracle PS1,dowody /tmp nie są trwałym CTest. Live29869 czeka78281
+w `/tmp/pe-ex-museum-L2-nav-v1-live`. Następne: Triceratops,stosować
+ruch podczas ATB i zachować Medicine4 na drugą fazę. Boss jeszcze
+nieuruchomiony w tej gałęzi,pełny cel nadal nieukończony.
+
+
 ### EX gałąź L: M242 wygrane i drugi Medicine3
 
 Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live29869 od55333:

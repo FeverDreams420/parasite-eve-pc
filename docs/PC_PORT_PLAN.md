@@ -2,6 +2,77 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### D4: mieszany łup SEL z pełnym plecakiem i pięć automatycznych walk
+
+Na niezmienionym pe-reward-visibility-v1 od D14392 wrócono przez
+M340→M34316636→M22918456→M24218996→M24319956. Bez walk i utratyHP.
+Kolejne powroty uruchomiły spotkanie M242; zwycięstwo31186 bez utratyHP,
+EXP4233. Sterownik raz potraktował żywy proces pomocnika oczekiwania
+jako błąd, bo exec_command zwrócił session_id zamiast końcowego exit_code.
+Naprawiono tylko tymczasowy sterownik: taki uchwyt jest teraz odpytywany
+do końca. Gra nie została zrestartowana; kontynuowano aktualną kolejkę
+ataku do zwycięstwa. Bez zmian kodu produkcyjnego, RAM/RNG/zapisu.
+
+Przy32302 oryginalny ekran łupów: pełne30/30, dwa Medicine3 iAmmo15,
+rezerwa204, clip13. Oryginalne Down/Cross weszło wSEL32422, dwaDown
+wybrały lewy indeks2, Cross32494 odebrało amunicję. Przy32574 rezerwa219,
+remaining[2]=value0/itemNULL, oba Medicine3 nadal w lewym łupie. Żaden
+slot/rekord wyposażenia nie został wymieniony. Circle wraca do paskaSEL;
+Down/END daje33082 swobodne M242,HP535/765,EXP417438. Nadmiarowych
+leków nie odebrano; siedem posiadanych Medicine3 i oba pancerze zachowane.
+
+PASS `/tmp/pe-D4-mixed-SEL-proof/proof.json`: punkty32302/32574/33082,
+każdy cold normal/SAN, sześć native exit0 bez diagnostyki, źródłowe/prywatne
+D8192B niezmienione. Wszystkie całeJSON identyczne z live i profilami;
+1MiBVRAM zgodne normal/SAN w każdym punkcie i z live przed/po całym
+odbiorze. LiveVRAM po samym32574 nie zamrożono — dla tego pośredniego
+obrazu potwierdzono tylko zgodność obu profili. Jawny cały inventory
+zmienia wyłącznie rezerwę204→219; character i512vars identyczne.
+
+Sterownik wdrożył ten przepływ z obserwacji battle_rewards: przy pełnym
+plecaku i mieszanym łupie wybieraSEL, nawiguje do kolejnych oryginalnych
+indeksów amunicji kind16..18, odbiera je i sprawdza po każdym Cross
+wyzerowanie właściwego wpisu oraz niezmienność wszystkich slotów.
+Nie używa prawej listy do wymiany wyposażenia. Po amunicji wraca doEND.
+Granice/niewłaściwe menu lub nieoczekiwany wynik zatrzymują sterownik.
+Pozostałe nadmiarowe Medicine3 zostawia; dla innego cennego łupu przy
+pełnym plecaku dodano zachowawczy stop do indywidualnej obsługi zamiast
+automatycznego porzucenia. To nie dowód obsługi wszystkich rodzajów łupów
+ani konwersji specjalnych skrzynek ammo; obserwowane przypadki używały
+zwykłych kind16 i indeksów0..2.
+
+Następne12 cykli M242/M243 wykonało pięć walk całkowicie automatycznie:
+3×4233 i2×4561EXP, razem21821, 417438→439259. Ekrany łupów obejmowały:
+Medicine3/Ammo15/Ammo15; Ammo30/Medicine3/Ammo15;
+Medicine3/Medicine3/Ammo15; Medicine3/Ammo15/Ammo15;
+Medicine3/Ammo15/Ammo15. OryginalneSEL odebrało odpowiednio30/45/15/30/30,
+łącznie150 nabojów. Rezerwa219→331, clip13→2, dwa przeładowania po19,
+49 pojedynczych strzałów. Sloty i wszystkie pozostałe rekordy ekwipunku
+identyczne; siedem Medicine3, oba pancerze, ATK149/DoubleAction zachowane.
+HP535→495, bez leczenia i zużywania leków. PulaPE74→215; wszystkie512vars
+poza1:243→242 i78:8→125 identyczne. Endpoint74052/M243,mode9,
+menuNULL,move_lock0. Oryginalny zapis D w telefonie nadal starszy:
+EXP413205/HP535. Tego bieżącego przyrostu nie zapisano nowym slotem.
+
+PASS `/tmp/pe-D4-mixed-SEL-auto-v1-proof/proof.json`: pełny cold replay
+D do74052, normal/SAN/live całyJSON i1MiBVRAM identyczne, oba exit0 bez
+diagnostyki, D8192B źródłowe/prywatne niezmienione. Jawny pełny verifier
+inventory/character/512vars, podsumowanie wszystkich pięciu list łupów
+oraz bilans150 nabojów/49 strzałów. Seed/checkpoint/runner/verifier pod
+tym samym prefiksem. Tymczasowe helpery
+`/tmp/pe-reward-visibility-v1-mixed-farm-driver-v2.js` i
+`/tmp/pe-reward-visibility-v1-fight-driver-v2.js`; dodatkowy zachowawczy
+warunek przeglądu nieoczekiwanego łupu dodano po tej serii, bez kolejnych
+walk z takim łupem. Żaden nowy plik nie trafił do źródeł projektu.
+
+Live nadal28567/native6445, root `/tmp/pe-reward-visibility-v1-D4-live`,
+zatrzymany74052: level36,EXP439259,HP495/765,BP729,ATK149,
+B Jacket1slot6/SvProtectorslot29,siedemMedicine3,reserve331,clip2.
+Dalszy trening i boss50/Chrysler77 pozostają otwarte. SDK/SDL
+nieinstrumentowane, brak oraclePS1, dowody/tmp nietrwałe, pełny port
+nieukończony. W razie utraty procesu odtwarzać zweryfikowany seed74052,
+a nie samo starsze Continue D, jeżeli ma zostać zachowany ten postęp.
+
 ### Headless: widoczność oryginalnych łupów i odbiór amunicji przy pełnym plecaku
 
 W istniejącym `src/main/boot/init.c` dodano25 linii diagnostyki do

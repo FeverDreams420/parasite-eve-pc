@@ -2,6 +2,45 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### B4: ukończone43, wejście na44, wszystkie leki zachowane
+
+Bez zmian produkcji,pe-m436-bind-v2. Od70895/M297 przejście Up312
+prowadzi M40571508/slot6/code9. Ta wizyta ma obróconą kamerę:
+Left340 przesunęło poZ do ściany,Right80/Up340 skorygowały trasę
+wzdłużX;guard zatrzymał przy72356 na trzech wrogach. Single shots,
+DoubleAction i Heal3 wygrywają75312,HP682/763. Read-only nagroda
+EXP403,Medicine2;pominięta przezEND. Up300→M30777324/slot2,
+Up65/Right230→M29477919/slot3,Right190→M40678409/slot4,
+Right340→M40879049/slot5. Right80 uruchamia jednego przeciwnika;
+pokonany80045,HP575,EXP133,nagrody zamknięte81161.
+
+Dalsze rzeczywiste indeksy potwierdzone read-only po przejściach:
+5→9→14→13→12→15→16→17→18→10. Right115/Down110→M40581686,
+Down340→M43282326,Down130/Left170→M29282924,
+Left210→M30783434,Left165/Down105→M40984004,
+Down90/Right150→M40684544. Right88 uruchamia jednego wroga;
+wygrana86140,HP620 po leczeniu PE,EXP160. END87564,
+Right280 daje slot17 w tej samej scenieM40688144;
+Right340→M43288784/slot18,Right130/Up160→M29689374/slot10,
+Up420→M29790094 i oryginalna zmienna4=44. Wszystkie14 kroków planu
+43 wykonane,slot11→6→2→3→4→5→9→14→13→12→15→16→17→18→10.
+
+PASS `/tmp/pe-ex-chrysler-floor44-B4-v1-proof/proof.json`:
+pełny cold B normal/SAN/live JSON i1MiBVRAM identyczne,oba exit0 bez
+raportów,B8192B źródłowy/prywatne niezmienione. Pełny inventory względem
+70895 tylko rezerwa399→387;magazynek2 i wszystkie inne bajty identyczne.
+Character tylkoEXP301885→302581(+403+133+160),HP584→620,pulaPE98→153.
+512vars poza4:43→44,18:59→251,78:67→157 identyczne. BP47,
+level35,maxHP763 i pięćMedicine3 zachowane. Runner/seed/checkpoint/verifier
+przy prefiksie. 43 ukończone w tej gałęzi,44 dopiero rozpoczęte.
+
+Read-only mapa44:count21,selected14/code2,seed25164,
+`/tmp/pe-chrysler-floor44-B4-table-v1.json`; plan od14 w -route-v1.json
+wymaga wykonania. Live `/tmp/pe-ex-museum-B4-loaded-v1-live`,
+kontroler75878/native26158,zatrzymany90094,HP620/763,
+mode9/menuNULL/lock0/zero wrogów. SDK/SDL nieinstrumentowane,
+brak oraclePS1,dowody/tmp nietrwałe. Boss50 i cały port nadal otwarte.
+
 ### B4: ukończone42, wejście na43 z zachowaniem leków
 
 Bez zmian kodu,pe-m436-bind-v2. Po61157/M409/slot3 każdy kolejny

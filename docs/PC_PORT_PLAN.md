@@ -2,6 +2,15 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: nagrody bossa, powrót, nowy zapis I2 i zimny Continue
+
+Bez zmian kodu, `pe-control-aim-v1`: nagrody M269 podnoszą maxHP437→532 i BP253→914; HP418. Pełny inventory26/26 nie przyjmuje nowego przedmiotu. Oryginalne schody przy z≈−816, marsz w prawo, drabina Up i obejście M267 prowadzą do M333. Powrót uruchamia ponowne starcie M333; zbyt długi ciąg ruchów po wejściu kosztował HP. Zwykłe Heal3 (144→424HP) i strzały wygrywają ponownie85693 przy353/532HP. Po nagrodach wyjście kontrolowane krótkimi krokami prowadzi do M266 i telefonu.
+
+FileSaved89056 tworzy I w pustym slocie8, G/H zachowane. Źródło `/tmp/pe-ex-warehouse-save-I2-v1-source/BASLUS-006620000000I`,8192B,SHA256 `23085a74132efb3906247446854a0ecabfc8d19f836ea92d9f24a4cc5856f650`. Względem zwycięstwa74987 pełny inventory różni wyłącznie rekord426:0→10; zmienne wyłącznie1=998,20=345245029,78=35.
+
+`/tmp/pe-ex-warehouse-save-I2-v1-proof/proof.json`: pełny replay od zimnego G2,normal/SAN exit0,pełny JSON/VRAM i8192B I identyczne z live,G bez zmian,H zgodny ze źródłem. `/tmp/pe-ex-warehouse-I2-loaded-v1-proof/proof.json`: zimny Continue wyłącznie z I,12920,M266,353/532HP,BP914,brak menu/przeciwników/blokady,pełny inventory i wszystkie zmienne zgodne z FileSaved,pełny JSON/VRAM normal=SAN,I niezmieniony. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/CTest. Dalsza kampania i Chrysler nadal otwarte.
+
+
 ### EX M269: pełne zwycięstwo nad bossem Warehouse
 
 `pe-control-aim-v1`, bez zmian kodu produkcyjnego: pełny replay od G2 do74987 kończy walkę M269,EXP,zero żywych przeciwników,Aya418/437HP. Zwykłe podejścia i pojedyncze strzały w Double Action niszczą segment5:29 (67387) i4:30 (70147). Obrona rdzenia zmienia się153→118→90 (nie83); następnie trafienia po64 przełamują oryginalny próg rdzenia1000000,co kończy całą walkę wraz z pozostałymi aktorami. Aya nie traci HP w tej walce; bez leczenia,edycji RAM/RNG/zapisu ani zmian balansu. Względem66071 pełny ekwipunek zmienia wyłącznie rekord amunicji426:18→0; wszystkie zmienne skryptowe identyczne.

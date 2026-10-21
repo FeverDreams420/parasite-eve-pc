@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: przez korytarze50 do windy i dalej
+
+Bez zmian kodu na pe-m410-bind-v1. Od209402:code9 walka z dwoma
+od209554,wygrana przy637HP po Heal3/ruchu/pojedynczych strzałach;
+wynik212650,read/detach łupu:id7,pozostawiony przy pełnym plecaku.
+Eksploracja213606,kolejny code9 214058,walka z dwoma od214210,
+wygrana przy671HP,wynik217218,ponownie id7 pozostawiony.
+Eksploracja218174,code21 218626,M292219186,code22 219686,
+endpoint220216 code9/a80802c8,piętro50,HP671/671,BP2,mode9,
+menuNULL,lock0,zero wrogów. Boss50 jeszcze nie osiągnięty.
+
+PASS `/tmp/pe-ex-chrysler-mid50c-A4-v1-proof/proof.json`: cały zimny
+A4 normal/SAN/live JSON i1MiB VRAM zgodny,exit0 bez diagnostyki,
+SHA obu gier sprawdzone. Pełny ekwipunek względem209402 poza
+amunicją426:0→15 identyczny; wszystkie512 zmiennych poza
+18:3922279→1825125,78:208→108 identyczne. Źródłowy/prywatne A8192B
+niezmienione. Seed/checkpoint/runner/verifier obok. Dowody /tmp
+nietrwałe,SDK/SDL nieinstrumentowane,brak oracle PS1,pełny port otwarty.
+
 ### EX A4: dalsza trasa piętra50, dwie kolejne wygrane
 
 Bez zmian kodu na pe-m410-bind-v1. Od191830:code22 192330,

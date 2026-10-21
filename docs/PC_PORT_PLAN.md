@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A2: piętro22, walki code23 i code21
+
+Bez zmian produkcji na pe-m392-bind-v1. Z51423: M29251963,
+M29452463,code23/a80691c8 przy52963. Dwóch wrogów pokonanych
+przy494HP; read/detach łupu dwa id16,pozostawione przy pełnym plecaku.
+Code21/a80692c8 przy55083 uruchamia55173 sześciu wrogów; wygrana
+przy437HP bez zużycia leków. Read/detach łupu dwa id1. Endpoint57453
+code21/a80692c8,piętro22,437/671HP,BP2,menuNULL,lock0,zero wrogów.
+Oba klucze i pięć Medicine3 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-second22-A2-v1-proof/proof.json`:
+niezależne zimne replaye tylko zA,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live57453. Pełny ekwipunek względem51423
+różni się tylko amunicją426:5→13; wszystkie zmienne poza18:17→50 identyczne.
+Źródłowy i prywatne A8192B bez zmian. Seed/checkpoint/runner/verifier obok.
+SDK/SDL nieinstrumentowane,brak oracle PS1,dowody /tmp nietrwałe.
+Piętro22 nieukończone; następne wyjście23 zcode21.
+Pełny zakres portu pozostaje otwarty.
+
 ### EX A2: pierwsza część piętra22, walka code9
 
 Bez dalszych zmian produkcji na pe-m392-bind-v1. Read/detach układu22:

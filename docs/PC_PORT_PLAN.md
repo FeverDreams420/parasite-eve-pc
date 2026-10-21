@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX B3: ukończone piętro34, wejście na35
+
+Bez zmian kodu na pe-m392-bind-v1. Z62008: code23 62620,code22 63198,
+code21 63728,code20 64288,code23 64878,code10 65456,M30566096,
+code9 66616/67306. Trzech wrogów uruchomionych67450, pokonanych przy475HP.
+Read/detach łupu id8,id1,id8; ALL odbiera dwie Medicine3 do slotów10/15
+oraz amunicję. M30470766,M33571426 (prawe wejście1347,-153),
+Left120/Up176 daje północne wyjście20 i M29672022. Endpoint72742
+M297/a80493c8,piętro35,HP475/671,BP2,menuNULL,lock0,zero wrogów,
+wszystkie trzy klucze i pięć Medicine3.
+
+PASS `/tmp/pe-ex-chrysler-floor35-B3-v1-proof/proof.json`: zimne replaye tylko
+z autentycznego B3, normal/SAN exit0 bez raportów; cały JSON i1MiB VRAM
+zgodne również z obserwowanym przebiegiem. Pełny ekwipunek względem62008
+różni się tylko slotami10/15:0→8 i amunicją426:7→15; wszystkie zmienne poza
+4:34→35,18:153→408,78:87→67 identyczne. Źródłowy i prywatne B8192B niezmienione.
+Seed/checkpoint/runner/verifier obok. Read/detach układu35:selected12,count23,
+seed1140; `/tmp/pe-chrysler-floor35-table-B3-v1.json`, plan -route obok wymaga
+wykonania. Piętro35 dopiero rozpoczęte. Dowody /tmp nietrwałe,
+SDK/SDL nieinstrumentowane, brak oracle PS1. Pełny zakres portu nadal otwarty.
+
 ### EX B3: ukończone piętro33, wejście na34
 
 Bez zmian kodu na pe-m392-bind-v1. Od49512: code9 50124,code23 50814,

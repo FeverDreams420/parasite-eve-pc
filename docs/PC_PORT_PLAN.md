@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: zwycięstwo M224 i wejście M225
+
+Bez zmian kodu, `pe-control-aim-v1`: zwykły ruch M224 uruchamia cel4:31,447HP/def69. Pięć pojedynczych strzałów w Double Action po92 pokonuje cel214665,Aya291/573HP,bez leczenia w M224. Po nagrodach południowe wyjście prowadzi do M225216884 (`a80422c8`),menuNULL,move_lock0,brak przeciwników,story608,BP1100. Ekwipunek pełny,bez nowego przedmiotu z nagród.
+
+Względem212653 pełny inventory zmienia wyłącznie rekord amunicji426:17→12; zmienne wyłącznie1=224,21=357601365,78=33. `/tmp/pe-ex-museum-m225-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live216884,pełne inventory/zmienne i pośrednie HP/walka sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Dalsza droga M225/Museum,kampania i Chrysler nadal otwarte.
+
+
 ### EX: nagroda Medicine4 po M221, wygrane M223 i wejście M224
 
 Bez zmian kodu, `pe-control-aim-v1`: nagrody M221 wstawiają Medicine4/raw9 w pusty slot25. Zwykłe Use w polu278→561HP,slot25 pusty,przejście M223204423 (`a80421c8`). Na tym przebiegu ruch uruchamia cztery cele279/279/279/391HP; pojedyncze strzały w Double Action wygrywają210783,Aya531/561HP bez leczenia w M223. Po nagrodach/awansie maxHP573,BP1100,slot25=raw20; Down/Right prowadzą do M224212653 (`a8042248`),531/573HP,menuNULL,move_lock0,story608.

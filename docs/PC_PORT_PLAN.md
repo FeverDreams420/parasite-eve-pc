@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: ukończone piętro14, wejście na15
+
+Bez zmian produkcji. Z100038 M388: M385100435, M304101075,
+M389101735 i wygrana z dwoma wrogami przy520HP. Read/detach łupu:
+dwa id6, pozostawione. M386104928: pięciu wrogów pokonanych bez
+utratyHP; łup cztery id1 oraz id6. Dalej M294107540, M306108040,
+M384108700, M387109390: czterech wrogów pokonanych przy460HP,
+łup trzy id1. M388111995 uruchamia jeszcze jednego wroga, pokonanego
+bez utratyHP; łup id7 pozostawiony. Wszystkie kontrole łupu wyłącznie
+read/detach przed zamknięciem. M296113653 i schody114373 dają
+M297/a80493c8,piętro15,460/671HP,BP2,menuNULL,lock0,zero wrogów.
+
+PASS `/tmp/pe-ex-chrysler-floor15-O1-v1-proof/proof.json`: niezależne
+zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON i1MiB VRAM
+normal=SAN=live114373. Pełny ekwipunek względem100038 różni się tylko
+amunicją426:10→6; Key1 i sześć Medicine3 zachowane. Wszystkie zmienne
+poza4:14→15,5:22→20,78:41→36 identyczne. Źródłowy i prywatne O8192B
+bez zmian. Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe. Następne: piętro15 i dalszy
+Chrysler przed finałem; cały zakres portu pozostaje otwarty.
+
 ### EX O1: piętro14, M386 i M388 oraz korekta celowania testowego
 
 Bez zmian produkcji. Z70738 M389 zwykły pad prowadzi71228 M386,

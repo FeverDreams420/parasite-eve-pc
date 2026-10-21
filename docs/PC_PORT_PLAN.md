@@ -2,6 +2,43 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### B4: ukończone44, wejście na45, bez zużycia leków HP
+
+Bez zmian produkcji,pe-m436-bind-v2. Z90094/M297 zwykły pad przechodzi
+44 według indeksów:14→10→5→6→7→2→3→4→9→13→18→20→19→17→8.
+Wszystkie14 przejść planu wykonane i potwierdzone read-only.
+Pierwsze M40590707 ma obróconą kamerę Up po−X;Up128 uruchamia dwóch
+wrogów90843,wygrana94103,HP486/763,EXP266. END95559,
+M30796115,M29496710,M43297200. Jeden wróg97288 wygrany98900,
+HP687/763 po leczeniuPE,EXP133,nagrody zamknięte100016.
+
+W M432 próby prostegoUp orazDown/Right dotarły do ścian; poprawne
+obejście zakrętu od x0,z−1503:Left80/Up168 dajeM407102747/slot2.
+To korekta sterownika,bez zmian geometrii lub kodu gry. Up70/Right208→
+M406103333/slot3,Right340→M408103973/slot4,
+Right145/Down110→M405104528/slot9. Down112 uruchamia dwóch wrogów,
+wygrana106220,HP589/763,EXP259. END107676,Down240 daje kolejne
+M405108216/slot13. Down340→M405108856/slot18,
+Down340→M432109496/slot20. Down120/Left110,Up24/Left56→
+M409110406/slot19,Left110/Up168→M306110984/slot17,
+Up300→M296111584/slot8,Up420→M297112304 i zmienna4=45.
+
+PASS `/tmp/pe-ex-chrysler-floor45-B4-v1-proof/proof.json`:
+pełny cold normal/SAN/live JSON i1MiBVRAM identyczne,oba exit0 bez
+diagnostyki,źródłowy/prywatneB8192B niezmienione. Jawne delty
+względem90094:inventory tylko
+clip426:2→0 i rezerwa387→369;characterEXP302581→303239(+266+133+259),
+HP620→589,pulaPE153→194. 512vars tylko4:44→45,18:251→1019,
+78:157→204. Pięć Medicine3,BP47,level35,maxHP763 zachowane.
+Runner/seed/checkpoint/verifier przy prefiksie. 44 ukończone i potwierdzone,45 dopiero rozpoczęte.
+
+Read-only45:count29,selected8/code2,seed25164,
+`/tmp/pe-chrysler-floor45-B4-table-v1.json`;plan od8 w -route-v1.json
+wymaga wykonania. Live `/tmp/pe-ex-museum-B4-loaded-v1-live`,
+kontroler75878/native26158,zatrzymany112304,HP589/763,
+mode9/menuNULL/lock0/zero wrogów. SDK/SDL nieinstrumentowane,
+brak oraclePS1,dowody/tmp nietrwałe. Boss50 i cały port pozostają otwarte.
+
 ### B4: ukończone43, wejście na44, wszystkie leki zachowane
 
 Bez zmian produkcji,pe-m436-bind-v2. Od70895/M297 przejście Up312

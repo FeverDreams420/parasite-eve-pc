@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: zimny powrót windą i zachowana wygrana bossa
+
+Na niezmienionym pe-control-aim-v1,cold tylkoO13200,zwykły pad
+przez korektę północnego wejścia M201 i powrót M340 prowadzi15290
+M192,mapę16826,Museum3→NYPD4→CentralPark2→Chrysler10 i hol17910.
+Oryginalny panel holu wymaga zwrócenia ku niemu (yaw2560..3584);
+interakcja otwiera drzwi i wejście19694 doM293/a80491c8. Panel kabiny,
+9Up wybiera10th floor,wyjście kabiny wraca doM292 na piętrze10.
+Dalej M29422319,M31122819,
+M29823409,M29124059/24709. Pokonany boss NIE uruchamia się ponownie.
+Przejście przez pokój25129 dajeM297/a80493c8,floor11,556/671HP,BP2,
+menuNULL,lock0,zero wrogów. Klucz56slot27 i sześć Medicine3 zachowane;
+pełne inventory identyczne z zimnymO13200. Wszystkie zmienne poza
+1:998→999,4:1→11,5:0→20,6:1→10 identyczne.
+
+PASS `/tmp/pe-ex-chrysler-floor11-O1-v1-proof/proof.json`: pełne
+niezależne zimne replaye tylko zO,normal/SAN exit0 bez raportów,
+pełny JSON/1MiB VRAM normal=SAN=live25129,O8192B bez zmian.
+Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oraclePS1,dowody/tmp nietrwałe.
+
+Świeży odczyt read/detach `/tmp/pe-chrysler-floor11-table-O1-v1.json`:
+codeIndex11,code107,selected14,count30. Po wyjściu do miasta i ponownym
+wejściu układ różni się od poprzedniego code73/count23. Nie powielać
+wcześniejszego planu w ciemno ani uznawać samej różnicy za błąd portu.
+Nowy `/tmp/pe-chrysler-floor11-route-O1-v1.json` ma11 przejść po znanych
+kodach do1; nowe warianty scen trzeba nadal kontrolować w runtime.
+Dalszy live25741:M306/a8060348 po pierwszym przejściu schodów,bez
+strat HP/przedmiotów; ten krótki dalszy odcinek jeszcze bez osobnego
+replayu. Aktywny `/tmp/pe-ex-chrysler-O1-nav-v1.py`,prywatny katalog
+z sufiksem-live,kontroler15331. Następne: realizować świeży plan,
+piętro11 i dalszy Chrysler. Pełny cel portu nadal otwarty.
+
+
 ### EX Chrysler: autentyczny zapis O1 po Key1 i zimne Continue
 
 Bez zmian produkcyjnych. Z203782 holu Chryslera zwykły pad wrócił na

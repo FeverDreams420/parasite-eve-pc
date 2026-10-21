@@ -2,6 +2,44 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### Naprawiony brak powiązań oryginalnego M406 na piętrze41
+
+Po endpoint34657 ruch Up50/Right210 ujawnił rzeczywisty błąd starego
+pe-m392-bind-v1: `Scene_LoadRoom: native descriptor missing for M406 slot 75
+(PS1 80192c70)`, następnie startup -2 i native exit1 przy przejściu34851.
+To brak powiązania loadera, nie zakończona eksploracja piętra41.
+
+Audyt `/tmp/pe-m406-module-audit-v1.json`: wszystkie15704 bajty oryginalnego
+kodu i danych M406 identyczne z M205/M243. M406 eksportuje również
+istniejący deskryptor klasy70@80192c38, oprócz75@80192c70 i116@80192d04.
+W istniejącym `src/main/scene/room_load.c` rozszerzono walidację i instalację
+oryginalnych klas0/2 oraz SoundBurst; żadnej nowej implementacji ani pliku.
+Istniejący test `--m205-load` w `tests/original_actor_animation.c` obejmuje
+teraz także cały M406, dwa ładowania, klasę70, reset argumentów, SoundBurst
+oraz wcześniejsze strażniki wskaźnika stanu akcji.
+
+Świeży pe-m406-bind-v2:438 obiektów (219/profil), cztery binaria,
+manifest i rehash wszystkich zależności/bibliotek/obiektów PASS.
+`/tmp/pe-m406-bind-v2-verification.json`:70/70 exit0, bez raportów
+sanitizerów, regresje replay stanu/VRAM/save również zgodne.
+`/tmp/pe-m406-bind-v2-effects-proof.json`:12/12 wybranych CTest w każdym
+profilu i dodatkowe sprawdzenia efektów PASS. SHA256 gry:
+normal7025e57f464a94f8420ab0dba453dcf15a4144aa6e81aae1d1c5984f8a16ca42,
+SAN0d2dcafa2e3f17f0e43329cd86b7e887bb12da8581a642749bd42debcdf9cc42.
+
+PASS `/tmp/pe-ex-chrysler-m406-A4-v1-proof/proof.json`: nowy kandydat od
+zimnego A4 przez całą pierwszą walkę41 i wcześniejszy punkt awarii do35151
+M406/a8080348. HP401/671,BP2,menuNULL,lock0,mode9,zero wrogów.
+Cały JSON i1MiB VRAM normal/SAN zgodny zarówno z pierwszym naprawionym
+przebiegiem, jak i świeżym uruchomieniem finalnego kandydata. Ekwipunek
+identyczny z34657, wszystkie zmienne poza5:20→23,18:4→5 identyczne;
+źródłowy i prywatne A8192B niezmienione, oba exit0 bez raportów, SHA gry
+zweryfikowane. Seed/checkpoint/runner/verifier obok. Nowy żywy kontroler:
+`/tmp/pe-ex-chrysler-A4-nav-v3-live`, cold endpoint35151; v2 zamknięty exit0.
+
+Dalsza część41 i piętra42–77 pozostają niezweryfikowane. Dowody /tmp
+nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1. Pełny port otwarty.
+
 ### EX A4: powrót na40 po Continue, brak respawnu bossa, wejście na41
 
 Bez zmian kodu na pe-m392-bind-v1. Zimny A4 od13200: muzeum→mapa→

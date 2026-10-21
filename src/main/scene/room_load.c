@@ -750,8 +750,9 @@ int Scene_LoadRoom(unsigned int roomId)
             if (slot == 185 && record[i].u.handlerAddress == 0x8019ad98u) native = &g_RoomM273SweepEffects;
             if (slot == 186 && record[i].u.handlerAddress == 0x8019ae24u) native = &g_RoomM273SwayEffects;
         }
-        /* M205/M243 link the identical complete USA actor/SoundBurst module. */
-        if (map + 1 == 205 || map + 1 == 243) {
+        /* M205/M243/M406 link the identical complete USA actor/SoundBurst module. */
+        if (map + 1 == 205 || map + 1 == 243 || map + 1 == 406) {
+            if (slot == 70 && record[i].u.handlerAddress == 0x80192c38u) native = &g_RoomActorClassTable[0];
             if (slot == 75 && record[i].u.handlerAddress == 0x80192c70u) native = &g_RoomActorClassTable[2];
             if (slot == 116 && record[i].u.handlerAddress == 0x80192d04u) native = &g_RoomSoundBurstProgram;
         }
@@ -1233,9 +1234,11 @@ int Scene_LoadRoom(unsigned int roomId)
             }
         } else if ((map + 1 == 245 || map + 1 == 397) && slot == 141) {
             g_FieldFxTaskPrograms[56] = &g_RoomScatterTrailProgram;
-        } else if ((map + 1 == 205 || map + 1 == 243) && slot == 75) {
+        } else if (map + 1 == 406 && slot == 70) {
+            g_PmCmdHandlerTable[70] = &g_RoomActorClassTable[0];
+        } else if ((map + 1 == 205 || map + 1 == 243 || map + 1 == 406) && slot == 75) {
             g_PmCmdHandlerTable[75] = &g_RoomActorClassTable[2];
-        } else if ((map + 1 == 205 || map + 1 == 243) && slot == 116) {
+        } else if ((map + 1 == 205 || map + 1 == 243 || map + 1 == 406) && slot == 116) {
             g_FieldFxTaskPrograms[31] = &g_RoomSoundBurstProgram;
             memset(g_RoomScriptArgs,0,sizeof(g_RoomScriptArgs));
         } else if (map + 1 == 273) {

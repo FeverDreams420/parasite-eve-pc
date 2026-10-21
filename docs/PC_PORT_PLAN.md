@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: M245 i Triceratops — pierwsza faza w toku
+
+Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live16191 od139501:
+schody M243→M245140586,Up45/Left60 sprowadziły z podestu.
+Dalsza nawigacja uruchomiła Triceratopsa przy142185; zaplanowane wait1200
+było za długie po wyzwoleniu walki i kosztowało97HP(245→148).
+Nie był to jeszcze film22. Pierwszy wybór143417,core6:31 HP1001049/def139,
+pomocniczy8:29 HP559/def104. Zwykły M8000 po25/pocisk i Heal3,
+podejścia po odrzucie; nie zatwierdzano kolejnych strzałów poza zasięgiem.
+Przy152522 M245(a80442c8),267/589HP,BP1156,combat1,lock5,menuNULL,
+core1000524,pomocniczy559,PE9965809(~152). Heal3 przy niskim PE nie
+wykonało się; zamknięto menu,zachowując zwykłe celowanie. Żaden przedmiot
+leczący nie został zużyty. To punkt w trakcie walki,nie zwycięstwo.
+
+Wszystkie50 slotów bez zmian względem końca M243; jedyna zmiana4096B
+rekordów to amunicja426:2→17. Zmienne wyłącznie1:242→243.
+Pełny cold replay od J do tego punktu:
+`/tmp/pe-ex-triceratops-phase1-J2-v1-proof/proof.json` PASS,
+pełny JSON i1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń sanitizerów,
+źródłowy J i utworzony K bez zmian. SDK/SDL bez instrumentacji,brak oracle
+PS1,dowody /tmp nie są trwałym CTest. Live16191 czeka152522 w
+`/tmp/pe-ex-museum-J2-nav-v1-live`. Następne: oszczędniejsza taktyka,
+regeneracja PE i zachowane leki; dokończyć obie fazy. Film22 i dalsza
+kampania tego przejścia nadal niezaliczone. Pełny cel otwarty.
+
+
 ### EX: M243 wygrane,545HP/def109
 
 Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live16191 od133313:

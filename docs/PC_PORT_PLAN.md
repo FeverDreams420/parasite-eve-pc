@@ -2,6 +2,37 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Chrysler N3: dwie wygrane,ślepa odnoga M300 i przejście do M333
+
+Na niezmienionym pe-control-aim-v1 zwykły pad od34567 przeszedł
+M306→M300/a8060048. Odczyt oryginalnego skryptu M300 potwierdził
+jedno wyjście do poprzedniego pokoju; nie są to schody. Powrót przez
+M306/M305 do M308 uruchomił39475 czterech przeciwników:
+typ4/sub31 HP85/def42 i typ3/sub0/1/2 HP74/def40. Zwykłe pojedyncze
+strzały/Double Action zakończyły walkę; nagrody zamknięte41795.
+Aya401/671HP,BP2,sześć Medicine3 zachowanych. Pełne inventory względem
+34567 zmienia tylko byte426:2→16; wszystkie zmienne poza5:23→21,
+18:17→33 identyczne. PASS
+`/tmp/pe-ex-chrysler-m308-win-N3-v1-proof/proof.json`.
+
+Południowe wyjście M308 prowadzi do M298/a8049448 (42290),które
+jest kolejnym pokojem,nie potwierdzonymi schodami. Powrót i ponowne
+wejście/ruch w głąb uruchamiają pięciu przeciwników (43582). Kolejna
+wygrana zwykłym ostrzałem,nagrody zamknięte46182,HP401/671 bez leków.
+Wyjście wschodnie prowadzi46672 do M333/a80610c8,menuNULL,lock0,
+BP2,zero przeciwników. Pełne inventory względem41795 zmienia tylko
+byte426:16→11; wszystkie zmienne poza5:21→22,18:33→51 identyczne.
+PASS `/tmp/pe-ex-chrysler-m333-N3-v1-proof/proof.json`.
+
+Oba dowody: pełny zimny replay od autentycznego muzealnego N3,
+normal/SAN exit0 bez sanitizer/opcode/assertion,pełny JSON i1MiB VRAM
+normal=SAN=zamrożony live odpowiedniego końca. Źródłowy/prywatne N3
+8192B niezmienione. Seed/checkpoint/runner/verifier przy obu prefiksach.
+Odczyty LLDB wyłącznie read/detach,bez modyfikacji RAM/RNG/save.
+SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+Dalszy graf piętra,schody,bossowie i pełny Chrysler pozostają otwarte.
+
+
 ### EX Chrysler N3: schody i połączenia korytarzy
 
 Nie zmieniano produkcji ani zapisów. Z M290 zwykły pad uruchomił

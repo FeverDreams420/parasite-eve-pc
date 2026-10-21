@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: wyjście z Warehouse na mapę po zapisie I2
+
+Bez zmian kodu, `pe-control-aim-v1`: pełny replay G2→boss→zapisI→M266→M265→M263→M262→M260→mapaM000 kończy97409 przy353/532HP,BP914,story600. Pełny inventory identyczny z FileSavedI89056,oba klucze zachowane. Zmienne zmieniają wyłącznie1=260,78=113. Droga M266 wymaga obejścia zachodniej barierki przyx≈−1694 i rampy; po drodze nagrano także omyłkowe wejście/wyjście po drabinie M266,bez strat HP/przedmiotów. Ruch kontrolowany krótkimi krokami zatrzymuje się przy przejściu sceny.
+
+`/tmp/pe-ex-warehouse-exit-G2-v1-proof/proof.json`: normal/SAN exit0,pełny JSON/VRAM identyczne z live97409,pełne inventory/zmienne sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/CTest. Dalszy żywy input Left,Left,Cross,karta lokacji,Cross prowadzi98413 do wejścia Museum M192 (`a8029148`),353HP; ten późniejszy endpoint nie jest objęty powyższym cold replayem. Museum i reszta kampanii pozostają do weryfikacji.
+
+
 ### EX: nagrody bossa, powrót, nowy zapis I2 i zimny Continue
 
 Bez zmian kodu, `pe-control-aim-v1`: nagrody M269 podnoszą maxHP437→532 i BP253→914; HP418. Pełny inventory26/26 nie przyjmuje nowego przedmiotu. Oryginalne schody przy z≈−816, marsz w prawo, drabina Up i obejście M267 prowadzą do M333. Powrót uruchamia ponowne starcie M333; zbyt długi ciąg ruchów po wejściu kosztował HP. Zwykłe Heal3 (144→424HP) i strzały wygrywają ponownie85693 przy353/532HP. Po nagrodach wyjście kontrolowane krótkimi krokami prowadzi do M266 i telefonu.

@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: pierwsza walka i korytarze piętra17
+
+Bez zmian produkcji. Świeży read/detach układu17: code40,selected5,
+count20; `/tmp/pe-chrysler-floor17-table-O1-v1.json`, plan obok z-route.
+Z144775: M305145387, M387145937, M388146467. Dwóch przeciwników
+pokonanych przy426HP; łup id6/14 potwierdzony read/detach, pozostawiony
+przy pełnym plecaku. Dalej M294149728, M387150228/a80683c8,
+piętro17,426/671HP,BP2,menuNULL,lock0,zero żywych wrogów.
+Key1 i sześć Medicine3 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-mid17-O1-v1-proof/proof.json`: niezależne
+zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON i1MiB VRAM
+normal=SAN=live150228. Pełny ekwipunek względem144775 różni się tylko
+amunicją426:0→6; wszystkie zmienne poza5:20→23,18:16351→32733,
+78:68→85 identyczne. Źródłowy i prywatne O8192B bez zmian.
+Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe. Piętro17 nieukończone;
+następne wyjście22 z M387. Cały zakres portu pozostaje otwarty.
+
 ### EX O1: ukończone piętro16, wejście na17
 
 Bez zmian produkcji. Z138399 zwykły pad realizuje pozostały plan:

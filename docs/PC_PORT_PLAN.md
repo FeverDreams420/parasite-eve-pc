@@ -2,6 +2,35 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: zweryfikowane Heal3 w eksploracji; przygotowanie kolejnej próby42
+
+Bez zmian kodu na pe-m406-bind-v2. Ze zwycięskiego52811 oryginalne menu
+PE→Heal3→potwierdzenie podniosłoHP371→651 przy53311,menu8,cursor[0,1],
+lock0,BP2. PASS `/tmp/pe-ex-chrysler-fieldheal42-A4-v1-proof/proof.json`:
+zimny A4 normal/SAN i świeży live zgodne całym JSON i1MiB VRAM,
+exit0 bez raportów, SHA gry sprawdzone. Pełny ekwipunek i wszystkie
+zmienne identyczne z52811, źródłowy/prywatne A8192B niezmienione.
+Seed/checkpoint/runner/verifier obok. Nowy kontroler:
+`/tmp/pe-ex-chrysler-A4-nav-v5-live`,endpoint53311,HP651/671.
+
+Wcześniejsza druga próba po takim leczeniu nie dała zwycięstwa: live-v4
+czekał w polu do59351, wszedł do code22 przy59843, walka z dwoma od59915.
+Przy61587 HP141, następny ruch zakończył się HP0/mode3 przy61775.
+Ten koniec nie ma jeszcze pełnego replayproof; pozostaje obserwacją
+nieudanej taktyki. V4 zamknięty quit/exit0, v5 odtworzony zimno przez pad,
+bez modyfikacji RAM/RNG/save. Read/detach wykazał brak regeneracji PE
+w bezruchu pola:56351 i59351 identyczne exp_or_acc8949554,HP651,
+atbStep83095,atbRate23251. Nie traktować oczekiwania w polu jako uzupełnieniaPE.
+
+Odczyt posiadanego wyposażenia: M8000 baza57+54ATK, B Jacket1 baza43+89DEF;
+pozostałe posiadane dynamiczne bronie mają tylko0–2 bonusu pierwszej statystyki.
+Samo użycie jednego Tool na tych bonusach nie daje dużego wzmocnienia.
+Planner ze znanymi portami nie znalazł ścieżki od slot4 do code6; brak wyniku
+plannera nie dowodzi braku zasobów w całym piętrze. Dalsze przygotowanie,
+celowanie/ruch i boczne pomieszczenia wymagają sprawdzenia.
+Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1.
+Piętro42 i pełny zakres portu nadal nieukończone.
+
 ### EX A4: druga wygrana walka42; kolejna próba zakończona porażką
 
 Bez zmian kodu na pe-m406-bind-v2. Od47351:code21 47891,M30548441;

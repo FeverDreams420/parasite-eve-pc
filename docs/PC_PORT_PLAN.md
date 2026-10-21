@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: reset i wygrana następnej walki po śmierci/Continue
+
+Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live47612 od160961
+po Continue K przeszedł M237→M235,film21 bez skipu,M234→M217.
+Zmienna trybu walki−1 utrzymywała się w eksploracji,ale spotkanie168948
+ustawiło7,następnie0 i wybór akcji1 przy169256: reset działa dla tej trasy.
+Wariant trzech typ6/sub31,30,29 po335HP/def99; M8000 z zapisu K,atak96,
+DoubleAction pojedynczym strzałem po62 obrażeń. Po trafieniach HP189,
+jedno oryginalne Heal3 i pocisk dały443HP. Podejście do ostatniego celu,
+wygrana174543,379/573HP. Nagrody zamknięte175743,menuNULL,lock0,
+combat9,BP1100,zero wrogów. Ekwipunek w całości identyczny z cold K
+(wszystkie50slotów i4096B rekordów,ammo ponownie9). Zmienne od K tylko
+1=234,21=357863509,34=183,74=632,78=107.
+
+Pełny cold replay od J obejmujący poprzedni boss/death/title/Continue K,
+film21 i tę wygraną w tym samym procesie:
+`/tmp/pe-ex-post-death-battle-K2-v1-proof/proof.json` PASS,
+pełny JSON i1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń sanitizerów,
+źródłowy J i utworzony K bez zmian. Ten dowód zamyka wcześniejszą
+wątpliwość resetu mode−1 dla sprawdzonego spotkania,nie wszystkich wariantów.
+SDK/SDL bez instrumentacji,brak oracle PS1,dowody /tmp nie są CTest.
+Live47612 czeka175743 wM217,root`/tmp/pe-ex-triceratops-prep-J2-v1-live`.
+Przedbossowy prefiks z atakiem107 nadal zachowany w142363-seed/checkpoint;
+dalej potrzebna skuteczna taktyka/przygotowanie Triceratopsa i reszta EX.
+Pełny cel nieukończony.
+
+
 ### EX: porażka w drugiej fazie i Continue K w tym samym procesie
 
 Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live47612 od156281:

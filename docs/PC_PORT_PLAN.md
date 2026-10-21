@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: film21, story632 i wejście M217
+
+Ten sam `pe-control-aim-v1`, bez zmian produkcyjnych. Live16191 od J2
+kontynuował po zapisie K: anulowano pytanie o nadpisanie K (bez zapisu),
+zakończono menu, przejście M237→winda M258→M237, następnie M235.
+Północne obejście przegrody jest konieczne zgodnie z oryginalną kolizją.
+Powrót w dół M235 uruchomił film21; poczekano na naturalny koniec.
+Przy31181 M234/story632,dialog63; dwa Cross zamknęły dialogi63/64.
+Up70,Left160 iLeft12 otworzyły zachodnie przejście do M217 przy32871.
+415/573HP,BP1100,menuNULL,move_lock0,bez żywych przeciwników.
+Cały ekwipunek bez zmian względem K; jedyne zmiany zmiennych to
+1:998→234,34:180→183,36:11→43,74:608→632.
+
+Pełny cold replay od J2 obejmuje alarm, zapis K, windę, naturalny film
+oraz M217: normal/SAN exit0, pełny JSON i1MiB VRAM identyczne z live,
+bez zgłoszeń sanitizerów, J nienaruszony, K identyczny we wszystkich8192B.
+Dowód `/tmp/pe-ex-museum-m217-J2-v1-proof/proof.json`;
+checkpoint `/tmp/pe-ex-museum-m217-J2-v1-checkpoint/`.
+SDK/SDL bez instrumentacji; brak niezależnego oracle PS1.
+To potwierdza trasę i stan końcowy, nie zgodność każdej klatki/audio filmu.
+Walka M217 i dalsza kampania tego kandydata pozostają do sprawdzenia.
+Live16191 czeka przy32871 w `/tmp/pe-ex-museum-J2-nav-v1-live`.
+Źródła J2/K2 zachowane; root bu00 nietknięty.
+
+
 ### EX Museum: alarm M237 i trwały zapis K2
 
 Ten sam kandydat `pe-control-aim-v1`, bez zmian kodu produkcyjnego.

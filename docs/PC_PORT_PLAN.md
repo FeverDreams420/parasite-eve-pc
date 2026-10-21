@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: druga walka47 wygrana, dojście do M410
+
+Bez zmian kodu na pe-m410-bind-v1. Od134930:M406135500,
+M305136140,code9 136660/137350. Walka z dwoma od137502
+wygrana przy503HP przez skupienie ognia i oryginalne sterowanie/Heal3.
+Wynik140566,read/detach łupu:id7. Pełny plecak; lek pozostawiony przezEND,
+menu zamknięte141294. Endpoint141746 M410/a8081048,HP503/671,BP2,
+mode9,menuNULL,lock0,zero wrogów. Cztery klucze,dwie Medicine3,
+trzy Medicine2 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-mid47b-A4-v1-proof/proof.json`: pełny zimny
+A4 normal/SAN/live zgodny całym JSON i1MiB VRAM,exit0 bez raportów,
+SHA gry sprawdzone. Cały ekwipunek poza amunicją426:11→1 identyczny
+z134930; wszystkie zmienne poza5:20→22,18:22885→39270,78:235→14
+identyczne. Źródłowy/prywatne A8192B niezmienione. Seed/checkpoint/
+runner/verifier obok. Dalsza część47 i piętra48–77 otwarte. Dowody /tmp
+nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1. Pełny port otwarty.
+
 ### EX A4: pierwsza walka47 wygrana, dojście do code22
 
 Bez zmian kodu na pe-m410-bind-v1. Od127328:code9 127940/128630,

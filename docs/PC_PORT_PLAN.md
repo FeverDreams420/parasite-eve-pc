@@ -2,6 +2,85 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### B4: oryginalny Tool przeniósł bonusy do M8000; dalszy trening w muzeum
+
+Po próbie bossa50 powrócono przez oryginalne Continue do zachowanego
+B4 w muzeum, bez modyfikowania źródłowego zapisu. Nowy kontroler
+49438, root `/tmp/pe-ex-museum-B4-training2-v2-live`, kandydat nadal
+pe-glyph-visibility-v1. Pierwsza próba kontrolera bez PTY zakończyła
+się EOF i native exit0 przy14328; nowy kontroler ma PTY. Nie uznano
+tego za awarię gry ani nie nadpisano śladu pierwszego uruchomienia.
+
+Przejście M340→M343 wymaga obejścia barierki przez x650/z−1021,
+x1554/z−1021, x1554/z−616, x1075/z−616 i północ do schodów.
+Dwie wcześniejsze próby nawigacji zatrzymały się na geometrii;
+bez edycji pozycji. Odtworzona trasa do M229 uruchomiła tym razem
+oryginalne spotkanie jednego type4:31/447HP. Wygrana23426,
+HP644→617, EXP300655→302484 (+1829), END24702. M24225122,
+M24326442. Nie zużyto leków, nie zmieniono kodu ani RNG.
+
+Zgodnie z uwagą użytkownika oryginalne Tune Up wykonało transfer
+parametrów M79-3 (slot8, rekord267) do wyposażonego M8000 (slot5,
+rekord269). Potwierdzenie OK27858, menu zamknięte28122/M243.
+Tool slot16/raw22 i donor slot8 zostały zużyte. Bonusy M8000
+(90,11,6)→(92,12,7), czyli ATK147→149, zasięg69→70,
+magazynek18→19. Efekty/tail pozostały identyczne: pojedynczy strzał
+oraz Double Action. Oryginalny transfer przeniósł też jeden nabój
+powyżej bazowej pojemności donora do magazynka M8000 (8→9).
+Pozostałe posiadane bronie mają tylko0–1 bonusu ATK; brak kolejnego
+Tool/SuperTool w plecaku. Nie pomylono kluczy Chryslera56–59 z Toolami.
+
+PASS `/tmp/pe-ex-museum-tool-transfer-B4-v1-proof/proof.json`:
+pełny cold B normal/SAN/live JSON i1MiBVRAM identyczne, oba exit0,
+bez diagnostyki, źródłowe i prywatne B8192B niezmienione. Verifier
+jawnie sprawdza cały inventory, character i512 zmiennych (tylko1/22/78
+zmienione), zużycie Tool/donora, wszystkie bonusy oraz transfer amunicji.
+
+Następnie M243→M24228472, Down30 i oczekiwanie uruchomiły trzech
+przeciwników28802. Wygrana30818 przy niezmienionych617/763HP,
+EXP+4233→306717. Oryginalne ALL zebrało Medicine3 do wolnego slot8
+oraz30 nabojów, END32190. MenuNULL, mode9, move_lock nadal1;
+nie uznano tego za zakończenie skryptu nagród. Pierwszy verifier
+błędnie wymagał lock0 i nie przeszedł; poprawiono oczekiwanie na
+obserwowane lock1, po czym ponowiono pełną weryfikację.
+Bez użycia leków; sześć Medicine3,
+rezerwa440, magazynek0, M8000 ATK149. PASS
+`/tmp/pe-ex-museum-training2-win1-B4-v1-proof/proof.json`: pełny cold
+normal/SAN/live JSON/1MiBVRAM identyczne, oba exit0 bez diagnostyki,
+karty B niezmienione; cały inventory/character/512 zmiennych jawnie
+sprawdzone względem checkpointu Tool (zmienne tylko1/78).
+
+Użytkownik zalecił również transfer bonusów pancerzy oraz zachowanie
+dwóch dobrych pancerzy do zmiany podczas walki w celu resetu PE fatigue.
+W tej gałęzi jest tylko wyposażony B Jacket1 (slot6); drugi trzeba
+zdobyć. Nie zużywać jedynego pancerza. Reset zmęczenia PE po zamianie
+pozostaje do sprawdzenia w oryginalnej walce; nie jest jeszcze dowodem
+runtime. Dalszy trening, zdobycie drugiego pancerza, zapis przez telefon,
+boss50/Chrysler77 i pełny port otwarte. SDK/SDL nieinstrumentowane,
+brak oraclePS1, dowody/tmp nietrwałe.
+
+### B4: zweryfikowana przegrana bossa50 po treningu, zapis muzeum zachowany
+
+Od preboss231309 oryginalne Items zużyły Medicine3 slot8 i12,
+HP435→615→763, pięć leków pozostało. Boss uruchomiony232733,
+walka232973. Osiem pojedynczych trafień po133 z M8000 ATK147
+(łącznie1064, pierwszy przeciwnik1004200→1003136); poprzedni ATK111
+zadawał81. Automat użył dwóch Heal3, ale nie użył leków w walce.
+Po przemianie pomocnika type4:30 w drugiego type3:29 oba cele były
+aktywne. HP763→279 po484 obrażeń235549, śmierć235805.
+To nie jest zwycięstwo ani dowód błędu gry; strategia automatu wymaga
+leczenia przed kolejną akcją i lepszego ruchu/zasobów, nie zmian trudności.
+Oryginalna tabela EXP wskazuje próg38=725158, od38→39 koszt4500.
+
+PASS `/tmp/pe-ex-chrysler-boss50-trained-loss-B4-v1-proof/proof.json`
+dowodzi odtworzenia przegranej: pełny cold B normal/SAN/live JSON oraz
+1MiBVRAM identyczne, oba exit0 bez diagnostyki, karty B8192B niezmienione.
+Jawne inventory/character/512vars: tylko dwa Medicine3, magazynek8→18,
+rezerwa318→300, savedHP435→279 (bieżące HP0), zmienne7/11/18/78.
+Stary kontroler36411 zakończony native exit0. Nie zapisano śmierci ani
+nie nadpisano B4. Bez zmian kodu gry/RNG/zapisów. SDK/SDL
+nieinstrumentowane, brak oraclePS1, dowody/tmp nietrwałe, pełny port otwarty.
+
 ### B4: pokój bossa50 osiągnięty i zweryfikowany, siedem Medicine3
 
 Na pe-glyph-visibility-v1 od176229 dokończono pierwszą walkę50

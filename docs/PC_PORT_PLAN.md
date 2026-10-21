@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: zwycięstwo M231, Detox i wejście M232
+
+Bez zmian kodu, `pe-control-aim-v1`: ruch M231 uruchamia cel4:31,545HP/def109 i raptora3:30,391HP/def65. Zwykłe podejścia,pojedyncze strzały w Double Action,trzy Heal3 i Detox wygrywają236673,Aya452/573HP. Detox usuwa truciznę:232687 flags&3=1,234037 flags&3=0. Raptor pokonany pierwszy. Bez edycji RAM/RNG/save i zmian balansu. Po nagrodach północne przejście prowadzi do M232238943 (`a8043148`),menuNULL,move_lock0,brak przeciwników,story608,BP1100.
+
+Względem229059 pełny inventory zmienia wyłącznie rekord amunicji426:7→9; zmienne wyłącznie1=231,22=20,78=63. `/tmp/pe-ex-museum-m232-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live238943,pełne inventory/zmienne i pośrednie HP/status/walka sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Dalsze M232/Museum,kampania i Chrysler nadal otwarte.
+
+
 ### EX Museum: M229 pojedynczy cel wygrany i wejście M231
 
 Bez zmian kodu, `pe-control-aim-v1`: zwykły ruch M229 uruchamia wariant jednego celu4:31,447HP/def69. Pięć pojedynczych strzałów w Double Action po92 wygrywa227311,Aya351/573HP,bez leczenia w M229. Po nagrodach ruch na wschód i krótkie Right na progu prowadzą do M231229059 (`a80430c8`),menuNULL,move_lock0,brak przeciwników,story608,BP1100.

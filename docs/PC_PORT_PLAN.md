@@ -3,6 +3,49 @@
 ## Aktualny potwierdzony stan — 21 października 2026
 
 
+### EX lotniskowiec: etapy642→716,zapis N i niezależny cold Continue
+
+Bez zmian produkcyjnych,`pe-control-aim-v1`. Z M27168352/dialog7 zwykłe
+potwierdzanie tylko aktywnych dialogów i wait podczas video przeszło
+sekwencję M271→M038→M259→M271→M272→M271,filmy25–35,etap716.
+Nie używano Start/skip po68352. Filmy28/30/32 miały już video0 przy
+kolejnym odczycie; nie deklarować dla nich osobno przechwyconych klatek
+aktywnego odtwarzania ani referencyjnej zgodności audio/obrazu PS1.
+Pozostałe obserwowano jako aktywne i zakończone. Przy111252 oryginalny
+skrypt otworzył zapis(port36),files37 wskazało M(slot12),Down wybrało
+pusty N(slot13),Cross dało FileSaved40 przy112130,M271/story716.
+Cały ekwipunek identyczny z M27168352; wszystkie zmienne identyczne
+poza1:35→998,74:642→716. Brak aktora gracza w tej scenie oznacza brak
+kluczyHP wcombat,nie śmierć ani zeroweHP.
+
+Nowy `/tmp/pe-ex-carrier-save-N2-v1-source/BASLUS-006620000000N`,
+8192B,SHA256 `6ed9e277dd4b04061898d8415b60f559933329ed2a143f8b3d46adf5d9349f66`.
+Cold replay od autentycznego M obejmujący wszystkie te sceny i zapis:
+pełny JSON/1MiB VRAM normal=SAN=live,wszystkie8192B nowego N
+normal=SAN=live/source,M bez zmian,oba exit0 bez raportów. PASS
+`/tmp/pe-ex-carrier-save-N2-v1-proof/proof.json`.
+
+Osobny cold Continue z wyłącznie N na prywatnej karcie,slot13,20000:
+M271/a80470c8,story716,dialog60,menuNULL,lock1,BP218. Pełny ekwipunek
+i wszystkie zmienne identyczne z FileSaved; pełny JSON/VRAM normal=SAN,
+oba exit0 bez diagnostyki,źródłowe/prywatne8192B N identyczne. PASS
+`/tmp/pe-ex-carrier-N2-loaded-v1-proof/proof.json`. Runner/verifier/seed
+oraz checkpoint przy odpowiednich prefiksach /tmp. SDK/SDL pozostają
+nieinstrumentowane,brak oracle PS1,dowody /tmp nie są trwałym CTest.
+Weryfikator tworzenia N skorygowano przed sprawdzeniem: odziedziczona
+kontrola starego źródła L została zmieniona na rzeczywiste źródło M;
+bez zmian gry ani ponownego uruchamiania już poprawnych replayów.
+
+Stary kontroler po FileSaved zamknięty quit exit0. Nowy
+`/tmp/pe-ex-carrier-N2-nav-v1.py` odtworzył z samego N20000 w
+`/tmp/pe-ex-carrier-N2-nav-v1-live`. Odczyt LLDB tylko do odczytu,
+bez funkcji/zapisów pamięci: current_hp621,max_hp621,rawlevel32,
+EXP208991 (`/tmp/pe-ex-carrier-N2-hp-readonly.log`). To potwierdza
+odnowienieHP przez oryginalną sekwencję lotniskowca. Następne:
+dialog60 i wejście do finału EX; walki finałowe oraz pełny cel otwarte.
+
+
+
 ### EX: M246 wygrane, filmy23/24 i retrospekcja do M271
 
 Nie zmieniano produkcji,`pe-control-aim-v1`. Z autentycznego M po

@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: ukończone piętro43, wejście na44
+
+Bez zmian kodu na pe-m410-bind-v1. Od81374:code22 81924,
+code9 82454/83144/83834/84524,M41085214,M40685754,M29486394,
+M40686894,code21 87534,code9 88084,M33588774,M30689322,
+M29690062,endpoint90782 M297/a80493c8,piętro44,HP454/671,BP2,
+mode9,menuNULL,lock0,zero wrogów. Brak dalszych walk/utraty HP na tej
+trasie; Medicine3 i cztery klucze zachowane.
+
+PASS `/tmp/pe-ex-chrysler-floor44-A4-v1-proof/proof.json`: pełny zimny
+A4 przez całe43,normal/SAN/live zgodne całym JSON i1MiB VRAM,
+exit0 bez raportów,SHA gry sprawdzone. Cały ekwipunek identyczny
+z81374; wszystkie zmienne poza4:43→44,78:138→254 identyczne.
+Źródłowy i prywatne A8192B niezmienione. Seed/checkpoint/runner/verifier
+obok. Read/detach układu44:selected17,count26,seed24325;
+`/tmp/pe-chrysler-floor44-table-A4-v1.json`,plan -route obok wymaga
+wykonania. Piętro44 dopiero rozpoczęte. Dowody /tmp nietrwałe,
+SDK/SDL nieinstrumentowane, brak oracle PS1. Pełny port nadal otwarty.
+
 ### EX A4: pierwsza walka43 wygrana, dojście do drugiego M305
 
 Bez zmian kodu na pe-m410-bind-v1. Od75239:code22 75851,

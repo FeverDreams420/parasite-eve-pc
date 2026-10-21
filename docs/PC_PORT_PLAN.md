@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: piętro14, M386 i M388 oraz korekta celowania testowego
+
+Bez zmian produkcji. Z70738 M389 zwykły pad prowadzi71228 M386,
+pięciu wrogów pokonanych bez utratyHP. Read/detach łupu: pięć id1
+(amunicja). Dalej M38474084 i74774, M38875464 i walka z jednym wrogiem.
+Prosty sterownik długo ponawiał Cross przy pustej liście celów. Odczyt
+telemetrii i obrazu potwierdził NO TARGET; anulowanie Circle i zwykłe
+przemieszczenie Ayi dały99322 cel type4/sub31,distance123. Kolejny
+strzał kończy walkę, nadal529HP. Bez RAM/RNG/save edits. Nie uznawać
+tego za naprawę produkcji: pomocnik functions.store teraz zatrzymuje się
+przy pustej liście, zamiast powtarzać Cross. Dalsze automatyczne podejście
+musi uwzględniać geometrię. Łup id7 (Medicine2) pozostawiony przy pełnym
+plecaku. Endpoint100038 M388/a8068448,piętro14,529/671HP,BP2,
+menuNULL,lock0,zero żywych wrogów.
+
+PASS `/tmp/pe-ex-chrysler-m388-floor14-O1-v1-proof/proof.json`:
+niezależne zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live100038. Pełny ekwipunek względem70738
+różni się tylko amunicją426:17→10; Key1 i sześć Medicine3 zachowane.
+Wszystkie zmienne poza18:476→990,78:8→41 identyczne. Źródłowy i prywatne
+O8192B bez zmian. Seed/checkpoint/runner/verifier obok. SDK/SDL
+nieinstrumentowane,brak oracle PS1,dowody /tmp nietrwałe. Piętro14
+nieukończone; następne wyjście23 z M388. Pełny cel pozostaje otwarty.
+
 ### EX O1: piętro14, pierwsza wygrana M389
 
 Bez zmian produkcji. Świeży read/detach układu14: code68,selected6,

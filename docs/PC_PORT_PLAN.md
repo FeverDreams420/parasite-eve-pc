@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: ukończone piętro47, wejście na48
+
+Bez zmian kodu na pe-m410-bind-v1. Od141746:M292142286,
+M406142786,code23 143426,code21 143981,M406144541,M305145181,
+code21 145701. Walka z jednym od145791 wygrana przy629HP po
+podejściu i Heal3. Wynik148231,read/detach łupu:same zera,
+menu zamknięte148539. M406149069,M410149709,M296150299,
+endpoint151019 M297/a80493c8,piętro48,HP629/671,BP2,mode9,
+menuNULL,lock0,zero wrogów. Cztery klucze,dwie Medicine3,trzy Medicine2.
+
+PASS `/tmp/pe-ex-chrysler-floor48-A4-v1-proof/proof.json`: pełny zimny
+A4 przez całe47,normal/SAN/live zgodne całym JSON i1MiB VRAM,
+exit0 bez raportów,SHA gry sprawdzone. Cały ekwipunek poza amunicją426:1→13
+identyczny z141746; wszystkie zmienne poza4:47→48,5:22→20,
+18:39270→55655,78:14→246 identyczne. Źródłowy/prywatne A8192B niezmienione.
+Seed/checkpoint/runner/verifier obok. Read/detach układu48:
+selected15,count20,seed24325 w `/tmp/pe-chrysler-floor48-table-A4-v1.json`,
+plan -route obok wymaga wykonania. Piętro48 dopiero rozpoczęte.
+Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1.
+Pełny port nadal otwarty.
+
 ### EX A4: druga walka47 wygrana, dojście do M410
 
 Bez zmian kodu na pe-m410-bind-v1. Od134930:M406135500,

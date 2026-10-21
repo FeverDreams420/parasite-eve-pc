@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: pierwsza walka na piętrze50
+
+Bez zmian kodu na pe-m410-bind-v1. Od183654:code9 184266,
+walka z dwoma od184434. Po pokonaniu pierwszego Aya miała126HP;
+oryginalna kolejka Medicine3(slot12)+Medicine2(slot13) podniosła HP
+na396 przy189246. Dalszy Heal3, ruch i pojedyncze strzały zakończyły
+walkę przy488HP; wynik191214, łup read/detach:same zera.
+Endpoint191830:code9/a80802c8,piętro50,mode9,menuNULL,lock0,
+zero wrogów,BP2. Boss50 jeszcze nie osiągnięty.
+
+PASS `/tmp/pe-ex-chrysler-mid50-A4-v1-proof/proof.json`: zimny A4
+normal/SAN/live, cały JSON i1MiB VRAM zgodne,exit0 bez diagnostyki,
+SHA obu gier sprawdzone. Pełny ekwipunek względem183654:
+amunicja426:3→10,slot12:8→0,slot13:7→0; reszta identyczna.
+Wszystkie512 zmiennych poza18:776549→1825124,78:66→75 identyczne.
+Źródłowy/prywatne A8192B niezmienione. Seed/checkpoint/runner/verifier
+obok; dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane, brak oracle
+PS1. To dalszy test oryginalnej rozgrywki; pełny port nadal otwarty.
+
 ### EX A4: ukończone piętro49, wejście na50 przed bossem
 
 Bez zmian kodu na pe-m410-bind-v1. Od168198:code22 168810,

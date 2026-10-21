@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: ukończone piętro46, wejście na47
+
+Bez zmian kodu na pe-m410-bind-v1. Od115124:code23 115736,
+code22 116314,walka z dwoma od116394. Skupienie ognia,Cancel/podejście
+po utracie zasięgu i oryginalne Heal3 dały zwycięstwo przy671HP.
+Wynik119770,read/detach łupu:id7/id7,ALL daje Medicine2 do slot26/28,
+menu zamknięte120482. M307120976,code9 121524,M307122214;
+wybranie niewłaściwego wyjścia wróciło do code9 122614. Powrót doM307
+123560 i właściwe Down110/Right220 daje M292124190,M306124690,
+code23 125350,M304125928,M296126608.
+Endpoint127328 M297/a80493c8,piętro47,HP671/671,BP2,mode9,
+menuNULL,lock0,zero wrogów. Cztery klucze,dwie Medicine3,trzy Medicine2.
+
+PASS `/tmp/pe-ex-chrysler-floor47-A4-v1-proof/proof.json`: pełny zimny
+A4 normal/SAN/live zgodny całym JSON i1MiB VRAM,exit0 bez raportów,
+SHA gry sprawdzone. Cały ekwipunek poza slot26/28:0→7,amunicją426:15→4
+identyczny z115124; wszystkie zmienne poza4:46→47,18:2405→6501,
+78:32→188 identyczne. Źródłowy/prywatne A8192B niezmienione.
+Seed/checkpoint/runner/verifier obok. Read/detach układu47:
+selected23,count27,seed24325 w `/tmp/pe-chrysler-floor47-table-A4-v1.json`,
+plan -route obok wymaga wykonania. Piętro47 dopiero rozpoczęte.
+Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1.
+Pełny port nadal otwarty.
+
 ### EX A4: ukończone piętro45, wejście na46
 
 Bez zmian kodu na pe-m410-bind-v1. Od101004:M305101616,

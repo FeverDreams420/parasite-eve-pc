@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A2: M392 walka/wyjście i wejście na22
+
+Na poprawionym pe-m392-bind-v1 bez dalszych zmian produkcji. Z35154
+M392 uruchamia35275 pięciu wrogów, pokonanych36515 bez utratyHP.
+Read/detach łupu id16,pozostawiony przy pełnym plecaku. Wyjście do
+code20/a8069348 przy37483, M30638073. Pierwsza próba ruchu wracała
+do poprzedniego pokoju; odczyt lewego wejścia[-569,-971] i korekta trasy
+przez północ daje code21/a80692c8 przy39783. Code9/a80690c8 przy40333
+uruchamia40517 sześciu wrogów; wygrana z leczeniem PE przy570HP,
+pusty łup potwierdzony read/detach. M29643741,schody44461:
+M297/a80493c8,piętro22,570/671HP,BP2,menuNULL,lock0,zero wrogów.
+Oba klucze i pięć Medicine3 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-floor22-A2-v1-proof/proof.json`:
+niezależne zimne replaye tylko zA,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live44461. Pełny ekwipunek względem35154
+różni się tylko amunicją426:8→14; wszystkie zmienne poza4:21→22,
+5:23→20,18:10→3 identyczne. Źródłowy i prywatne A8192B bez zmian.
+Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe. Następne: piętro22 i dalszy Chrysler;
+pełny zakres portu pozostaje otwarty.
+
 ### M392: naprawiona rejestracja oryginalnych deskryptorów
 
 Poprzedni kandydat pe-control-aim-v1 kończył się exit1 przy przejściu

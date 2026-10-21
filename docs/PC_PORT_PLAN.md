@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: po Triceratopsie oryginalna scena odnowienia HP i wejście T-Rexa
+
+Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live29869 od90699:
+Down140 i oczekiwanie prowadzą do M251(a80450c8)92039,dialog146.
+Cross/wait300→M255(a80452c8),dialog147,HP318→604 ze skryptu sceny.
+Cross zamknęło dialog;Right90 (kamera M255 maRight+X),potemRight25
+przekroczyły strefę wyjścia,dały M256(a8045348)94394 i walkę T-Rexa.
+Nie była to przewidywana wcześniej bezpośrednia trasa M246/film22;
+nie zaliczać tego filmu. Podczas przejścia lock1 nie blokował zwykłego
+ruchu,przedłużone czekanie nie było konieczne do opuszczenia strefy.
+
+Przy94558 T-Rex typ2/sub0 HP3359/def109,Aya594/604HP po początkowym
+trafieniu10,BP218,capacity28,combat0,move_lock4,menuNULL. ATB jeszcze
+się napełnia; headless control zatrzymuje symulację przed kolejnym wejściem.
+Cały inventory identyczny z końcem Triceratopsa90699,w tymMedicine4slot0
+orazMedicine3slot26. Zmienne wyłącznie1:243→255,34:200→204.
+
+Pełny cold replay od L przez całą wcześniejszą trasę i oba etapy bossa:
+`/tmp/pe-ex-trex-entry-L2-v1-proof/proof.json` PASS,
+pełny JSON i1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń sanitizerów,
+źródłowy i prywatne L bez zmian. SDK/SDL bez instrumentacji,brak oracle
+PS1,dowody /tmp nie są CTest. Live29869 czeka94558 w
+`/tmp/pe-ex-museum-L2-nav-v1-live`. Następny krok: T-Rex z ruchem/ATB,
+leczeniem i zachowanymi lekami. T-Rex/film22/dalsza kampania i cały cel
+nadal otwarte.
+
+
 ### EX: obie fazy Triceratopsa pokonane na obecnym kandydacie
 
 Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live29869 od78281

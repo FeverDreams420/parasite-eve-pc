@@ -3,6 +3,56 @@
 ## Aktualny potwierdzony stan — 21 października 2026
 
 
+### EX finał: potwierdzone wejście M273,próby sterowania i potrzeba zapasu HP
+
+Na niezmienionym `pe-control-aim-v1`,cold N20000/dialog60 przeszedł
+film36 bez skipu i oddał sterowanie M273/a80471c8,story720. Zwykły
+Up180/Up150 uruchomił dialog1,potwierdzenia1–24 doprowadziły40730
+do walki. Aya621/621HP,BP218,lock4,bez menu/aktywnych dialogów;
+root typ2/sub0 HP13/def139,części5/6/7 HP1002239/1002449/1002659,
+def118/97/76. Milion jest bazą liczników części; nie traktować ich jak
+zwykłych przeciwników wymagających miliona obrażeń. Cały ekwipunek
+identyczny z FileSaved N; zmienne tylko1:998→271,74:716→720.
+Cold normal/SAN pełny JSON i1MiB VRAM normal=SAN=live,oba exit0 bez
+raportów sanitizera,8192B N bez zmian. PASS:
+`/tmp/pe-ex-m273-entry-N2-v1-proof/proof.json`,runner/verifier/seed oraz
+checkpoint obok. SDK/SDL nieinstrumentowane,brak oracle PS1.
+Weryfikator po globalnej zamianie cap przypadkiem zmienił fragment nazwy
+karty; poprawiono samą nazwę przed PASS,bez zmian gry/powtarzania replayów.
+
+Ręczna próba zakolejkowała FullCure17slot15 i Liberate jako dwie akcje.
+Liberate rozdzieliło obrażenia między części:5→1001239,6→1001907,
+7→1002367,Aya464HP przy43866. Późniejsze dwa strzały podczas ataku
+zakończyły próbę śmiercią44202;quit exit0,bez osobnego SAN tej porażki.
+FullCure usuwa statusy,ale nie daje odporności na stiffness; CureM16
+usuwa stiffness albo ustawia odporność0xc0,jak w oryginalnym attack.c.
+
+Automatyczne zwykłe próby pada od tego samego N40730:
+`/tmp/pe-m273-policy-search-N2-v{1,2,3,4,5}.py`,po4warianty każda,
+pełne logi/input/args/stany/VRAM/karty i `audit.json` w katalogach tych
+samych prefiksów. Wszystkie20 zakończone porażką,exit0,karty N bez zmian,
+bez unbound opcode/assertion. To normal-only audyty prób,nie dowód
+zwycięstwa ani niezależny SAN porażek. Warianty badały CureM,Liberate,
+GeneHeal,kolejność części,leczenie i ruch. Najlepsze próby zmniejszyły
+nadwyżkę części6 do689 i części7 do538,nie wyłączyły żadnej części.
+Naprawiano wyłącznie sterowanie /tmp: ponowny wybór celu po pierwszej
+akcji DoubleAction oraz użycie aktualnego dystansu z pozycji zamiast
+buforowanego control.targets.distance. Nie zmieniano AI/obrażeń/HP/RNG.
+Odczyty LLDB tylko do odczytu wykazały wielokąt8 wierzchołków:
+`/tmp/pe-ex-m273-floor-{count,polygon}-readonly.log`; nie jest to jeszcze
+sprawdzona trasa unikania ataków ani cały obrys ruchu Ayi.
+
+Próby nadal nie przeżywają pierwszej fazy bez zapasu leków HP (N ma
+slot26/27 puste po T-Rexie). Następny krok to przygotowanie leków przez
+zwykłą rozgrywkę od M,z zachowaniem kluczy i wyposażenia,ponowna droga
+fabularna i zapis przed finałem. Nowy live
+`/tmp/pe-ex-museum-restock-M2-v1.py` odtworzył z oryginalnego M13200
+w `/tmp/pe-ex-museum-restock-M2-v1-live`:M340,442/621HP,sterowanie wolne.
+Źródła M/N pozostają autentyczne i niezmienione. To nie blokada ani
+ukończenie celu; finał EX,Chrysler i pełny zakres portu nadal otwarte.
+
+
+
 ### EX lotniskowiec: etapy642→716,zapis N i niezależny cold Continue
 
 Bez zmian produkcyjnych,`pe-control-aim-v1`. Z M27168352/dialog7 zwykłe

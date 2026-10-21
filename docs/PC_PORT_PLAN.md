@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: piętro14, pierwsza wygrana M389
+
+Bez zmian produkcji. Świeży read/detach układu14: code68,selected6,
+count29; `/tmp/pe-chrysler-floor14-table-O1-v1.json`, plan obok z-route.
+Z63498 zwykły pad: M38764110, M38564680, M30565320,
+M38465840 i M38966530. Walka z dwoma przeciwnikami wygrana przy529HP.
+Read/detach łupu potwierdza dwa id6 (Medicine1), pozostałe puste;
+pozostawione przy pełnym plecaku. Endpoint70738 M389/a80684c8,
+piętro14,529/671HP,BP2,menuNULL,lock0,zero żywych wrogów.
+
+PASS `/tmp/pe-ex-chrysler-m389-floor14-O1-v1-proof/proof.json`:
+niezależne zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live70738. Pełny ekwipunek względem63498
+różni się tylko amunicją426:4→17; Key1 i sześć Medicine3 zachowane.
+Wszystkie zmienne poza5:20→22,18:223→476,78:82→8 identyczne.
+Źródłowy i prywatne O8192B bez zmian. Seed/checkpoint/runner/verifier obok.
+SDK/SDL nieinstrumentowane,brak oracle PS1,dowody /tmp nietrwałe.
+Piętro14 nieukończone; następne wyjście21 z M389 według planu.
+Cały zakres portu pozostaje otwarty.
+
 ### EX O1: ukończone piętro13, wejście na14
 
 Bez zmian produkcji. Z53434 M387 wyjście21 prowadzi53971 do M386.

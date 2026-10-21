@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: środek piętra15, wygrana M387 i przejście do M389
+
+Bez zmian produkcji. Świeży read/detach układu15: code25,selected4,
+count19; `/tmp/pe-chrysler-floor15-table-O1-v1.json`, plan obok z-route.
+Z114373: M386114985, M387115563 i wygrana z dwoma przeciwnikami
+bez utratyHP. Pusty łup potwierdzony read/detach. Dalej M388117515,
+M294118073, M306118573 i M389119133. Endpoint M389/a80684c8,
+piętro15,460/671HP,BP2,menuNULL,lock0,zero żywych wrogów.
+
+PASS `/tmp/pe-ex-chrysler-mid15-O1-v1-proof/proof.json`: niezależne
+zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON i1MiB VRAM
+normal=SAN=live119133. Pełny ekwipunek względem114373 różni się tylko
+amunicją426:6→2; Key1 i sześć Medicine3 zachowane. Wszystkie zmienne
+poza5:20→22,18:990→2013,78:36→181 identyczne. Źródłowy i prywatne
+O8192B bez zmian. Seed/checkpoint/runner/verifier obok. SDK/SDL
+nieinstrumentowane,brak oracle PS1,dowody /tmp nietrwałe. Piętro15
+nieukończone; następne wyjście21 z M389. Cały zakres portu nadal otwarty.
+
 ### EX O1: ukończone piętro14, wejście na15
 
 Bez zmian produkcji. Z100038 M388: M385100435, M304101075,

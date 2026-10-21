@@ -2,6 +2,38 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### A4 prep: siedem wolnych slotów i polowe Heal1
+
+Bez zmian produkcyjnych na pe-anim-event-null-v1. Kontroler prep-v1
+zamknął/reotworzył rozmowę109 (zachowane w input),wrócił na mapę20324,
+Left2→Chrysler10,lobby M290/a8049048 przy21328. Oryginalne Items→Discard:
+M79-3 slot8/dynamic267 rekord11 usunięty22304,G23 slot18/dynamic266
+rekord10 usunięty23024,M9-2 slot20/dynamic265 rekord9 usunięty23336.
+Anulowanie pierwszych potwierdzeń także zapisane; domyślne Cancel wymaga
+wyboru Left na Discard. Ponowne wejście do popupu po anulowaniu działa.
+Trzy rekordy mają wyzerowany tylko iconId,pozostałe bajty zachowane.
+Nie ma dodatkowego M8000 w aktywnym ekwipunku: wcześniejsze wrażenie
+z listy było błędne; żaden M8000 nie został usunięty.
+
+Siedem pustych slotów8/12/13/15/18/20/26 z29. Wyposażony M8000,
+B Jacket1,Maeda's Gun,Club1,klucze,karty oraz dotychczasowy Medicine3
+zachowane. Po zamknięciu menu23400 polowe Heal3 niedostępne z powodu
+PE,nie potraktowane jako bug. Oryginalne Heal1 daje353→383HP,
+endpoint24000:lobby,menuNULL,lock0,live_enemies0. Read-only odczyt
+`/tmp/pe-A4-prep-field-pe-v1.json`:exp_or_acc19942015 (~304PE),
+maxAtk98566144 (1504PE),curHP383; Heal3 wymaga500PE.
+
+PASS `/tmp/pe-ex-chrysler-A4-prep-pack-v1-proof/proof.json`:
+cały zimny A4 normal/SAN/live JSON i1MiB VRAM identyczny,exit0 bez
+diagnostyki,SHA obu gier sprawdzone. Pełny ekwipunek względem19120
+zmienia wyłącznie slot8/18/20→0 oraz rekordy offset288/320/352→0;
+wszystkie512 zmiennych skryptowych identyczne. Źródłowy/prywatne A8192B
+niezmienione; zmiany ekwipunku tylko w odtwarzanej gałęzi przez pad.
+Seed/checkpoint/runner/verifier obok. Żywy prep-v1 zatrzymany24000,
+kontroler40967,pid61137. Następny krok:klucz4/winda40,zbieranie leków
+na piętrach41–49,zachowanie zapasu na bossa50. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe,boss50 i pełny port nieukończone.
+
 ### Boss50: źródło silnego trafienia; gałąź przygotowania ekwipunku
 
 Read-only watchpoint HP z żywego238905 podczas Right160 wskazuje

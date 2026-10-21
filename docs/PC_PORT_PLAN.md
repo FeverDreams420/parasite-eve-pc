@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Chrysler piętro4: trzy wyjścia M306 i wygrana M310→M309
+
+Bez zmian produkcyjnych. Od78221 zwykły pad prowadzi79137 doM306.
+Odczyt oryginalnego aktywnego skryptu potwierdził trzy akcje177:
+20,22,21. Planner pomijał22; uzupełniono tylko pomocniczy skrypt/tmp,
+bez zmiany gry. Północne wyjście M306 prowadzi80347 doM310.
+Spotkanie80437 (dwóch wrogów) wygrane bez utraty HP i leków;
+nagrody zamknięte83183. Korekty podejścia do wyjścia prowadzą84372
+doM309/a80604c8. Aya397/671HP,BP2,menuNULL,lock0,zero wrogów.
+Pełne inventory względem78221 zmienia tylko byte426:17→13;
+wszystkie zmienne poza18:178→433,78:135→127 identyczne.
+
+PASS `/tmp/pe-ex-chrysler-floor4-m309-N3-v1-proof/proof.json`:
+pełny zimny replay od muzealnego N3,normal/SAN exit0 bez raportów,
+pełny JSON i1MiB VRAM normal=SAN=live84372,źródłowy/prywatne N3
+8192B niezmienione. Seed/checkpoint/runner/verifier obok.
+SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+
+Dodatkowy odczyt skryptów z wyekstrahowanego PE.IMG przez istniejący
+`/tmp/pe-room-navigation-extract-v1.py` daje
+`/tmp/pe-chrysler-original-ports-v1/ports.json` dla pierwszych24
+nazw tabeli scen. To kandydaci do dalszego audytu,nie zweryfikowany
+katalog wyjść: skan literalnego opcode177 nie obejmuje warunków,
+niektóre typy nie zawierają takiego wzorca. Odczyt M300 różni się od
+wcześniejszego nazwanego snapshotu runtime; wymaga wyjaśnienia
+proweniencji/interpretacji przed użyciem. Nie włączono tych wyników
+hurtowo do planera ani nie zmieniono gry. Nadal potrzebne rzeczywiste
+wyjścia brakujących typów,piętro5 i dalszy Chrysler.
+
+
 ### EX Chrysler N3: oryginalne przejście z piętra3 na4 przez M299
 
 Bez zmian produkcyjnych. Od68177 powrót M303→M292→M310→M309→M307

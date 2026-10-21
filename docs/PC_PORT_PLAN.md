@@ -2,6 +2,37 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX B3: zapis po bossie30 i zimne Continue potwierdzone
+
+Bez zmian kodu na pe-m392-bind-v1. Z205059: wyjście M390→M304205589,
+M292206249, M293207030. Oryginalny selektor z Key3 pokazuje30;29 kroków
+Down wybiera1, wyjście M290209171. Mapa209939, muzeum M192210927,
+M340212002; telefon213097, port213417, lista213737. Wybór pustego slotuB1,
+FileSaved214389 (menu40,lock1). HP427/671,BP2,trzy klucze,trzy Medicine3;
+pełny ekwipunek identyczny z205059. Zmienne poza1:999→998,4:30→1,
+5:20→0,6:20→1 identyczne.
+
+PASS `/tmp/pe-ex-chrysler-save-B3-v1-proof/proof.json`: pełne zimne replaye
+od autentycznego A2, normal/SAN exit0 bez raportów; cały JSON i1MiB VRAM
+normal=SAN=przebieg na żywo. Nowy B8192B identyczny w obu replayach i na żywo;
+SHA256 bbf8212a7691ef36d85f0b4b153cf519cb7c2c9385c790617d74e6859fd4ba6b.
+Źródło `/tmp/pe-ex-chrysler-save-B3-v1-source/BASLUS-006620000000B` jest
+kopią prawdziwego zapisu; oryginalny A i prywatne A niezmienione.
+
+PASS `/tmp/pe-ex-chrysler-B3-loaded-v2-proof/proof.json`: zimne Continue
+wyłącznie zB, oryginalny pad wybiera slot1. Pierwszy runner v1 nadal wybierał
+pusty slot0 i prawidłowo pozostał na liście; do v2 dodano Down przy12080.
+Przy13200 swobodne M340/a8064048,427/671HP,BP2,menuNULL,lock0,
+cały ekwipunek i wszystkie zmienne identyczne z FileSaved. Pełny JSON/VRAM
+normal=SAN, cały B8192 niezmieniony. Oba profile exit0 bez raportów.
+
+A2 controller v3 zamknięty quit/exit0. Nowy controller B3 sesja3254,PID95421,
+`/tmp/pe-ex-chrysler-B3-nav-v1-live`: zimny input Continue od B do13200,
+cały JSON identyczny z potwierdzoną parą. Następnie powrót do Chrysler,
+sprawdzenie powrotu na30 i dostępu do31. Seed/checkpoint/runner/verifier obok
+powyższych dowodów. Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane,
+brak oracle PS1. Pełny zakres portu pozostaje otwarty.
+
 ### EX A2: boss30 M390 pokonany, Chrysler Key3 odebrany
 
 Bez zmian kodu na pe-m392-bind-v1. Autentyczne nowe podejście z v3 od187123:

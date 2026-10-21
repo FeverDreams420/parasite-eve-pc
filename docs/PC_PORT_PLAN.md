@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A2: boss30 M390, początkowa część pokonana, walka otwarta
+
+Bez zmian kodu na pe-m392-bind-v1. Z187123 przez M304 do M390/a8069048
+187803. Up104 uruchamia187907 czterech przeciwników. Początkowy type3/sub31
+ma oryginalny licznik HP1001200; znika podczas walki, pozostałe type4/5/6
+pozostają aktywne. Poza zasięgiem automatyczny kontroler zatrzymuje ataki.
+Próba Heal3 przy190895 kolejkuje komendę, ale nie wykonuje jej bez
+uzupełnienia DoubleAction; Circle ją anuluje. Po podejściu Heal3 zatwierdzone
+z drugim atakiem podnosi284→564HP przy192075. Dalsze salwy i leczenie
+usuwają type3; brak zwycięstwa. Przy205627 type4/5/6 mają600/503/800HP.
+Podejście diagonalne daje endpoint205705: Aya417/671,BP2,mode1,
+lock5,menuNULL,trzech wrogów,oba klucze,pięć Medicine3,wolny slot28.
+Cele poruszają się; część pozostaje poza zasięgiem1245. Wymagana dalsza
+sekwencja celowania/ruchu; nie zmieniono mechaniki ani kodu produkcyjnego.
+
+PASS `/tmp/pe-ex-chrysler-boss30-phase1-A2-v1-proof/proof.json`: niezależne
+zimne replaye tylko z autentycznego A2, normal/SAN exit0 bez raportów;
+cały JSON i1MiB VRAM zgodne również z obserwowanym przebiegiem.
+Względem187123 pełny ekwipunek różni się tylko amunicją426:2→15;
+wszystkie zmienne poza5:23→20,7:6→14,11:25034→57802,18:4170611→0,
+78:159→11 identyczne. Źródłowy i prywatne A8192B niezmienione,
+SHA256 obu binariów sprawdzone. Seed/checkpoint/runner/verifier obok.
+Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1.
+Boss30 niepokonany, Key3 niezdobyty; pełny zakres portu pozostaje otwarty.
+
 ### EX A2: M304 przed bossem30, wolne miejsce na klucz
 
 Bez zmian kodu na pe-m392-bind-v1. Z176643: code20 177159, code22/a8069248

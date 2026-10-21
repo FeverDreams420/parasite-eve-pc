@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: przejście za M410 i kolejna wygrana code21 na42
+
+Bez zmian kodu na pe-m410-bind-v1. Od60011:code23 60551,
+code9 61106,M30761796,code9 62344,code21 63034.
+Walka z jednym przeciwnikiem od63124 wygrana przy452HP;
+wynik64672 menuEXP20,read/detach łupu:same zera.
+Endpoint64980 code21/a80804c8,mode9,menuNULL,lock0,BP2,
+Medicine3 i wszystkie cztery klucze zachowane.
+
+PASS `/tmp/pe-ex-chrysler-win42-late21-A4-v1-proof/proof.json`: zimny A4
+normal/SAN/fresh live zgodne całym JSON i1MiB VRAM,exit0 bez raportów,
+SHA gry sprawdzone. Cały ekwipunek poza amunicją426:11→6 identyczny
+z60011; wszystkie zmienne poza18:55→7,78:231→8 identyczne.
+Źródłowy i prywatne A8192B niezmienione.
+
+Dalsza pierwsza próba:code10/M40665445,walka od65533. Endpoint68181:
+HP0,mode3,zero żywych przeciwników,lock5. To porażka, nie zwycięstwo.
+PASS `/tmp/pe-ex-chrysler-defeat42-m406-A4-v1-proof/proof.json`: pełny
+zimny normal/SAN/live JSON iVRAM zgodny,exit0 bez raportów,SHA gry
+sprawdzone, źródłowy/prywatne A8192B niezmienione. Cały ekwipunek poza
+amunicją426:11→18 identyczny z60011; wszystkie zmienne poza5:22→23,
+18:55→4,78:231→11 identyczne. Kryterium samego live_enemies0 nie dowodzi
+zwycięstwa — wymagane żywe HP i potwierdzony stan wyników/eksploracji.
+
+Nowy żywy kontroler `/tmp/pe-ex-chrysler-A4-nav-v7-live` odtworzył zimno
+zwycięski64980; v6 zamknięty quit/exit0. Seed/checkpoint/runner/verifier
+obok dowodów. Dalsza walka i reszta42,piętra43–77 pozostają otwarte.
+Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1.
+Pełny port nadal nieukończony.
+
 ### Naprawione kompletne powiązania oryginalnego M410 na piętrze42
 
 Przejście po58547 przez code23 59456 ujawniło w pe-m406-bind-v2 brak:

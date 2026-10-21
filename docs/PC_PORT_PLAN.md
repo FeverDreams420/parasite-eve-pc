@@ -3,6 +3,60 @@
 ## Aktualny potwierdzony stan — 21 października 2026
 
 
+### EX przygotowanie finału: sześć Medicine3,awans,BP i autentyczny zapis N3
+
+Bez zmian produkcyjnych,`pe-control-aim-v1`. Z autentycznego M13200
+przez oryginalne field Items/Discard/OK odrzucono duplikat M8000slot0
+oraz nieużywane sloty9/10/12/13. Klucze,Club,MaedaGun,wyposażone
+M8000slot5/B Jacket1slot6 zachowane. Przy14784:M340442/621HP,BP218,
+sloty0/9/10/12/13=0; jedynie nagłówki rekordów128/160/224/256/448
+zmieniły flagę na0 (pozostałe4096B sprawdzone dokładnie). Wszystkie
+zmienne jak FileSaved M. Cold normal/SAN pełny JSON/VRAM normal=SAN=live,
+M8192B bez zmian,exit0 bez raportów. PASS
+`/tmp/pe-ex-restock-space-M2-v1-proof/proof.json`.
+
+Zwykła trasa M340→M343→M229→M242 i ponowne wejścia przez M243
+uruchomiły447/335/335HP. Pierwsza wygrana29544,nagrody zamknięte30744:
+372/621HP,Medicine3raw8slot0; całe inventory jak przygotowane14784
+poza slot0 i ammo426:4→5. Zmienne względem M tylko1=243,78=12. PASS
+`/tmp/pe-ex-restock-first-med-M2-v1-proof/proof.json`,pełny cold
+normal/SAN JSON/1MiB VRAM normal=SAN=live,M8192B bez zmian,exit0 bez
+raportów. Następnie `/tmp/pe-museum-auto-restock-M2-v1.py` wykonał
+kolejne7 spotkań zwykłym padem z leczeniem PE i odbiorem ALL/END.
+Nie zużywał leków HP. Pełne logi/wejścia/stany/karty w /tmp prefiksu/0.
+Przy93019:sześć Medicine3 w0/9/10/12/13/26,401/671HP,cap29,BP402.
+Względem źródłowego M tylko te6 slotów,nagłówki odrzuconych rekordów,
+ammo426:4→8; wszystkie inne rekordy/sloty identyczne. Zmienne tylko
+1:998→243,78:101→41. PASS `/tmp/pe-ex-stock6-M2-v1-proof/proof.json`:
+pełny cold normal/SAN JSON/1MiB VRAM normal=SAN=live,M8192B bez zmian,
+oba exit0 bez zgłoszeń. Generator verifierów
+`/tmp/pe-ex-stock-verifiers-M2-v1.py`; runner/verifier/seed/checkpoint
+przy wszystkich trzech powyższych prefiksach.
+
+Oryginalne menu BP wydało400BP na4 punkty ataku M8000 (bonus50→54,
+atak107→111),pozostało2BP. Powrót M242→M229→M343→M340 bez kolejnej
+walki i telefon zapisały nowy pusty slotN13 przy98282/FileSaved40.
+Cały ekwipunek jak93019 poza byte430:50→54; zmienne tylko1→998,
+78→206. Nowy `/tmp/pe-ex-museum-stock-save-N3-v1-source/BASLUS-006620000000N`,
+8192B,SHA256 `766cc437015bf7460da2542ece539bb8bbefb7e33daf5d042d131b45ab6c27d3`.
+To osobna gałąź muzealna,nie nadpisanie wcześniejszego przedfinałowego
+N2 (źródła mają różne katalogi). PASS
+`/tmp/pe-ex-museum-stock-save-N3-v1-proof/proof.json`:cold M przez całą
+powyższą trasę,pełny JSON/VRAM normal=SAN=live,N8192B utworzone
+normal=SAN=live/source,M bez zmian,oba exit0 bez raportów.
+
+Osobny cold Continue tylkoN3,slot13,13200:M340,story632,401/671HP,
+BP2,cap29,menuNULL,lock0; pełny ekwipunek/wszystkie zmienne równe
+FileSaved. Pełny JSON/VRAM normal=SAN,N8192B bez zmian,exit0 bez
+raportów. PASS `/tmp/pe-ex-stock-N3-loaded-v1-proof/proof.json`.
+SDK/SDL nieinstrumentowane,brak oracle PS1,dowody /tmp nie są CTest.
+Stare kontrolery zamknięte quit exit0; nowy
+`/tmp/pe-ex-stock-N3-nav-v1.py` startuje z samegoN3 w
+`/tmp/pe-ex-stock-N3-nav-v1-live`. Następne: ponowna droga M246/Eve,
+lotniskowiec i próba finału z zapasem leków. Finał EX i pełny cel otwarte.
+
+
+
 ### EX finał: potwierdzone wejście M273,próby sterowania i potrzeba zapasu HP
 
 Na niezmienionym `pe-control-aim-v1`,cold N20000/dialog60 przeszedł

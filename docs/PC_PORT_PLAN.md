@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: M207 wygrane, wejście M209
+
+Bez zmian kodu, `pe-control-aim-v1`: po nagrodach M206 zwykła droga prowadzi do M207149474 (`a80403c8`). Ruch uruchamia trzy cele5:31/30/29 po279HP; pojedyncze strzały w Double Action i jedno podejście do ostatniego celu kończą walkę153097,EXP,zero przeciwników,Aya364/547HP bez strat HP w M207. Po nagrodach Up prowadzi do M209154897 (`a80404c8`),brak menu/przeciwników/blokady,story608,BP1028.
+
+Względem147464 pełny inventory zmienia wyłącznie rekord amunicji426:2→11; zmienne wyłącznie1=207,21=20565,78=167. `/tmp/pe-ex-museum-m209-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live154897,pełne inventory/zmienne i pośrednie wejście/walka sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Dalsze Museum,kampania i Chrysler nadal otwarte.
+
+
 ### EX: awans po M205 i zwycięstwo M206
 
 Bez zmian kodu, `pe-control-aim-v1`: nagrody M205/awans podnoszą maxHP532→547,capacity26→27,BP914→1028,nowy slot26 przyjmuje raw8. Oryginalne zachodnie drzwi przyx≈−1480,z≈0 prowadzą do M206143514 (`a8040348`). Ruch uruchamia dwa cele279HP/def55 i raptora391HP/def65. Pojedyncze strzały w Double Action zadają po103/93; zwycięstwo147464,EXP,zero przeciwników,Aya364/547HP,bez leczenia w M206.

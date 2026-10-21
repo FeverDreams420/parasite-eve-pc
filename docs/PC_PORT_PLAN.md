@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: piętro16, dalsze wygrane i M388
+
+Bez zmian produkcji. Z132257: M386132797 i pięciu wrogów pokonanych
+bez utratyHP. Read/detach łupu: id6/1/6/1/1; Medicine1 pozostawione.
+M384135653 i136343, kolejna walka z dwoma wrogami bez utratyHP,
+pusty łup potwierdzony read/detach. Dalej M388138399/a8068448,
+piętro16,460/671HP,BP2,menuNULL,lock0,zero żywych wrogów.
+Key1 i sześć Medicine3 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-m388-floor16-O1-v1-proof/proof.json`:
+niezależne zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live138399. Pełny ekwipunek względem132257
+różni się tylko amunicją426:9→0; wszystkie zmienne poza18:8157→16351,
+78:201→238 identyczne. Źródłowy i prywatne O8192B bez zmian.
+Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe. Piętro16 nieukończone;
+następne wyjście23 z M388. Cały zakres portu nadal otwarty.
+
 ### EX O1: pierwsza część piętra16 do M389
 
 Bez zmian produkcji. Świeży read/detach układu16: code71,selected8,

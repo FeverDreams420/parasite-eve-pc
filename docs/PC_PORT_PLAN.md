@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A2: ukończone piętro29, wejście na piętro30
+
+Bez zmian kodu na pe-m392-bind-v1. Z150969: M306151581, M392152191/152831,
+M294153471, M307153971, code9 154551. Pięciu wrogów pokonanych bez
+utraty HP445; read/detach łupu trzy id1,dwa id7. Code21 158283,
+M305158843, M292159471, code22 159971, code21 160501, M392161061:
+pięciu wrogów pokonanych przy371HP, łup id16. Code20 164117:
+czterech wrogów pokonanych przy542HP; Heal3 przy166137:262→542HP,
+łup id1,id6,dwa id7. Code9 167847/168537, M296169227,
+endpoint169947 M297/a80493c8, piętro30,HP542/671,BP2,menuNULL,lock0,
+zero wrogów,oba klucze i pięć Medicine3. Boss30 jeszcze nieuruchomiony.
+
+PASS `/tmp/pe-ex-chrysler-floor30-A2-v1-proof/proof.json`: zimne replaye
+tylko z autentycznego A2, normal/SAN exit0 bez raportów; cały JSON i1MiB
+VRAM zgodne również z obserwowanym przebiegiem. Względem150969 pełny
+ekwipunek różni się tylko amunicją426:14→9; wszystkie zmienne poza4:29→30,
+18:238451→1024883 identyczne. Źródłowy i prywatne A8192B niezmienione;
+SHA256 obu zamrożonych binariów sprawdzone. Seed/checkpoint/runner/verifier obok.
+Read/detach układu30: selected18,count19; `/tmp/pe-chrysler-floor30-table-A2-v1.json`.
+Target1 nie występuje w układzie; plan do code0 w -boss-route wymaga wykonania.
+Przed bossem nadal trzeba zwolnić miejsce na klucz przez oryginalne menu.
+Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1.
+Pełny zakres portu pozostaje otwarty.
+
 ### EX A2: ukończone piętro28, wejście na piętro29
 
 Bez zmian kodu na pe-m392-bind-v1. Z134709: M306135321, code23 135931,

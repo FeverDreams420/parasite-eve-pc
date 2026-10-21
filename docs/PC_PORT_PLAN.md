@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: pierwsza walka42 i oryginalne leczenie w eksploracji
+
+Bez zmian kodu na pe-m406-bind-v2. Od40255:code9 40867,code22 41557,
+M40642127. Walka z jednym wrogiem od42223,sub31,HP580,def98.
+Heal3, Medicine3 ze slot28 oraz single-shot/DoubleAction; wynik46111
+HP180/671,zero wrogów,menuEXP20. Read/detach łupu potwierdził id1,
+amunicja odebrana. Endpoint46515 M406/a8080348,mode9,menuNULL,lock0,BP2.
+
+PASS `/tmp/pe-ex-chrysler-mid42-A4-v1-proof/proof.json`: zimny A4 przez
+całe41 i tę walkę42, normal/SAN exit0 bez raportów; pełny JSON i1MiB VRAM
+zgodne z live, SHA gry sprawdzone. Cały ekwipunek względem40255 poza
+slot28:8→0 i amunicją426:16→9 identyczny; wszystkie zmienne poza5:20→21,
+18:5→20,78:140→123 identyczne. Źródłowy/prywatne A8192B niezmienione.
+
+Następnie oryginalne menu Items w eksploracji: Medicine2 slot12 daje
+HP270 przy46883, Medicine2 slot13 dajeHP360; zamknięcie menu47351.
+PASS `/tmp/pe-ex-chrysler-heal42-A4-v1-proof/proof.json`: pełny zimny
+replay normal/SAN/live JSON i VRAM zgodny, exit0 bez raportów, SHA gry
+sprawdzone, źródłowy/prywatne A8192B niezmienione. Cały ekwipunek poza
+slot12/13:7→0 identyczny z46515; wszystkie zmienne identyczne.
+Seed/checkpoint/runner/verifier obok dowodów. Cztery klucze zachowane,
+zapas leków zużyty; dalsza część42 i piętra43–77 do sprawdzenia.
+Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1.
+Pełny port pozostaje nieukończony.
+
 ### EX A4: ukończone piętro41, wejście na42 na poprawionym kandydacie
 
 Bez dalszych zmian kodu na pe-m406-bind-v2. Od35151:M30535791,

@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: pierwsza część piętra16 do M389
+
+Bez zmian produkcji. Świeży read/detach układu16: code71,selected8,
+count29; `/tmp/pe-chrysler-floor16-table-O1-v1.json`, plan obok z-route.
+Z127679: M305128291, M386128841, trzech wrogów pokonanych bez utratyHP.
+Read/detach łupu potwierdził id1/6/6 (amunicja, dwie Medicine1), leki
+pozostawione przy pełnym plecaku. Dalej M389131137, M307131677,
+M389132257/a80684c8. Piętro16,460/671HP,BP2,menuNULL,lock0,
+zero żywych wrogów. Key1 i sześć Medicine3 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-mid16-O1-v1-proof/proof.json`: niezależne
+zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON i1MiB VRAM
+normal=SAN=live132257. Pełny ekwipunek względem127679 różni się tylko
+amunicją426:12→9; wszystkie zmienne poza5:20→22,18:4062→8157,
+78:40→201 identyczne. Źródłowy i prywatne O8192B bez zmian.
+Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe. Piętro16 nieukończone;
+następne wyjście21 z M389. Cały zakres portu pozostaje otwarty.
+
 ### EX O1: ukończone piętro15, wejście na16
 
 Bez zmian produkcji. Z119133: M386119673 i wygrana z pięcioma wrogami

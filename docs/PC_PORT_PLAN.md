@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### Boss50: druga próba i punkt przed śmiertelną serią
+
+Na pe-anim-event-null-v1 kontroler v10 odtwarza wejście228178.
+Po triggerze ruchLeft150,drugi wróg widoczny228740. Późniejsze Liberate
+nadal zadaje1540 głównemu,dodatkowy pozostajeHP1200; główny1002660
+przy230956. Strzały do1002336,potem Heal3+Medicine4(slot13):
+232904 HP671. Seria trafień do233216 pozostawia166HP.
+Medicine3(slot15)+Medicine2(slot12) daje436HP przy234304.
+Dalszy ciągły ruch wzdłuż areny:Left120,Up100,Right210,Down100,
+Left210,Up100,Right210,Down100. Punkt235518 HP423,PE64952083.
+Następne Left210+wait8 kończy235736:HP0,mode3,dwóch żywych wrogów
+1002336/1004200. To porażka,nie crash ani zwycięstwo.
+
+PASS `/tmp/pe-ex-chrysler-boss50-attempt2-A4-v1-proof/proof.json`:
+zapisany przebieg normal/SAN/live zgodny całym JSON/1MiB VRAM,
+exit0 bez diagnostyki. Pełny ekwipunek względem wejścia:slot12/13/15→0,
+amunicja426:5→1,reszta identyczna; wszystkie512 zmiennych poza
+7:270→782,11:123338→254410,18:2873702→0,78:105→14 identyczne.
+A4 źródłowy/prywatne niezmienione. Prestrike JSON235518 zachowany
+w /tmp/pe-boss50-attempt2-prestrike-v1-state.json,oryginalny seed
+pe-ex-chrysler-boss50-prestrike-A4-v1-seed.json obok umożliwia zmianę
+następnego inputu bez edycji RAM/RNG/zapisu. Kontroler v11 odtwarza
+235518 do dalszych prób uników/leczenia. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe,boss50 i pełny port nieukończone.
+
 ### Boss50: pierwsza pełna próba kończy się porażką Ayi
 
 Na pe-anim-event-null-v1 kontroler v9 zimno odtwarza231146 dokładnie

@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: trwały zapis L2 z Medicine4 i osobne Continue
+
+Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live51540 od63868
+wrócił M371→M340:Down305,Left110,Down20,wait400→64703.
+Telefon przy−1882,−521:Down130,normalDown20,Left30,Cross dały dialog6;
+Cross/port36/Cross/files37,Down do pustego slotuL(11),Cross utworzyło
+FileSaved40 przy66845.237/589HP,BP1156,Medicine4raw9slot0,Medicine3
+raw8slot26,wyposażone M8000/B Jacket1 bez zmian. Cały inventory identyczny
+z końcem M371; jedyna zmiana zmiennych1:340→998.
+
+Nowy autentyczny `/tmp/pe-ex-museum-save-L2-v1-source/BASLUS-006620000000L`,
+8192B,SHA256 `a16de9a08baa2f8111b6f3b161c1a0b9a7926d9f0e61819608d3763ff6172408`.
+Pełny cold replay od J: `/tmp/pe-ex-museum-save-L2-v1-proof/proof.json`
+PASS,pełny JSON i1MiB VRAM normal=SAN=live,wszystkie8192B L identyczne,
+J/K zachowane,oba exit0,bez zgłoszeń sanitizerów.
+
+Osobny cold Continue z wyłącznie L na prywatnej karcie,slot11:
+`/tmp/pe-ex-museum-L2-loaded-v1-proof/proof.json` PASS,przy13200
+M340(a8064048),story632,237/589HP,BP1156,menuNULL,lock0,dialogi zamknięte.
+Cały inventory i wszystkie zmienne równe FileSaved; pełny JSON/VRAM
+normal=SAN,oba exit0,źródłowy i prywatne L bez zmian.
+SDK/SDL bez instrumentacji,brak oracle PS1,dowody /tmp nie są CTest.
+Live51540 nadal przy FileSaved66845 w `/tmp/pe-ex-museum-restock-J2-v1-live`.
+Dalszą trasę można zacząć krótkim cold L13200 zamiast całego prefiksu J.
+Następne: Klamp/klucz,dalsza trasa i nowa próba Triceratopsa z Medicine4;
+boss i pełny zakres portu nadal otwarte.
+
+
 ### EX: próba z ruchem i zweryfikowany zapas Medicine4
 
 Bez zmian produkcyjnych,`pe-control-aim-v1`. Nowa normal-only gałąź46269,

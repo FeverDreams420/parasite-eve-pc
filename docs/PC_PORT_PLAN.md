@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX B3: Key3, powrót na30 i wejście na31 po Continue
+
+Bez zmian kodu na pe-m392-bind-v1. Od zimnego B3/13200: M20113995,
+M34014335,M19215290,mapa16426,M29017414,M29318478. Oryginalny selektor
+po29 Up wybiera30, wyjście M29220619 (zmienne4/6=30), M30421049,
+M39021729. Up470 przez pokonaną salę bossa nie uruchamia walki;
+endpoint22499 M297/a80493c8, piętro31. HP427/671,BP2,mode0,menuNULL,
+lock0,zero wrogów,wszystkie trzy klucze i trzy Medicine3 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-floor31-B3-v1-proof/proof.json`: pełne zimne
+replaye tylko z autentycznego B3, normal/SAN exit0 bez raportów; cały JSON
+i1MiB VRAM zgodne również z obserwowanym przebiegiem. Pełny ekwipunek
+identyczny z13200; wszystkie zmienne poza1:998→999,4:1→31,5:0→20,
+6:1→30 identyczne. Źródłowy i prywatne B8192B niezmienione.
+Seed/checkpoint/runner/verifier obok. Read/detach układu31: selected9,count31,
+seed1140; `/tmp/pe-chrysler-floor31-table-B3-v1.json`, plan -route obok.
+Plan wymaga wykonania, piętro31 dopiero rozpoczęte. Dowody /tmp nietrwałe,
+SDK/SDL nieinstrumentowane, brak oracle PS1. Pełny zakres portu nadal otwarty.
+
 ### EX B3: zapis po bossie30 i zimne Continue potwierdzone
 
 Bez zmian kodu na pe-m392-bind-v1. Z205059: wyjście M390→M304205589,

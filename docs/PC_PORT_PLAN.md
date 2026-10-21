@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: ukończone piętro48, wejście na49
+
+Bez zmian kodu na pe-m410-bind-v1. Od151019:M306151631,
+code23 152371,M306152949,code9 153509. Pierwsza walka z dwoma
+od153661 wygrana przy509HP; wynik156413,read/detach łupu:id8/id7,
+pozostawione przy pełnym plecaku. Kolejny code9 157853,druga walka
+z dwoma od158005 wygrana przy671HP po Heal3; wynik161069,
+łup id7 pozostawiony. Code21 162477,trzecia walka z dwoma od162567
+wygrana przy581HP po Heal3; wynik165327,łup id7 pozostawiony.
+M410166888,M296167478,endpoint168198 M297/a80493c8,piętro49,
+HP581/671,BP2,mode9,menuNULL,lock0,zero wrogów. Cztery klucze,
+dwie Medicine3,trzy Medicine2 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-floor49-A4-v1-proof/proof.json`: pełny zimny
+A4 normal/SAN/live zgodny całym JSON i1MiB VRAM,exit0 bez raportów,
+SHA gry sprawdzone. Cały ekwipunek poza amunicją426:13→1 identyczny
+z151019; wszystkie zmienne poza4:48→49,18:55655→252263,
+78:246→251 identyczne. Źródłowy/prywatne A8192B niezmienione.
+Seed/checkpoint/runner/verifier obok. Read/detach układu49:
+selected7,count20,seed24325 w `/tmp/pe-chrysler-floor49-table-A4-v1.json`,
+plan -route obok wymaga wykonania. Piętro49 dopiero rozpoczęte.
+Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1.
+Pełny port nadal otwarty.
+
 ### EX A4: ukończone piętro47, wejście na48
 
 Bez zmian kodu na pe-m410-bind-v1. Od141746:M292142286,

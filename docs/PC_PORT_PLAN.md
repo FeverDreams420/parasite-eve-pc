@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: trudna walka code22 na42 wygrana przy604HP
+
+Bez zmian kodu na pe-m406-bind-v2. Z53311 menu zamknięte, code22 53867,
+walka z dwoma sub31/sub30 HP410/def92 od53939. Oryginalne celowanie
+używa wewnętrznych bitów0x10/0x40, czyli raw Right/Left. Próby rawUp
+nie przestawiały kursora; skorygowano sterowanie kontrolera, nie kod gry.
+Skupienie strzałów na zranionym celu, ruch między akcjami i oryginalne
+Heal3 pozwoliły wygrać. Przy56471 jeden wróg,HP324 i Heal3 już w kolejce;
+anulowano drugie menuPE i dołączono atak jako drugą akcję.
+Wynik57835:HP604/671,zero wrogów,menuEXP20. Read/detach łupu:id8.
+Medicine3 odebrana do slot12; endpoint58547 a8080448,mode9,menuNULL,
+lock0,BP2,cztery klucze zachowane.
+
+PASS `/tmp/pe-ex-chrysler-win42-code22-A4-v1-proof/proof.json`: pełny
+zimny A4 normal/SAN/live zgodny całym JSON i1MiB VRAM,exit0 bez raportów,
+SHA gry zweryfikowane. Cały ekwipunek poza slot12:0→8 i amunicją426:3→11
+identyczny z53311; wszystkie zmienne poza5:21→20,18:37→54,78:9→46
+identyczne. Źródłowy i prywatne A8192B niezmienione. Seed/checkpoint/
+runner/verifier obok. Żywy v5 czeka przy58547 po zwycięstwie.
+
+To potwierdza przejście wcześniej przegrywanej walki przez oryginalne
+mechanizmy, bez zmiany balansu/statystyk lub edycji RAM/RNG/save.
+Dalsza część42 i piętra43–77 pozostają do sprawdzenia. Dowody /tmp
+nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1. Pełny port otwarty.
+
 ### EX A4: zweryfikowane Heal3 w eksploracji; przygotowanie kolejnej próby42
 
 Bez zmian kodu na pe-m406-bind-v2. Ze zwycięskiego52811 oryginalne menu

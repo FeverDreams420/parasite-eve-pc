@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: telefon M266, nowy zapis H2 i zimny Continue
+
+Bez zmian kodu, `pe-control-aim-v1`: zwykły powrót M333→M266 i telefon tworzą nowy H w pustym slocie7, FileSaved50867. Źródłowy G2 zachowany. `/tmp/pe-ex-warehouse-save-H2-v1-source/BASLUS-006620000000H`,8192B,SHA256 `fe71089240925357b136b341e0398869ba6aa12140c57ee286b57da4b837d9d0`. Aya251/437HP,story600,oba klucze zachowane. Pełny ekwipunek identyczny z M33348903; jedyna zmiana zmiennych skryptowych:1=998.
+
+Pełny replay od G2 do zapisu: `/tmp/pe-ex-warehouse-save-H2-v1-proof/proof.json`. Normal/SAN/live mają identyczny pełny JSON,VRAM oraz wszystkie8192B nowego H; prywatne i źródłowy G bez zmian. Zimny Continue wyłącznie z H: `/tmp/pe-ex-warehouse-H2-loaded-v2-proof/proof.json`,12920,M266,251/437HP,brak menu/przeciwników/blokady ruchu, pełny ekwipunek i wszystkie zmienne identyczne z FileSaved; pełny JSON/VRAM normal=SAN,exit0,H bez zmian. Pierwszy tester v1 miał błędne składanie argumentów i zakończył się przed grą; v2 poprawia tylko argumenty. SDK/SDL nieinstrumentowane, dowody w /tmp nietrwałe, brak oracle PS1/CTest. Dalsza część Warehouse i kampania pozostają otwarte.
+
+
 ### EX: oryginalne drzwi Warehouse Key otwierają M333
 
 Ten sam kandydat `pe-control-aim-v1`, bez edycji kodu: pełny replay od G2 przez M265 i M266 dociera do M333 (`a80631c8`) w klatce 48903. Zwykły input pada prowadzi od wejścia M266 w dół, na zachód po schodach i do drzwi przy [−1722,−770,236]; oryginalny dialog10 i przejście reagują na wcześniej zdobyty Warehouse Key. Pierwsze podejście zawróciło przez wejściowe drzwi; korekta jest także w pełnym replayu. Aya251/437HP, brak przeciwników/menu/blokady, pełny ekwipunek identyczny z potwierdzonym M266/45352, oba klucze zachowane. Wyłączne zmiany zmiennych skryptowych względem 45352: 1=266,47=25165827.

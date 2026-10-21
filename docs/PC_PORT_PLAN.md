@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: Key2 działa w windzie, powrót do holu
+
+Bez zmian produkcji. Z205435 powrót zM383 daje M389205863,
+M292206403. Oryginalny panel otwiera windę zKey2, wejście M293207184;
+panel kabiny207561 otwiera wybór piętra. Dziewiętnaście naciśnięć Down
+wybiera „1st floor” (sprawdzony obraz `/tmp/pe-key2-elevator-floor.png`),
+Cross i wyjście prowadzą209469 do M290/a8049048,piętro1,
+433/671HP,BP2,menuNULL,lock0,zero wrogów. Pełny ekwipunek identyczny
+z205435: Key2slot0,Key1slot27 i pięć Medicine3 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-key2-elevator-O1-v1-proof/proof.json`:
+niezależne zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live209469. Wszystkie zmienne poza4:20→1,
+5:20→25,6:10→1 identyczne. Źródłowy i prywatne O8192B bez zmian.
+Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe. Zapis po bossie20 jeszcze niewykonany;
+następne: telefon i trwały zapis/Continue, następnie dalszy Chrysler.
+Pełny zakres portu pozostaje otwarty.
+
 ### EX O1: boss20 pokonany, Key2 odebrany
 
 Bez zmian produkcji. Z200395 zwykłe wejście w głąb M383 uruchamia

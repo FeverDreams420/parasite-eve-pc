@@ -2,6 +2,73 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### Sterownik tras: pełne HP i zatrzymanie na pierwszej walce50
+
+Bez zmian produkcji,pe-glyph-visibility-v1. Tymczasowy
+/tmp/pe-chrysler-native-nav-v1.py dobiera punkty przejścia według
+obserwowanej geometrii modułu i kamery,emituje wyłącznie oryginalny pad
+przez istniejące nav,nie ustawia pozycji/RNG/skryptu. Strażnik
+scene/active/code_index/selected/combat/HP/menu pozostaje aktywny.
+W /tmp/pe-ex-chrysler-B4-route-v1.py dopracowano raportowanie nav w
+klatce zmiany sali:brak gracza używa ostatniej znanej pozycji wyłącznie
+w raporcie;nie zmienia aktorów. Nowy cold replay174905 dokładnie
+zgodny pełnymJSON iVRAM z potwierdzonym floor50. Stary29828/native45349
+zakończony exit0;nowy36411/native50083 w
+/tmp/pe-ex-chrysler-B4-route-v1-live.
+
+Oryginalne fieldHeal3 i zamknięcie menu175305:HP510→763/763,
+bez zużycia leków. Up312→M405175917/slot15. Nav do punktu
+[-2050,-700],basis1024,wykonał39 kroków po8 klatek i sam zatrzymał
+się176229 na starcie trzech wrogów:mode7,HP763/763,pozycja1062,-693.
+Nie traktować tego jako wygranej ani dotarcia do bossa50. Trasa do bossa
+ma26 przejść,wykonano dopiero pierwsze z19 do15.
+
+PASS `/tmp/pe-ex-chrysler-route50-B4-v1-proof/proof.json`:
+pełny cold normal/SAN/live JSON i1MiBVRAM identyczne,oba exit0 bez
+diagnostyki,B8192B źródłowy/prywatne niezmienione. Pełny inventory identyczny
+ze174905;character tylko savedHP510→763;512vars tylko
+18:539642→539640 i78:206→7. Selektor50/slot15,count32,seed25164,
+kod sali9. Seed/checkpoint/runner/verifier obok.
+Następne:rozegrać tę walkę oryginalnymi komendami i kontynuować trasę50,
+sprawdzając wyjścia wybrane przez punkty,szczególnie inne warianty sal.
+SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+Boss50 i cały port nadal nieukończone.
+
+### B4: ukończone49, wejście50 z zachowaniem pięciu Medicine3
+
+Ten sam pe-glyph-visibility-v1,bez zmian produkcji. Od158181 trasa49:
+6→2→1→5→4→3→8→11→12→13→14→19→23→24→25→21→20→15→7.
+Wszystkie18 przejść planu potwierdzone glyph_selection.selected.
+M408158794,M407159364,M432159919;naDown88 uruchomiony jeden wróg
+160007. Następne zaplanowane ruchy zatrzymane przezguard po8 klatkach;
+walka wygrana160971,HP549/763,EXP133. END162395,
+Down67/Left136→M304162898/slot4,Left340→M407163538/slot3,
+Left145/Down110→M405164093/slot8,Down340→M409164733/slot11,
+Down90/Right150→M294165273/slot12,Right190→M292165763,
+Right210→M408166273/slot14,Right145/Down110→M405166828/slot19,
+Down340→M304167468/slot23,Down190/Right190→M406168148/slot24,
+Right340→M432168788/slot25,Right130/Up160→M306169378/slot21,
+Up50/Left195→M409169923/slot20. Left80 uruchamia jednego170003,
+wygrana171871 przy510/763HP,EXP133,nagrody zamknięte172987.
+Left90/Up168→M405173545/slot15,Up340→M296174185/slot7,
+Up420→M297174905 i zmienna4=50. Boss jeszcze nieuruchomiony.
+
+PASS `/tmp/pe-ex-chrysler-floor50-B4-v1-proof/proof.json`:
+pełny cold B normal/SAN/live JSON i1MiBVRAM identyczne,oba exit0 bez
+raportów,źródłowy/prywatneB8192B niezmienione. Pełny inventory względem
+158181 tylko clip426:7→17 i rezerwa339→336. Character wyłącznie
+EXP304280→304546(+133+133),HP604→510,pulaPE275→299.
+512vars poza4:49→50,18:15352→539642,78:129→206 identyczne.
+PięćMedicine3,level35,maxHP763,BP47 zachowane. Selektor50,
+selected19,count32,seed25164,kod sali2. Runner/seed/checkpoint/verifier
+przy prefiksie. 49 ukończone,50 i boss50 nadal wymagają wykonania.
+Plan do bossa od19 w /tmp/pe-chrysler-floor50-B4-route-v1.json.
+
+Live29828/native45349 w /tmp/pe-ex-chrysler-B4-glyph-guard-v1-live
+zatrzymany174905. Przed dalszą trasą:polowe Heal3 dopełnegoHP.
+SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+Pełny zakres portu pozostaje otwarty.
+
 ### B4: całe48 bez walk i zużycia zasobów, wejście49
 
 Ten sam pe-glyph-visibility-v1,bez zmian produkcji. Od153859 sześć

@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Chrysler N3: przejście schodami z piętra2 na3
+
+Ten sam pe-control-aim-v1,bez zmian produkcyjnych. Od50830 zwykły pad
+przeszedł zachodnim wyjściem M305 do M332/a8061048 (51420).
+Po korekcie powrotu wejście M332 i wyjście x1444..1932,z−1549..312
+prowadzą52415 do M307/a80603c8. Dalsze wschodnie wyjście M307
+(x1604..2209) daje53265 M296/a80492c8. Przejście M296 przez
+x796..1557,z−909..−205 prowadzi54255 do M297/a80493c8. Zwykły
+ruch schodami przy54735 potwierdza oryginalny licznik piętra3
+(script_variables[4]:2→3),nie jedynie zmianę obrazu pokoju.
+Aya401/671HP,BP2,menuNULL,lock0,zero wrogów. Pełne inventory
+identyczne z50830: sześć Medicine3 i całe wyposażenie zachowane.
+Wszystkie zmienne poza4:2→3,5:21→20,78:7→36 identyczne.
+
+PASS `/tmp/pe-ex-chrysler-floor3-N3-v1-proof/proof.json`: niezależne
+pełne zimne replaye od muzealnego N3 w normal/SAN,pełny JSON i1MiB
+VRAM normal=SAN=live54735,oba exit0 bez sanitizer/opcode/assertion,
+źródłowy/prywatne N3 8192B niezmienione. Seed/checkpoint/runner/verifier
+obok. Odczyty skryptów LLDB tylko read/detach; bez RAM/RNG/save edits.
+Tabela kolejnego piętra odczytana osobno do
+`/tmp/pe-chrysler-floor3-table-N3-v1.json`. SDK/SDL nieinstrumentowane,
+brak oraclePS1,dowody/tmp nietrwałe. Potwierdza jedno przejście w górę;
+pozostałe piętra,bossowie i pełny Chrysler nadal otwarte.
+
+
 ### EX Chrysler N3: zamknięta winda i odczyt układu piętra
 
 Bez zmian produkcyjnych. Z M333 zwykły pad prowadzi48030 do

@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: ukończone piętro17, wejście na18
+
+Bez zmian produkcji. Z150228 M387: czterech wrogów pokonanych przy421HP,
+read/detach łupu potwierdza trzy id1, pozostałe puste. Dalej M389152796,
+M386153336, M304153891, M292154551, M385155051,
+M307155691, M296156341 i schody157061 dają M297/a80493c8,
+piętro18,421/671HP,BP2,menuNULL,lock0,zero żywych wrogów.
+Key1 i sześć Medicine3 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-floor18-O1-v1-proof/proof.json`:
+niezależne zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live157061. Pełny ekwipunek względem150228
+różni się tylko amunicją426:6→1; wszystkie zmienne poza4:17→18,
+5:23→20,18:32733→49118,78:85→83 identyczne. Źródłowy i prywatne
+O8192B bez zmian. Seed/checkpoint/runner/verifier obok. SDK/SDL
+nieinstrumentowane,brak oracle PS1,dowody /tmp nietrwałe. Następne:
+piętro18 i dalszy Chrysler przed finałem; pełny zakres portu nadal otwarty.
+
 ### EX O1: pierwsza walka i korytarze piętra17
 
 Bez zmian produkcji. Świeży read/detach układu17: code40,selected5,

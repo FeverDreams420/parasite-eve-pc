@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: powrót M210, walka M207, przejścia M214/M216 → M212
+
+Bez zmian kodu, `pe-control-aim-v1`: zwykłe wyjście M210→M207166501,powtórne starcie z trzema celami279HP wygrane170657 przy421/561HP bez utraty HP. Po nagrodach obejście podstawy schodów i oryginalne wschodnie drzwi prowadzą do M214172607 (`a8041248`),dalej M216173757 (`a8041348`). Obejście uszkodzonego pomostu bez zmian kolizji prowadzi do M212175424 (`a8041148`),421/561HP,menuNULL,move_lock0,brak przeciwników. Full Cure i oba klucze zachowane.
+
+Względem166260 pełny inventory zmienia wyłącznie rekord amunicji426:11→2; zmienne wyłącznie1=216,21=36949,78=68. `/tmp/pe-ex-museum-m212-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live175424,pełne inventory/zmienne i pośrednie walka/przejścia sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Drabina M212 i dalsza droga Museum/kampanii/EX nadal otwarte.
+
+
 ### EX M210: awans i Full Cure z pełnej listy łupu
 
 Bez zmian kodu, `pe-control-aim-v1`: oryginalne nagrody/awans M210 podnoszą maxHP547→561,BP1028→1052. W pełnym inventory27/27 zwykłe menu SEL i wymiana między listami przenoszą Full Cure/raw17 na slot15,zastępując Mod Permit/raw55 (164812). Pozostały łup pominięto przy END; próby wyboru Medicine4 nie zmieniły inventory. Końcowy stan166260:421/561HP,field,menuNULL,move_lock0,story608. Broń,pancerz,oba klucze i wszystkie4096B rekordów ekwipunku zachowane.

@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: M206→M205→M204→M201→poalarmowy hol M340
+
+Ten sam `pe-control-aim-v1`, bez zmian produkcyjnych. Live16191 od56546:
+Right70 zatrzymało Ayę przy1897,-1013;Up50,Right55 prowadzą do M20557521.
+Right245→M20458166,Down300,DownRight100→M20158966.
+Down310 nie uruchomiło ponownej walki tego wariantu; dalsze Down104
+przekroczyło południowe wyjście i wybrało M340(a8064048) przy59662.
+Przy60062 hol,story632,237/589HP,BP1156,menuNULL,move_lock0,zero wrogów.
+Cały ekwipunek identyczny z końcem M206. Jedynie zmienne1:207→201,
+78:94→239 zmieniły się na tej trasie.
+
+Pełny cold replay od autentycznego J przez dotychczasową trasę/film21/
+walki do holu: `/tmp/pe-ex-museum-m340-J2-v1-proof/proof.json` PASS.
+Pełny JSON i1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń sanitizerów;
+źródłowy J bez zmian,utworzony K identyczny we wszystkich8192B.
+SDK/SDL bez instrumentacji,brak niezależnego oracle PS1; dowody /tmp
+nie zastępują trwałego katalogu/CTest ani porównania wszystkich klatek/audio.
+Live16191 czeka60062 w `/tmp/pe-ex-museum-J2-nav-v1-live`.
+Dalej droga do zdarzenia Klampa; dalsza kampania i pełny cel otwarte.
+
+
 ### EX Museum: powrót M207→M206, zwycięstwo przy wschodnim wyjściu
 
 Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live16191 od48090:

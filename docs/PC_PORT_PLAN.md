@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A2: pierwsza część piętra23 i walka code20
+
+Bez zmian kodu na pe-m392-bind-v1. Read/detach układu23: selected12,
+count27; `/tmp/pe-chrysler-floor23-table-A2-v1.json`, plan -route obok.
+Od61887: code17/M30562500, code23/a80691c8 63050,
+code18/M30663605, code9/a80690c8 64185, code19/M30764875,
+code20/a8069348 65423. Pięciu wrogów pokonanych przy415/671HP.
+Read/detach łupu: dwa id16 i trzy id1; pełny plecak zachowany.
+Endpoint68317: menuNULL,lock0,zero wrogów,BP2,oba klucze i pięć Medicine3.
+
+PASS `/tmp/pe-ex-chrysler-mid23-A2-v1-proof/proof.json`: zimne replaye
+wyłącznie z autentycznego A2, normal/SAN exit0 bez raportów błędów;
+cały JSON i1MiB VRAM zgodne również z obserwowanym przebiegiem.
+Względem61887 pełny ekwipunek różni się tylko amunicją426:13→6;
+wszystkie zmienne poza5:20→22,18:51→112 identyczne. Źródłowy oraz
+prywatne A8192B niezmienione. Seed/checkpoint/runner/verifier obok.
+Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1.
+Piętro23 nieukończone; dalsza trasa prowadzi wyjściem21 do code21.
+Pełny zakres portu pozostaje otwarty.
+
 ### EX A2: ukończone piętro22, wejście na piętro23
 
 Bez zmian kodu na pe-m392-bind-v1. Od57453 przejście przez trzy kolejne

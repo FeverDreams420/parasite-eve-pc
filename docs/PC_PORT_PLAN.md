@@ -2,6 +2,15 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: wygrane M234, telefon M237, zapis J2 i zimny Continue
+
+Bez zmian kodu, `pe-control-aim-v1`: M234 uruchamia trzy cele391/391/447HP. Zwykłe Double Action,jedno Heal3 po165HP i podejścia wygrywają258695,Aya415/573HP. Po nagrodach oryginalne wyjścia prowadzą do M235261115 (`a80432c8`) i pokoju ochrony M237261705 (`a80433c8`). Dialog o alarmie zamknięty,telefon przy[−845,59] wywołany twarzą w lewo. FileSaved263609 tworzy nowy J w pustym slocie9,G/H/I zachowane.
+
+Źródło `/tmp/pe-ex-museum-save-J2-v1-source/BASLUS-006620000000J`,8192B,SHA256 `645828e09996d65d83acdd77134a474e63dc437a67ea309b605ab711b8e3fb2c`. Względem252567 pełny inventory zmienia wyłącznie rekord amunicji426:6→9; zmienne wyłącznie1=998,22=1364,78=226. BP1100,story608. `/tmp/pe-ex-museum-save-J2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM i8192B J identyczne z live,G bez zmian,H/I zgodne ze źródłami.
+
+`/tmp/pe-ex-museum-J2-loaded-v2-proof/proof.json`: zimny Continue wyłącznie z J,pierwotna kwestia53 o alarmie zamknięta zwykłym Cross;13200,M237,415/573HP,BP1100,brak menu/przeciwników/dialogu/blokady. Pełny inventory i wszystkie zmienne identyczne z FileSaved;pełny JSON/VRAM normal=SAN,J niezmieniony. V1 kończył się poprawnie przed zamknięciem kwestii,nie był dowodem wolnego sterowania;v2 dodaje wyłącznie Cross. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Alarm i dalsze Museum/kampania/EX nadal otwarte.
+
+
 ### EX Museum: M232/M233 wygrane i wejście M234
 
 Bez zmian kodu, `pe-control-aim-v1`: M232 losuje dwa cele5:31/30 po279HP. Pojedyncze strzały w Double Action wygrywają241539 bez strat HP,452/573HP. Przejście M233 uruchamia447HP/def69 i335HP/def99. Dwa Heal3 i zwykłe strzały wygrywają249662,Aya385/573HP. Po nagrodach obejście na północ/zachód prowadzi do M234252567 (`a8043248`),menuNULL,move_lock0,brak przeciwników,story608,BP1100. Bez zmian RAM/RNG/save i balansu.

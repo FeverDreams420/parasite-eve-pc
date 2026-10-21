@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Chrysler N3: schody i połączenia korytarzy
+
+Nie zmieniano produkcji ani zapisów. Z M290 zwykły pad uruchomił
+oryginalne Scene_SelectMapById(20),M297/a80493c8 przy26370,
+następnie M305/a80602c8 przy27440. Zachodnie wyjście M305 prowadzi
+do M308/a8060448 przy29984; powrót wschodnim daje M305 przy32701.
+Południowe wyjście M305 wraca do M297 przy33241; powrót i wschodnie
+wyjście prowadzą przy34567 do M306/a8060348. To graf połączeń
+pierwszego wygenerowanego piętra,nie ukończenie piętra. Zamknięte
+drzwi widoczne na północnych ścianach nie były przejściem tej trasy.
+Odczyt starych oryginalnych skryptów M305 wskazał polygony wyjść;
+bez zmiany RAM/RNG/save. Input obejmuje także korekty podejść.
+
+PASS `/tmp/pe-ex-chrysler-corridors-N3-v1-proof/proof.json`: zimny
+replay od muzealnego N3 w normal/SAN,pełny JSON/1MiB VRAM
+normal=SAN=live34567. Oba exit0 bez sanitizer/opcode/assertion,
+źródłowy/prywatne N3 8192B bez zmian. Aya401/671HP,BP2,menuNULL,
+lock0,zero przeciwników,sześć Medicine3 zachowanych; pełne inventory
+identyczne z hol24932. Wszystkie zmienne identyczne poza4:1→2,
+5:0→23,18:16→17. Seed/checkpoint/runner/verifier obok.
+SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+Dalsze korytarze,walki,bossowie i pełny Chrysler pozostają otwarte.
+
+
 ### EX: korekta kolejności — muzealny N3 → Chrysler przed finałem
 
 Zgodnie z korektą użytkownika najpierw Chrysler Building, potem finał.

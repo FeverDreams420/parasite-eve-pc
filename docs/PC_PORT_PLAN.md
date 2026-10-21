@@ -2,6 +2,39 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Chrysler N3: piętro9→10,trzy wygrane i Heal3 bez zużycia leków
+
+Na niezmienionym pe-control-aim-v1 od157767 zwykły pad prowadzi
+M308158379→M309158959. Dwóch wrogów159075 pokonanych,361/671HP,
+nagrody zamknięte163935. Dalej M310164425→M294164985→M306165485
+→M311166045→M308166585. Czterech wrogów166688 pokonanych z Heal3
+przez oryginalne PE menu: live167632 HP357,PE98566144;live167872
+HP637,PE69084423 (odnowa po wydaniu PE). Nagrody zamknięte169832.
+Dalej M306170327,z korektami przejścia,M311171837,M299172377/173017.
+Trzech wrogów173113 pokonanych,629/671HP,nagrody zamknięte175833.
+M310176405→M296176955→schody177675 dająM297/a80493c8 i licznik9→10.
+Aya629/671HP,BP2,menuNULL,lock0,zero wrogów,sześć Medicine3 zachowanych.
+
+Pełne inventory względem157767 zmienia tylko byte426:13→16;
+wszystkie zmienne poza4:9→10,18:114609→901043,78:17→146 identyczne.
+PASS `/tmp/pe-ex-chrysler-floor10-N3-v1-proof/proof.json`: pełny zimny
+replay od autentycznego muzealnego N3,normal/SAN exit0 bez raportów,
+pełny końcowy JSON/1MiB VRAM normal=SAN=live177675,źródłowy/prywatne N3
+8192B niezmienione. Seed/checkpoint/runner/verifier obok.
+Odczyty pośrednie Heal3 powyżej z live,nie osobne checkpointy SAN.
+SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+
+Dalszy live: M298178287,pięciu wrogów178423 pokonanych,nagrody
+zamknięte181631,611/671HP,sześć leków. Ten dalszy odcinek jeszcze bez
+niezależnego replayu. Boss jeszcze nieosiągnięty. Tabela piętra10
+read/detach `/tmp/pe-chrysler-floor10-table-N3-v1.json`:codeIndex10,
+code0,selected9,count19. Planner ma opcjonalny cel kod0 zamiast1;
+`/tmp/pe-chrysler-floor10-boss-route-N3-v1.json` wyznacza15 przejść
+odslot9 do4,kodu0=boss room. To plan,nie wykonanie walki.
+Następne: dojście do bossa,walka i nagroda. Dalszy Chrysler,EX i cały
+port nadal otwarte; bez RAM/RNG/save edits lub zmian gry/PsyZ.
+
+
 ### EX Chrysler N3: piętro8→9,zachowane HP i leki
 
 Bez zmian produkcyjnych. Od148469 zwykły pad prowadzi149081 doM308;

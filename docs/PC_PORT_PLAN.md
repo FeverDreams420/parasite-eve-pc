@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: M243 wygrane,545HP/def109
+
+Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live16191 od133313:
+field Heal3 239→519,zamknięcie menu,Up100 uruchomiło typ3/sub31
+545HP/def109. Pierwszy wybór134321,504HP. DoubleAction pojedynczymi
+strzałami po55:545→435→325→215→105. Po ostatniej serii Aya67HP.
+Jedno combat Heal3 i pocisk:przy137525 Aya263HP,wróg50HP; ostatni
+ostrzał kończy walkę137969,Aya245HP (trucizna/ataki podczas animacji).
+Nagrody zamknięte139501,M243(a80441c8),story632,BP1156,245/589HP,
+menuNULL,lock0,zero przeciwników. Wszystkie50 slotów bez zmian; jedyna
+zmiana4096B rekordów sprzętu to amunicja426:12→2. Zmienne wyłącznie
+22:5464→21848,78:210→27. KlampKey/MaedaGun i wyposażenie zachowane.
+
+Pełny cold replay od J przez poprzednią trasę i zwycięstwo M243:
+`/tmp/pe-ex-museum-m243-win-J2-v1-proof/proof.json` PASS,
+pełny JSON i1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń sanitizerów,
+źródłowy J i utworzony K bez zmian. SDK/SDL bez instrumentacji,brak oracle
+PS1,dowody /tmp nie są trwałym CTest. Live16191 czeka139501 w
+`/tmp/pe-ex-museum-J2-nav-v1-live`. Dalej M245/M246 i film22.
+Pełna kampania EX i pełny zakres portu nadal nieukończone.
+
+
 ### EX: Klamp Key otwiera M243
 
 Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live16191 od130756:

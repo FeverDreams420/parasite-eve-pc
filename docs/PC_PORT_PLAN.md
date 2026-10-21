@@ -19,7 +19,7 @@ zakończony exit0;nowy36411/native50083 w
 Oryginalne fieldHeal3 i zamknięcie menu175305:HP510→763/763,
 bez zużycia leków. Up312→M405175917/slot15. Nav do punktu
 [-2050,-700],basis1024,wykonał39 kroków po8 klatek i sam zatrzymał
-się176229 na starcie trzech wrogów:mode7,HP763/763,pozycja1062,-693.
+się176229 na starcie trzech wrogów:mode7,move_lock1,HP763/763,pozycja1062,-693.
 Nie traktować tego jako wygranej ani dotarcia do bossa50. Trasa do bossa
 ma26 przejść,wykonano dopiero pierwsze z19 do15.
 
@@ -29,6 +29,11 @@ diagnostyki,B8192B źródłowy/prywatne niezmienione. Pełny inventory identyczn
 ze174905;character tylko savedHP510→763;512vars tylko
 18:539642→539640 i78:206→7. Selektor50/slot15,count32,seed25164,
 kod sali9. Seed/checkpoint/runner/verifier obok.
+Pierwszy verifier błędnie wymagał move_lock0 jak w eksploracji;skorygowano
+wyłącznie test do oryginalnej fazy wejścia mode7/move_lock1. Początkowe
+assertion failed w verifierze nie jest diagnostyką gry. PASS powyżej jest
+potwierdzony dopiero ponownym uruchomieniem po tej korekcie;wcześniejszy
+zapis PASS w dokumentacji był przedwczesny. Kod gry bez zmian.
 Następne:rozegrać tę walkę oryginalnymi komendami i kontynuować trasę50,
 sprawdzając wyjścia wybrane przez punkty,szczególnie inne warianty sal.
 SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.

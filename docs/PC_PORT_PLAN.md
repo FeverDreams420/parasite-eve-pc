@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A2: pierwsza walka piętra21 i nowe warianty scen
+
+Bez zmian produkcji. Read/detach układu21: code59,selected6,count26;
+`/tmp/pe-chrysler-floor21-table-A2-v1.json`, plan obok z-route.
+Z22631 wariantcode22/a8069248 przy23243,code23/a80691c8 przy23813,
+code20/a8069348 przy24368,M30424908,ponownie code23 przy25568.
+Pięciu przeciwników pokonanych bez utratyHP; read/detach łupu:1/1/1/7/7,
+Medicine2 pozostawione przy pełnym plecaku. Wyjście22 daje28992
+code9/a80690c8,piętro21,433/671HP,BP2,menuNULL,lock0,zero wrogów.
+Oba klucze i pięć Medicine3 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-mid21-A2-v1-proof/proof.json`:
+niezależne zimne replaye tylko zA,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live28992. Pełny ekwipunek względem22631
+różni się tylko amunicją426:4→13; wszystkie zmienne poza5:20→22,
+18:0→5 identyczne. Źródłowy i prywatne A8192B bez zmian.
+Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe. Piętro21 nieukończone;
+następne wyjście22 zcode9. Pomocnik functions.store peFightA2Only używa
+kontrolera31022 i katalogu A2-live,zatrzymuje się przy NO TARGET.
+Pełny zakres portu pozostaje otwarty.
+
 ### EX A2: zimny powrót na20 i wejście na21, boss nie odradza się
 
 Bez zmian produkcji. Z samegoA13200 zwykły pad wraca przez M201,

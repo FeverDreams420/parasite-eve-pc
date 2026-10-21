@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum M197: powrotna walka wygrana
+
+Bez zmian kodu, `pe-control-aim-v1`: nagrody M198 zamknięte120774,oryginalne wyjście prowadzi do M197121394. Zwykły ruch uruchamia391/279/279HP; podejścia do oddalających się celów i pojedyncze strzały w Double Action kończą walkę125797,EXP,zero przeciwników,Aya444/532HP. Bez leczenia w M197,edycji RAM/RNG/save ani zmian balansu. Względem119574 pełny inventory zmienia wyłącznie rekord amunicji426:7→14; zmienne wyłącznie1=198,21=20,78=76. Story608,BP914 zachowane.
+
+`/tmp/pe-ex-museum-m197-win-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live125797,pełne inventory/zmienne oraz pośrednie HP sprawdzone,G niezmieniony,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Dalsza droga do M201 i reszta Museum/kampanii/EX nadal otwarte.
+
+
 ### EX: nagrody M199, Heal3 i powrotna walka M198
 
 Bez zmian kodu, `pe-control-aim-v1`: nagrody/dialog32 po M199 zamknięte,Heal3 w polu276→532HP (114405),oryginalne południowe wyjście M199→M198114710. Ruch uruchamia trzy cele391/279/279HP; pojedyncze strzały w Double Action prowadzą do zwycięstwa119574,EXP,zero przeciwników,Aya476/532HP. Kończący strzał trafia ostatnie77HP celu5:29 także po wyborze w mode16; nie traktować samego numeru16/17 jako dowodu nietykalności. Północne drzwi M199 nadal wymagają oryginalnego Klamp Key; trasa go nie obchodzi.

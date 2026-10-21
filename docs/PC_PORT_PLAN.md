@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A2: zimne Continue po bossie20
+
+PASS `/tmp/pe-ex-chrysler-A2-loaded-v1-proof/proof.json`:
+niezależne normal/SAN startują wyłącznie z autentycznego nowego A,
+slot0 zwykłym padem. Przy13200 M340/a8064048,433/671HP,BP2,
+menuNULL,lock0,zero wrogów. Pełny ekwipunek i wszystkie zmienne równe
+FileSaved217483; wprost sprawdzone Key2slot0,Key1slot27 i pięć Medicine3.
+Pełny JSON i1MiB VRAM normal=SAN,exit0 bez raportów. A8192B zachowany
+z SHA256 `df4a7eb26a6a5f48f66554d4471dfd149b44f74f16d06d852f811f8c9dcdb88c`.
+Seed/runner/verifier obok. SDK/SDL nieinstrumentowane,brak oracle PS1,
+dowody /tmp nietrwałe; bez zmian produkcji.
+
+Poprzedni kontroler O1 zamknięty quit exit0. Nowy
+`/tmp/pe-ex-chrysler-A2-nav-v1.py` używa tylko A i izolowanej karty.
+Pierwsza próba bez interaktywnego stdin zakończyła natywną grę exit0,
+a wrapper EOFError; zachowana jako katalog-eof-closed. Po potwierdzonym
+zamknięciu uruchomiono PTY,aktywny kontroler31022,katalog-live.
+Pierwszy ruch prowadzi13995 M201 przez północne wyjście muzeum;
+ten dalszy krótki odcinek tylko live,bez osobnego replayu. Następne:
+powrót do Chryslera,zweryfikować zachowanie zwycięstwa/Key2 po Continue,
+i kontynuować ponad20. Pełny cel portu pozostaje otwarty.
+
 ### EX po bossie20: autentyczny zapis A2 w muzeum
 
 Bez zmian produkcji. Z209469 holu Chryslera zwykły pad wraca na mapę,

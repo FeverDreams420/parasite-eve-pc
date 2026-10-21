@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### A4 prep: całe42, wejście na43 z zachowanymi lekami
+
+Na pe-state-visibility-v1 bez zmian kodu. Read-only układ42 seed32416,
+count22,selected20: `/tmp/pe-chrysler-floor42-table-prep-v1.json`,plan-route
+obok. Od45268:code9 45880,kolejny46570. Walka z dwoma od46738,
+wygrana przy515HP po Heal3/ruchu/single shots; wynik50130,read/detach:
+brak łupu,EXP266. Eksploracja50746,M30651366,M40651976,walka z jednym
+od52072 wygrana przy545HP; wynik55408,read/detach:id1(6nabojów),EXP160.
+ALL i zamknięcie56640. M33557235,code9 57807,M30658497,code21 59077,
+M30659637,M29660333,endpoint61053 M297/a80493c8,piętro43,
+HP545/671,BP2,mode9,menuNULL,lock0,zero wrogów.
+Med2 slot8/13,Med4 slot12,Med3 slot28 zachowane;wolne15/18/20/26.
+
+PASS `/tmp/pe-ex-chrysler-A4-prep-floor43-state-v1-proof/proof.json`:
+cały zimny A4 normal/SAN/live JSON i1MiB VRAM identyczny,exit0 bez
+raportów,SHA gry sprawdzone. Cały rozszerzony inventory snapshot:
+magazynek17→0,rezerwa369→375 po łupie6,łącznie17 strzałów;pozostałe
+rekordy,sloty,category_counts,storage/special_storage bez zmian.
+Wszystkie dane character zgodne z bazą45268 pozaEXP248980→249406,
+saved_hp543→545,pe_bonus_pool3358→3374. Wszystkie512 zmiennych poza
+4:42→43,18:5→38,78:250→207 identyczne. Źródłowy/prywatne A8192B
+niezmienione. Seed/checkpoint/runner/verifier obok;żywy prep-v2,
+kontroler96861,pid82271,zatrzymany61053. Następnie piętra43–49,
+zapasy leków i boss50. SDK/SDL nieinstrumentowane,brak oracle PS1,
+dowody/tmp nietrwałe,pełny port nadal otwarty.
+
 ### Snapshot: dane Ayi, specjalna amunicja i magazyn
 
 Zmiana wyłącznie diagnostyki w istniejącym src/main/boot/init.c;

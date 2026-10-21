@@ -499,7 +499,7 @@ int Scene_LoadRoom(unsigned int roomId)
     case 78: case 81: case 197: case 198: case 199: case 201: case 206:
     case 207: case 210: case 214: case 217: case 218: case 219: case 220:
     case 226: case 227: case 232: case 386: case 405: case 407: case 408:
-    case 409:
+    case 409: case 436:
         actor_library = 1;
         break;
     }

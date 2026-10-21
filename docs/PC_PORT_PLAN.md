@@ -2,6 +2,69 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### Muzeum: rozpoczęte zdobywanie XP zamiast kolejnych prób bossa50
+
+Zgodnie z uwagą użytkownika priorytetem jest teraz podniesienie poziomu
+w muzeum. Na nowym pe-m436-bind-v2 oryginalny zapis A4 odtworzony
+w muzeum do13200/M340,HP353,level34,EXP248635. Oryginalne Items:
+Medicine3 slot28 daje533HP,zamknięcie14072. M20114867/a80400c8;
+Up160 trigger15027 jeden type3 HP279,defense55. Single shots,
+wynik16247 HP533 bez utraty HP w walce. Read-only nagroda:
+`/tmp/pe-museum-A4-grind-battle1-reward-v1.txt`:EXP896,junk(id20).
+Junk pozostawiony przez END,endpoint17203,HP533/671,level34,
+EXP249531. Następnie dalsze sale i większe grupy w celu wydajniejszego
+grindu;nie uznano pierwszych896XP za osiągnięcie wymaganego poziomu.
+
+PASS `/tmp/pe-ex-museum-A4-grind-win1-v1-proof/proof.json`:
+zimny A4 normal/SAN/live checkpoint pełny JSON i1MiB VRAM zgodne,
+oba exit0 bez raportów,karty8192B niezmienione. Pełny inventory względem
+13200 wyłącznie Medicine3 slot28:8→0 i magazynek14→11;rezerwa bez zmian.
+Character wyłącznie EXP+896,HP353→533,pe_bonus3325→3337;
+wszystkie512 zmiennych poza1:998→340,21:357933205→357933269,
+78:55→20 identyczne. Seed/checkpoint/runner/verifier obok.
+Żywy root `/tmp/pe-ex-museum-A4-grind-v1-live`,pid20713,
+kontroler5905,zatrzymany17203. Boss50 nadal niepokonany;celem następnych
+kroków jest wzmocnienie Ayi w muzeum,zachowanie oryginalnej rozgrywki
+oraz dalsza realizacja całego portu. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody/tmp nietrwałe,pełny port nadal nieukończony.
+
+### Naprawione wejście do M436 przez drzwi M294
+
+Badanie bocznych pokoi50 wykazało rzeczywisty brak powiązania modułu.
+Od196405:M307196955,code9 197591,M410198281,M294198821.
+M294 zawiera oryginalną tabelę wyboru pięciu wariantów pokoju;
+po ustawieniu Ayi w prostokącie drzwi (x-70..95,z82..207) i właściwym
+kierunku oryginalny Cross prowadzi do M436/a8083348. Stary kandydat
+kończył się: native descriptor missing for M436 slot75 (PS1 80192520),
+Scene frame startup failed:-2. Ten sam zimny input odtwarza błąd
+normal/SAN exit1: `/tmp/pe-m436-door-failure-v1-proof`.
+
+Audyt oryginalnych danych USA:cały moduł M43613728B jest identyczny
+z M022,SHA256 ba882d6c2ff9f160796d490043d58f387b77a06e3ecde233f26de9516952f464,
+FNV600398f8d9a0ab3c;wyłącznie eksporty75@80192520 i70@801924e8.
+`/tmp/pe-m436-module-audit-v1.json`. Istniejące funkcje i klasy0/2 już
+obsługują ten moduł;w room_load.c dodano436 do istniejącej grupy
+actor_library,bez przenoszenia funkcji ani nowych plików źródłowych.
+Istniejący test aktywów porównuje teraz również cały M436 i oba eksporty
+(łącznie50 deskryptorów). Dodano w istniejącym fixture --m436-load:
+pełny hash USA,oba natywne deskryptory,dwa kolejne ładowania.
+CTest original-m436-chrysler-load zarejestrowany w istniejącym CMakeLists.
+Pierwszy wariant testu błędnie zakładał reset argumentów innego modułu;
+skorygowano test kontraktu,bez dodawania takiego zachowania grze.
+
+Kandydat pe-m436-bind-v2:438 świeżych obiektów219/profil,
+przehaszowane zależności,biblioteki i pliki wykonywalne;70/70 regresji,
+po13/13 wybranych CTest,osobno --m436-load normal/SAN PASS.
+`/tmp/pe-m436-bind-v2-{build-manifest,build-proof,verification,effects-proof}.json`.
+PASS `/tmp/pe-m436-door-fixed-v2-proof/proof.json`:identyczny zimny input
+wchodzi doM436 przy201152,HP529,mode9,menuNULL,lock0;pełny JSON i1MiB
+VRAM normal/SAN zgodne,oba exit0 bez raportów,karty niezmienione.
+Cały inventory i character względem195179 identyczny,512 zmiennych
+poza5:20→21,18:1598436→1598437,78:71→245 identyczne.
+Pierwotny żywy loot-v1 zakończył się na brakującym module;nie jest już
+aktywną grą. Nowe priorytetowe przejście muzeum opisano wyżej.
+Pełny port nieukończony,brak oracle PS1,SDK/SDL nieinstrumentowane.
+
 ### A4 prep: porażka po Liberate; następna gałąź sprawdza boczny pokój50
 
 Od199843:Right200/otwarcie200067 po zakończeniu Liberate,

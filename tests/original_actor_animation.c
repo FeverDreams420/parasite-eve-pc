@@ -9388,7 +9388,7 @@ static int original_room_actor_assets(PeDisc *disc,PeDiscFile *exe)
             {78,4}, {81,4}, {197,5}, {198,5}, {199,5}, {201,4}, {206,5},
             {207,5}, {210,5}, {214,5}, {217,5}, {218,4}, {219,5}, {220,5},
             {226,5}, {227,5}, {232,4}, {386,4}, {405,21}, {407,17}, {408,21},
-            {409,21}
+            {409,21}, {436,5}
         };
         unsigned descriptors=0;
         for(unsigned m=0;m<sizeof(libraries)/sizeof(libraries[0]) && valid;++m){
@@ -9415,7 +9415,7 @@ static int original_room_actor_assets(PeDisc *disc,PeDiscFile *exe)
             }
             free(linked);
         }
-        valid=valid && descriptors==48;
+        valid=valid && descriptors==50;
     }
     free(room);
     if(valid)puts("Original room actor assets: 29 identical complete actor modules, all 48 class descriptors, all 42 class methods and 4096 USA sine/cosine entries verified");
@@ -18004,6 +18004,27 @@ int main(int argc, char **argv)
         }
         CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
         puts("Original M418 loader: real Disc2 assets, all four PM classes/scripts, native method ABI and reset passed twice");return 0;
+    }
+    if(argc==2 && !strcmp(argv[1],"--m436-load")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};PeDiscFile exe,archive;SceneRoomSectorRange range;u8 module[13728];
+        if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return 1;
+        ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
+        Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+        if(!pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive) ||
+           !pe_disc_read(&disc,&exe,0x800+(0x80093378-0x80010000)+435*8,&range,8) ||
+           !pe_disc_read(&disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048+8,module,sizeof(module)))return 1;
+        uint64_t hash=UINT64_C(14695981039346656037);
+        for(unsigned i=0;i<sizeof(module);++i)hash=(hash^module[i])*UINT64_C(1099511628211);
+        if(hash!=UINT64_C(0x600398f8d9a0ab3c))return 1;
+        for(unsigned pass=0;pass<2;++pass){
+            g_PmCmdHandlerTable[70]=NULL;g_PmCmdHandlerTable[75]=NULL;
+            if(Scene_LoadRoom(Text_ParseBase32Id((signed char *)"m0436i")) ||
+               g_PmCmdHandlerTable[70]!=&g_RoomActorClassTable[0] ||
+               g_PmCmdHandlerTable[75]!=&g_RoomActorClassTable[2])return 1;
+        }
+        CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+        puts("Original M436 loader: complete USA actor module, both classes passed twice");return 0;
     }
     if(argc==2 && !strcmp(argv[1],"--m430-load")){
         const char *path=getenv("PE_TEST_DISC2");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

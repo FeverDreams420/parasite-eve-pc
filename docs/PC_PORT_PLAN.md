@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX po bossie20: autentyczny zapis A2 w muzeum
+
+Bez zmian produkcji. Z209469 holu Chryslera zwykły pad wraca na mapę,
+przez krótki pobyt przy NYPD i wybór Museum do M192212701,
+M340213776. Korekty dojścia do telefonu zachowane w input. Dialog6
+przy215243, Saveport36 przy215963, files37 początkowo wskazuje O14.
+Down nie zawija listy; czternaście Up wybiera pusty A0. Cross daje
+FileSaved40 przy217483,433/671HP,BP2,Key2slot0,Key1slot27 i pięć
+Medicine3. Pełny ekwipunek identyczny z209469; wszystkie zmienne poza
+1:999→998,5:25→0 identyczne. FileSaved utrzymuje lock1; pierwszy
+verifier błędnie oczekiwał0, poprawiono tylko asercję po porównaniu ze
+wcześniejszym potwierdzonym FileSaved O1, również lock1.
+
+Nowy `/tmp/pe-ex-chrysler-save-A2-v1-source/BASLUS-006620000000A`,8192B,
+SHA256 `df4a7eb26a6a5f48f66554d4471dfd149b44f74f16d06d852f811f8c9dcdb88c`.
+PASS `/tmp/pe-ex-chrysler-save-A2-v1-proof/proof.json`: niezależne zimne
+replaye odO1 przez bossa20,klucz,windę i telefon,normal/SAN exit0 bez
+raportów,pełny JSON/1MiB VRAM normal=SAN=live217483. Nowe A8192B
+normal=SAN=live/source; źródłowy i prywatne O8192B bez zmian.
+Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe. Zimne Continue tylko z nowego A
+jeszcze niezweryfikowane; to następny krok przed dalszym Chryslerem.
+Pełny zakres portu pozostaje otwarty.
+
 ### EX O1: Key2 działa w windzie, powrót do holu
 
 Bez zmian produkcji. Z205435 powrót zM383 daje M389205863,

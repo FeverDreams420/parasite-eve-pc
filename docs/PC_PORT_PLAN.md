@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### Boss50: źródło silnego trafienia; gałąź przygotowania ekwipunku
+
+Read-only watchpoint HP z żywego238905 podczas Right160 wskazuje
+Entity_ResolveDropTable/combat.c:92 przez Menu_MainUpdate:470.
+Pojedynczy zapis HP263→-74,337 obrażeń,roll91. Potem239073 HP0/mode3;
+V11 zamknięty oryginalnym quit,exit0,karta niezmieniona. Ślad
+`/tmp/pe-boss50-hit-source-v1.txt`. To obserwacja ścieżki zwykłego trafienia,
+nie dowód nieuniknionego ataku,nowy bug ani porównanie z PS1.
+Nie zmieniono obrażeń/statystyk ani kodu produkcyjnego.
+
+Nowy kontroler `/tmp/pe-ex-chrysler-A4-prep-v1.py` zimno ładuje autentyczny
+A4 do13200 Museum na tym samym kandydacie. Oryginalne menu Weapon:
+M8000 attack111 (57+54),M79-3 attack54,wyposażenie niezmienione.
+Z widgetu atrybutów Up→panel/Cross→lista pozwala wybrać inne bronie;
+nie był to brak odpowiedzi menu. Po anulowaniu13952 eksploracja,
+M20114747,M34015087,M19216042,mapa17178,NYPD18150 M058/a8005448.
+Up150/Cross daje19120 dialog109:policjant mówi o zwierzętach na wolności.
+NYPD nadal zamknięte w story632; magazyn Wayne'a w tej gałęzi niedostępny.
+Plan przygotowania musi użyć oryginalnego ekwipunku i zbierania zapasów,
+bez omijania bramy/edycji zapisu/RAM/RNG.
+
+PASS `/tmp/pe-ex-chrysler-A4-prep-gate-v1-proof/proof.json`:
+cały zimny A4 normal/SAN/live JSON i1MiB VRAM identyczny,exit0 bez
+diagnostyki,SHA obu gier sprawdzone. HP353/671,BP2,cały ekwipunek
+identyczny z zimnym A4; wszystkie512 zmiennych poza1:998→999 identyczne.
+Źródłowy/prywatne A8192B niezmienione. Seed/checkpoint/runner/verifier
+obok. Żywy prep-v1 zatrzymany w dialogu109 przy19120.
+SDK/SDL nieinstrumentowane,brak oracle PS1,dowody /tmp nietrwałe,
+boss50 i pełny port nadal nieukończone.
+
 ### Boss50: żywa gałąź po Heal3 i Haste, odczyt krzywej EXP
 
 Na tym samym pe-anim-event-null-v1 kontroler v11 odtwarza235518

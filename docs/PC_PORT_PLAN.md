@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A2: boss30 Darkness, Full Cure i nieudane podejście
+
+Bez zmian produkcji. Przy205705 state_flags0x10200010 zawiera Darkness:
+oryginalne AYA_DARKNESS_MASK0x30/value0x10 ogranicza zasięg do200,
+nie nominalnego1245. Poprzedni kontroler używał nominalnego zasięgu,
+więc dalsze strzały nie dowodziły odporności przeciwników ani błędu portu.
+Medic w menu przy206553 niedostępne z powodu PE poniżej600<<16.
+Oryginalne Items/Full Cure ze slot15 usuwa Darkness; przy207281 flagi
+0x10200000, type4 HP600→503 po następnym strzale. Aya315/671.
+Pierwszy verifier błędnie zakładał niezmienione HP600; pełny JSON był zgodny,
+sprawdzono trafienie i poprawiono oczekiwanie do503 bez rerunu gry.
+
+PASS `/tmp/pe-ex-chrysler-boss30-cure-A2-v1-proof/proof.json`: zimne replaye
+tylko z autentycznego A2, normal/SAN exit0 bez raportów; cały JSON zgodny
+z zachowanym rzeczywistym stanem207281. VRAM normal=SAN; VRAM z przebiegu
+na żywo dla tej klatki nie zachowano. Pełny ekwipunek względem205705 różni
+się tylko slot15:17→0 i amunicją426:15→16; wszystkie zmienne identyczne.
+Źródłowy i prywatne A8192B oraz SHA binariów sprawdzone bez zmian.
+
+Dalsza próba: Darkness wraca. Przy213229 HP441, wrogowie503/406/800.
+Częstszy Medic zużywa PE, kontroler nie przełącza się na leki; przy216469
+Aya ma0HP, przy216969 następuje powrót do menu. Nie jest to zwycięstwo.
+Kontroler v2 zamknięty quit/exit0; źródłowy i prywatny A bez zmian.
+Pomocniczy kontroler /tmp obecnie zatrzymuje się przy Darkness, HP<360
+bez PE na Heal3 oraz przy porażce, zamiast kontynuować nieskuteczne salwy.
+
+Nowy proces headless v3 PID94617, sesja98127: pełny zimny input od A2
+do187123, cały JSON identyczny z wcześniejszym dowodem preboss30.
+Root `/tmp/pe-ex-chrysler-A2-nav-v3-live`,631/671HP,pięć Medicine3,
+Full Cure ponownie dostępne, slot28 pusty. To replay od zapisu, nie snapshot RAM.
+Następne podejście wymaga leczenia przedmiotami przy braku PE i reagowania
+na Darkness. Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1.
+Boss30 niepokonany, pełny zakres portu pozostaje otwarty.
+
 ### EX A2: boss30 M390, początkowa część pokonana, walka otwarta
 
 Bez zmian kodu na pe-m392-bind-v1. Z187123 przez M304 do M390/a8069048

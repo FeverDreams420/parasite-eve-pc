@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: leczenie po M229, wejście i zwycięstwo M242
+
+Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live16191 od120251:
+oryginalne field Heal3 122→402HP; zamknięcie PE/menu. Left110,Down50,
+Left35 dało−1273,32; normalLeft8,Cross nie otworzyły drzwi poza strefą.
+Up20run,normalLeft8 prowadzi do M242(a8044148)122174,bez strat HP.
+Down100,Left88 uruchomiło grupę typ5/sub31 447HP/def69 oraz dwa
+ typ6/sub30,29 po335HP/def99. Pierwszy wybór123266,Aya378HP.
+M8000 single+DoubleAction: silny cel447→257→67→martwy,przy124742
+190HP. Jedno oryginalne Heal3 i strzał dały440HP po atakach,sub30=270.
+Pozostałe cele otrzymywały65/pocisk; wygrana129256,239/589HP,BP1156.
+Nagrody zamknięte130756,menuNULL,lock0,mode9,brak wrogów.
+
+Wszystkie50 slotów bez zmian względem końca M229; jedyna zmiana4096B
+rekordów sprzętu to amunicja426:11→12. Zmienne wyłącznie1:343→229,
+22:1368→5464,78:93→210. KlampKey213slot14,MaedaGun268slot25 zachowane.
+Pełny cold replay od J przez wcześniejszą trasę i M242:
+`/tmp/pe-ex-museum-m242-win-J2-v1-proof/proof.json` PASS,pełny JSON
+oraz1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń sanitizerów,J/K bez zmian.
+SDK/SDL bez instrumentacji,brak oracle PS1,dowody /tmp nie są CTest.
+Live16191 czeka130756,pozycja−997,733,w
+`/tmp/pe-ex-museum-J2-nav-v1-live`. Następne: drzwi KlampKey i M243;
+klucza jeszcze nie użyto. Cała kampania EX i pełny zakres nadal otwarte.
+
+
 ### EX: korekta M232/M229 i zwycięstwo we właściwym M229
 
 Poprzedni punkt111269,a8043148,był M232,nie M229. Token dekodowany

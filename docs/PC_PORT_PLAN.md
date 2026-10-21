@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX B3: ukończone piętro37, wejście na38
+
+Bez zmian kodu na pe-m392-bind-v1. Z94795:code23 95407,code22 95985,
+code9 96515. Trzech wrogów pokonanych przy537HP po PE; read/detach łupu
+dwa id8,id1. Pełny plecak pozostawia leki, odbiera amunicję. Kolejne code9
+100635/101287,M306101977,M305102647,code21 103275: dwóch wrogów
+pokonanych przy422HP, łup id16 pozostawiony. M306106637,M292107247,
+M304107747,code22 108442: trzech wrogów pokonanych przy579HP po PE,
+łup id16,id7,id13 pozostawiony. Code21 112210,M296112760,
+endpoint113480 M297/a80493c8,piętro38,HP579/671,BP2,menuNULL,lock0,
+zero wrogów,trzy klucze,sześć Medicine3.
+
+PASS `/tmp/pe-ex-chrysler-floor38-B3-v1-proof/proof.json`: zimne replaye tylko
+z autentycznego B3, normal/SAN exit0 bez raportów; cały JSON i1MiB VRAM
+zgodne również z obserwowanym przebiegiem. Pełny ekwipunek względem94795
+różni się tylko amunicją426:11→4; wszystkie zmienne poza4:37→38,
+18:3480→52635,78:236→200 identyczne. Źródłowy i prywatne B8192B niezmienione.
+Seed/checkpoint/runner/verifier obok. Read/detach układu38:selected21,count26,
+seed1140; `/tmp/pe-chrysler-floor38-table-B3-v1.json`, plan -route obok wymaga
+wykonania. Piętro38 dopiero rozpoczęte. Dowody /tmp nietrwałe,
+SDK/SDL nieinstrumentowane, brak oracle PS1. Pełny zakres portu nadal otwarty.
+
 ### EX B3: ukończone piętro36, wejście na37
 
 Bez zmian kodu na pe-m392-bind-v1. Od91028:M30591640,M29292190,

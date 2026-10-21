@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Chrysler N3: piętro7→8,dwie wygrane i zachowany zapas HP
+
+Na niezmienionym pe-control-aim-v1 od135056 zwykły pad uruchomił
+135668 M308 z trzema wrogami. Wygrana369/671HP (−6),nagrody zamknięte
+138016. Dalej M309138500 i trzy kolejne M298139030/139680/140330
+prowadzą140980 doM311. Trzech wrogów141078 pokonanych bez strat,
+nagrody zamknięte143418. Dalsze M304144194→M309144889→M292145459
+→M294145959→M307146449→M298147099→M296147749→schody148469:
+M297/a80493c8,oryginalny licznik piętra7→8. Aya369/671HP,BP2,
+menuNULL,lock0,zero przeciwników,sześć Medicine3 zachowanych.
+Nie użyto leków ani Heal3; próg leczenia nie został osiągnięty.
+
+Pełne inventory względem135056 zmienia tylko byte426:5→17;
+wszystkie zmienne poza4:7→8,18:16306→49074,78:69→195 identyczne.
+PASS `/tmp/pe-ex-chrysler-floor8-N3-v1-proof/proof.json`: pełny zimny
+replay od autentycznego muzealnego N3,normal/SAN exit0 bez raportów,
+pełny JSON/1MiB VRAM normal=SAN=live148469,źródłowy/prywatne N3
+8192B niezmienione. Seed/checkpoint/runner/verifier obok.
+SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+
+Tabela kolejnego piętra read/detach w osobnym
+`/tmp/pe-chrysler-floor8-table-N3-v1.json`:codeIndex8,code37,selected10,
+count17. Plan `/tmp/pe-chrysler-floor8-route-N3-v1.json` zawiera8
+przejść po znanych portach do kodu1,jeszcze niewykonanych.
+Następne: piętro8; dalszy Chrysler,EX i cały port nadal otwarte.
+Nie zmieniano RAM/RNG/save ani kodu gry/PsyZ.
+
+
 ### EX Chrysler N3: piętro6→7 bez dalszych strat HP
 
 Bez zmian produkcyjnych,ten sam pe-control-aim-v1 (SHA obu profili

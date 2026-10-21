@@ -2,6 +2,42 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### Naprawione kompletne powiązania oryginalnego M410 na piętrze42
+
+Przejście po58547 przez code23 59456 ujawniło w pe-m406-bind-v2 brak:
+`native descriptor missing for M410 slot 73 (PS1 80192ca8)`, startup -2,
+native exit1 podczas następnego przejścia. Audyt
+`/tmp/pe-m410-module-audit-v1.json` potwierdza wszystkie15704 bajty kodu
+oraz danych M410 identyczne z M205/M243/M406. M410 eksportuje klasy
+70@80192c38,73@80192ca8,75@80192c70 i SoundBurst116@80192d04.
+Istniejący loader obejmuje teraz komplet tych powiązań i inicjalizacji;
+bez nowych funkcji implementujących grę, plików lub zmiany balansu.
+Istniejący `--m205-load` testuje także cały M410, dwa ładowania,
+wszystkie eksportowane klasy, SoundBurst i reset argumentów.
+
+Świeży pe-m410-bind-v1:438 obiektów,219/profil,manifest/rehash
+zależności,bibliotek,obiektów i binariów PASS.
+`/tmp/pe-m410-bind-v1-verification.json`:70/70 exit0 bez raportów;
+replaye regresji stanu/VRAM/save zgodne.
+`/tmp/pe-m410-bind-v1-effects-proof.json`:12/12 wybranych CTest/profil
+oraz dodatkowe kontrole efektów PASS. SHA256 gry:
+normal0ef02e8c1638ced35bb3c6cdb799e8186f792d20dc3267a4f219b1ac86116c78,
+SAN723b74fc84a5fab869cd8c0a7d0ff748a39bf77bba88e22153e4f4c5b9760dbf.
+
+PASS `/tmp/pe-ex-chrysler-m410-A4-v1-proof/proof.json`: nowy kandydat
+zimno od A4 przez wszystkie dotychczasowe walki; przy58547 pełny stan
+oraz VRAM zgodne z wcześniejszym zwycięstwem. Code23 59456,
+przejście59711 i endpoint60011 M410/a8081048 już bez awarii.
+HP604/671,BP2,mode9,menuNULL,lock0,zero wrogów,Medicine3 w slot12.
+Cały JSON i1MiB VRAM normal/SAN/live zgodne,exit0 bez raportów,
+SHA gry sprawdzone. Cały ekwipunek identyczny z58547, wszystkie zmienne
+poza5:20→22,18:54→55,78:46→231 identyczne. Źródłowy i prywatne A8192B
+niezmienione. Seed/checkpoint/runner/verifier obok; nowy żywy kontroler
+`/tmp/pe-ex-chrysler-A4-nav-v6-live` czeka przy60011.
+
+Dalsza część42 i piętra43–77 otwarte. Dowody /tmp nietrwałe,
+SDK/SDL nieinstrumentowane, brak oracle PS1. Pełny port nieukończony.
+
 ### EX A4: trudna walka code22 na42 wygrana przy604HP
 
 Bez zmian kodu na pe-m406-bind-v2. Z53311 menu zamknięte, code22 53867,

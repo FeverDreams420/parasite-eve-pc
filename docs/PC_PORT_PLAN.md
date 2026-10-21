@@ -2,6 +2,35 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX B3: boss40 pokonany, klucz4 odebrany
+
+Ten sam pe-m392-bind-v1, bez zmian kodu. Pierwsza próba zakończyła się
+porażką164251:HP0,mode3,dwóch wrogów. PASS reprodukcji tej porażki:
+`/tmp/pe-ex-chrysler-boss40-defeat-B3-v1-proof/proof.json`, cały normal/SAN/live
+JSON i VRAM zgodny, dokładne zmiany ekwipunku/zmiennych sprawdzone,
+źródłowy i prywatne B8192B niezmienione. To test porażki, nie zwycięstwo.
+
+Nowa próba powstała przez zimny replay z B3 do157103, bez edycji RAM,
+RNG lub save. Sterowanie `/tmp/pe-ex-chrysler-boss40-B3-nav-v3-live`:
+wyzwolenie157207, Liberate158063, zmiana sub31→sub30 zaobserwowana159559.
+Ruch między akcjami, oryginalne Heal3, pięć Medicine3 i pojedyncze strzały
+z DoubleAction. Wynik169479:HP353/671,mode2,zero wrogów,menuEXP20.
+Read/detach łupu potwierdził id59; odebrany klucz4 do slot10.
+Endpoint170459:scena a80693c8,mode9,zero wrogów,menuNULL,lock0,BP2.
+
+PASS `/tmp/pe-ex-chrysler-boss40-win-B3-v1-proof/proof.json`: zimne replaye
+normal/SAN exit0 bez raportów; cały JSON i1MiB VRAM zgodne także z żywą
+zwycięską próbą. Pełny ekwipunek względem157103:slot10 id8→59,
+slot12/13/15/26 id8→0, amunicja426:5→14; pozostały ekwipunek identyczny.
+Pozostała jedna Medicine3 w slot28 i wszystkie cztery klucze. Wszystkie
+zmienne poza7:14→270,11:57802→123338,18:3001754→0,78:62→55 identyczne.
+Źródłowy i prywatne B8192B niezmienione. Seed/checkpoint/runner/verifier obok.
+SHA256 obu kandydatów nadal00634d01…15921 /99484533…6ea8.
+
+Klucz4 nie został jeszcze zweryfikowany w windzie, nowy trwały zapis
+po bossie40 i piętra41–77 pozostają do sprawdzenia. Dowody /tmp nietrwałe,
+SDK/SDL nieinstrumentowane, brak oracle PS1; pełny port nadal nieukończony.
+
 ### EX B3: droga przez piętro40 do bossa, walka rozpoczęta
 
 Bez zmian kodu na pe-m392-bind-v1. Od142611: code22 143223,

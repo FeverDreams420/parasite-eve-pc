@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: ukończone piętro19, wejście na20
+
+Bez zmian produkcji. Z178681 zwykły pad: M384179231,
+M386179921, M389180499, M296181089 i schody181809 dają
+M297/a80493c8,piętro20,596/671HP,BP2,menuNULL,lock0,zero wrogów.
+Bez kolejnej walki na tym odcinku; Key1 i sześć Medicine3 zachowane.
+Pełny ekwipunek identyczny z178681.
+
+PASS `/tmp/pe-ex-chrysler-floor20-O1-v1-proof/proof.json`:
+niezależne zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live181809. Wszystkie zmienne poza4:19→20,
+5:21→20,78:60→195 identyczne. Źródłowy i prywatne O8192B bez zmian.
+Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe. Boss20 jeszcze niepodjęty.
+Przed nim zwolnić slot na klucz przez oryginalne menu; nie powtarzać
+utraty klucza przy pełnym plecaku. Następne: piętro20 i dalszy Chrysler
+przed finałem; pełny zakres portu pozostaje otwarty.
+
 ### EX O1: piętro19, dwie walki M385 i leczenie PE
 
 Bez zmian produkcji. Read/detach układu19: code13,selected15,count20;

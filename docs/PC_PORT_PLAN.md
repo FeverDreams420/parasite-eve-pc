@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Chrysler N3: oryginalne przejście z piętra3 na4 przez M299
+
+Bez zmian produkcyjnych. Od68177 powrót M303→M292→M310→M309→M307
+→M298→M310. Kolejna walka M310 (71505,dwóch wrogów) wygrana bez
+utraty HP/leków,nagrody zamknięte74225. Dalsze wyjście daje74653
+M299/a80494c8. Oryginalny skrypt M299 ma DWIE akcje177:21 i23.
+Nie traktować tych pokojów jako ślepych odnóg. Kolejne przejścia
+w prawo prowadzą przez trzy pozycje z tym samym M299 doM31176581.
+Wyjście M311 akcją20 prowadzi77501 doM296. Przejście M296 schodami
+przy78221 dajeM297/a80493c8 i licznik piętra4 (zmienna4:3→4).
+Aya397/671HP,BP2,menuNULL,lock0,zero przeciwników,sześć Medicine3
+zachowanych. Pełne inventory względem68177 zmienia tylko byte426:6→17;
+wszystkie zmienne poza4:3→4,5:23→20,18:113→178,78:128→135 identyczne.
+
+PASS `/tmp/pe-ex-chrysler-floor4-N3-v1-proof/proof.json`: pełny zimny
+replay od autentycznego muzealnego N3,normal/SAN exit0 bez raportów,
+pełny JSON i1MiB VRAM normal=SAN=live78221,źródłowy/prywatne N3
+8192B niezmienione. Seed/checkpoint/runner/verifier obok.
+SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+
+Pomocniczy `/tmp/pe-chrysler-floor-route-v1.py` planuje pozycje BFS
+wyłącznie dla kodów pokojów z odczytanymi akcjami. Z tabeli piętra3
+wyznaczył drogę odslot7 do12 przez1/6/5/4/9/13/17/18/19/20/21,
+zgodną z dostępnymi wyjściami (wykonana trasa zawiera również detury).
+Wynik `/tmp/pe-chrysler-floor3-route-N3-v1.json` nie zastępuje runtime.
+Odczyt tabeli piętra4 read/detach do osobnego
+`/tmp/pe-chrysler-floor4-table-N3-v1.json`: codeIndex4,code61,
+selected17,count28. Nie zmieniano pamięci/RNG/save.
+Planner z obecnym częściowym katalogiem portów nie znalazł drogi
+na tym kolejnym piętrze; brak wyniku nie dowodzi nieosiągalności.
+Następne: uzupełnić brakujące typy wyjść z oryginalnych skryptów,
+kontynuować piętro4. Reszta Chryslera i pełny port nadal otwarte.
+
+
 ### EX Chrysler piętro3: kolejna wygrana M298 i odnoga M303
 
 Bez zmian produkcyjnych. Od61909 powrót M310→M298 uruchomił62507

@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A2: ukończone piętro25, wejście na piętro26
+
+Bez zmian kodu na pe-m392-bind-v1. Read/detach układu25: selected15,
+count21; `/tmp/pe-chrysler-floor25-table-A2-v1.json`, plan -route obok.
+Z104977: M307105589, M292106169, M392106669, M304107309,
+M306107989. Wejście M306 jest lewe (-569,-971), nie północne;
+Right140/Up220 dochodzi do(1911,-1669), dodatkowe Up80 daje M296109029.
+Endpoint109749 M297/a80493c8, piętro26. Na piętrze25 brak walk i utraty HP.
+HP446/671,BP2,menuNULL,lock0,zero wrogów,oba klucze i pięć Medicine3.
+
+PASS `/tmp/pe-ex-chrysler-floor26-A2-v1-proof/proof.json`: zimne replaye
+tylko z autentycznego A2, normal/SAN exit0 bez raportów; cały JSON i1MiB
+VRAM zgodne również z obserwowanym przebiegiem. Pełny ekwipunek identyczny
+z104977; wszystkie zmienne poza4:25→26,18:883→880 identyczne.
+Źródłowy i prywatne A8192B niezmienione. Seed/checkpoint/runner/verifier obok.
+Read/detach układu26: selected10,count22; `/tmp/pe-chrysler-floor26-table-A2-v1.json`,
+plan -route obok wymaga wykonania. Dowody /tmp nietrwałe,
+SDK/SDL nieinstrumentowane, brak oracle PS1. Pełny port nadal otwarty.
+
 ### EX A2: ukończone piętro24, wejście na piętro25
 
 Bez zmian kodu na pe-m392-bind-v1. Od92703: code23 93363, code9 93918,

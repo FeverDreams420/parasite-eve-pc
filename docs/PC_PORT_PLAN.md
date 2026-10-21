@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### A4 prep: koniec wariantu Haste i źródło śmiertelnego trafienia
+
+Od200555 odnowienie Haste i strzał,krótkie odcinki oryginalnego pad
+wybierane z pozycji obu przeciwników nie zapobiegły spadkowi671→88
+przy201251. Oryginalne Items kolejkuje Medicine4 slot12 przy201619
+oraz Medicine3 slot28;przy202387 HP488 po pierwszym leku,
+przy202475 HP85 po drugim leczeniu i kolejnych obrażeniach.
+Ruch180 do202655/202663 daje79HP;obserwacja sprzętowa HP:
+`/tmp/pe-prep50-haste-hit-source-v1.txt` wskazuje Battle_SubActionStep
+(enemy_actions.c:19),okresowe odjęcie2HP. Następny ruch300:
+`/tmp/pe-prep50-haste-lethal-source-v1.txt` wskazuje
+Entity_ResolveDropTable/combat.c:92 przez Menu_MainUpdate:470.
+Odczyt:power460,effectChance40,roll50,ATB0,stat20=374,
+parameterWord(first132,second49,third30),stateFlags270549249.
+Zgodnie z bieżącym C przy Haste scale=floor(floor(374/5)*3/10)=22,
+389=460−22−49;roll50 nie spełnia progu28%,HP77→-312
+(u16 65224),potem clamp0/mode3. To wyjaśnia śmiertelny cios w PC;
+nie stanowi porównania z oracle PS1 ani dowodu błędu portu.
+
+PASS `/tmp/pe-ex-chrysler-A4-prep-boss50-haste-loss-state-v1-proof/proof.json`:
+zimny A4 normal/SAN/live checkpoint pełny JSON i1MiB VRAM zgodne,
+oba exit0 bez raportów,SHA kandydatów i karty8192B niezmienione.
+Endpoint202971:a8080248,HP0/mode3,dwóch żywych wrogów,menuNULL,lock5.
+Inventory względem200555 wyłącznie slot12:9→0,slot28:8→0,
+zapisany magazynek10→8. Character wyłącznie saved_hp282→88,
+wszystkie512 zmiennych identyczne. Seed/checkpoint/runner/verifier obok.
+Kontroler haste-v2 zamknięty native exit0,karta niezmieniona.
+Kolejny wariant bez Haste odtwarzany do195179 z tego samego A4 i inputu:
+`/tmp/pe-ex-chrysler-A4-prep-boss50-nohaste-v1.py`,root live obok,
+kontroler51572. Następnie leczenie przed wejściem bez zużycia PE
+na polowe Heal3,próba z większą początkową rezerwą PE.
+Boss50 nadal niepokonany. SDK/SDL nieinstrumentowane,brak oracle PS1,
+dowody/tmp nietrwałe,pełny port nadal nieukończony.
+
 ### A4 prep: wariant Haste i Medicine4 utrzymuje walkę z bossem50
 
 Oryginalny input od zimnego A4 odtwarza198623 (HP671,mode1,dwóch

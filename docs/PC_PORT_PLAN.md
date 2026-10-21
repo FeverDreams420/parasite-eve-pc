@@ -2,6 +2,37 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: klucz4 w windzie40→1, oryginalny Save/Continue po bossie40
+
+Bez zmian kodu na pe-m392-bind-v1. Od170459 powrót przez code21 171337,
+code10 171897,code22 172537,code20 173067,code23 173607,
+code20 174162,code10 174702,code21 175342,M335175892,M292176512,
+M293177293. Panel177670 pokazuje40th floor; klucz4 odblokował zakres
+windy do40. Oryginalne 39 naciśnięć Down i zatwierdzenie sprowadza na1:
+M290180218, mapa180986, muzeum182022,M340183097. Bez walk/utraty HP.
+Telefon184538, port184858, lista185178; Up wybiera pusty slotA,
+endpoint185830 FileSaved(menu40,lock1),HP353/671,BP2.
+
+PASS `/tmp/pe-ex-chrysler-save-A4-v1-proof/proof.json`: zimne replaye B3
+normal/SAN exit0 bez raportów; cały JSON i1MiB VRAM zgodne z żywym
+przebiegiem. Pełny ekwipunek identyczny z170459; wszystkie zmienne poza
+1:999→998,4:40→1,5:20→0,6:30→1 identyczne. Nowy A8192B identyczny
+normal/SAN/live, źródłowy i prywatne B8192B niezmienione; SHA obu
+kandydatów zweryfikowane. Nowe źródło:
+`/tmp/pe-ex-chrysler-save-A4-v1-source/BASLUS-006620000000A`,
+SHA256 ae30e8ac4eb131c245276e8dfebfe291ddbc39fe7e5c1df0f616051d223b7f65.
+
+PASS `/tmp/pe-ex-chrysler-A4-loaded-v1-proof/proof.json`: zimny Continue
+z wyłącznie nowym A4, oryginalny pad wybiera slot0. Endpoint13200 M340,
+menuNULL,lock0,HP353/671,BP2,cztery klucze i jedna Medicine3 w slot28.
+Cały ekwipunek i wszystkie zmienne identyczne z FileSaved; cały JSON/VRAM
+normal/SAN/live zgodny, źródłowy i prywatne A8192B niezmienione,exit0.
+Nowy żywy kontroler `/tmp/pe-ex-chrysler-A4-nav-v1-live`; poprzedni B3-v3
+zamknięty quit/exit0. Seed/checkpoint/runner/verifier są obok dowodów.
+
+Piętra41–77 i reszta pełnego zakresu nadal do sprawdzenia. Dowody /tmp
+nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1. Port nieukończony.
+
 ### EX B3: boss40 pokonany, klucz4 odebrany
 
 Ten sam pe-m392-bind-v1, bez zmian kodu. Pierwsza próba zakończyła się

@@ -2,6 +2,50 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Chrysler N3: odzyskany Key1 i winda do holu,floor1
+
+Bez zmian produkcyjnych. Z196802 zwykły powrót do M291 i korytarzami
+M298/M311/M294/M292 dał200158 dialog8 „need a key”. Odczyt LLDB
+wyłącznie target variable/detach: g_BattleRewardSlots[0].id=56,
+reszta0. include/pe1/item_ids.h: ITEM_CHRYSLER_KEY1=0x38. Pierwszy
+bot przy pełnych29 slotach użył ALL i następnie END,nie odbierając
+klucza. To błąd sterowania testowego,nie podstawa do zmiany gry.
+Próba SEL przy pełnym plecaku nie przeniosła klucza. Nie kontynuować
+wspinaczki na tej gałęzi jako równoważnej pełnemu odbiorowi nagród.
+
+Odtworzono zimno input tylko do193048,pokój M291 przed bossem.
+Nowy `/tmp/pe-ex-chrysler-key1-prep-N3-v1.py`,aktywny prywatny katalog
+z sufiksem-live,kontroler35020;v2 oraz próbny kontroler loot-only zamknięte
+quit exit0,karty zachowane. Oryginalne field Items/Use Medicine2slot27:
+193692 HP611→671,slot27:7→0,28/29 zajęte. Sześć Medicine3 zachowanych.
+Ponowny boss193860,zwykły single/Double Action,wygrana556/671HP.
+Po ALL klucz56 trafił do wolnego27,nagrody zamknięte196760.
+Pełne inventory względem starej wygranej196152 różni wyłącznie
+slot27:7→56;wszystkie zmienne i4096B rekordów identyczne.
+Względem177675 zmienne jak wcześniej7=2,11=8650,18=1,78=183.
+PASS `/tmp/pe-ex-chrysler-key1-N3-v1-proof/proof.json`.
+
+Z kluczem powrót doM292198860,interakcja z panelem otwiera drzwi,
+wejście doM293/a80491c8 przy199841. Panel kabiny przyx341,z−276,
+zwrócenie w dół iCross otwierają oryginalny wybór piętra (dialog9).
+Pierwszy zjazd10→9 potwierdzony201706; kolejne8Down iCross wybierają
+1st floor. Wyjście kabiny203782 dajeM290/a8049048,floor1,556/671HP,
+BP2,menuNULL,lock0,zero wrogów. Klucz56slot27 i sześć Medicine3 zachowane.
+Pełne inventory identyczne z196760,wszystkie zmienne poza4:10→1,
+5:20→25,6:0→1 identyczne. PASS
+`/tmp/pe-ex-chrysler-elevator-key1-N3-v1-proof/proof.json`.
+
+Oba dowody: pełne niezależne zimne replaye od muzealnego N3,
+normal/SAN exit0 bez raportów,pełny JSON/1MiB VRAM normal=SAN=live
+odpowiedniego końca,źródłowy/prywatne N3 8192B niezmienione.
+Seed/checkpoint/runner/verifier przy obu prefiksach. SDK/SDL
+nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+Zasada dalszego runnera: nie zamykać loot END bez sprawdzenia ważnych
+nagród przy pełnym plecaku; przed bossem zapewnić wolny slot zwykłym
+użyciem/przekazaniem przedmiotów. Następne: autentyczny trwały zapis
+po powrocie do miasta i dalszy Chrysler. Cały cel nadal otwarty.
+
+
 ### EX Chrysler N3: boss piętra10 pokonany i potwierdzone piętro11
 
 Bez zmian produkcyjnych,ten sam pe-control-aim-v1. Kontroler/tmp v1

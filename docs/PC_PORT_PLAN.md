@@ -2,6 +2,38 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: alarm M237 i trwały zapis K2
+
+Ten sam kandydat `pe-control-aim-v1`, bez zmian kodu produkcyjnego.
+Cold Continue z autentycznego J2, zwykły pad do panelu M237 oraz
+zatwierdzenie oryginalnego dialogu wyłączyły alarm: zmienna34 130→180.
+Przy16127 sterowanie wolne,415/573HP,BP1100,ekwipunek bez zmian;
+wszystkie pozostałe zmienne identyczne z J2. Pełny JSON i1MiB VRAM
+normal/SAN/live identyczne, oba exit0, bez zgłoszeń sanitizerów:
+`/tmp/pe-ex-museum-alarm-J2-v1-proof/proof.json`.
+
+Powrót do telefonu i zapis w pustym slocie K przy18608 (FileSaved40).
+J pozostał bez zmian. Nowy K ma8192B, SHA256
+`ec49b1e049bd52ecca3af8366fb678bd56d5785106bfd68bf4d1aa6bc5412be9`;
+wszystkie bajty normal/SAN/live identyczne:
+`/tmp/pe-ex-museum-save-K2-v1-proof/proof.json`.
+Źródło: `/tmp/pe-ex-museum-save-K2-v1-source/BASLUS-006620000000K`.
+
+Osobny cold Continue wyłącznie z K przy13200: M237,story608,
+415/573HP,BP1100,menuNULL,move_lock0,dialogi zamknięte,alarm34=180.
+Cały ekwipunek i wszystkie zmienne równe FileSaved; pełny JSON/VRAM
+normal=SAN, oba exit0, karta bez zmian:
+`/tmp/pe-ex-museum-K2-loaded-v1-proof/proof.json`.
+Runner odrzucił pierwszą próbę z nieuporządkowanymi zdarzeniami pada;
+po uporządkowaniu osi czasu oba testy wykonano od początku.
+
+To dowody runtime w /tmp, nie trwałe CTest ani niezależny oracle PS1.
+SDK/SDL pozostają bez instrumentacji. Nie dowodzi to dalszej części
+muzeum, zakończenia kampanii EX ani Chryslera. Następny etap: dalsza
+trasa od K z wyłączonym alarmem. Live16191 pozostaje przy FileSaved K
+w `/tmp/pe-ex-museum-J2-nav-v1-live`; źródłowy J zachowany.
+
+
 ### EX Museum: wygrane M234, telefon M237, zapis J2 i zimny Continue
 
 Bez zmian kodu, `pe-control-aim-v1`: M234 uruchamia trzy cele391/391/447HP. Zwykłe Double Action,jedno Heal3 po165HP i podejścia wygrywają258695,Aya415/573HP. Po nagrodach oryginalne wyjścia prowadzą do M235261115 (`a80432c8`) i pokoju ochrony M237261705 (`a80433c8`). Dialog o alarmie zamknięty,telefon przy[−845,59] wywołany twarzą w lewo. FileSaved263609 tworzy nowy J w pustym slocie9,G/H/I zachowane.

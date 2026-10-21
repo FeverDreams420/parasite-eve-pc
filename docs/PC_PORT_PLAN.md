@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: ukończone piętro16, wejście na17
+
+Bez zmian produkcji. Z138399 zwykły pad realizuje pozostały plan:
+M304138957, M386139637, M385140215, M304140855,
+M294141515, M306142015, M384142675 i143365, M296144055.
+Schody144775 prowadzą do M297/a80493c8,piętro17,460/671HP,BP2,
+menuNULL,lock0,zero żywych wrogów. Bez nowej walki na tym odcinku.
+Key1 i sześć Medicine3 zachowane; pełny ekwipunek identyczny z138399.
+
+PASS `/tmp/pe-ex-chrysler-floor17-O1-v1-proof/proof.json`:
+niezależne zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live144775. Wszystkie zmienne poza4:16→17,
+5:22→20,78:238→68 identyczne. Źródłowy i prywatne O8192B bez zmian.
+Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe. Następne: piętro17 i dalszy
+Chrysler przed finałem; pełny zakres portu pozostaje otwarty.
+
 ### EX O1: piętro16, dalsze wygrane i M388
 
 Bez zmian produkcji. Z132257: M386132797 i pięciu wrogów pokonanych

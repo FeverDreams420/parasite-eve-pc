@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: ukończone piętro15, wejście na16
+
+Bez zmian produkcji. Z119133: M386119673 i wygrana z pięcioma wrogami
+bez utratyHP; read/detach łupu: pięć id1. Dalej M306122529,
+M389123109, M385123649 i124289, M388124929. Jednego wroga nie było
+na liście celów; pomocnik zatrzymał się przy NO TARGET. Circle anuluje
+celowanie, zwykły Left90 zbliża Ayę; następny wybór/strzał kończy walkę
+bez utratyHP. Read/detach łupu id7, pozostawiony przy pełnym plecaku.
+M296126959 i schody127679: M297/a80493c8,piętro16,460/671HP,
+BP2,menuNULL,lock0,zero wrogów. Key1 i sześć Medicine3 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-floor16-O1-v1-proof/proof.json`: niezależne
+zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON i1MiB VRAM
+normal=SAN=live127679. Pełny ekwipunek względem119133 różni się tylko
+amunicją426:2→12; wszystkie zmienne poza4:15→16,5:22→20,
+18:2013→4062,78:181→40 identyczne. Źródłowy i prywatne O8192B
+bez zmian. Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe. Następne: piętro16 i dalszy
+Chrysler przed finałem; pełny zakres portu pozostaje otwarty.
+
 ### EX O1: środek piętra15, wygrana M387 i przejście do M389
 
 Bez zmian produkcji. Świeży read/detach układu15: code25,selected4,

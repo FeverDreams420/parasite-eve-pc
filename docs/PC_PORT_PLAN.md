@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: ukończone piętro49, wejście na50 przed bossem
+
+Bez zmian kodu na pe-m410-bind-v1. Od168198:code22 168810,
+code23 169380,M306169935,code9 170515,M304171205,M292171865,
+M406172365,code21 173005. Walka z jednym od173085 wygrana przy531HP
+po Heal3,wynik175841,read/detach łupu:same zera. Menu zamknięte176457,
+code9 176942. Jeszcze jedna walka z dwoma od177110 wygrana przy439HP;
+wynik181746,brak łupu. Menu zamknięte182362,M296182934,
+endpoint183654 M297/a80493c8,piętro50,HP439/671,BP2,mode9,
+menuNULL,lock0,zero wrogów. Cztery klucze,dwie Medicine3,trzy Medicine2.
+Boss50 jeszcze nie sprawdzony.
+
+PASS `/tmp/pe-ex-chrysler-floor50-A4-v1-proof/proof.json`: pełny zimny
+A4 normal/SAN/live zgodny całym JSON i1MiB VRAM,exit0 bez raportów,
+SHA gry sprawdzone. Cały ekwipunek poza amunicją426:1→3 identyczny
+z168198; wszystkie zmienne poza4:49→50,18:252263→776549,
+78:251→66 identyczne. Źródłowy/prywatne A8192B niezmienione.
+Seed/checkpoint/runner/verifier obok. Read/detach układu50:
+selected19,count32,seed24325 w `/tmp/pe-chrysler-floor50-table-A4-v1.json`,
+plan -route do code0 obok wymaga wykonania. Piętro50 dopiero rozpoczęte.
+Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1.
+Pełny port nadal otwarty.
+
 ### EX A4: ukończone piętro48, wejście na49
 
 Bez zmian kodu na pe-m410-bind-v1. Od151019:M306151631,

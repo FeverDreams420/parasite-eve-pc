@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX B3: droga przez piętro40 do bossa, walka rozpoczęta
+
+Bez zmian kodu na pe-m392-bind-v1. Od142611: code22 143223,
+code10 143793, walka z dwoma wrogami144213 wygrana przy459HP,
+łup id16 pozostawiony. Code21 146813,code23 147363,M294147941,
+M292148441,M335148941,code21 149513,code10 150073,code20 150713,
+code23 151303,code20 151881. Dwóch wrogów od152277 pokonanych
+przy542HP po PE; łup id8/id1, pełny plecak zachował sześć Medicine3,
+odebrał amunicję. Code22 155343,code10 155913,code21 156553,
+endpoint157103: pokój bossa a80693c8,HP542/671,BP2,menuNULL,lock0,
+zero aktywnych wrogów przed wyzwoleniem walki.
+
+PASS `/tmp/pe-ex-chrysler-boss40-entry-B3-v1-proof/proof.json`: zimne
+replaye z autentycznego B3, normal/SAN exit0 bez raportów; cały JSON
+i1MiB VRAM zgodne również z obserwowanym przebiegiem. Pełny ekwipunek
+względem142611 różni się tylko amunicją426:0→5; wszystkie zmienne poza
+18:904603→3001754,78:194→62 identyczne. Źródłowy i prywatne B8192B
+niezmienione. Seed/checkpoint/runner/verifier obok. Odczyt układu40:
+`/tmp/pe-chrysler-floor40-table-B3-v1.json`, selected16,count21,seed1140.
+
+Dalszy żywy przebieg nie stanowi jeszcze dowodu zwycięstwa: walka
+wyzwolona157207, Liberate158063, zaobserwowana zmiana sub31 na sub30.
+Po leczeniu PE i użyciu dwóch Medicine3 (slot10,slot12) endpoint162555
+nadal w walce,HP331/671. Pozostałe fazy, zwycięstwo i klucz4 niepotwierdzone.
+Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1.
+Pełny zakres portu pozostaje otwarty.
+
 ### EX B3: ukończone piętro39, wejście na40
 
 Bez zmian kodu na pe-m392-bind-v1. Od125736: M306126348,

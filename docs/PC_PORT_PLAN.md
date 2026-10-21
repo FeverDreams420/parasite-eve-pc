@@ -8,7 +8,7 @@ Bez zmian produkcyjnych. Od61909 powrót M310→M298 uruchomił62507
 pięciu przeciwników; zwykły ostrzał/Double Action zakończył walkę,
 nagrody zamknięte65507. Aya397/671HP (−4),BP2,sześć Medicine3
 zachowanych. Dalej M30766007→M30966587→M31067117→M29267677
-→M303/a8060148 przy68177. M303 ma tylko jedną akcję177=21,
+→M303/a80601c8 przy68177. M303 ma tylko jedną akcję177=21,
 wyjście w poligonie x516..993,z−1369..616. Nie traktować go jako
 skrzyżowania na podstawie kodu14 lub samej nazwy. Bieżący live68177
 czeka w M303,menuNULL,lock0,zero przeciwników.
@@ -28,7 +28,9 @@ na podstawie samej dotychczasowej trasy. Nie deklarować softlocka
 ani nieosiągalności schodów bez pełnego audytu rzeczywistych akcji.
 Nadal pozostają nieodwiedzone odnogi tego piętra,w tym pozycje
 prowadzące do M299; nie zakładać z góry ich zachowania.
-Piętro4 i pełny Chrysler nadal otwarte.
+Pierwszy verifier odrzucił ręcznie wpisane a8060148; poprawiono tylko
+assert identyfikatora na a80601c8 i ponowiono pełny verifier z PASS,
+bez zmiany replayu/gry. Piętro4 i pełny Chrysler nadal otwarte.
 
 
 ### EX Chrysler piętro3: zachodnia trasa do M310 i audyt nawigacji

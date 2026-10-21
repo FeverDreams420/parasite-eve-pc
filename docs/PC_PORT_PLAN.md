@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum M205: Sound Burst, dwa Heal3 i zwycięstwo
+
+Bez zmian kodu, `pe-control-aim-v1`: droga M204 na północ/zachód i Cross prowadzą do M205 (`a80402c8`)134595,oryginalny dialog23/185. Dalszy ruch uruchamia przeciwnika4:31,601HP,def109. Zwykłe pojedyncze strzały w Double Action zadają po47; Sound Burst/odrzut wymuszają ponowne podejścia. Dwa zwykłe Heal3 pozwalają wygrać140839,EXP,zero przeciwników,Aya386/532HP. Po pierwszym leczeniu stan137837:489HP,cel366HP; drugie po zejściu do168HP. Bez zmian RAM/RNG/save i balansu. Endpoint ma oryginalny move_lock5 w stanie wyników,nie oznacza swobodnej eksploracji.
+
+Względem133771 pełny inventory zmienia wyłącznie rekord amunicji426:8→13; zmienne wyłącznie1=204,34=63. `/tmp/pe-ex-museum-m205-win-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live140839,pełne inventory/zmienne i pośrednie HP sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Nagrody i dalsze Museum/kampania/EX nadal otwarte.
+
+
 ### EX Museum: M197 → hol M196 → M201, zwycięstwo i wejście M204
 
 Bez zmian kodu, `pe-control-aim-v1`: po nagrodach M197 oryginalne drzwi prowadzą do holu M196128052; północne przejście do Rain Forest M201 (`a80400c8`)129402. Ruch uruchamia dwóch przeciwników3:31/30 po279HP; pojedyncze strzały w Double Action i jedno podejście do oddalonego celu kończą walkę132021,zero przeciwników,Aya444/532HP bez utraty HP w M201. Po nagrodach Up prowadzi do M204 (`a8040248`)133771,brak menu/przeciwników/blokady ruchu,story608,BP914.

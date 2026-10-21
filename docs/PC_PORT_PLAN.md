@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: Klamp Key otwiera M243
+
+Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live16191 od130756:
+Up150,Right40,Up55 wM242 dało−1672,778;Cross poza strefą nie otworzyło
+wyjścia. Left95 zatrzymane przez ekspozycję przyz508. Down35,Left90,
+Up50 ominęło przeszkodę i uruchomiło dialog41 „Used Klamp Key.”
+przy132893;Cross zamknęło go i załadowało M243(a80441c8)133313.
+239/589HP,BP1156,menuNULL,lock0,zero wrogów,pozycja−90,−45,−1830.
+Cały ekwipunek identyczny z końcem M242 (KlampKey zachowany zgodnie ze
+skryptem). Zmienne wyłącznie1:229→242,37:197 zamiast133 (bit64 drzwi).
+
+Pełny cold replay od autentycznego J przez wcześniejszą trasę i drzwi:
+`/tmp/pe-ex-museum-m243-entry-J2-v1-proof/proof.json` PASS.
+Pełny JSON i1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń sanitizerów,
+źródłowy J i utworzony K niezmienione. Wejście nie zgłosiło dawnego
+braku deskryptora M243. To potwierdza załadowanie sceny; walka M243
+jeszcze nie jest dowiedziona dla tego przejścia.
+SDK/SDL bez instrumentacji,brak oracle PS1,dowody /tmp nie są CTest.
+Live16191 czeka133313 w `/tmp/pe-ex-museum-J2-nav-v1-live`.
+Następne: leczenie/przygotowanie i walka M243,dalsza kampania EX.
+Pełny zakres portu nadal otwarty.
+
+
 ### EX: leczenie po M229, wejście i zwycięstwo M242
 
 Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live16191 od120251:

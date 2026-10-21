@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: ukończone piętro 11, wejście na 12
+
+Bez zmian produkcyjnych. Z M38430653 zwykły pad przechodzi kolejne
+korytarze tego wariantu, wygrywa dwie walki po dwóch przeciwników
+(551, następnie 546 HP). Odczyty LLDB wyłącznie read/detach potwierdziły
+puste sloty łupu obu walk. Przy wejściu do korytarza przesunięcie w bok
+omija kolizję przy drzwiach; ciąg scen o tej samej nazwie trzeba śledzić
+przez stan przejścia, nie sam identyfikator sceny. Dalej M38835371,
+M38935929, M38636519, M30437097, M38437777, M29638467 i schody:
+39187 M297/a80493c8, piętro12. HP546/671, BP2, menuNULL, lock0,
+zero żywych wrogów. Klucz56slot27, sześć Medicine3 i wszystkie sloty
+zachowane; pełny ekwipunek względem30653 różni się wyłącznie bajtem
+amunicji426:13→5. Wszystkie zmienne poza4:11→12,5:22→20,
+18:5→15,78:183→229 identyczne.
+
+PASS `/tmp/pe-ex-chrysler-floor12-O1-v1-proof/proof.json`: niezależne
+zimne replaye tylko z O1, normal/SAN exit0 bez raportów, pełny JSON i
+1MiB VRAM normal=SAN=live39187. Źródłowy i prywatne zapisy O8192B
+bez zmian. Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1, dowody /tmp nietrwałe. Następne: piętro12 i dalszy
+Chrysler przed finałem Eve. Pełny zakres portu pozostaje otwarty.
+
 ### EX O1: pierwsza walka na piętrze 11 — M386
 
 Bez zmian produkcyjnych. Z potwierdzonego 25129 przejście przez M306

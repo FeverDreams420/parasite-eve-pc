@@ -3,6 +3,44 @@
 ## Aktualny potwierdzony stan — 21 października 2026
 
 
+### EX: M246 wygrane, filmy23/24 i retrospekcja do M271
+
+Nie zmieniano produkcji,`pe-control-aim-v1`. Z autentycznego M po
+filmie22 zwykły ruch wM246 uruchomił391/391/335HP(def65/65/99).
+DoubleAction z pojedynczymi strzałami wygrało34981,Aya361/621HP,
+bez leczenia. Nagrody zamknięte36181. Wszystkie sloty jak31219,
+jedyna zmiana rekordów426:4→9; zmienne tylko22:62804→128340,
+78:246→207. Cold normal/SAN pełny JSON/1MiB VRAM normal=SAN=live,
+oba exit0 bez diagnostyki,M8192B niezmienione. PASS
+`/tmp/pe-ex-m246-win-M2-v1-proof/proof.json`.
+
+Po obejściu przeszkody przy wyjściu: M24837456,drzwi przyx−600/z1450
+uruchomiły dialog187 („Eve's on the other side!”),M24938772/dialog154.
+Film23 aktywny39192–40992,zakończony41292;dialogi155–159;film24
+aktywny43812–47712,zakończony48012. Podczas aktywnego filmu wyłącznie
+wejścia0,bez Start po38352. Dalsze dialogi M192(Daniel/Maeda),samochód
+M037 i początek retrospekcji szpitalnej M367/a80663c8 przy55752:
+story670,dialog152,lock1,bez aktora gracza. Cały ekwipunek identyczny
+z36181; zmienne tylko1:246→36,34:210→216,74:632→670. Pełny JSON/VRAM
+normal=SAN=live,oba exit0 bez raportów,M8192B bez zmian. PASS
+`/tmp/pe-ex-eve-museum-M2-v1-proof/proof.json`.
+
+Oryginalne dialogi retrospekcji i samochodu M036 doprowadziły68352
+doM271/a80470c8,mostek lotniskowca,dialog7,story642,lock1.
+W tej scenie nie ma aktora gracza/kluczyHP wcombat; nie traktować tego
+jako utratyHP. Ekwipunek nadal dokładnie jak36181; względem tego punktu
+zmienne tylko1:246→35,34:210→216,74:632→642. Cold normal/SAN pełny
+JSON i1MiB VRAM normal=SAN=live,oba exit0 bez diagnostyki,M8192B
+niezmienione. PASS `/tmp/pe-ex-carrier-entry-M2-v1-proof/proof.json`.
+Runner/verifier/seed/checkpoint przy wszystkich trzech prefiksach /tmp;
+generator verifierów `/tmp/pe-ex-post-trex-verifiers-M2-v1.py`.
+SDK/SDL nieinstrumentowane,brak niezależnego oracle PS1,dowody /tmp
+nie są trwałymi CTest. Live `/tmp/pe-ex-post-trex-M2-nav-v1-live`
+zatrzymany68352,M271/dialog7. Następne: sceny lotniskowca,autentyczny
+zapis i finał EX. Pełny zakres celu nadal otwarty.
+
+
+
 ### EX od M: dalsza trasa muzeum i pełny film22 w M246
 
 Bez zmian produkcyjnych,`pe-control-aim-v1`. Cold autentyczny M13200

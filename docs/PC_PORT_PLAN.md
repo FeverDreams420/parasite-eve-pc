@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A2: ukończone piętro23, wejście na piętro24
+
+Bez zmian kodu na pe-m392-bind-v1. Z79329: code21/a80692c8 przy79814,
+code9/a80690c8 przy80364. Pięciu wrogów pokonanych przy573/671HP;
+read/detach łupu: trzy id1 i dwa id7. Schody M296 przy84104,
+endpoint84824 M297/a80493c8 na piętrze24: BP2,menuNULL,lock0,
+zero wrogów,oba klucze i pięć Medicine3 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-floor24-A2-v1-proof/proof.json`: zimne replaye
+tylko z autentycznego A2, normal/SAN exit0 bez raportów; cały JSON i1MiB
+VRAM zgodne również z obserwowanym przebiegiem. Względem79329 pełny
+ekwipunek różni się tylko amunicją426:6→15; wszystkie zmienne poza4:23→24,
+18:51→112 identyczne. Źródłowy i prywatne A8192B niezmienione.
+Seed/checkpoint/runner/verifier obok. Dowody /tmp nietrwałe,
+SDK/SDL nieinstrumentowane, brak oracle PS1. Read/detach układu24:
+selected7,count26; `/tmp/pe-chrysler-floor24-table-A2-v1.json`, plan -route
+obok; plan wymaga wykonania i nie jest dowodem przejścia piętra24.
+Pełny zakres portu pozostaje otwarty.
+
 ### EX A2: dalsza część piętra23, trzy kolejne walki
 
 Bez zmian kodu na pe-m392-bind-v1. Z68317 do code21/a80692c8 przy68812:

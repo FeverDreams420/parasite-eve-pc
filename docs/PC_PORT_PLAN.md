@@ -2,14 +2,40 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
-### EX Museum: wyjście z Klamp Key do M229,global34=186
+### EX: korekta M232/M229 i zwycięstwo we właściwym M229
+
+Poprzedni punkt111269,a8043148,był M232,nie M229. Token dekodowany
+polami5bit daje cyfry232; poprzednią sekcję poprawiono. Dowód runtime
+pozostaje ważny dla tokenu,ale etykieta M229 w plikach /tmp była błędna.
+Bez zmian kolizji ani kodu: Right110,Down220 wróciły M343113705;
+Down245,Left180,normalDown15,Left8 prowadzą zachodnim wyjściem do
+prawdziwego M229(a80424c8)114953. M343 północne wyjście prowadzi doM232.
+
+Up70,Left48 uruchomiło447HP/def69 typ4/sub31. Przy115601 Aya195HP,
+oślepienie. Oryginalne Heal3 podniosło HP (po atakach449),Medic usunął
+Darkness,po jego animacji231HP. Dwie serie po95/pocisk:447→257→67,
+ostatnia kończy walkę118719 bez dalszych strat:122/589HP. Nagrody
+zamknięte120251,mode9,menuNULL,lock0,BP1156. Brak zmiany50slotów;
+rekord amunicji426:16→11. Zmienne od111269 wyłącznie22:1364→1368,
+78:172→93. KlampKey iMaedaGun zachowane.
+
+Pełny cold replay od J do wygranej:
+`/tmp/pe-ex-museum-m229-win-J2-v1-proof/proof.json` PASS,
+pełny JSON i1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń sanitizerów,
+J/K bez zmian. SDK/SDL bez instrumentacji,brak PS1 oracle,dowody /tmp
+nie są trwałym CTest. Live16191 czeka120251 w
+`/tmp/pe-ex-museum-J2-nav-v1-live`. Przed następną walką potrzebne leczenie;
+dalej zachodnie drzwi M229 do M242 i użycie klucza. Pełny cel otwarty.
+
+
+### EX Museum: wyjście z Klamp Key do M232,global34=186
 
 Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live16191 od103851:
 Up32,Left130 w laboratorium zatrzymało Ayę przy−324,−844;Down20,Left30
 doprowadziło do M343104863. Ze spawnu2200,550:Left195,Up180 prowadzą
-do M229105638. Dalsze podejścia zwykłym padem nie uruchomiły walki;
+do M232105638. Dalsze podejścia zwykłym padem nie uruchomiły walki;
 kolizja ekspozycji wymaga jeszcze ustalenia trasy do zachodnich drzwi.
-Nie zaliczać wejścia M242 ani użycia klucza. Przy111269 M229(a8043148),
+Nie zaliczać wejścia M242 ani użycia klucza. Przy111269 M232(a8043148),
 237/589HP,BP1156,menuNULL,lock0,zero wrogów,pozycja−590,268.
 Cały ekwipunek identyczny z końcem sceny Klampa; MaedaGun268slot25,
 KlampKey213slot14,drugi Tool22slot16 zachowane. Zmienne wyłącznie
@@ -21,7 +47,9 @@ pełny JSON i1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń sanitizerów.
 Źródłowy J i utworzony K bez zmian. SDK/SDL bez instrumentacji,brak
 PS1 oracle/porównania wszystkich klatek i audio,dowody /tmp nie są CTest.
 Live16191 czeka111269 w `/tmp/pe-ex-museum-J2-nav-v1-live`.
-Dalej ustalić obejście do M242 na podstawie pierwotnej kolizji i starszego
+Korekta identyfikacji: token a8043148 oznacza M232; wcześniejsze próby
+nie dotyczyły kolizji M229. Dalej wrócić M343 i wybrać zachodnie wyjście;
+pomocniczy zapis starszego
 inputu `/tmp/pe-m243-missing-descriptor-v1-args.json`,bez zmian geometrii.
 Pełny cel nadal otwarty.
 

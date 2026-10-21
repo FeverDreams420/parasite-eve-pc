@@ -2,6 +2,84 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### Wytrenowany C4: oryginalny zapis i zimne Continue zweryfikowane
+
+PASS `/tmp/pe-ex-museum-trained-save-C4-v1-proof/proof.json`:
+pełny cold B4 do372817, normal/SAN/live JSON i1MiBVRAM identyczne,
+oba exit0 bez diagnostyki. Oryginalny telefon utworzył identyczne
+8192B C w obu profilach i live. SHA256
+`caa2b76c92c318a7c7871e8e2e41cf675fa2339dad2c46334996fd0d17dbc8ad`.
+Źródło `/tmp/pe-ex-museum-trained-save-C4-v1-source/BASLUS-006620000000C`.
+Stare źródłowe/prywatne B8192B niezmienione. Względem końca treningu
+inventory identyczny poza cache category_counts[0]405→242 (rzeczywista
+rezerwa już242), character identyczny,512vars tylko1:243→998 i78:29→146.
+
+PASS `/tmp/pe-ex-museum-trained-C4-continue-v1-proof/proof.json`:
+wyłącznie nowy C w prywatnym bu00, oryginalne dwa Down/Cross wybierają
+C1, endpoint14360/M340. Cały inventory, character i512vars identyczne
+z checkpointem telefonu. Normal/SAN pełny JSON/1MiBVRAM zgodne,
+oba exit0 bez diagnostyki, karty8192B niezmienione. Dodatkowe świeże
+Continue live ma identyczny cały JSON/VRAM, receipt
+`/tmp/pe-ex-museum-trained-C4-continue-v1-proof/live-reference.json`.
+Nowy kontroler60865, native80811, root
+`/tmp/pe-ex-museum-C4-loaded-v1-live`, zatrzymany14360. Stary49438
+zakończony native exit0 po zachowaniu dowodów i C. Dalszą gałąź prowadzić
+z C4 zamiast tracić wytrenowany postęp. Level36,EXP405388,HP509/765,
+BP729,ATK149,siedem Medicine3,capacity30; boss50 nadal niepokonany.
+Bez zmian kodu gry/RAM/RNG/zapisów. SDK/SDL nieinstrumentowane,
+brak oraclePS1, dowody/tmp nietrwałe; pełny port nadal nieukończony.
+
+### Muzeum: drugi trening doprowadzony do poziomu36
+
+Na niezmienionym pe-glyph-visibility-v1 oryginalny pad kontynuował
+od32190/M242. Dwadzieścia trzy następne wygrane w M242:
+19×4233 i4×4561EXP, dokładnie98671EXP (306717→405388).
+Ostatnia walka zakończyła się363252 ekranem awansu; sterownik zatrzymał
+się na nim zamiast traktować go jak ekran łupów. Dwa dodatkowe Cross
+zatwierdziły animację i oryginalny awans, nagrody END zamknięte364328.
+Level35→36, stat_allocation wszystkie340→350, maxHP763→765,
+BP47→729, pula PE44→0. Nie przypisywać awansowi dużego wzrostu HP:
+w tej gałęzi są to tylko dwa punkty. Jedyny Heal3 w tej serii nastąpił
+271704, HP446→726; bez zużycia Medicine3. Końcowe HP509/765.
+Medicine3 zebrany do wolnego16, siedem w plecaku. Pojemność29→30
+w wyniku awansu, slot29 pusty. Atak149 i efekty M8000 zachowane;
+magazynek0→2, rezerwa440→242. Przy pełnym plecaku wybierano END,
+więc nie każda nagroda amunicji była odbierana.
+
+PASS `/tmp/pe-ex-museum-training2-level36-B4-v1-proof/proof.json`:
+pełny zimny replay od oryginalnego B4 do364328, normal/SAN/live cały
+JSON i1MiBVRAM identyczne, oba exit0 bez diagnostyki, źródłowe
+oraz prywatne B8192B niezmienione. Verifier jawnie sprawdza cały
+inventory/character/512vars (tylko78:17→29). Pierwsza wersja verifiera
+pominęła prawidłowy wzrost capacity29→30 i nie przeszła; po dodaniu
+jawnej delty pełna weryfikacja przeszła. To korekta testu, bez zmiany gry.
+Runner/seed/checkpoint/verifier pod tym samym prefiksem w/tmp.
+
+Tymczasowy sterownik najpierw opierał się na krótkim opóźnieniu po
+pakiecie wejścia i zatrzymał się, gdy odczytał jeszcze poprzedni ekran
+wyniku; gra następnie normalnie pokazała łup. Sterownik poprawiono tak,
+aby przed odczytem czekał na dokładny vblank ostatniego polecenia,
+a dla nav/walk na raport zakończenia. Pomocnik
+`/tmp/pe-wait-control-v1.py` tylko odczytuje JSON. Nawigację M243→M242
+zastąpiono waypointami x0/z−1500→x0/z−2050, bo powtarzane Down50
+nie gwarantowało wejścia w drzwi z każdej pozycji. Wszystkie zatrzymania,
+próby bez spotkań i poprawione wejścia pozostają w pełnym replayu.
+Żadnych edycji RAM/RNG/pozycji/zapisu ani zmian kodu produkcyjnego.
+
+Powrót bez walk/utraty HP: M242→M229365644, M343366179,
+M340368559. Obejście górnej barierki przez x−1220/z1550 do prawego
+zejścia x1120/z1550. W M340 podejście do telefonu wymagało również
+obrócenia Ayi w lewo; samo Cross przy patrzeniu na północ go nie otwiera.
+Nowy telefon otwarty370989. Zapis do pustego C1 utworzony372253,
+menu zamknięte372817. Nie nadpisano wcześniejszego B1.
+
+Odczyt kodu `BattleCmd_LoadWeaponModifiers` i `Inv_RecalcSlotStats`
+pokazuje ponowne ustawianie początkowego PE recovery step/divisor.
+To wskazówka do testu zamiany pancerza, nie runtime dowód resetu
+fatigue: w plecaku nadal tylko B Jacket1. Drugi pancerz i jego ulepszenie,
+dalszy trening/boss50/Chrysler77 oraz pełny port pozostają otwarte.
+SDK/SDL nieinstrumentowane, brak oraclePS1, dowody/tmp nietrwałe.
+
 ### B4: oryginalny Tool przeniósł bonusy do M8000; dalszy trening w muzeum
 
 Po próbie bossa50 powrócono przez oryginalne Continue do zachowanego

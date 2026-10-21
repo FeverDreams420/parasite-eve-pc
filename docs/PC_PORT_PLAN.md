@@ -3,6 +3,40 @@
 ## Aktualny potwierdzony stan — 21 października 2026
 
 
+### EX od M: dalsza trasa muzeum i pełny film22 w M246
+
+Bez zmian produkcyjnych,`pe-control-aim-v1`. Cold autentyczny M13200
+przeszedł zwykłym padem M340→M20115655→M20416607→M20517644→M20618184,
+bez walk/utratyHP. Pełny ekwipunek identyczny z FileSaved156238,
+zmienne tylko1:998→205,78:101→250. Normal/SAN pełny JSON/1MiB VRAM
+normal=SAN=live,oba exit0 bez raportów,M8192B niezmienione. PASS
+`/tmp/pe-ex-museum-loop-M2-v1-proof/proof.json`,runner/verifier/seed
+oraz checkpoint obok. To boczne obejście,nie bezpośrednia droga fabuły.
+
+Po odczycie wcześniejszej gałęzi normalnej wybrano dalszą drogę fabuły
+przez M343. Powrót M206→M205→M204→M201→M340,oryginalna wąska strefa
+drzwi po obejściu gabloty dała M34323068; korekta dojścia w korytarzu
+M22925003,M24225741,M24326674,M24527179. Bez walk i zużycia zasobów.
+Wyjście M245 wymagało ustawienia w środku rzeczywistego przejścia,
+nie tylko szerokiego wielokąta aktywacji; x23,z−2044 i Down50 pozwoliły
+przejść do M246/a8044348 i uruchomić film22 przy29719.
+
+Film odtworzony bez skipu: przy29719/30019/30319/30619 video_state2,
+przy30919 video_state0,przy31219 lock0 i oddane sterowanie M246.
+Wejścia pada w tej części śladu wyłącznie0. Przy31219: story632,
+Aya442/621HP,BP218,bez przeciwników/menu/dialogów,video0,movie22.
+Cały ekwipunek identyczny z FileSaved M; zmienne tylko1:998→246,
+34:208→210,78:101→246. Cold replay z wyłącznie M: pełny JSON/1MiB VRAM
+normal=SAN=live,oba exit0 bez diagnostyki,M8192B niezmienione. PASS
+`/tmp/pe-ex-m246-film22-M2-v1-proof/proof.json`,runner/verifier/seed
+oraz checkpoint obok. SDK/SDL nieinstrumentowane,brak oracle PS1,
+dowody /tmp nie są trwałym CTest. Film ten nie dowodzi zgodności obrazu
+lub audio z referencją PS1 ani przejścia dalszej zawartości.
+Live `/tmp/pe-ex-post-trex-M2-nav-v1-live` zatrzymany31219 wM246.
+Następne: dalsze M246/M248/M249,sceny Eve i kampania EX; pełny cel otwarty.
+
+
+
 ### EX po T-Rexie: autentyczny zapis M i niezależny cold Continue
 
 Bez zmian produkcyjnych,`pe-control-aim-v1`. Z M371153196 zwykły ruch

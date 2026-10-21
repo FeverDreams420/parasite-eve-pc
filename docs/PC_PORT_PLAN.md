@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: M229 pojedynczy cel wygrany i wejście M231
+
+Bez zmian kodu, `pe-control-aim-v1`: zwykły ruch M229 uruchamia wariant jednego celu4:31,447HP/def69. Pięć pojedynczych strzałów w Double Action po92 wygrywa227311,Aya351/573HP,bez leczenia w M229. Po nagrodach ruch na wschód i krótkie Right na progu prowadzą do M231229059 (`a80430c8`),menuNULL,move_lock0,brak przeciwników,story608,BP1100.
+
+Względem225243 pełny inventory zmienia wyłącznie rekord amunicji426:12→7; zmienne wyłącznie1=229,22=4,78=166. `/tmp/pe-ex-museum-m231-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live229059,pełne inventory/zmienne i pośrednie HP/walka sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Dalsze M231/Museum,kampania i Chrysler nadal otwarte.
+
+
 ### EX Museum: M225 Heal3, okno M227, gzyms M228 i zejście M229
 
 Bez zmian kodu, `pe-control-aim-v1`: zwykłe Heal3 w polu M225291→571/573HP. Droga na zachód prowadzi M227218883 (`a80423c8`),dialog45 o zamkniętych drzwiach. Podejście do rozbitego okna i krótkie Up uruchamiają wybór47,oryginalne potwierdzenia prowadzą do M228221003 (`a8042448`). Dialog48,przejście po gzymsie,wybór zejścia i pełna animacja kończą się dialog52; po zamknięciu i ruchu w lewo M229225243 (`a80424c8`),571/573HP,menuNULL,move_lock0,brak przeciwników,story608.

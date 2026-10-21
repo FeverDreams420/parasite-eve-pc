@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: wejście do pokoju bossa20 M383
+
+Bez zmian produkcji. Z193185 zwykły pad: M387193757,
+M384194287/194977/195667, M389196357,
+M385196897/197537, M388198177, M386198727,
+M292199305, M389199805 i M383200395/a80681c8.
+Bez nowej walki na tym odcinku. Aya przy[-2009,0,45],piętro20,
+567/671HP,BP2,menuNULL,lock0,zero żywych wrogów. Wolny slot0,
+Key1 i pięć Medicine3 zachowane; pełny ekwipunek identyczny z193185.
+
+PASS `/tmp/pe-ex-chrysler-boss20-entry-O1-v1-proof/proof.json`:
+niezależne zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live200395. Wszystkie zmienne poza5:23→20,
+18:3850206→3850207,78:17→146 identyczne. Źródłowy i prywatne O8192B
+bez zmian. Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe. Boss20 jeszcze nieuruchomiony;
+następne wejście w głąb pokoju i weryfikacja walki oraz klucza.
+Pełny zakres portu pozostaje otwarty.
+
 ### EX O1: piętro20, kolejne walki M386 i M385
 
 Bez zmian produkcji. Z185911 przejście doM386186501 uruchamia trzech

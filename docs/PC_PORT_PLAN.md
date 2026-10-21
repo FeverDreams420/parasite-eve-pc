@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: wejście do pokoju bossa50
+
+Bez zmian kodu na pe-m410-bind-v1. Od220216:walka z dwoma
+w code9 od220368 wygrana przy552HP,wynik223048;read/detach łupu:id7,
+pozostawiony przy pełnym plecaku. Eksploracja224004,code21 224456,
+M406225016,M294225656,M410226156,code9 226746,M307227436.
+Po Left170/Up272 wejście do pokoju bossa228178:a8080248,
+piętro50,HP552/671,BP2,mode9,menuNULL,lock0,zero wrogów.
+Walka z bossem50 jeszcze nie rozpoczęta.
+
+PASS `/tmp/pe-ex-chrysler-boss50-entry-A4-v1-proof/proof.json`:
+cały zimny A4 normal/SAN/live JSON i1MiB VRAM zgodny,exit0 bez
+diagnostyki,SHA obu gier sprawdzone. Pełny ekwipunek względem220216
+poza amunicją426:15→5 identyczny; wszystkie512 zmiennych poza
+5:22→20,18:1825125→2873702,78:108→105 identyczne. Źródłowy/prywatne
+A8192B niezmienione. Seed/checkpoint/runner/verifier obok. Dowody
+/tmp nietrwałe,SDK/SDL nieinstrumentowane,brak oracle PS1,
+pełny port otwarty. Następny krok: oryginalna walka bossa50.
+
 ### EX A4: przez korytarze50 do windy i dalej
 
 Bez zmian kodu na pe-m410-bind-v1. Od209402:code9 walka z dwoma

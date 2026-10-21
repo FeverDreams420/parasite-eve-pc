@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: zwycięstwo M220 i wejście M221
+
+Bez zmian kodu, `pe-control-aim-v1`: ruch M220 uruchamia trzy cele3:31/30/29 po279HP/def55. Pojedyncze strzały w Double Action po105 kończą walkę193657,EXP,zero przeciwników,Aya365/561HP bez strat HP. Po nagrodach korekta podejścia do wschodniego przejścia przyx≈1670,z<240 prowadzi do M221196277 (`a80420c8`),menuNULL,move_lock0,brak przeciwników,story608,BP1052.
+
+Względem190013 pełny inventory zmienia wyłącznie rekord amunicji426:10→1; zmienne wyłącznie1=220,21=22057045,78=83. `/tmp/pe-ex-museum-m221-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live196277,pełne inventory/zmienne i pośrednia walka sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Scena i walka M221,dalsze Museum/kampania/EX nadal otwarte.
+
+
 ### EX Museum: M219 wygrane i wejście M220
 
 Bez zmian kodu, `pe-control-aim-v1`: po nagrodach M218 przejście przyx≈1190,z≈−590 prowadzi do M219186103 (`a80414c8`). Zwykły ruch uruchamia na tym przebiegu jednego raptora3:31,391HP/def65 (inny wariant niż historyczne dwa cele240HP). Pięć pojedynczych strzałów w Double Action po95 kończy walkę188163,Aya365/561HP,bez leczenia w M219. Nagrody i Down prowadzą do M220190013 (`a8042048`),brak menu/przeciwników/blokady,story608,BP1052.

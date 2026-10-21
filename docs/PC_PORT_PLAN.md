@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: zwycięstwo M214, awans i powrót M207
+
+Ten sam `pe-control-aim-v1`, bez zmian źródeł produkcyjnych. Live16191
+od40652: Up88 uruchomiło M214, dwa typ5/sub31,30 po391HP/def65.
+Po napełnieniu ATB pierwszy wybór41176,oba cele w zasięgu M8000.
+Zwykłe pojedyncze strzały iDoubleAction,96 obrażeń/pocisk; wygrana44828,
+272/573HP,bez leczenia. Oryginalne nagrody/awans zwiększyły maxHP589,
+BP1100→1156; przy46328 menuNULL,lock0,mode9,272/589HP.
+Wszystkie50 slotów bez zmian. Jedyna zmiana rekordów sprzętu od wejścia
+M214: bajt426 amunicja17→7. Zmienne21:357863509→357929045,78:107→24.
+Pełny cold replay od J przez film21/M217/M214:
+`/tmp/pe-ex-museum-m214-win-J2-v1-proof/proof.json` PASS.
+
+Trasa do M207: Up200,Right85,Up50 zatrzymało Ayę przy543,-997;
+Down12,Right40 nadal blokowała przeszkoda. Up65,Right45,Down65
+ominęło ją i prowadzi do M207(a80403c8) przy48090. HP272/589,BP1156,
+menuNULL,lock0,bez wrogów,ekwipunek identyczny z końcem M214;
+jedyna zmiana zmiennych1:217→214.
+`/tmp/pe-ex-museum-m207-J2-v1-proof/proof.json` PASS: pełny JSON i1MiB
+VRAM normal=SAN=live,oba exit0,bez zgłoszeń sanitizerów,źródłowy J
+zachowany i wszystkie8192B K identyczne. Analogiczne porównania przeszły
+dla końca walki M214. SDK/SDL bez instrumentacji,brak oracle PS1;
+dowody /tmp nie zastępują trwałego katalogu iCTest. Dalsza kampania otwarta.
+Live16191 przy48090 w `/tmp/pe-ex-museum-J2-nav-v1-live`,następna trasa
+od M207. Root bu00 nietknięty.
+
+
 ### EX Museum: zwycięstwo M217 i wyjście M214
 
 Bez zmian produkcyjnych, ten sam `pe-control-aim-v1`. Kontynuacja live16191

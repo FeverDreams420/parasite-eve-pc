@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### Muzeum: poziom35 i ulepszenie M8000 przez oryginalne BP
+
+Na niezmienionym pe-m436-bind-v2 autentyczna gałąź A4 została podlevelowana
+w muzeum. Po M201 zwykła trasa przez M343/M229 prowadzi do M242;
+powroty przez M243 i przekraczanie stref skryptu odtwarzają spotkania.
+Dwanaście wygranych w M242: jedenaście po4233EXP i jedna4561EXP,
+łącznie z pierwszym M201896EXP przyrost52020:248635→300655.
+Próg35 to299579; oryginalny ekran awansu potwierdzony przy151442:
+level34→35,maxHP671→763,HP644,BP2→3647,pula PE3325→0,
+wszystkie siedem stat_allocation330→340. Wszystkie walki oryginalnym
+padem,pojedyncze strzały w DoubleAction,leczenie PE; przed pierwszą
+walką zużyty Medicine3,po treningu pięć Medicine3 w12/13/15/26/28.
+Ekwipunek względem A4 poza tym tylko magazynek14→16,rezerwa387→405.
+
+PASS `/tmp/pe-ex-museum-A4-level35-v1-proof/proof.json`: pełny zimny
+replay od A4,normal/SAN/live JSON oraz1MiB VRAM identyczne,oba exit0
+bez diagnostyki,źródłowe i prywatne A8192B niezmienione. Jawne pełne
+porównanie inventory,character i512 zmiennych: poza1→243,
+21→357933269,78→31 wszystkie identyczne. Runner/seed/checkpoint obok,
+verifier `/tmp/pe-ex-museum-A4-level35-verify-v1.py`.
+
+Oryginalne menu BP następnie wydało3600 na36 punktów ataku M8000:
+bonus54→90,atak111→147,BP47,endpoint153606/M242,HP644/763,
+menuNULL,lock0. PASS `/tmp/pe-ex-museum-A4-level35-BP-v1-proof/proof.json`:
+pełny cold normal/SAN/live JSON i1MiB VRAM identyczne,oba exit0,
+bez diagnostyki,karty A niezmienione. Ten sam pełny verifier z jawną
+dodatkową deltą byte430:54→90 i BP3647→47.
+Live `/tmp/pe-ex-museum-A4-grind-v1-live`,kontroler5905,pid20713.
+Nie zapisano jeszcze nowego slotu przez telefon; źródłowy A4 zachowany.
+Nie zmieniano kodu gry,RNG,pamięci ani zapisów. SDK/SDL nieinstrumentowane,
+brak oraclePS1,dowody/tmp nietrwałe. Boss50 nadal niepokonany;
+pełny port i dalsze wzmocnienie/przejście Chryslera pozostają otwarte.
+Odczyt oryginalnej tabeli: próg38=725158,od38→39 stałe4500EXP.
+
 ### Muzeum: rozpoczęte zdobywanie XP zamiast kolejnych prób bossa50
 
 Zgodnie z uwagą użytkownika priorytetem jest teraz podniesienie poziomu

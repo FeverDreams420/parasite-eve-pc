@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: ukończone piętro 12, wejście na 13
+
+Bez zmian produkcyjnych. Odczyt oryginalnego g_FontSelectionState na12:
+code39,selected5,count17; `/tmp/pe-chrysler-floor12-table-O1-v1.json`.
+Początkowo planer nie znał portów code15. Oryginalny skrypt M335,
+odczytany LLDB ReadMemory/detach do `/tmp/pe-ex-m335-script-O1-v1`,
+potwierdza cztery literały przejścia20/22/21/23 i ich poligony. Tylko
+pomocniczy planer /tmp uzupełniono o te porty. Trasa odslot2:
+22→6(code9),22→9(code19),23→10(code3),23→11(code5),
+23→12(code20),20→4(code1). Runtime: M38639799, M33540377,
+M38441023, M30741713, M29242343, M29442843, M38943343.
+Jednoosobowa walka M389 wygrana zwykłym padem bez utraty HP; łup id7
+(Medicine2) potwierdzony read/detach, pozostawiony przy pełnym plecaku.
+M29645036, schody do M297/a80493c8 przy45756: piętro13,
+546/671HP, BP2, menuNULL, lock0, zero żywych wrogów.
+
+PASS `/tmp/pe-ex-chrysler-floor13-O1-v1-proof/proof.json`: pełne
+niezależne zimne replaye tylko z O1, normal/SAN exit0 bez raportów,
+pełny JSON/1MiB VRAM normal=SAN=live45756. Cały ekwipunek względem
+39187 różni się tylko amunicją426:5→3; Key1 i sześć Medicine3 zachowane.
+Wszystkie zmienne poza4:12→13,18:15→28,78:229→122 identyczne.
+Źródłowy i prywatne zapisy O8192B bez zmian. Seed/checkpoint/runner/verifier
+obok. SDK/SDL nieinstrumentowane, brak oracle PS1, dowody /tmp nietrwałe.
+Następne: piętro13 i dalszy Chrysler przed finałem; pełny cel nadal otwarty.
+
 ### EX O1: ukończone piętro 11, wejście na 12
 
 Bez zmian produkcyjnych. Z M38430653 zwykły pad przechodzi kolejne

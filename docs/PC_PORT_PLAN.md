@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A2: zimny powrót na20 i wejście na21, boss nie odradza się
+
+Bez zmian produkcji. Z samegoA13200 zwykły pad wraca przez M201,
+M340 i M192 do mapy16426,Museum3→NYPD4→CentralPark2→Chrysler10,
+hol17462. Oryginalny panel i kabina M29318526,19Up wybiera20,
+wyjście20811 M292. Read/detach układu20: code1,selected15,count22,
+`/tmp/pe-chrysler-floor20-table-A2-v1.json`; układ zachowany,seed24325.
+M38921271,M38321861. Pokonany boss NIE uruchamia się po Continue.
+Przejście przez pokój i schody22631 daje M297/a80493c8,piętro21,
+433/671HP,BP2,menuNULL,lock0,zero wrogów. Oba klucze i pięć Medicine3
+zachowane; pełny ekwipunek identyczny z zimnymA13200.
+
+PASS `/tmp/pe-ex-chrysler-floor21-A2-v1-proof/proof.json`:
+niezależne zimne replaye tylko zA,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live22631. Wszystkie zmienne poza1:998→999,
+4:1→21,5:0→20,6:1→20 identyczne. Źródłowy i prywatne A8192B bez zmian.
+Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe. Aktywny kontroler31022,katalog
+`/tmp/pe-ex-chrysler-A2-nav-v1-live`,PID79796. Następne: układ21 i dalszy
+Chrysler przed finałem; pełny zakres portu pozostaje otwarty.
+
 ### EX A2: zimne Continue po bossie20
 
 PASS `/tmp/pe-ex-chrysler-A2-loaded-v1-proof/proof.json`:

@@ -2,6 +2,39 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: powrót na40 po Continue, brak respawnu bossa, wejście na41
+
+Bez zmian kodu na pe-m392-bind-v1. Zimny A4 od13200: muzeum→mapa→
+Chrysler17462, winda18526, wybór40 przez39Up, M29221451. M33521881,
+code21 22453,code10 23013,code20 23653,code23 24243,code20 24821,
+code22 25411,code10 25981,code21 26621,pokój bossa27171.
+Przejście Up470 bez respawnu bossa daje endpoint27941 M297/a80493c8,
+piętro41,HP353/671,BP2,menuNULL,lock0,zero wrogów.
+
+PASS `/tmp/pe-ex-chrysler-floor41-A4-v1-proof/proof.json`: normal/SAN
+exit0 bez raportów; cały JSON i1MiB VRAM zgodne z żywym przebiegiem.
+Pełny ekwipunek identyczny z coldContinue13200, wszystkie zmienne poza
+1:998→999,4:1→41,5:0→20,6:1→40 identyczne; źródłowy i prywatne A8192B
+niezmienione. Odczyt układu41:selected6,count28,seed24325 w
+`/tmp/pe-chrysler-floor41-table-A4-v1.json`; plan -route wymaga wykonania.
+
+### EX A4: pierwsza walka piętra41 wygrana
+
+Code23/a80803c8 od28553 uruchomił trzech wrogów. Oryginalne Heal3
+oraz single-shot/DoubleAction, bez użycia ostatniej Medicine3.
+Wynik33945:HP401/671,BP2,menuEXP20,zero wrogów. Read/detach łupu:
+id7/id2/id7. ALL odbiera amunicję i dwie Medicine2 do slot12/13.
+Endpoint34657 ta sama scena,mode9,menuNULL,lock0.
+
+PASS `/tmp/pe-ex-chrysler-mid41-A4-v1-proof/proof.json`: zimne replaye A4,
+normal/SAN exit0 bez raportów; cały JSON i1MiB VRAM zgodne także z live.
+Pełny ekwipunek względem27941 różni się tylko slot12/13:0→7 oraz
+amunicją426:14→16; wszystkie zmienne poza18:0→4,78:55→20 identyczne.
+Źródłowy i prywatne A8192B niezmienione. Seed/checkpoint/runner/verifier
+obok obu dowodów. Dalsza część41 i piętra42–77 niezweryfikowane.
+Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1.
+Pełny zakres portu pozostaje otwarty.
+
 ### EX A4: klucz4 w windzie40→1, oryginalny Save/Continue po bossie40
 
 Bez zmian kodu na pe-m392-bind-v1. Od170459 powrót przez code21 171337,

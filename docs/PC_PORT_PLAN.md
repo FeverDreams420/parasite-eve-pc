@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: próba z ruchem i zweryfikowany zapas Medicine4
+
+Bez zmian produkcyjnych,`pe-control-aim-v1`. Nowa normal-only gałąź46269,
+`/tmp/pe-ex-triceratops-orbit-J2-v1-live`,odtworzyła BP142363.
+Field Heal3+Heal2 dały585HP. Zamiast wait420 po każdym strzale zastosowano
+ruch w krokach24,poll zwykłego Cross i kierunek styczny względem bossa.
+To zwykłe wejścia,bez sterowania aktorami/RAM. Oryginalny seeking trail
+sprawdza24 punkty historii toru z promieniem0x68; obserwacja uzasadnia
+unikanie stania podczas ATB,ale nie stanowi niezależnego oracle PS1.
+Pierwsza faza zakończona151417,przy151537 Aya129HP,PE32759283.
+Krótki ruch odnowił brakujący ułamek do Heal3; leczenie409HP. Druga faza
+zeszła do1000494,lecz próba skończyła się śmiercią153289.
+Ten nowy ślad jest normal-only,nie świeży SAN i nie zwycięstwo.
+
+Kolejna gałąź51540,`/tmp/pe-ex-museum-restock-J2-v1-live`,odtworzyła
+z J hol M34060062,żeby przed dalszą trasą odebrać dodatkowe leczenie.
+Pierwsze podejście wróciłoM201;powrót doM340,podejście z−1613,557:
+Up40,Left15,normalLeft8→M37161997. Up40,Right110,Up290→−4542,−3496;
+Up15,Cross uruchomiły skrzynię Medicine4. Przy pełnym plecaku
+zatwierdzono pierwszy slot0: M16A1(262)→Medicine4(9),a nie planowany N Vest.
+Oryginalna skrzynia zachowała M16A1 wglobal258=262. Wyposażone M8000
+/B Jacket1 bez zmian. Przy63868 M371(a80670c8),237/589HP,BP1156,
+menuNULL,lock0,bez wrogów. Wszystkie pozostałe49slotów i4096B rekordów
+identyczne z M340;zmienne tylko1:201→340,258:0→262.
+
+Pełny cold replay od J do odbioru Medicine4:
+`/tmp/pe-ex-museum-med4-J2-v1-proof/proof.json` PASS,pełny JSON i1MiB
+VRAM normal=SAN=live,oba exit0,bez zgłoszeń sanitizerów,J/K bez zmian.
+SDK/SDL bez instrumentacji,brak oracle PS1,dowody /tmp nie są CTest.
+Kontynuować51540 przy63868: wrócić do holu,utrwalić nowy telefoniczny
+zapis z Medicine4 i przejść dalszą trasę Klampa/bossa z dodatkowym lekiem.
+Pozostałe sesje zachowane; Triceratops/film22 i pełny cel nadal nieukończone.
+
+
 ### EX: reset i wygrana następnej walki po śmierci/Continue
 
 Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live47612 od160961

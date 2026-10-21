@@ -2,6 +2,35 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### A4 prep: dalsza trasa50, pełne HP i drugie Medicine4
+
+Bez zmian kodu na pe-state-visibility-v1. Od167750 M406:
+Down23/Left220 daje code21 168293;Left90/Up160 code9 168843;
+Right40/Up350 code22 169533;Up90/Left180 M406170103.
+Left340 przechodzi do kolejnej instancji M406170743 (pozycja1720,-478),
+kolejne Left340 daje code23 171383;Left145/Down110 code9 171938.
+Ten odcinek bez walk i utraty zasobów. Right40/Down112 trigger172090
+na dwóch przeciwnikach;po wejściu172390 HP555. Oryginalne
+Heal3/ruch/single shots,wynik175098 HP671/671. Read/detach:
+`/tmp/pe-prep50-battle3-reward-v1.txt`:id9(Medicine4),EXP259.
+ALL176022 dodało Medicine4 do wolnego slot8;zamknięcie176330.
+Endpoint code9/a80802c8,piętro50,HP671/671,BP2,mode9,
+menuNULL,lock0,zero wrogów. Teraz dwa Medicine4 slot8/12,
+Medicine3 slot28 iMedicine2 slot18/20/26;wolne13/15.
+
+PASS `/tmp/pe-ex-chrysler-A4-prep-mid50-loot4-state-v1-proof/proof.json`:
+zimny A4 normal/SAN/live checkpoint pełny JSON i1MiB VRAM identyczne,
+oba exit0 bez raportów,SHA kandydatów oraz niezmienione źródłowe/prywatne
+karty8192B sprawdzone. Inventory względem167750 wyłącznie slot8:0→9,
+magazynek7→15,rezerwa312→294,bez łupu amunicji10strzałów.
+Character wyłącznie EXP252331→252590(+259),HP589→671,
+pe_bonus3597→3626;reszta identyczna. Wszystkie512 zmiennych poza
+5:21→22,18:2647013→3695590,78:14→37 identyczne.
+Seed/checkpoint/runner/verifier obok. Żywy prep-v2 zatrzymany176330,
+kontroler96861,pid82271. Następnie code9→M306,trasa do bossa50
+oraz pozostały pełny zakres. SDK/SDL nieinstrumentowane,brak oracle PS1,
+dowody/tmp nietrwałe,pełny port nadal nieukończony.
+
 ### A4 prep: pierwsze dwie walki na50 i polowe leczenie Medicine2
 
 Bez zmian kodu na pe-state-visibility-v1. Od153708:code9 154320,

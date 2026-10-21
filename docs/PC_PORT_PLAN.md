@@ -1,6 +1,44 @@
 # Plan implementacji pełnego portu Parasite Eve na PC
 
-## Aktualny potwierdzony stan — 21 października 2026
+## Aktualny potwierdzony stan — 22 października 2026
+
+### B4: przejście całego45 na nowym zrzucie selektora, wejście46
+
+Bez zmian produkcji od pe-glyph-visibility-v1. Nowy live81586 od112305
+przechodzi45,odczytując glyph_selection.selected bez debuggera.
+Wszystkie16 planowanych przejść:8→2→1→7→11→15→14→13→12→18→
+23→24→25→26→27→28→17. M305112918/slot2,Up85/Left180→
+M407113491/slot1,Left145/Down110→M306114046/slot7.
+Pierwsze podejście Right100/Down110 doszło do dolnej ściany;Left100/
+Down150 poprawnie dajeM405115106/slot11. Down112 uruchamia dwóch
+wrogów115218;single shots DoubleAction wygrywają116766,HP462/763,
+EXP259,nagrody pozostawioneEND118222. LekiHP niezużyte.
+
+Down264→M304118786/slot15,Down190/Left190→M292119466/slot14,
+Left210→M305119976/slot13,Left328→M407120604/slot12,
+Left145/Down110→M405121159/slot18,Down340→M409121799/slot23,
+Down90/Right150→M406122339/slot24. KolejneRight340/300wait dają
+slot25/122979 i26/123619,ta sama scena. Guard zatrzymujeRight88 na
+jednym wrogu123707,wygrana125911,HP405/763,EXP160;END127335.
+Right280→slot27/127915,Right340→M432128555/slot28,
+Right130/Up160→M296129145/slot17,Up420→M297129865,zmienna4=46.
+
+PASS `/tmp/pe-ex-chrysler-floor46-B4-v1-proof/proof.json`:
+pełny cold normal/SAN/live JSON i1MiBVRAM identyczne,oba exit0 bez
+diagnostyki,źródłowy/prywatneB8192B niezmienione.
+Jawne delty względem112305:inventory tylko clip426:0→7,
+rezerwa369→357;characterEXP303239→303658(+259+160),HP589→405,
+pulaPE194→221. 512vars tylko4:45→46,18:1019→3066,78:204→154.
+PięćMedicine3,level35,maxHP763,BP47 zachowane. Nowy selektor46,
+selected4,seed25164,count14,kod bieżącej sali2. Runner/seed/checkpoint/
+verifier przy prefiksie. 45 ukończone i potwierdzone,46 dopiero rozpoczęte.
+
+Live `/tmp/pe-ex-chrysler-B4-glyph-v1-live`,kontroler81586/native33781,
+zatrzymany129865,HP405/763,mode9/menuNULL/lock0/zero wrogów.
+Następny krok:oryginalne polowe Heal3 przed dalszą eksploracją46;
+plan od4 w /tmp/pe-chrysler-floor46-B4-route-v1.json wymaga wykonania.
+SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+Boss50 i cały port pozostają otwarte; nie uruchamiano finału Eve.
 
 ### Widoczność indeksu i układu sal bez debuggera
 

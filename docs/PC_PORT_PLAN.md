@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: wejście Museum i przejścia M192 → M196 → M197 → M198
+
+Bez zmian kodu, `pe-control-aim-v1`: pełny replay od G2, przez Warehouse/mapę, prowadzi do M19298413,schodów i holu M196102253. Oryginalny skrypt zmienia story600→608. Zamknięta bramka holu wyświetla dialog24 (102703),Cross go zamyka; zachodnie drzwi prowadzą do M197103663,obejście ekspozycji i Cross do M198105881 (`a8029448`). Nagranie obejmuje także korektę błędnego pierwszego podejścia do schodów M192. Aya353/532HP,BP914,brak menu/przeciwników/blokady,pełny inventory identyczny z mapą97409. Zmienne różnią się wyłącznie1=197,34=50,36=1,42=1,74=608.
+
+`/tmp/pe-ex-museum-m198-G2-v1-proof/proof.json`: normal/SAN exit0,pełny JSON/VRAM identyczne z live105881,pełne inventory/zmienne i pośrednie wejścia/dialog sprawdzone,G bez zmian,H/I identyczne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. To przejścia i eksploracja początkowych sal; walki i ukończenie Museum/kampanii pozostają otwarte.
+
+
 ### EX: wyjście z Warehouse na mapę po zapisie I2
 
 Bez zmian kodu, `pe-control-aim-v1`: pełny replay G2→boss→zapisI→M266→M265→M263→M262→M260→mapaM000 kończy97409 przy353/532HP,BP914,story600. Pełny inventory identyczny z FileSavedI89056,oba klucze zachowane. Zmienne zmieniają wyłącznie1=260,78=113. Droga M266 wymaga obejścia zachodniej barierki przyx≈−1694 i rampy; po drodze nagrano także omyłkowe wejście/wyjście po drabinie M266,bez strat HP/przedmiotów. Ruch kontrolowany krótkimi krokami zatrzymuje się przy przejściu sceny.

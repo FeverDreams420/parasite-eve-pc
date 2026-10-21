@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: porażka w drugiej fazie i Continue K w tym samym procesie
+
+Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live47612 od156281:
+Heal2 odnowiło106→166HP,zlecony pocisk85 obrażeń dał fazie2 HP1001174.
+Następny atak zabił Ayę przy156785,combat3,HP0. Próba nie jest zwycięstwem.
+Po zwykłym odczekaniu gra wróciła do tytułu a9400048; obraz ręcznie
+obejrzany z VRAM:logo iPress Start. Start/Cross/wybór slotu K/Continue
+w tym samym procesie załadowały M237. Przy160929 415/573HP,BP1100,
+menuNULL,lock0,wszystkie dialogi zamknięte; Right8 potwierdziło ruch160961.
+Cały inventory i wszystkie zmienne identyczne z osobnym cold Continue K.
+Techniczny combat.mode pozostaje−1 po wczytaniu; reset przy kolejnym
+spotkaniu jeszcze do sprawdzenia,nie uznawać automatycznie za poprawny.
+
+Dwa osobne pełne cold replaye od J:
+`/tmp/pe-ex-death-K2-v1-proof/proof.json` PASS: punkt śmierci156785,
+cały JSON normal=SAN=odnotowany live; VRAM normal=SAN (brak zachowanego
+VRAM live samej śmierci). `/tmp/pe-ex-death-continue-K2-v1-proof/proof.json`
+PASS: całe Continue160961,pełny JSON i1MiB VRAM normal=SAN=live.
+Wszystkie replaye exit0,bez zgłoszeń sanitizerów; karty J/K zachowane.
+SDK/SDL bez instrumentacji,brak oracle PS1,dowody /tmp nie są CTest.
+Live47612 obecnie przy160961 wM237 po K,root
+`/tmp/pe-ex-triceratops-prep-J2-v1-live`. Źródło przygotowanej gałęzi BP
+142363 i źródła J/K zachowane; można odtworzyć przed bossem zwykłym
+prefiksem. Następne: sprawdzić reset walki po Continue,przygotować bardziej
+oszczędne uniki/leczenie i ponowić bossa. Triceratops/film22 niezaliczone,
+pełny zakres portu nadal otwarty.
+
+
 ### EX Triceratops: ulepszone M8000 przeszło pierwszą fazę
 
 Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live47612 od142363:

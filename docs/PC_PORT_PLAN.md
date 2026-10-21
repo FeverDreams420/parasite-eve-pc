@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M333: walka po powrocie od telefonu wygrana
+
+`pe-control-aim-v1`, bez zmian kodu: zwykły powrót od telefonu M266 przez drzwi do M333, ruch na zachód uruchamia czterech przeciwników (338/338/13/13HP). Double Action z pojedynczymi strzałami i jedno Heal3 prowadzą do zwycięstwa55408,EXP,zero przeciwników,Aya138/437HP. Przed leczeniem89HP,po leczeniu369HP; nie przyjęto żadnych zmian RAM/RNG/zapisu. Względem FileSavedH50867 pełny ekwipunek zmienia wyłącznie amunicję M8000:13→5; zmienne skryptowe wyłącznie1=266,78=194.
+
+`/tmp/pe-ex-warehouse-m333-win-G2-v1-proof/proof.json`: pełny replay od zimnego G2 obejmuje także utworzenie H i powrót do walki. Normal/SAN exit0, pełny JSON i VRAM identyczne z live55408, pełne inventory/zmienne sprawdzone. G bez zmian, utworzone H ma identyczne8192B jak źródłowy H2. SDK/SDL nieinstrumentowane, brak oracle PS1, trwałego CTest i dowodu ukończenia Warehouse. Następne: nagrody i dalsze sale za M333.
+
+
 ### EX: telefon M266, nowy zapis H2 i zimny Continue
 
 Bez zmian kodu, `pe-control-aim-v1`: zwykły powrót M333→M266 i telefon tworzą nowy H w pustym slocie7, FileSaved50867. Źródłowy G2 zachowany. `/tmp/pe-ex-warehouse-save-H2-v1-source/BASLUS-006620000000H`,8192B,SHA256 `fe71089240925357b136b341e0398869ba6aa12140c57ee286b57da4b837d9d0`. Aya251/437HP,story600,oba klucze zachowane. Pełny ekwipunek identyczny z M33348903; jedyna zmiana zmiennych skryptowych:1=998.

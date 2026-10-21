@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A2: ukończone piętro27, wejście na piętro28
+
+Bez zmian kodu na pe-m392-bind-v1. Z122665: M306123277, code23/a80691c8
+123887. Dwóch wrogów pokonanych przy540HP; read/detach łupu dwa id16.
+M306126131, code20 126711, dwa kolejne M392127251/127891,
+code21 128531 i code9/a80690c8 129081. Pięciu wrogów pokonanych przy530HP;
+łup trzy id1,dwa id7. Code23 132821, code20 133399, M296133989,
+endpoint134709 M297/a80493c8 na piętrze28: HP530/671,BP2,menuNULL,
+lock0,zero wrogów,oba klucze i pięć Medicine3.
+
+PASS `/tmp/pe-ex-chrysler-floor28-A2-v1-proof/proof.json`: zimne replaye
+tylko z autentycznego A2, normal/SAN exit0 bez raportów; cały JSON i1MiB
+VRAM zgodne również z obserwowanym przebiegiem. Względem122665 pełny
+ekwipunek różni się tylko amunicją426:13→0; wszystkie zmienne poza4:27→28,
+18:9073→41842 identyczne. Źródłowy i prywatne A8192B niezmienione.
+Verifier dodatkowo sprawdza SHA256 obu zamrożonych binariów.
+Seed/checkpoint/runner/verifier obok. Read/detach układu28: selected14,count30;
+`/tmp/pe-chrysler-floor28-table-A2-v1.json`, plan -route obok wymaga wykonania.
+Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1.
+Pełny zakres portu pozostaje otwarty.
+
 ### EX A2: ukończone piętro26, wejście na piętro27
 
 Bez zmian kodu na pe-m392-bind-v1. Z109749: M307110361,

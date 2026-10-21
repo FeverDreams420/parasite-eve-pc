@@ -2,6 +2,35 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Chrysler piętro3: kolejna wygrana M298 i odnoga M303
+
+Bez zmian produkcyjnych. Od61909 powrót M310→M298 uruchomił62507
+pięciu przeciwników; zwykły ostrzał/Double Action zakończył walkę,
+nagrody zamknięte65507. Aya397/671HP (−4),BP2,sześć Medicine3
+zachowanych. Dalej M30766007→M30966587→M31067117→M29267677
+→M303/a8060148 przy68177. M303 ma tylko jedną akcję177=21,
+wyjście w poligonie x516..993,z−1369..616. Nie traktować go jako
+skrzyżowania na podstawie kodu14 lub samej nazwy. Bieżący live68177
+czeka w M303,menuNULL,lock0,zero przeciwników.
+
+Względem61909 pełne inventory zmienia tylko byte426:11→6; wszystkie
+zmienne poza5:22→23,18:48→113,78:138→128 identyczne.
+PASS `/tmp/pe-ex-chrysler-floor3-m303-N3-v1-proof/proof.json`:
+pełne zimne replaye od muzealnego N3,normal/SAN exit0 bez raportów,
+pełny JSON/1MiB VRAM normal=SAN=live68177,źródłowy/prywatne N3
+8192B bez zmian. Seed/checkpoint/runner/verifier obok. SDK/SDL
+nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+
+Dodatkowo pierwsze7 wierszy g_MapSelectIndexTable porównano z odczytem
+USA EXE (pierwszy identity row file offset81f3c); porównana treść
+zgodna z bieżącym C. Bez podstaw do modyfikacji mechanizmu nawigacji
+na podstawie samej dotychczasowej trasy. Nie deklarować softlocka
+ani nieosiągalności schodów bez pełnego audytu rzeczywistych akcji.
+Nadal pozostają nieodwiedzone odnogi tego piętra,w tym pozycje
+prowadzące do M299; nie zakładać z góry ich zachowania.
+Piętro4 i pełny Chrysler nadal otwarte.
+
+
 ### EX Chrysler piętro3: zachodnia trasa do M310 i audyt nawigacji
 
 Bez zmian produkcyjnych. Od56251 powrót M301→M309→M305→M308,

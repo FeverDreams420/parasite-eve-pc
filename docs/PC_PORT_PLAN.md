@@ -2,6 +2,44 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Chrysler: autentyczny zapis O1 po Key1 i zimne Continue
+
+Bez zmian produkcyjnych. Z203782 holu Chryslera zwykły pad wrócił na
+mapę204550,wybrałNYPD4 i wszedł205586 M058/a8005448. Oryginalna
+rozmowa policjanta109 o zwierzętach wciąż uciekających działa; zapisany
+input obejmuje ponowne wywołanie i zamknięcie dialogu. Powrót na mapę
+208084,Museum3→M192209072 i schody doM340210547. Korekty obejścia
+centralnej ekspozycji zachowane w input. Telefon211988/dialog6,
+Saveport36 przy212408,files37,pustyO/index14→FileSaved40 przy213396.
+Aya556/671HP,BP2,Key1raw56slot27,sześć Medicine3 zachowanych.
+Pełne inventory identyczne z203782,wszystkie zmienne poza1:999→998,
+5:25→0 identyczne.
+
+Nowy `/tmp/pe-ex-chrysler-save-O1-v1-source/BASLUS-006620000000O`,
+8192B,SHA256 `651543233182af0353fd24103d2cd2464747086d053bbdf63dc75c03cee3e23a`.
+PASS `/tmp/pe-ex-chrysler-save-O1-v1-proof/proof.json`: pełne zimne
+replaye od muzealnego N3 przez całą wspinaczkę,bossa,klucz,windę i telefon,
+normal/SAN exit0 bez raportów,pełny JSON/1MiB VRAM normal=SAN=live213396,
+nowyO8192B normal=SAN=live/source,źródłowy/prywatne N3 bez zmian.
+Nie nadpisuje innych historycznych O w odrębnych katalogach.
+
+Osobne Continue tylko zO,index14,13200 dajeM340/a8064048,
+556/671HP,BP2,cap29,menuNULL,lock0,zero wrogów. Pełne inventory i
+wszystkie zmienne równeFileSaved; wprost sprawdzone56slot27 i6Medicine3.
+PASS `/tmp/pe-ex-chrysler-O1-loaded-v1-proof/proof.json`: cold normal/SAN
+exit0 bez raportów,pełny JSON/VRAM normal=SAN,O8192B bez zmian.
+Dwie pierwsze próby odrzucił walidator kolejności inputu,przed startem gry;
+wyniki w katalogach-order-rejected/-order-rejected-2. Poprawiono wyłącznie
+sortowanie harmonogramu Continue przed udanym replayem.
+
+Seed/checkpoint/runner/verifier przy obu prefiksach. SDK/SDL
+nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe. Stary kontroler
+key1-prep zamknięty quit exit0,karty zachowane. Nowy aktywny
+`/tmp/pe-ex-chrysler-O1-nav-v1.py`,prywatny katalog z sufiksem-live,
+startuje z samegoO13200. Następne: powrót windą do10 i dalszy Chrysler.
+Cały zakres portu pozostaje otwarty; bez RAM/RNG/save edits i zmian produkcji.
+
+
 ### EX Chrysler N3: odzyskany Key1 i winda do holu,floor1
 
 Bez zmian produkcyjnych. Z196802 zwykły powrót do M291 i korytarzami

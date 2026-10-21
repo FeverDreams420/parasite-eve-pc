@@ -2,6 +2,79 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### Headless: widoczność oryginalnych łupów i odbiór amunicji przy pełnym plecaku
+
+W istniejącym `src/main/boot/init.c` dodano25 linii diagnostyki do
+istniejącego zrzutu stanu; bez nowych plików/funkcji produkcyjnych,
+przenoszenia kodu lub zmian reguł gry. Nowy `battle_rewards` zawiera
+`result_phase`, naliczone `exp`/`pe_bonus`, dokładnie10 oryginalnych
+`rolled` par id/extra oraz `remaining`: oryginalną aktywną listę odbioru
+z value i odczytanym item id/kind/ammo. Zachowuje puste sloty(value0,
+itemNULL) po odbiorze. Extra jest signed, w tym sentinel−1. Odczyt
+listy ograniczono do0..10 i jej własnego wskaźnika override, w fazie
+wyników z istniejącym menu. Nie wybiera ani nie przebudowuje list.
+Poza tym kontekstem remainingNULL. Rolled/EXP mogą pozostać z ostatniej
+walki także w eksploracji: nie traktować ich jako bieżącego łupu, gdy
+result_phasefalse. Podgląd nie obiecuje, że każdy przedmiot zmieści się
+w ekwipunku; oryginalne menu nadal rozstrzyga odbiór i transfer.
+
+Nowy kandydat `/tmp/pe-reward-visibility-v1-game`, SHA256
+`75f2c3a117a15aa3ec6c46f5944637654ba585540df46b7cf0ca5026bbc5c7a0`;
+SAN `/tmp/pe-reward-visibility-v1-game-sanitized`, SHA256
+`ec2ee3a8acce7545acf2dcdcbb69d4e294e58f6709866564a2350975bd169c21`.
+Świeże438 obiektów (219/profil), zależności/archiwa/binaria ponownie
+sprawdzone manifestem. Init bez ostrzeżeń. PASS70/70 regresji
+`/tmp/pe-reward-visibility-v1-verification.json`; PASS13/13 wybranych
+CTest w każdym profilu i sygnatury efektów M418/M436 zgodne:
+`/tmp/pe-reward-visibility-v1-effects-proof.json`. Skrypty build,
+regressions,checks i manifest/proof pod tym samym prefiksem w/tmp.
+PsyZ/SDL archiwa niezmienione i nieinstrumentowane.
+
+Z oryginalnego C odtworzono starą gałąź do M22946548: pełne30/30,
+HP535/765, łup wyłącznieAmmo30. Read-only LLDB na poprzednim kandydacie
+potwierdził rolled id3/extra−1, remaining value3/item3/kind16/ammo30.
+Oryginalne ALL przy46556 odebrało amunicję mimo braku wolnego slotu:
+46676 rezerwa223→253, wszystkie sloty/rekordy wyposażenia, character
+oraz512vars niezmienione. Remaining ma wtedy value0/itemNULL,
+a rolled pozostaje niezmienione. END47104: remainingNULL,
+result_phasefalse. To błąd wcześniejszego sterownika, który przy pełnym
+plecaku wybierał END; nie był to brak miejsca na amunicję w grze.
+
+PASS `/tmp/pe-reward-visibility-v1-loot-proof/proof.json`: trzy punkty
+46548/46676/47104, każdy zimny normal/SAN, sześć native exit0 bez
+diagnostyki, C8192B źródłowe/prywatne niezmienione. Nowy battle_rewards
+w każdym punkcie dokładnie zgodny z niezależnym odczytem LLDB starego
+kandydata. Wszystkie dotychczasowe pola JSON i1MiBVRAM identyczne ze
+starym kandydatem oraz pomiędzy profilami. Reference helper
+`/tmp/pe_reward_reference_v1.py`, snapshoty
+`/tmp/pe-reward-reference-v1-{before,after,field}`.
+
+Sterownik wybiera teraz ALL także przy pełnym plecaku, gdy wszystkie
+pozostałe przedmioty mają oryginalny rodzaj amunicji16..18. Dla pełnego
+plecaka i mieszanego łupu z amunicją zatrzymuje się przed END, do świadomej
+obsługi SEL; nie deklarować jeszcze automatycznego rozwiązania wszystkich
+mieszanych łupów. Nie zmienia reguł pojemności. Helper
+`/tmp/pe-reward-visibility-v1-farm-driver.js`. Osobny live na nowym
+kandydacie wykonał decyzję z nowego JSON i odebrał Ammo30; cały stan/VRAM
+po ALL i END dokładnie zgodny z cold normal/SAN. PASS receipt
+`/tmp/pe-reward-visibility-v1-loot-proof/driver-proof.json`; decision.json
+w `/tmp/pe-reward-visibility-v1-loot-live`. Obie referencyjne gałęzie
+zamknięte native exit0. Dalszy zapis D nie otrzymał tych30 nabojów:
+test odbioru był osobną gałęzią, bez nowego zapisu.
+
+PASS `/tmp/pe-reward-visibility-v1-D4-proof/proof.json`: świeże zimne
+Continue D14392 na nowym kandydacie, normal/SAN całyJSON/VRAM zgodne,
+wszystkie stare pola i obraz identyczne ze starym D. Nowe nagrody
+początkowo zero/inactive/remainingNULL. Karty D8192B niezmienione,
+oba exit0 bez diagnostyki. Nowy live również w całości zgodny;
+receipt `/tmp/pe-reward-visibility-v1-D4-proof/live-reference.json`.
+Kontroler28567/native6445, root `/tmp/pe-reward-visibility-v1-D4-live`,
+zatrzymany14392/M340,HP535/765,EXP413205,BP729,ATK149,oba pancerze,
+siedemMedicine3,rezerwa223. Poprzedni13572 zamknięty native exit0.
+Boss50/Chrysler77 i pełny port pozostają otwarte. Brak oraclePS1,
+dowody/tmp nietrwałe, SDK/SDL nieinstrumentowane. To rozszerzenie
+obserwacji oryginalnej gry i dowód odbioru amunicji, nie ukończenie portu.
+
 ### Dwa pancerze: SvProtector odebrany, reset PE fatigue potwierdzony
 
 Na tym samym pe-glyph-visibility-v1 kontynuowano autentyczny C4.

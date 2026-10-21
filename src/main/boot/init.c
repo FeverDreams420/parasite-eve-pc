@@ -9,6 +9,7 @@
 #include "pe1/aya.h"
 #include "pe1/battle_runtime.h"
 #include "pe1/battle_status.h"
+#include "pe1/battle_start.h"
 #include "pe1/boot.h"
 #include "pe1/boot_services.h"
 #include "pe1/cdrom_buffers.h"
@@ -20,6 +21,7 @@
 #include "pe1/game_state_types.h"
 #include "pe1/game_timers.h"
 #include "pe1/gte.h"
+#include "pe1/inventory_slots.h"
 #include "pe1/menu_inventory.h"
 #include "pe1/pad_state.h"
 #include "pe1/psyq_callbacks.h"
@@ -124,6 +126,29 @@ static void Boot_PollHost(void) {
         Combatant *player=(Combatant *)g_PlayerEntity->state;
         printf(",\"player_hp\":%u,\"player_max_hp\":%u",(unsigned)player->curHP,(unsigned)player->maxHP);
     }
+    printf("},\"battle_rewards\":{\"result_phase\":%s,\"exp\":%u,\"pe_bonus\":%u,\"rolled\":[",
+        g_BattleModeState==2?"true":"false",g_BattleExpReward,(unsigned)g_BattlePeBonusReward);
+    for(unsigned i=0;i<10;++i)
+        printf("%s{\"id\":%u,\"extra\":%d}",i?",":"",
+            (unsigned)(u16)g_BattleRewardSlots[i].id,(int)g_BattleRewardSlots[i].extra);
+    printf("],\"remaining\":");
+    /* The reward menu consumes this original override list. Observe its
+     * holes and ammo records without selecting or rebuilding either list. */
+    if(g_BattleModeState==2 && g_MenuWidgetCurrentNode &&
+       g_InvActiveListOverride==g_InvActiveListItems &&
+       g_InvOverrideSlotLimit>=0 && g_InvOverrideSlotLimit<=10){
+        printf("[");
+        for(int i=0;i<g_InvOverrideSlotLimit;++i){
+            unsigned value=(u16)g_InvActiveListItems[i];
+            const ItemDataRecord *item=Inv_LookupItemRecord(value);
+            printf("%s{\"value\":%u,\"item\":",i?",":"",value);
+            if(item)printf("{\"id\":%u,\"kind\":%u,\"ammo\":%u}",
+                (unsigned)item->itemId,(unsigned)item->kind,(unsigned)item->ammo);
+            else printf("null");
+            printf("}");
+        }
+        printf("]");
+    }else printf("null");
     printf("},\"inventory\":{\"capacity\":%u,\"slots\":[",(unsigned)g_AyaSaveState.inventory_slot_count);
     for(unsigned slot=0;slot<50;++slot)
         printf("%s%u",slot?",":"",(unsigned)(u16)g_AyaSaveState.inventory_items[slot]);

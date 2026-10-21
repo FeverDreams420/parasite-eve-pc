@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Chrysler N3: zamknięta winda i odczyt układu piętra
+
+Bez zmian produkcyjnych. Z M333 zwykły pad prowadzi48030 do
+M292/a8049148. Interakcja z panelem przy[482,177],po zwróceniu ku
+panelowi,wyświetla49800–50200 oryginalny dialog8 „Aya: I guess I need
+a key...”. Warunku nie omijano. Zamknięcie dialogu i zachodnie wyjście
+prowadzą50830 do M305. Aya401/671HP,BP2,menuNULL,lock0; pełne inventory
+identyczne z46672,wszystkie zmienne poza5:22→21 identyczne.
+PASS `/tmp/pe-ex-chrysler-elevator-N3-v1-proof/proof.json`: pełny
+zimny replay od muzealnego N3,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live50830,źródłowy/prywatne N3 8192B bez zmian.
+Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oraclePS1,dowody/tmp nietrwałe.
+
+Dalszy live51420:M332/a8061048 po zachodnim wyjściu M305; ten końcowy
+odcinek jeszcze bez niezależnego replayu. Odczyt LLDB read/detach
+`g_FontSelectionState` przy50830 ujawnił codeIndex2,code87,selected12,
+seed11569 i26 pozycji tabeli. Dane w `/tmp/pe-chrysler-table-N3-v1.json`.
+Istniejące Render_GetOrLoadFontGlyph/Render_FindFontGlyphSlot/
+Render_StepFontLoad w src/main/render/font.c obsługują również tę
+nawigację (historyczne nazwy funkcji nie opisują w pełni zastosowania).
+Wyliczony pomocniczy graf potencjalnych akcji20/21/22/23 w
+`/tmp/pe-chrysler-floor2-graph-N3-v1.json`: kod1 występuje wslot0,
+kod2 wslot9. To odczyt/planner,nie dowód dojścia do schodów; faktyczne
+wyjścia zależą od oryginalnych skryptów pokoju. Nie zmieniano RAM,
+losowania ani save. Dalsze piętra i pełny Chrysler nadal otwarte.
+
+
 ### EX Chrysler N3: dwie wygrane,ślepa odnoga M300 i przejście do M333
 
 Na niezmienionym pe-control-aim-v1 zwykły pad od34567 przeszedł

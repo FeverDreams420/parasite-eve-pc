@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX B3: ukończone piętro31, wejście na32
+
+Bez zmian kodu na pe-m392-bind-v1. Z30880 kolejne code9/a8069448 przy31570:
+dwóch wrogów pokonanych przy434HP, read/detach łupu dwa id1,odebrane.
+Następny code9 34526, code21/a8080148 35178, code10 35738,
+M30436378,M29437038,code20/a80801c8 37538,M30738128,
+code20 38708,code9 39298,M29639988. Endpoint40708 M297/a80493c8,
+piętro32,HP434/671,BP2,menuNULL,lock0,zero wrogów,trzy klucze,trzy Medicine3.
+
+PASS `/tmp/pe-ex-chrysler-floor32-B3-v1-proof/proof.json`: zimne replaye
+wyłącznie z autentycznego B3, normal/SAN exit0 bez raportów; cały JSON i1MiB
+VRAM zgodne również z obserwowanym przebiegiem. Względem30880 pełny
+ekwipunek różni się tylko amunicją426:5→15; wszystkie zmienne poza4:31→32,
+5:22→20,18:5→10,78:169→98 identyczne. Źródłowy i prywatne B8192B niezmienione.
+Seed/checkpoint/runner/verifier obok. Read/detach układu32:selected18,count23,
+seed1140; `/tmp/pe-chrysler-floor32-table-B3-v1.json`, plan -route obok wymaga
+wykonania. Piętro32 dopiero rozpoczęte. Dowody /tmp nietrwałe,
+SDK/SDL nieinstrumentowane, brak oracle PS1. Pełny zakres portu nadal otwarty.
+
 ### EX B3: pierwsza część piętra31, walka w nowym code10
 
 Bez zmian kodu na pe-m392-bind-v1. Z22499: M30523111,

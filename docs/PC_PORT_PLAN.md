@@ -2,6 +2,35 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A2: boss30 M390 pokonany, Chrysler Key3 odebrany
+
+Bez zmian kodu na pe-m392-bind-v1. Autentyczne nowe podejście z v3 od187123:
+M390187803, walka187907. Po podejściu i Heal3 przy192259 type3 ma106HP,
+pozostałe600/600/800; Aya428HP i pełne PE98566144, Darkness aktywne.
+Liberate zatwierdzone192643; oryginalna animacja i trafienia zmniejszają
+pozostałe części do600/266/466 przy196315. Full Cure ze slot15 oraz
+Medicine3 ze slot9 w DoubleAction: HP224→404 przy197295, Darkness znika.
+Dalsze Heal3 i ruch wokół areny odnawiają PE. Liberate niedostępne przy
+PE72704822, dostępne przy pełnym98566144; drugie zatwierdzone200559.
+Przy203031 zostaje type6/sub28 z165HP, Aya257HP. Medicine3 ze slot10
+plus strzał: HP437, wróg68. Kolejna salwa pokonuje ostatnią część:
+204379 menu EXP, zero wrogów, Aya427/671HP. Read/detach łupu id58.
+ALL odbiera Chrysler Key3 do slot9. Endpoint205059: M390/a8069048,
+piętro30,BP2,menuNULL,lock0,zero wrogów,klucze57/58/56,trzy Medicine3,
+puste sloty10/15/28. Key3 nie wymagał modyfikacji pamięci ani stanu zapisu.
+
+PASS `/tmp/pe-ex-chrysler-boss30-win-A2-v1-proof/proof.json`: pełne zimne
+replaye tylko z autentycznego A2, normal/SAN exit0 bez raportów; cały JSON
+i1MiB VRAM zgodne również z obserwowanym przebiegiem. Pełny ekwipunek
+względem187123 różni się tylko slot9:8→58,slot10:8→0,slot15:17→0,
+amunicją426:2→15. Wszystkie zmienne poza5:23→20,7:6→14,11:25034→57802,
+18:4170611→0,78:159→11 identyczne. Źródłowy i prywatne A8192B oraz
+SHA256 obu zamrożonych binariów sprawdzone bez zmian. Seed/checkpoint/
+runner/verifier obok. Kontroler v3 nadal żywy w potwierdzonym punkcie.
+Następne kroki: wyjście z Chrysler, trwały zapis po bossie oraz Continue,
+następnie piętra31–77. Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane,
+brak oracle PS1. Pełny zakres portu pozostaje otwarty.
+
 ### EX A2: boss30 Darkness, Full Cure i nieudane podejście
 
 Bez zmian produkcji. Przy205705 state_flags0x10200010 zawiera Darkness:

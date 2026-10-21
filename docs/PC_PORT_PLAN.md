@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: poprzednio przegrywana późna walka M406 na42 wygrana
+
+Bez zmian kodu na pe-m410-bind-v1. Ze zweryfikowanego64980 oryginalne
+Heal3 w polu podniosło HP452→671 przy65480. Code10/M40666009,
+walka z jednym sub31 HP580/def98 od66097. Pierwszy cel był poza zasięgiem;
+Cancel, podejście i ponowne celowanie. Ruch między akcjami oraz oryginalne
+Heal3/single-shot/DoubleAction pozwoliły wygrać zamiast wcześniejszej porażki.
+Wynik69205:HP456/671,mode2,zero wrogów,menuEXP20. Read/detach łupu:id1,
+amunicja odebrana; endpoint69917 M406/a8080348,mode9,menuNULL,lock0,BP2.
+Medicine3 i wszystkie cztery klucze zachowane.
+
+PASS `/tmp/pe-ex-chrysler-win42-late406-A4-v1-proof/proof.json`: pełny
+zimny A4 normal/SAN/live zgodny całym JSON i1MiB VRAM,exit0 bez raportów,
+SHA gry sprawdzone. Cały ekwipunek poza amunicją426:6→17 identyczny
+z64980; wszystkie zmienne poza5:22→23,18:7→20,78:8→41 identyczne.
+Źródłowy i prywatne A8192B niezmienione. Seed/checkpoint/runner/verifier
+obok. Żywy v7 czeka przy69917 po zwycięstwie.
+
+Nie zmieniono statystyk, balansu ani stanu przez RAM/RNG/save; przygotowanie
+przez oryginalne menu oraz sterowanie wystarczyło do wygranej.
+Dalsza końcówka42 i piętra43–77 do sprawdzenia. Dowody /tmp nietrwałe,
+SDK/SDL nieinstrumentowane, brak oracle PS1. Pełny port otwarty.
+
 ### EX A4: przejście za M410 i kolejna wygrana code21 na42
 
 Bez zmian kodu na pe-m410-bind-v1. Od60011:code23 60551,

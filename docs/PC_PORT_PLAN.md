@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### B4: ukończone41, wejście na42 bez zużycia Medicine3
+
+Bez zmian produkcji,ten sam pe-m436-bind-v2. Od potwierdzonego33903
+M407 pad:Right70/Up70/Right70→M33534714,Right115/Down150→
+M40535279. Down112 uruchamia dwóch wrogów35391; Single shots,
+DoubleAction i Heal3 wygrywają37267 przy691/763HP. Oryginalna nagroda
+read-only:EXP259,Medicine2/id7; pozostawiona przez END,endpoint38723.
+Pięć Medicine3 niezużyte,HP487→691 dzięki PE. Magazynek6→0,
+EXP301018→301277,pulaPE30→54,BP47 bez zmian.
+
+Down260→M30739283,Down130/Right170 nie sięga końca korytarza;
+dodatkoweRight50→M29240233. Right130+80→M43241043,
+Right130/Up160→M40741633,Up70/Right208→M43242211,
+Right130/Up160→M29642801,Up420→M29743521,piętro42.
+Na tej części nie było nowych walk. Oryginalna trasa41 wykonana w całości;
+42 tylko rozpoczęte. Endpoint691/763HP,menuNULL,lock0,mode9,zero wrogów.
+
+PASS `/tmp/pe-ex-chrysler-floor42-B4-v1-proof/proof.json`:
+pełny zimny B normal/SAN/live JSON i1MiBVRAM identyczne,oba exit0
+bez diagnostyki,źródłowy i prywatneB8192B niezmienione. Pełny inventory
+względem33903 tylko clip426:6→0; character tylkoEXP+259,HP487→691,
+pulaPE30→54. Wszystkie512vars poza4:41→42,18:4→10,78:13→89
+identyczne. Runner/seed/checkpoint/verifier przy tym prefiksie.
+Read-only mapa42:count26,selected17,seed25164,
+`/tmp/pe-chrysler-floor42-B4-table-v1.json`; plan w -route-v1.json wymaga
+wykonania. Live `/tmp/pe-ex-museum-B4-loaded-v1-live`,kontroler75878,
+native26158,zatrzymany43521. Zapas leków nadal pięć Medicine3.
+SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+Dalsze piętra42–50 i cały zakres portu pozostają otwarte.
+
 ### B4: powrót na41 i pierwsza walka mocniejszą Ayą
 
 Bez zmian kodu,pe-m436-bind-v2. Z Continue B14328 zwykły pad wraca

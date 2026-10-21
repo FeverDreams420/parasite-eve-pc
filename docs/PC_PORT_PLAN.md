@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: cold L → Klamp Key z zachowanym Medicine4
+
+Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Nowy controller29869,
+`/tmp/pe-ex-museum-L2-nav-v1.py`,root`/tmp/pe-ex-museum-L2-nav-v1-live`,
+wczytał wyłącznie autentyczny L przy13200. M340→M34314335,właściwe
+podejście do drzwi x≥2300,z470..630 i dialog174→M34417413.
+Pełny oryginalny ciąg dialogów/animacji Klampa zakończony55333.
+MaedaGun268 odebrano za Junkslot25;KlampKey213 za jeden Toolslot14.
+Medicine4raw9slot0 iMedicine3raw8slot26 zachowane,drugi Toolslot16 również.
+M344(a8064248),story632,237/589HP,BP1156,menuNULL,lock0,bez wrogów.
+
+Względem zimnego L wyłącznie slot14:22→213,slot25:20→268;
+rekordy sprzętu zmieniają bajty384:0→1,394:0→15. Reszta inventory
+identyczna. Zmienne wyłącznie1:998→343,34:183→185,37:132→133.
+Pełny cold replay od L: `/tmp/pe-ex-klamp-key-L2-v1-proof/proof.json`
+PASS,pełny JSON i1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń
+sanitizerów,źródłowy i prywatne L bez zmian. SDK/SDL bez instrumentacji,
+brak oracle PS1,dowody /tmp nie są trwałym CTest.
+Live29869 czeka55333 wM344. Dalej M343 zachodnim wyjściem do M229,
+M242/M243 i boss,z zachowaniem dodatkowego Medicine4 na drugą fazę.
+Pełna kampania EX i cały cel nadal otwarte.
+
+
 ### EX: trwały zapis L2 z Medicine4 i osobne Continue
 
 Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live51540 od63868

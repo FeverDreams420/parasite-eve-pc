@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: piętro20, kolejne walki M386 i M385
+
+Bez zmian produkcji. Z185911 przejście doM386186501 uruchamia trzech
+wrogów, pokonanych bez utratyHP. Read/detach łupu:1/6/1; END przez
+Up z ALL, bez odbierania łupu, zachowuje wolny slot0. Dalej M385188489,
+trzech wrogów pokonanych przy567HP. Read/detach łupu:6/7/6; ponownie
+END bez ALL. Endpoint193185 M385/a80682c8,piętro20,567/671HP,
+BP2,menuNULL,lock0,zero wrogów. Slot0 wolny,Key1 i pięć Medicine3 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-m385-floor20-O1-v1-proof/proof.json`:
+niezależne zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live193185. Pełny ekwipunek względem185911
+różni się tylko amunicją426:0→8; wszystkie zmienne poza18:1753053→3850206,
+78:195→17 identyczne. Źródłowy i prywatne O8192B bez zmian.
+Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe. Boss20 jeszcze niepodjęty;
+następne wyjście23 z M385. Pełny zakres portu pozostaje otwarty.
+
 ### EX O1: piętro20, wolny slot i pierwsza wygrana
 
 Bez zmian produkcji. Z181809 oryginalne menu Items/Use Medicine3

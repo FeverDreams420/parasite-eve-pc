@@ -2,11 +2,42 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Chrysler piętro3: M305/M309→M301 i korekta nazw scen
+
+Bez zmian produkcyjnych. Od54735 zwykły pad prowadzi55171 doM305,
+55721 doM309/a80604c8,a56251 doM301/a80600c8. Oryginalny skrypt
+M301 ma jedno wyjście (akcja20),więc ta odnoga jest ślepa; tabela
+potencjalnych akcji sama nie dowodzi dostępności wyjścia w pokoju.
+Aya401/671HP,BP2,menuNULL,lock0,pełne inventory identyczne z54735.
+Wszystkie zmienne poza5:20→22,18:51→48,78:36→181 identyczne.
+PASS `/tmp/pe-ex-chrysler-floor3-m301-N3-v1-proof/proof.json`:
+pełne zimne replaye od muzealnego N3,normal/SAN exit0 bez raportów,
+pełny JSON i1MiB VRAM normal=SAN=live56251,źródłowy/prywatne N3
+8192B niezmienione. Seed/checkpoint/runner/verifier obok. SDK/SDL
+nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+
+Poprawiono nazwy w powyższych nowych notatkach Chryslera:
+a8061048 to m0310i (M310),a80610c8 to m0311i (M311),zgodnie z
+Text_ParseBase32Id i g_MapFilenameTable. Wcześniejsze etykiety
+M332/M333 były błędnym odczytem base32 jako numeru dziesiętnego.
+Identyfikatory,pełne porównania i historyczne nazwy artefaktów/tmp
+pozostają bez zmian. Korekta nie dotyczy odrębnych prawdziwych modułów
+M332/M333 poza tymi nowymi notatkami.
+
+Dalszy live59726 po powrocie M301→M309→M305→M308 i przejściu
+M311: M294/a8049248,bez strat HP/leków. Ten dalszy odcinek jeszcze
+bez niezależnego replayu. Skrypt M294 udostępnia akcje21/23;
+nie zakładać20/22 tylko na podstawie klucza kolumny w tabeli.
+Następne: kontynuować graf z uwzględnieniem faktycznych akcji pokojów,
+przy niezmienionym stanie i oryginalnych warunkach. Piętro3,wspinaczka
+oraz cały cel pozostają otwarte.
+
+
 ### EX Chrysler N3: przejście schodami z piętra2 na3
 
 Ten sam pe-control-aim-v1,bez zmian produkcyjnych. Od50830 zwykły pad
-przeszedł zachodnim wyjściem M305 do M332/a8061048 (51420).
-Po korekcie powrotu wejście M332 i wyjście x1444..1932,z−1549..312
+przeszedł zachodnim wyjściem M305 do M310/a8061048 (51420).
+Po korekcie powrotu wejście M310 i wyjście x1444..1932,z−1549..312
 prowadzą52415 do M307/a80603c8. Dalsze wschodnie wyjście M307
 (x1604..2209) daje53265 M296/a80492c8. Przejście M296 przez
 x796..1557,z−909..−205 prowadzi54255 do M297/a80493c8. Zwykły
@@ -29,7 +60,7 @@ pozostałe piętra,bossowie i pełny Chrysler nadal otwarte.
 
 ### EX Chrysler N3: zamknięta winda i odczyt układu piętra
 
-Bez zmian produkcyjnych. Z M333 zwykły pad prowadzi48030 do
+Bez zmian produkcyjnych. Z M311 zwykły pad prowadzi48030 do
 M292/a8049148. Interakcja z panelem przy[482,177],po zwróceniu ku
 panelowi,wyświetla49800–50200 oryginalny dialog8 „Aya: I guess I need
 a key...”. Warunku nie omijano. Zamknięcie dialogu i zachodnie wyjście
@@ -41,7 +72,7 @@ oraz1MiB VRAM normal=SAN=live50830,źródłowy/prywatne N3 8192B bez zmian.
 Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
 brak oraclePS1,dowody/tmp nietrwałe.
 
-Dalszy live51420:M332/a8061048 po zachodnim wyjściu M305; ten końcowy
+Dalszy live51420:M310/a8061048 po zachodnim wyjściu M305; ten końcowy
 odcinek jeszcze bez niezależnego replayu. Odczyt LLDB read/detach
 `g_FontSelectionState` przy50830 ujawnił codeIndex2,code87,selected12,
 seed11569 i26 pozycji tabeli. Dane w `/tmp/pe-chrysler-table-N3-v1.json`.
@@ -55,7 +86,7 @@ wyjścia zależą od oryginalnych skryptów pokoju. Nie zmieniano RAM,
 losowania ani save. Dalsze piętra i pełny Chrysler nadal otwarte.
 
 
-### EX Chrysler N3: dwie wygrane,ślepa odnoga M300 i przejście do M333
+### EX Chrysler N3: dwie wygrane,ślepa odnoga M300 i przejście do M311
 
 Na niezmienionym pe-control-aim-v1 zwykły pad od34567 przeszedł
 M306→M300/a8060048. Odczyt oryginalnego skryptu M300 potwierdził
@@ -72,7 +103,7 @@ Południowe wyjście M308 prowadzi do M298/a8049448 (42290),które
 jest kolejnym pokojem,nie potwierdzonymi schodami. Powrót i ponowne
 wejście/ruch w głąb uruchamiają pięciu przeciwników (43582). Kolejna
 wygrana zwykłym ostrzałem,nagrody zamknięte46182,HP401/671 bez leków.
-Wyjście wschodnie prowadzi46672 do M333/a80610c8,menuNULL,lock0,
+Wyjście wschodnie prowadzi46672 do M311/a80610c8,menuNULL,lock0,
 BP2,zero przeciwników. Pełne inventory względem41795 zmienia tylko
 byte426:16→11; wszystkie zmienne poza5:21→22,18:33→51 identyczne.
 PASS `/tmp/pe-ex-chrysler-m333-N3-v1-proof/proof.json`.

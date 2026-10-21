@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A2: pierwsza część piętra22, walka code9
+
+Bez dalszych zmian produkcji na pe-m392-bind-v1. Read/detach układu22:
+code21,selected3,count21; `/tmp/pe-chrysler-floor22-table-A2-v1.json`,
+plan obok z-route. Z44461: code23/a80691c8 przy45073,
+code22/a8069248 przy45651,code21/a80692c8 przy46181,
+M39246741,code22 przy47381,code9/a80690c8 przy47911.
+Pięciu wrogów pokonanych przy509HP; łup1/1/1/7/7 potwierdzony
+read/detach,Medicine2 pozostawione przy pełnym plecaku. Wyjście22
+prowadzi51423 do code20/a8069348,piętro22,509/671HP,BP2,
+menuNULL,lock0,zero wrogów. Oba klucze i pięć Medicine3 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-mid22-A2-v1-proof/proof.json`:
+niezależne zimne replaye tylko zA,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live51423. Pełny ekwipunek względem44461
+różni się tylko amunicją426:14→5; wszystkie zmienne poza5:20→22,
+18:3→17 identyczne. Źródłowy i prywatne A8192B bez zmian.
+Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe. Piętro22 nieukończone;
+następne wyjście21 zcode20. Pełny zakres portu nadal otwarty.
+
 ### EX A2: M392 walka/wyjście i wejście na22
 
 Na poprawionym pe-m392-bind-v1 bez dalszych zmian produkcji. Z35154

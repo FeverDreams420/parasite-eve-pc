@@ -2,6 +2,28 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: ukończone piętro42, wejście na43
+
+Bez zmian kodu na pe-m410-bind-v1. Od69917:M29470401,
+code10/M40670901,code20/M41071541. Jeszcze jedna walka z jednym
+sub31 HP460/def88 od71629. Oryginalne anulowanie celowania, podejście,
+ruch podczas fazy poza zasięgiem oraz Heal3 dały zwycięstwo przy625HP.
+Wynik73621 menuEXP20,read/detach łupu:same zera. Menu zamknięte73929,
+M29674519,endpoint75239 M297/a80493c8,piętro43,HP625/671,BP2,
+mode9,menuNULL,lock0,zero wrogów. Medicine3 i cztery klucze zachowane.
+
+PASS `/tmp/pe-ex-chrysler-floor43-A4-v1-proof/proof.json`: pełny zimny
+A4 przez całe41/42 i wszystkie dotychczasowe walki/poprawione moduły;
+normal/SAN/live zgodne całym JSON i1MiB VRAM,exit0 bez raportów,
+SHA gry sprawdzone. Cały ekwipunek poza amunicją426:17→12 identyczny
+z69917; wszystkie zmienne poza4:42→43,5:23→20,18:20→37,78:41→7
+identyczne. Źródłowy i prywatne A8192B niezmienione.
+Seed/checkpoint/runner/verifier obok. Read/detach układu43:
+selected20,count30,seed24325 w `/tmp/pe-chrysler-floor43-table-A4-v1.json`,
+plan -route obok wymaga wykonania. Piętro43 dopiero rozpoczęte.
+Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1.
+Pełny zakres portu pozostaje otwarty.
+
 ### EX A4: poprzednio przegrywana późna walka M406 na42 wygrana
 
 Bez zmian kodu na pe-m410-bind-v1. Ze zweryfikowanego64980 oryginalne

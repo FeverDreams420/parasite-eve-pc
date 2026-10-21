@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: ukończone piętro41, wejście na42 na poprawionym kandydacie
+
+Bez dalszych zmian kodu na pe-m406-bind-v2. Od35151:M30535791,
+M40636419,code22/a8080448 37059,code9/a80802c8 37589,
+code21/a80804c8 38279,M30638839,M29639535,
+endpoint40255 M297/a80493c8,piętro42,HP401/671,BP2,menuNULL,lock0,
+mode9,zero wrogów. Od M406 do schodów brak kolejnych walk/utraty HP.
+
+PASS `/tmp/pe-ex-chrysler-floor42-A4-v1-proof/proof.json`: zimny A4 przez
+całą pierwszą walkę41 i poprawiony M406, następnie wszystkie przejścia do42.
+Normal/SAN exit0 bez raportów; cały JSON i1MiB VRAM zgodne z live;
+SHA obu binariów zweryfikowane. Pełny ekwipunek identyczny z35151,
+wszystkie zmienne poza4:41→42,5:23→20,78:20→140 identyczne.
+Źródłowy i prywatne A8192B niezmienione. Cztery klucze, jedna Medicine3
+i dwie Medicine2 zachowane. Seed/checkpoint/runner/verifier obok.
+Read/detach układu42:selected20,count26,seed24325;
+`/tmp/pe-chrysler-floor42-table-A4-v1.json`, plan -route obok wymaga wykonania.
+Piętro42 dopiero rozpoczęte. Dowody /tmp nietrwałe, SDK/SDL
+nieinstrumentowane, brak oracle PS1. Pełny zakres portu nadal otwarty.
+
 ### Naprawiony brak powiązań oryginalnego M406 na piętrze41
 
 Po endpoint34657 ruch Up50/Right210 ujawnił rzeczywisty błąd starego

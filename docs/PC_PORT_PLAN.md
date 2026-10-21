@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### A4 prep: pierwsze dwie walki na50 i polowe leczenie Medicine2
+
+Bez zmian kodu na pe-state-visibility-v1. Od153708:code9 154320,
+trigger154488 dwóch type5 po460HP. Utrata zasięgu wymagała Cancel
+z cofnięciem zakolejkowanego Heal3 i ruchu;HP spadło do223,oryginalne
+Heal3/focus/ruch pozwoliły wygrać przy659HP. Wynik159428,
+read/detach:id2(15nabojów),EXP266. ALL,zamknięcie160660,
+code22 161240,M406161810. Trigger161906 jeden type3 HP580;
+kilka Cancel/repozycjonowań po utracie zasięgu,Heal3/single shots,
+wynik165878 HP319. Read/detach:id1(6nabojów),EXP160.
+ALL,zamknięcie167110. Oryginalne Items używa Medicine2 slot8
+przy167398:319→409,slot13 przy167574:409→499,slot15 przy167686:499→589.
+Zamknięte menu,endpoint167750 M406/a8080348,piętro50,HP589/671,BP2,
+mode9,menuNULL,lock0,zero wrogów. Wolne8/13/15;Medicine2 slot18/20/26,
+Medicine3 slot28,Medicine4 slot12 zachowane. Magazynek7,rezerwa312.
+
+PASS `/tmp/pe-ex-chrysler-A4-prep-mid50-state-v1-proof/proof.json`:
+pełny zimny A4 normal/SAN/live checkpoint JSON i1MiB VRAM identyczne,
+oba exit0 bez raportów,SHA kandydatów oraz niezmienione źródłowe/prywatne
+karty8192B sprawdzone. Inventory względem153708 wyłącznie trzy zużyte
+sloty8/13/15,magazynek6→7,rezerwa309→312;21łupu oznacza17strzałów.
+Character wyłącznie EXP251905→252331(+426),HP657→589;pozostałe pola
+w tym pe_bonus3597 identyczne. Wszystkie512 zmiennych poza5:20→21,
+18:549862→2647013,78:219→14 identyczne. Seed/checkpoint/runner/verifier obok.
+Żywy prep-v2 zatrzymany167750,kontroler96861,pid82271. Dalsza trasa50,
+boss50 i piętra51–77 nadal otwarte. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody/tmp nietrwałe,pełny port nadal nieukończony.
+
 ### A4 prep: ukończone49 i wejście na50
 
 Bez zmian kodu na pe-state-visibility-v1. Od149122 M301:

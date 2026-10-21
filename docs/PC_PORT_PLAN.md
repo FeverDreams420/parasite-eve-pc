@@ -2,6 +2,37 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: druga wygrana walka42; kolejna próba zakończona porażką
+
+Bez zmian kodu na pe-m406-bind-v2. Od47351:code21 47891,M30548441;
+obejście geometrii korytarza daje kolejne code21 50156. Walka z jednym
+sub31 HP460/def88 od50236, Heal3 i single-shot/DoubleAction.
+Brak celu51824 został rozwiązany przez oryginalne Cancel i podejście;
+wynik52503:HP371/671,zero wrogów,menuEXP20. Read/detach łupu: same zera.
+Endpoint52811 code21/a80804c8,mode9,menuNULL,lock0,BP2.
+
+PASS `/tmp/pe-ex-chrysler-win42-code21-A4-v1-proof/proof.json`: pełny zimny
+A4 normal/SAN oraz świeży kontroler live zgodne całym JSON i1MiB VRAM,
+exit0 bez raportów, SHA gry zweryfikowane. Pełny ekwipunek względem47351
+poza amunicją426:9→3 identyczny; wszystkie zmienne poza18:20→37,
+78:123→9 identyczne. Źródłowy i prywatne A8192B niezmienione.
+
+Dalsza pierwsza próba:code22 53303, dwóch wrogów od53375. Leczenie PE
+po ruchu podniosłoHP220→342, ale dalsza wymiana zakończyła się porażką
+56843:HP0,mode3,jeden wróg pozostał. PASS reprodukcji tej porażki:
+`/tmp/pe-ex-chrysler-defeat42-A4-v1-proof/proof.json`, pełny normal/SAN/live
+JSON iVRAM zgodny; cały ekwipunek poza amunicją426:9→17 identyczny
+z47351, wszystkie zmienne poza5:21→20,18:20→38,78:123→46 identyczne.
+Exit0 bez raportów, SHA gry i źródłowy/prywatne A8192B sprawdzone.
+Nie jest to ukończenie42. Nowy żywy kontroler
+`/tmp/pe-ex-chrysler-A4-nav-v4-live` zimno odtworzył zwycięski52811;
+v3 zamknięty quit/exit0. Żadnych edycji RAM/RNG/save.
+
+Seed/checkpoint/runner/verifier obok dowodów. Następna walka wymaga
+lepszego przygotowania/sterowania; dalsza część42 i piętra43–77 otwarte.
+Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1.
+Pełny port nadal nieukończony.
+
 ### EX A4: pierwsza walka42 i oryginalne leczenie w eksploracji
 
 Bez zmian kodu na pe-m406-bind-v2. Od40255:code9 40867,code22 41557,

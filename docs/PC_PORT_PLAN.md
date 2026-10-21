@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: oryginalne drzwi Warehouse Key otwierają M333
+
+Ten sam kandydat `pe-control-aim-v1`, bez edycji kodu: pełny replay od G2 przez M265 i M266 dociera do M333 (`a80631c8`) w klatce 48903. Zwykły input pada prowadzi od wejścia M266 w dół, na zachód po schodach i do drzwi przy [−1722,−770,236]; oryginalny dialog10 i przejście reagują na wcześniej zdobyty Warehouse Key. Pierwsze podejście zawróciło przez wejściowe drzwi; korekta jest także w pełnym replayu. Aya251/437HP, brak przeciwników/menu/blokady, pełny ekwipunek identyczny z potwierdzonym M266/45352, oba klucze zachowane. Wyłączne zmiany zmiennych skryptowych względem 45352: 1=266,47=25165827.
+
+Dowód `/tmp/pe-ex-warehouse-m333-G2-v1-proof/proof.json`: normalny build i ASan/UBSan exit0, pełny JSON i VRAM identyczne z żywym przebiegiem, źródłowa i prywatne G2 bez zmian. SDK/SDL nieinstrumentowane; brak niezależnego oracle PS1 i trwałego CTest. Telefon, zapis po Warehouse i dalsza część lokacji pozostają do potwierdzenia na tym przebiegu.
+
+
 ### EX: wyjście M265 → M266 po zwycięstwie
 
 Bez zmian kodu, ten sam `pe-control-aim-v1`: zimne Continue G2, walka i nagrody M265, dojście do bocznych drzwi przy x≈−1111,z≈−2002, Cross i oryginalne przejście do M266 (`a8046348`) w klatce 45352. Aya 251/437HP, brak przeciwników/menu/blokady ruchu, pozycja startowa [829,0,911]. Pełny ekwipunek identyczny z ekranem zwycięstwa 42553; oba klucze 220/219 zachowane. Zmienne względem 42553 zmieniają się wyłącznie: 1=265 i 20=336856421.

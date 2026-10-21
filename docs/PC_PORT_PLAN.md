@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: ukończone piętro18, wejście na19
+
+Bez zmian produkcji. Read/detach układu18: code52,selected17,count26;
+`/tmp/pe-chrysler-floor18-table-O1-v1.json`, plan obok z-route.
+M307157673: początkowy ruch wrócił do schodów; korekta po odczycie
+lewego wejścia [-712,-81] daje M292159241, M385159741,
+M306160381, M384160941. Czterech wrogów pokonanych przy416HP,
+łup dwa id1 potwierdzony read/detach. M304163613: po korekcie dolnego
+wejścia M389164883, pojedynczy wróg pokonany bez utratyHP, łup id2.
+M384166676, M296167366 i schody168086: M297/a80493c8,piętro19,
+416/671HP,BP2,menuNULL,lock0,zero wrogów. Key1 i sześć Medicine3 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-floor19-O1-v1-proof/proof.json`:
+niezależne zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live168086. Pełny ekwipunek względem157061
+różni się tylko amunicją426:1→11; wszystkie zmienne poza4:18→19,
+18:49118→180190,78:83→33 identyczne. Źródłowy i prywatne O8192B
+bez zmian. Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody /tmp nietrwałe. Następne: piętro19 i dalszy
+Chrysler przed finałem; pełny zakres portu pozostaje otwarty.
+
 ### EX O1: ukończone piętro17, wejście na18
 
 Bez zmian produkcji. Z150228 M387: czterech wrogów pokonanych przy421HP,

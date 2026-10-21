@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: pełne zejście M268 → M269
+
+Bez zmian kodu, `pe-control-aim-v1`: oryginalna drabina M268 wymaga zwykłego Down; Down z Circle/biegiem nie przesuwa Ayi. Po zwykłym schodzeniu wejście M269 (`a80464c8`) i swobodne sterowanie potwierdzone62999:418/437HP,move_lock0,brak przeciwników/menu,pozycja[207.669,−225,−911.008]. Pełny ekwipunek identyczny z M26860099,zmienne różnią się wyłącznie1=268.
+
+`/tmp/pe-ex-warehouse-m269-G2-v1-proof/proof.json`: pełny replay od zimnego G2,normal/SAN exit0,pełny JSON/VRAM zgodny z live62999,pełne inventory/zmienne sprawdzone,G bez zmian,H identyczny ze źródłowym H2. SDK/SDL nieinstrumentowane,brak oracle PS1/trwałego CTest. Dalszy żywy input Left/run100,Up/run100,wait200 uruchamia63199/63399 oryginalną walkę M269:7 aktorów,rdzeń1001198/def153,sześć segmentów587/def90,Aya418HP,ammo5. To dopiero początek walki,nie dowód zwycięstwa ani ukończenia Warehouse.
+
+
 ### EX: nagrody M333, leczenie i przejście M267 → drabina M268
 
 Bez zmian kodu, `pe-control-aim-v1`: po zwycięstwie55408 oryginalny ekran nagród zamyka się56608. Zwykłe Heal3 w menu pola podnosi138→418/437HP (57244). Ruch na zachód prowadzi M333→M267 (`a80463c8`,57954), obejście przeszkód i Cross przy drabinie prowadzą do M268 (`a8046448`,60099). Ten endpoint jest w oryginalnej animacji drabiny, move_lock3; nie oznacza jeszcze swobodnego sterowania ani wejścia M269. Pełny ekwipunek identyczny z55408; zmienne zmieniają wyłącznie1=267,20=341050725.

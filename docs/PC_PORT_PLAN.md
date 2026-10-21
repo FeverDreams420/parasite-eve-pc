@@ -2,6 +2,66 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### A4 prep: wariant Haste i Medicine4 utrzymuje walkę z bossem50
+
+Oryginalny input od zimnego A4 odtwarza198623 (HP671,mode1,dwóch
+wrogów),bez zmian RAM/zapisu. Wariant haste-v2:PE→Haste do kolejki
+przy198991;próba Barrier w drugiej akcji przy199555 pozostaje w PE8,
+przycisk niedostępny (nie wykonano Barrier). Cancel do wyboru celu,
+strzał jako druga akcja. Haste działa,po ruchu199875 HP282;
+PE17149863raw,ATB6000,statusHaste. Ruch60/otwarcie akcji,oryginalne
+Items→slot8 Medicine4→Use przy200247 kolejkuje lek. Druga akcja strzał;
+przy200555 HP671/671,PE26275893raw,ATB9000,statusHaste,
+mode0,dwóch wrogów,menuNULL,lock4. Walka trwa,nie jest zwycięstwem.
+
+PASS `/tmp/pe-ex-chrysler-A4-prep-boss50-haste-item-state-v1-proof/proof.json`:
+cały zimny A4 normal/SAN/live checkpoint JSON i1MiB VRAM zgodne,
+oba exit0 bez raportów,sprawdzone SHA gry i źródłowe/prywatne karty8192B.
+Inventory względem195179 wyłącznie slot8:9→0 i zapisany magazynek16→10;
+żywy magazynek9 jest osobnym polem. Character saved_hp529→282,
+odrębne od żywegoHP671,pozostałe pola identyczne;wszystkie512 zmiennych
+poza7:270→782,11:123338→254410,18:1598436→0,78:71→100 identyczne.
+Seed/checkpoint/runner/verifier obok. Żywy haste-v2 zatrzymany200555,
+kontroler14777,pid94967;root
+`/tmp/pe-ex-chrysler-A4-prep-boss50-haste-v2-live`.
+Pozostałe leki:Medicine4 slot12,Medicine3 slot28,Medicine2 slot18/20/26.
+Dalszy krok:kontynuacja walki,leczenie i kontrola obu przeciwników.
+SDK/SDL nieinstrumentowane,brak oracle PS1,dowody/tmp nietrwałe,
+pełny port nadal nieukończony.
+
+### A4 prep: pierwsza próba bossa50 zakończona porażką
+
+Na pe-state-visibility-v1 bez zmian kodu. Od195179 oryginalne polowe
+PE→Heal3→potwierdzenie przy195499 przywraca529→671HP;leki niezużyte.
+Trigger195667,walka195967. Cel główny1004200HP (wartość skryptowa),
+przy196167 pojawia się type4/sub30 HP1200. Single shots,Heal3;
+przy197495 HP444,cel poza zasięgiem,Heal3 już w kolejce.
+Dodanie Heal1 jako drugiej akcji pozwala wykonać leczenie bez celu
+strzeleckiego:197963 HP671,PE8150393raw. Przy198607 type4 ma0HP
+bez trafienia i pojawia się drugi type3/sub29 HP1004200.
+Przy198623 HP671,mode1,PE26446238raw,magazynek11.
+Dalsze single shots/ruch:198887 HP166 (spadek505),199407 Heal3 daje446,
+199583 HP0/mode3,settled endpoint199591,a8080248,lock5,menuNULL.
+To porażka,nie zwycięstwo;sam ten przebieg nie dowodzi błędu silnika.
+
+PASS `/tmp/pe-ex-chrysler-A4-prep-boss50-loss1-state-v2-proof/proof.json`:
+zimny A4 normal/SAN/live checkpoint JSON i1MiB VRAM identyczne,
+oba exit0 bez raportów,SHA gry i źródłowe/prywatne karty8192B niezmienione.
+Inventory względem195179 wyłącznie zapisany magazynek16→9 (żywy8
+jest osobnym polem podczas trwającej animacji);wszystkie leki zachowane.
+Character wyłącznie saved_hp529→166,odrębne od żywegoHP0;
+wszystkie512 zmiennych poza7:270→782,11:123338→254410,
+18:1598436→0,78:71→100 identyczne. Seed/checkpoint/runner/verifier obok.
+Próba v1 z cap199583 pozostaje surowym odtworzeniem;nie użyto jej
+jako zgodnego z checkpoint199591 dowodu. Kontroler prep-v2 zamknięty
+native exit0,karta niezmieniona. Wariant obronny od198623 odtwarzany
+z oryginalnego inputu (bez zmian RAM/zapisu),wrapper
+`/tmp/pe-ex-chrysler-A4-prep-boss50-haste-v2.py`,live obok.
+Pierwszy wrapper haste-v1 zamknął native exit0 po EOF stdin;
+v2 uruchomiony interaktywnie. Następnie Haste/obrona i dalsza walka.
+SDK/SDL nieinstrumentowane,brak oracle PS1,dowody/tmp nietrwałe,
+pełny port nadal nieukończony.
+
 ### A4 prep: pełna trasa do pokoju bossa50
 
 Na pe-state-visibility-v1 bez zmian kodu. Od176330:

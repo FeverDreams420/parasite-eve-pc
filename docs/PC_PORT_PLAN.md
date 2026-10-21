@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M210: awans i Full Cure z pełnej listy łupu
+
+Bez zmian kodu, `pe-control-aim-v1`: oryginalne nagrody/awans M210 podnoszą maxHP547→561,BP1028→1052. W pełnym inventory27/27 zwykłe menu SEL i wymiana między listami przenoszą Full Cure/raw17 na slot15,zastępując Mod Permit/raw55 (164812). Pozostały łup pominięto przy END; próby wyboru Medicine4 nie zmieniły inventory. Końcowy stan166260:421/561HP,field,menuNULL,move_lock0,story608. Broń,pancerz,oba klucze i wszystkie4096B rekordów ekwipunku zachowane.
+
+Względem163248 pełny inventory różni wyłącznie slot15:55→17; zmienne wyłącznie42:128→130. `/tmp/pe-ex-m210-full-cure-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live166260,pełne inventory/zmienne sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Dalsze wyjście z M210 i Museum/kampania/EX nadal otwarte.
+
+
 ### EX Museum M210: wstrząs, dialog i pełne zwycięstwo
 
 Bez zmian kodu, `pe-control-aim-v1`: ruch M209 wyzwala oryginalny wstrząs/dialog182,po zamknięciu przejście do M210 (`a8041048`)155937. Dalszy dialog23 zamknięty,krótki ruch do strefy x≈1005..1114 uruchamia trzech przeciwników5:31/30/29 po335HP/def99. Pojedyncze strzały w Double Action zadają po59,dwa Heal3 stabilizują HP po224 i191. Zwycięstwo163248,EXP,zero przeciwników,Aya421/547HP,oryginalny move_lock5 w wynikach. Bez edycji RAM/RNG/save i balansu.

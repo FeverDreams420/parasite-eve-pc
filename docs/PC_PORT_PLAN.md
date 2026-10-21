@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M269: pełne zwycięstwo nad bossem Warehouse
+
+`pe-control-aim-v1`, bez zmian kodu produkcyjnego: pełny replay od G2 do74987 kończy walkę M269,EXP,zero żywych przeciwników,Aya418/437HP. Zwykłe podejścia i pojedyncze strzały w Double Action niszczą segment5:29 (67387) i4:30 (70147). Obrona rdzenia zmienia się153→118→90 (nie83); następnie trafienia po64 przełamują oryginalny próg rdzenia1000000,co kończy całą walkę wraz z pozostałymi aktorami. Aya nie traci HP w tej walce; bez leczenia,edycji RAM/RNG/zapisu ani zmian balansu. Względem66071 pełny ekwipunek zmienia wyłącznie rekord amunicji426:18→0; wszystkie zmienne skryptowe identyczne.
+
+`/tmp/pe-ex-m269-win-G2-v1-proof/proof.json`: normal/SAN exit0,pełny JSON i VRAM identyczne z live74987,pełne inventory/zmienne i pośrednie stany segmentów/obrony sprawdzone. G bez zmian,H identyczny ze źródłowym H2. SDK/SDL nieinstrumentowane,dowody /tmp nietrwałe,brak niezależnego oracle PS1/CTest. Nagrody,wyjście i zapis po bossie jeszcze niepotwierdzone na tym przebiegu; kampania/EX pozostają otwarte.
+
+
 ### EX M269: potwierdzone obrażenia segmentu i opancerzonego rdzenia
 
 Bez zmian kodu, `pe-control-aim-v1`: zwykły input od G2 do66071 obejmuje początek walki M269 i osiem pojedynczych strzałów w Double Action. Sześć trafień po64 obniża segment5:29 z587 do203HP; dwa trafienia rdzenia3:31 obniżają1001198→1001196,po1HP. Pozostałe segmenty nadal587. Aya cały czas418/437HP; przeładowanie z początkowych5 daje runtime ammo15,rekord inventory426=18 (wartość zapisana przy przeładowaniu; nie utożsamiać ze stanem magazynka w trakcie walki). Względem62999 inventory zmienia wyłącznie rekord426:5→18,zmienne wyłącznie11=458,78=203. Endpoint to wybór celu,nie zwycięstwo.

@@ -516,6 +516,8 @@ int Scene_LoadRoom(unsigned int roomId)
     case 153:case 154:shared_actor=0x801955bc;walker_class=0x8019562c;walker_task=0x80195688;break;
     case 391:case 394:case 395:
         shared_actor=0x801943fc;chrysler_particles=0x80194360;chrysler_line=0x8019448c;break;
+    case 392:
+        shared_actor=0x80194578;chrysler_falling=0x801944d8;chrysler_line=0x80194608;break;
     case 393:case 396:
         shared_actor=0x801947c4;chrysler_particles=0x8019466c;chrysler_falling=0x80194724;break;
     case 399:case 402:

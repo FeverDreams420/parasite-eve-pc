@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### M392: naprawiona rejestracja oryginalnych deskryptorów
+
+Poprzedni kandydat pe-control-aim-v1 kończył się exit1 przy przejściu
+z M304 po34854: `native descriptor missing for M392 slot75 (PS1 80194578)`.
+Oryginalny kontroler31022 zakończył się; wrapper dostał następnie BrokenPipe.
+Pełny input i log pozostają w A2-nav-v1-live. To brak portu, nie błąd pada.
+
+Naprawa wyłącznie w istniejącym `src/main/scene/room_load.c`: wpis M392
+łączy slot75/80194578 z istniejącą oryginalną klasą aktora,slot40/801944d8
+z FallingBurst oraz slot136/80194608 z LineBurst. Żadnych nowych plików
+ani nowych implementacji gry. Audyty `/tmp/pe-m392-class-e-audit-v1.json`
+i `/tmp/pe-m392-effects-audit-v1.json`:681 instrukcji klasy/33 cele configure,
+1095 FallingBurst,909 LineBurst oraz metody,listy,rozmiary,skrypty,seedy,
+zerowane bufory zgodne po jawnych relokacjach. M392 ma dwa przesunięcia
+bloków roboczych FallingBurst (2038/2018),seed -50,LineBurst seed210
+oraz bufor bez dodatkowych4 bajtów odstępu; to relokacje danych,nie zmiana
+zachowania oryginalnych procedur.
+
+Nowy kandydat `/tmp/pe-m392-bind-v1-{game,game-sanitized,fixture,fixture-sanitized}`:
+świeże438 obiektów (219/profil),pełne hashe zależności w-build-manifest.json
+oraz-build-proof.json. PASS70/70 regresji w-verification.json i12/12 wybranych
+CTest/profil w-effects-proof.json. SDK/SDL nadal nieinstrumentowane.
+PASS `/tmp/pe-m392-bind-v1-replay-proof/proof.json`: dokładny zimny input
+odA,który wcześniej kończył grę,teraz normal/SAN exit0,pełny JSON/1MiB VRAM
+równe35154,M392/a8069148,387/671HP,BP2,menuNULL,lock0,zero wrogów.
+Pełny ekwipunek jak33804; tylko zmienna5:22→23. A8192B bez zmian.
+Seed/runner/verifier obok; brak oraclePS1,dowody/tmp nietrwałe.
+
+Nowy `/tmp/pe-ex-chrysler-A2-nav-v2.py` odtwarza ten sam input nowym
+kandydatem. Aktywny kontroler54462,katalog z sufiksem-live,start35154,
+dodatkowy wait1 daje35155; bez dalszych działań. Pomocnik peFightA2Only
+przełączony na ten kontroler/katalog. Następne wyjście23 z code10/M392
+zgodnie z planem21. Pełny zakres portu pozostaje otwarty.
+
 ### EX A2: druga walka piętra21, code22
 
 Bez zmian produkcji. Z28992 zwykły pad: code21/a80692c8 przy29682,

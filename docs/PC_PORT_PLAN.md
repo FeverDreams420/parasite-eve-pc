@@ -2,6 +2,22 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A2: ukończone piętro22, wejście na piętro23
+
+Bez zmian kodu na pe-m392-bind-v1. Od57453 przejście przez trzy kolejne
+pokoje M392/code10 (57967,58607,59247), code20 przy59887,
+code9 przy60477 i schody M296 przy61167. Endpoint61887 to M297
+(a80493c8), piętro23, HP437/671, BP2, menuNULL, lock0, zero wrogów.
+Oba klucze i pięć Medicine3 zachowane; ekwipunek identyczny z57453.
+Wszystkie zmienne skryptowe poza4:22→23,5:22→20,18:50→51 identyczne.
+
+PASS `/tmp/pe-ex-chrysler-floor23-A2-v1-proof/proof.json`: niezależne
+zimne odtworzenia wyłącznie z autentycznego A2, normal/SAN exit0 bez
+raportów błędów. Cały JSON oraz1MiB VRAM normal=SAN=obserwowany przebieg;
+źródłowe i prywatne A8192B niezmienione. Seed/checkpoint/runner/verifier obok.
+Dowody w /tmp są nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1.
+Piętro23 dopiero rozpoczęte; pełny port i pozostałe piętra wymagają dalszej pracy.
+
 ### EX A2: piętro22, walki code23 i code21
 
 Bez zmian produkcji na pe-m392-bind-v1. Z51423: M29251963,

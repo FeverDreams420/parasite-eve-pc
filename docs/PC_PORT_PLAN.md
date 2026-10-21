@@ -3,6 +3,52 @@
 ## Aktualny potwierdzony stan — 21 października 2026
 
 
+### EX T-Rex pokonany: pełny cold replay zwycięstwa,łup M8000 i M371
+
+Na niezmienionym `pe-control-aim-v1` wygrano T-Rexa M2563359HP/def109.
+Oryginalne wejścia pada: Liberate1379 obrażeń,potem pojedyncze strzały
+z DoubleAction,leczenie i drugie Liberate przy756HP bossa. Przy151396:
+combat2,zero przeciwników,Aya442/621HP,BP218. Zużyto Medicine4slot0
+oraz Medicine3slot26/27; wyposażony ulepszony M8000 pozostał slot5.
+Względem punktu odblokowania Liberate127054: tylko slot0 raw9→0,
+slot26/27 raw8→0,bajt426 rekordów0→4. Wszystkie inne sloty/rekordy
+identyczne. Zmienne tylko1:243→255,22:46420→62804,34:200→204,
+78:55→101. Pełny JSON i1MiB VRAM normal=SAN=live; oba exit0 bez
+raportów sanitizera,8192B źródłowego L identyczne. PASS:
+`/tmp/pe-ex-trex-victory-L2-v1-proof/proof.json`,runner/verifier/seed
+oraz checkpoint obok. SDK/SDL nieinstrumentowane,brak oracle PS1.
+
+Zamknięto oryginalne nagrody ALL/END,zabrano M8000 i amunicję.
+Przy153196:M371/a80670c8,story632,Aya442/621HP,BP218,lock0,bez
+menu/dialogów/przeciwników. Nowa broń dynamic270 w wolnym slocie0,
+rekord14 o itemId0x48 (pełne32B sprawdzone),pozostały ekwipunek
+identyczny ze zwycięstwem. Wyposażona broń nadal dynamic269slot5,
+pancerz slot6. Zmienne tylko1:255→256,34:204→208,
+38:0→3978470010,39:0→4180538555,40:0→3760. Niezależny cold replay
+normal/SAN również pełny JSON/VRAM normal=SAN=live,exit0 bez raportów,
+L8192B bez zmian. PASS `/tmp/pe-ex-trex-loot-L2-v1-proof/proof.json`,
+runner/verifier/seed/checkpoint obok. Live kontroler
+`/tmp/pe-ex-trex-victory-L2-v1-live.py` zatrzymany153196 wM371.
+Następne: powrót M340,autentyczny zapis po bossie,dalsza kampania EX.
+
+Zwycięstwo uzyskał automatyczny headless runner zwykłego pada,
+`/tmp/pe-trex-policy-search-L2-v2.py`: cztery warianty od tego samego
+cold L,bazujące na pozycji głowy i oryginalnym wielokącie podłogi,
+z wyborem kierunku,wagi dystansu od ścian i leczeniem. Wariant0 wygrał
+151396/442HP (powyższe niezależne dowody),wariant2 wygrał153820/339HP
+(normal-only);1 i3 porażki. Pełne logi/args/wejścia/VRAM/stany/karty
+w `/tmp/pe-trex-policy-search-L2-v2/{0,1,2,3}` i `audit.json`.
+Wcześniejszy runner v1 próbował regenerować PE bez strzelania i przegrał
+4/4; zachowane logi/audit w analogicznym katalogu v1. Wszystkie8 prób
+exit0,karty źródłowe/prywatne L bez zmian,bez zgłoszeń unbound opcode
+lub assertion. Nie jest to dowód zwycięstwa każdego wariantu.
+Ręczna próba `/tmp/pe-ex-trex-liberate-early-L2-v2-live` zakończona
+porażką151832,quit exit0. Bez zmian RAM,RNG,zapisów ani kodu gry.
+Dowody /tmp nie zastępują trwałego CTest; dalsza kampania EX,Chrysler
+oraz pełny zakres celu nadal wymagają weryfikacji.
+
+
+
 ### EX T-Rex: alternatywne wejście,1844HP i odczyt geometrii podłogi
 
 Poprzedni live `/tmp/pe-ex-trex-training-L2-v1-live` zakończony porażką

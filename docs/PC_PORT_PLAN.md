@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: M219 wygrane i wejście M220
+
+Bez zmian kodu, `pe-control-aim-v1`: po nagrodach M218 przejście przyx≈1190,z≈−590 prowadzi do M219186103 (`a80414c8`). Zwykły ruch uruchamia na tym przebiegu jednego raptora3:31,391HP/def65 (inny wariant niż historyczne dwa cele240HP). Pięć pojedynczych strzałów w Double Action po95 kończy walkę188163,Aya365/561HP,bez leczenia w M219. Nagrody i Down prowadzą do M220190013 (`a8042048`),brak menu/przeciwników/blokady,story608,BP1052.
+
+Względem183803 pełny inventory zmienia wyłącznie rekord amunicji426:15→10; zmienne wyłącznie1=219,21=5279829,78=170. `/tmp/pe-ex-museum-m220-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live190013,pełne inventory/zmienne i pośrednie wejście/walka sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Dalsze M220/Museum,kampania i Chrysler nadal otwarte.
+
+
 ### EX: obie gałęzie drabiny M212 i zwycięstwo M218
 
 Bez zmian kodu, `pe-control-aim-v1`: obejście przeszkody i Cross przy drabinie M212 uruchamiają dialog42 (177203). Wybór Down prowadzi do M211178459 (`a80410c8`); Up/Cross wraca do M212178993. Ponowne podejście i domyślny wybór prowadzą do M213181130 (`a80411c8`),oryginalne drzwi do M218181683 (`a8041448`). Ruch uruchamia cel3:31,391HP/def65; pięć pojedynczych strzałów w Double Action (po95) wygrywa183803,EXP,zero przeciwników,Aya397/561HP,move_lock5 w wynikach. Bez leczenia/edycji RAM/RNG/save i zmian balansu.

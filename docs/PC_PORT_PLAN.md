@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: nagroda Medicine4 po M221, wygrane M223 i wejście M224
+
+Bez zmian kodu, `pe-control-aim-v1`: nagrody M221 wstawiają Medicine4/raw9 w pusty slot25. Zwykłe Use w polu278→561HP,slot25 pusty,przejście M223204423 (`a80421c8`). Na tym przebiegu ruch uruchamia cztery cele279/279/279/391HP; pojedyncze strzały w Double Action wygrywają210783,Aya531/561HP bez leczenia w M223. Po nagrodach/awansie maxHP573,BP1100,slot25=raw20; Down/Right prowadzą do M224212653 (`a8042248`),531/573HP,menuNULL,move_lock0,story608.
+
+Względem201799 pełny inventory zmienia wyłącznie slot25:0→20 i rekord amunicji426:13→17; zmienne wyłącznie1=223,21=89165909,34=100,42=134,78=160. `/tmp/pe-ex-museum-m224-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live212653,pełne inventory/zmienne i pośrednie HP/walka sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Dalsze M224/Museum,kampania i Chrysler nadal otwarte.
+
+
 ### EX Museum M221: scena, Darkness/Cure-D i zwycięstwo
 
 Bez zmian kodu, `pe-control-aim-v1`: zwykłe obejście sali uruchamia oryginalną scenę i przeciwnika5:31,447HP/def69. Pojedyncze strzały w Double Action zadają po91. Po169HP zwykłe Heal3 stabilizuje Ayę; przeciwnik nakłada Darkness (200063,flags&0x30=0x10),Cure-D/raw14 ze slot25 usuwa status (201267,flags&0x30=0). Kolejny strzał i kończąca seria wygrywają201799,EXP,zero przeciwników,Aya278/561HP,oryginalny move_lock5 w wynikach. Jedno Heal3 i jedno Cure-D,bez edycji RAM/RNG/save i zmian balansu.

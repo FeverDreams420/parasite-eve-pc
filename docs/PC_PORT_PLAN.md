@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: boss20 pokonany, Key2 odebrany
+
+Bez zmian produkcji. Z200395 zwykłe wejście w głąb M383 uruchamia
+200499 walkę z dwoma wrogami. Oryginalne pojedyncze strzały/Double Action
+kończą ją przy204683,433/671HP. Read/detach g_BattleRewardSlots:
+id57 (ChryslerKey2),id18 (Revive),reszta0. Oryginalne EXP→ALL
+przy204827 przenosi57 do wolnego slot0. Revive pozostaje przy pełnym
+plecaku. END i wygaszenie dają205435 M383/a80681c8,piętro20,
+433/671HP,BP2,menuNULL,lock0,zero żywych wrogów. Key1slot27 i pięć
+Medicine3 zachowane. Bez RAM/RNG/save edits.
+
+PASS `/tmp/pe-ex-chrysler-boss20-key2-O1-v1-proof/proof.json`:
+niezależne zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live205435. Pełny ekwipunek względem200395
+różni się tylko slot0:0→57 oraz amunicją426:8→4. Wszystkie zmienne poza
+7:2→6,11:8650→25034,18:3850207→0,78:146→159 identyczne.
+Źródłowy i prywatne O8192B bez zmian. Seed/checkpoint/runner/verifier obok.
+SDK/SDL nieinstrumentowane,brak oracle PS1,dowody /tmp nietrwałe.
+Użycie Key2 w windzie i trwały zapis po bossie jeszcze niezweryfikowane;
+następne: te mechanizmy oraz dalszy Chrysler. Pełny cel portu pozostaje otwarty.
+
 ### EX O1: wejście do pokoju bossa20 M383
 
 Bez zmian produkcji. Z193185 zwykły pad: M387193757,

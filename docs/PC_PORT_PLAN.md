@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: dwie walki na piętrze13, odcinek do M387
+
+Bez zmian produkcji. Świeży read/detach układu13: code56,selected20,
+count26; `/tmp/pe-chrysler-floor13-table-O1-v1.json`, plan obok z-route.
+Z45756: M38446368, M38747058, M38547628 i walka z trzema wrogami
+wygrana przy544HP. Read/detach łupu:14/6/7 (CureD, Medicine1/2),
+pozostawione przy pełnym plecaku. M38850448, M30550998,
+M38851548, M38752098 i walka z dwoma wrogami wygrana przy539HP;
+łup pusty potwierdzony read/detach. Endpoint53434 M387/a80683c8,
+piętro13,539/671HP,BP2,menuNULL,lock0,zero żywych wrogów.
+
+PASS `/tmp/pe-ex-chrysler-m387-win-O1-v1-proof/proof.json`: niezależne
+zimne replaye odO1, normal/SAN exit0 bez raportów, pełny JSON/1MiB VRAM
+normal=SAN=live53434. Cały ekwipunek względem45756 różni się tylko
+amunicją426:3→9; Key1 i sześć Medicine3 zachowane. Wszystkie zmienne
+poza18:28→157,78:122→177 identyczne. Źródłowy i prywatne O8192B
+bez zmian. Seed/checkpoint/runner/verifier obok. SDK/SDL nieinstrumentowane,
+brak oracle PS1, dowody /tmp nietrwałe. Piętro13 jeszcze nieukończone;
+następne wyjście21 w M387 według zapisanego planu. Cały cel nadal otwarty.
+
 ### EX O1: ukończone piętro 12, wejście na 13
 
 Bez zmian produkcyjnych. Odczyt oryginalnego g_FontSelectionState na12:

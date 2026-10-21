@@ -2,6 +2,47 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### Snapshot: dane Ayi, specjalna amunicja i magazyn
+
+Zmiana wyłącznie diagnostyki w istniejącym src/main/boot/init.c;
+bez nowych źródeł gry/przenoszenia funkcji/zmian rozgrywki. Inventory
+ma teraz special_records (dziewięć rekordów po32B),category_counts[6],
+storage[100],special_storage[82]. Pominięty tylko poprzedzający rekord
+fallback,który nakłada się na przejściowy bufor pakowania list menu.
+Nowy character:level_index,level(+1),total_exp,saved_hp/saved_max_hp,
+bonus_points,new_game_count,spell_flags,pe_bonus_pool,stat_allocation[7].
+To zapisane pola Ayi; bieżące HP walki nadal w combat.player_hp.
+Dotychczasowe klucze zachowane. Rozszerzony istniejący --native-control
+w tests/original_actor_animation.c sprawdza długość/hex specjalnych
+rekordów,liczbę/zakres elementów czterech tablic i kontrakt danych Ayi.
+
+Świeży `/tmp/pe-state-visibility-v1`:438 obiektów219/profil,70/70 regresji,
+12/12 wybranych CTest/profil oraz144 przypadki zakończenia animacji/profil
+PASS. Poprzednie pola replayów nadal zgodne ze starszym kandydatem;
+cały nowy JSON także porównany normal/SAN. Build/manifest/build-proof,
+regressions/verification i checks/effects-proof obok.
+
+PASS `/tmp/pe-state-visibility-v1-proof.json` i -verify.py: dwa zimne
+punkty przygotowanej gałęzi A4,24000 i45268,normal/SAN zgodne całym JSON
+oraz VRAM; stare pola i1MiB VRAM identyczne ze starym kandydatem/live.
+Każde nowe pole endpointu45268 identyczne z niezależnym read-only LLDB
+starego procesu61137: `/tmp/pe-state-visibility-v1-live-reference.json`,
+skrypt pe_read_state_visibility_v1.py i log obok. Poziom34,index33,
+EXP248635→248980 dokładnie+345,zapisane HP383→543,BP2,pe_bonus3325→3358,
+new_game_count1,spell_flags794623,alokacje[330]*7. Rezerwa387→369,
+magazynek14→17:łącznie15 zużytych nabojów. Category_counts zachowuje
+[387,0,0,0,0,0] — zapisany licznik nie jest żywym rekordem rezerwy.
+Storage100 zer,special_storage[515,516]+80 zer bez zmian. A4 źródłowy/
+prywatne8192B niezmienione,exit0,brak diagnostyki.
+
+SHA normal81d529cf7a426448d225b5a6d10fd22cd83269b23abe4d954410d3a14733d8ad,
+SAN16477c2cf041bb632babc00fdea2ac2b06c672541d8ad742e674d01d12dbd21d.
+Punkty `/tmp/pe-ex-chrysler-A4-prep-{pack,floor42}-state-v1-proof`;
+seed/runner obok. Kontroler prep-v2 odtwarza45268 na nowym kandydacie.
+To rozszerzenie widoczności,nie kompletny zrzut całego silnika ani dowód
+ukończenia portu. SDK/SDL nieinstrumentowane,brak oracle PS1,dowody/tmp
+nietrwałe. Następnie piętra42–49,zapas leków,boss50 i reszta pełnego celu.
+
 ### A4 prep: pierwszy nowy łup i wejście na42
 
 Bez zmian kodu na pe-anim-event-null-v1. Od24000:M29325064,

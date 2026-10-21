@@ -131,8 +131,31 @@ static void Boot_PollHost(void) {
     const u8 *equipment=(const u8 *)g_SaveRuntimeState.player.runtime.inventory.equipment;
     for(unsigned byte=0;byte<sizeof(g_SaveRuntimeState.player.runtime.inventory.equipment);++byte)
         printf("%02x",(unsigned)equipment[byte]);
-    printf("\",\"weapon_slot\":%d,\"armor_slot\":%d},\"story_stage\":%u,\"timers\":[",
-        g_AyaSaveState.equipped_weapon_slot,g_AyaSaveState.equipped_armor_slot,g_ScriptVariableBank[74]);
+    printf("\",\"special_records\":\"");
+    /* The nine special records include reserve ammunition. The preceding
+     * fallback record overlaps the transient packed-list workspace. */
+    const u8 *special=(const u8 *)g_KeyItemRecords;
+    for(unsigned byte=0;byte<9*sizeof(*g_KeyItemRecords);++byte)
+        printf("%02x",(unsigned)special[byte]);
+    printf("\",\"category_counts\":[");
+    for(unsigned i=0;i<6;++i)
+        printf("%s%u",i?",":"",(unsigned)g_SaveRuntimeState.categoryCounts[i]);
+    printf("],\"storage\":[");
+    for(unsigned i=0;i<100;++i)
+        printf("%s%u",i?",":"",(unsigned)(u16)g_InventoryRuntime.storage[i]);
+    printf("],\"special_storage\":[");
+    for(unsigned i=0;i<82;++i)
+        printf("%s%u",i?",":"",(unsigned)(u16)g_InventoryRuntime.specialStorage[i]);
+    printf("],\"weapon_slot\":%d,\"armor_slot\":%d},\"character\":{\"level_index\":%u,\"level\":%u,\"total_exp\":%u,\"saved_hp\":%u,\"saved_max_hp\":%u,\"bonus_points\":%u,\"new_game_count\":%u,\"spell_flags\":%u,\"pe_bonus_pool\":%u,\"stat_allocation\":[",
+        g_AyaSaveState.equipped_weapon_slot,g_AyaSaveState.equipped_armor_slot,
+        (unsigned)g_AyaSaveState.level,(unsigned)g_AyaSaveState.level+1,
+        g_AyaSaveState.total_exp,(unsigned)g_AyaSaveState.current_hp,
+        (unsigned)g_AyaSaveState.max_hp,g_AyaSaveState.bonus_points,
+        (unsigned)g_AyaSaveState.new_game_count,g_AyaSaveState.parasite_spell_flags,
+        (unsigned)g_AyaSaveState.pe_bonus_pool);
+    for(unsigned i=0;i<7;++i)
+        printf("%s%u",i?",":"",(unsigned)g_AyaSaveState.stats.levels[i]);
+    printf("]},\"story_stage\":%u,\"timers\":[",g_ScriptVariableBank[74]);
     for(unsigned timer=0;timer<4;++timer)
         printf("%s{\"flags\":%u,\"current\":%d,\"limit\":%d}",timer?",":"",
             g_GameTimers[timer].flags,g_GameTimers[timer].current,g_GameTimers[timer].limit);

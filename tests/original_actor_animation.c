@@ -183,6 +183,7 @@ int Inv_ScrambleGrid(void);
 #include "../src/overlays/menu_memcard/menu_memcard_image.h"
 #include <SDL3/SDL.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <limits.h>
 #include <psyz/system.h>
 #include <psyz/spu.h>
@@ -15487,6 +15488,28 @@ static int original_native_control(const char *executable)
         int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);SDL_DestroyProcess(child);
         int expected=trial<6?0:2;int ok=wrote && output && status==expected && strstr(output,"\"event\":\"control\",\"vblanks\":2") && strstr(output,"\"control\":{");
         if(output && !strstr(output,"\"bonus_points\":"))ok=0;
+        if(output){
+            const char *hex=strstr(output,"\"special_records\":\"");
+            if(!hex)ok=0;
+            else{
+                hex+=strlen("\"special_records\":\"");unsigned digits=0;
+                while(hex[digits] && isxdigit((unsigned char)hex[digits]))++digits;
+                if(digits!=9*32*2 || hex[digits]!='"')ok=0;
+            }
+            const char *keys[]={"\"category_counts\":[","\"storage\":[","\"special_storage\":[","\"stat_allocation\":["};
+            const unsigned counts[]={6,100,82,7};
+            for(unsigned field=0;field<4;++field){
+                const char *cursor=strstr(output,keys[field]);
+                if(!cursor){ok=0;continue;}cursor+=strlen(keys[field]);
+                for(unsigned item=0;item<counts[field];++item){
+                    char *end;unsigned long value=strtoul(cursor,&end,10);
+                    if(end==cursor || value>65535 || *end!=(item+1==counts[field]?']':',')){ok=0;break;}
+                    cursor=end+1;
+                }
+            }
+            if(!strstr(output,"\"character\":{\"level_index\":") ||
+               !strstr(output,"\"total_exp\":") || !strstr(output,"\"spell_flags\":"))ok=0;
+        }
         if(output && (strstr(output,"runtime error:") || strstr(output,"AddressSanitizer") || strstr(output,"Unbound original")))ok=0;
         if(trial==0 && (!strstr(output,"\"event\":\"control\",\"vblanks\":4") || !strstr(output,"\"event\":\"frame_limit\",\"vblanks\":8")))ok=0;
         if(trial>=3 && trial<6 && !strstr(output,"\"event\":\"control\",\"vblanks\":4"))ok=0;

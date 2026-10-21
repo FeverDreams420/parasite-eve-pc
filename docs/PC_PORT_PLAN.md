@@ -2,6 +2,39 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### A4 prep: całe44, polowe Medicine2 i pełne HP na45
+
+Na pe-state-visibility-v1 bez zmian kodu. Od79866:code23 80478,
+M41081056,code9 81646,M30582336,code22 82886. Trigger82966 jeden460HP;
+Cancel/ruch gdy cel znika w locie,single shots,wynik84714 HP519,
+read/detach:brak łupu,EXP133. Eksploracja85330,code21 85710,M29486270,
+code22 86770,M30487300,code23 87960,M30688515,code9 89095.
+Trigger89247 trzech,Heal3/ruch/focus i repozycjonowanie po zniknięciu
+ostatniego celu,wynik95279 HP589,read/detach:id7,EXP392.
+ALL do slot26,eksploracja96511; oryginalne Items→Medicine2 slot8
+przy96875 daje589→671HP,zużywa slot8 i zwalnia miejsce.
+M30497391,M41098051,trigger98139 jeden; dodatkowy guarded Up zatrzymał
+się po8 klatkach fazy wejścia,HP bez zmian. Walka wygrana przy671HP,
+wynik100459,read/detach:id1(6nabojów),EXP160. ALL,zamknięcie101691,
+M296102227,endpoint102947 M297/a80493c8,piętro45,HP671/671,BP2,
+mode9,menuNULL,lock0,zero wrogów. Wolny slot8;Med2 slot13/15/18/20/26,
+Med4 slot12 iMed3 slot28 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-A4-prep-floor45-state-v1-proof/proof.json`:
+cały zimny A4 normal/SAN/live JSON i1MiB VRAM identyczny,exit0 bez
+raportów,SHA gry sprawdzone. Cały inventory snapshot względem79866:
+slot8:7→0,26:0→7,magazynek9→0,rezerwa360→348 po6łupu,27strzałów;
+pozostałe rekordy/category_counts/storage/special_storage bez zmian.
+Wszystkie pola character zgodne pozaEXP250044→250729 (+685),HP609→671,
+pe_bonus3437→3489. Wszystkie512 zmiennych poza4:44→45,18:230→998,
+78:50→41 identyczne. Źródłowy/prywatne A8192B niezmienione.
+Seed/checkpoint/runner/verifier obok. Żywy prep-v2 zatrzymany102947,
+kontroler96861,pid82271. Read-only układ45:selected12,count16,seed32416,
+`/tmp/pe-chrysler-floor45-table-prep-v1.json`,plan-route obok wymaga
+wykonania. Następnie45–49,lepsze leki,boss50 i pozostały pełny zakres.
+SDK/SDL nieinstrumentowane,brak oracle PS1,dowody/tmp nietrwałe,
+pełny port nadal nieukończony.
+
 ### A4 prep: całe43, trzy Medicine2 i wejście na44
 
 Bez zmian kodu na pe-state-visibility-v1. Read-only układ43 seed32416,

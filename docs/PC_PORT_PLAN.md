@@ -2,6 +2,38 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: obie fazy Triceratopsa pokonane na obecnym kandydacie
+
+Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live29869 od78281
+wszedł do walki wM245 z589HP,atakiem107 i zachowanymi Medicine4/Medicine3.
+Zwykłe pojedyncze strzały DoubleAction:36/pocisk w fazie1,85 w fazie2.
+Ruch24frames podczas ATB,kolejny wybór przez zwykły Cross; kierunek
+styczny z korektą odległości,bez sterowania RAM/aktorami. Heal3 przy
+HP<300,gdy wystarczało PE. Użyto łącznie cztery Heal3 podczas bossa.
+Faza1 przeszła w7:30 przy85447,Aya482HP. Po trafieniu i kolejnym Heal3
+faza2 zeszła1259→1174→1089→1004→919→834→749→664→579→494→409→324→239→154→69.
+Ostatnia seria zakończyła oba aktywne cele przy88519; wynik przy88599,
+318/589HP,zero przeciwników. Żaden lek nie został zużyty w walce.
+
+Nagrody/awans/END zamknięte90699:M245(a80442c8),story632,
+318/604HP,BP218,capacity28,menuNULL,lock0,mode9. Medicine4slot0 oraz
+Medicine3slot26 zachowane;slot1 nadal pusty. Względem przygotowania78281
+całe50slotów bez zmian,jedyny bajt sprzętu426(ammo)4→9;capacity27→28.
+Zmienne wyłącznie34:186→200. Pierwszy verifier pominął wzrost capacity;
+poprawiono oczekiwanie jawnie na28,bez zmiany gry/replayu.
+
+Pełny cold replay od autentycznego L obejmujący Klampa,M242/M243,
+przygotowania i całe obie fazy:
+`/tmp/pe-ex-triceratops-win-L2-v1-proof/proof.json` PASS,
+pełny JSON i1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń sanitizerów,
+źródłowy i prywatne L bez zmian. SDK/SDL bez instrumentacji,brak oracle
+PS1,dowody /tmp nie są trwałym CTest ani porównaniem wszystkich klatek/audio.
+Live29869 czeka90699 w `/tmp/pe-ex-museum-L2-nav-v1-live`.
+Następne: przejście M246/film22 i dalszy boss,kolejny autentyczny zapis.
+Triceratops zaliczony dla tego przejścia; cała kampania EX i pełny cel
+portu nadal nieukończone.
+
+
 ### EX gałąź L: M243 wygrane,przygotowane M245 z Medicine4
 
 Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live29869 od68462

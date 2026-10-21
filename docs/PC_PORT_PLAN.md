@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: nagrody M199, Heal3 i powrotna walka M198
+
+Bez zmian kodu, `pe-control-aim-v1`: nagrody/dialog32 po M199 zamknięte,Heal3 w polu276→532HP (114405),oryginalne południowe wyjście M199→M198114710. Ruch uruchamia trzy cele391/279/279HP; pojedyncze strzały w Double Action prowadzą do zwycięstwa119574,EXP,zero przeciwników,Aya476/532HP. Kończący strzał trafia ostatnie77HP celu5:29 także po wyborze w mode16; nie traktować samego numeru16/17 jako dowodu nietykalności. Północne drzwi M199 nadal wymagają oryginalnego Klamp Key; trasa go nie obchodzi.
+
+Względem112409 pełny inventory zmienia wyłącznie rekord amunicji426:0→7; zmienne wyłącznie1=199,21=16,37=132,78=15. `/tmp/pe-ex-museum-m198-return-win-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live119574,pełne inventory/zmienne i pośrednie HP sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Dalsze przejścia Museum i kampania/EX nadal otwarte.
+
+
 ### EX Museum M199: dwa raptory pokonane
 
 Bez zmian kodu, `pe-control-aim-v1`: zwykła nawigacja M198 do drzwi przy[−1540,−275],Cross i oryginalny dialog181/23 prowadzą do walki M199 z dwoma raptorami6:31/30 po391HP. Pojedyncze strzały w Double Action zadają po91; oba cele pokonane112409,EXP,zero przeciwników,Aya276/532HP. W tej walce bez leczenia,edycji RAM/RNG/save ani zmian balansu. Pełne inventory względem M198105881 zmienia wyłącznie rekord amunicji426:10→0; zmienne wyłącznie1=198,34=60,36=3,37=4,42=128,78=54. Story608 zachowane.

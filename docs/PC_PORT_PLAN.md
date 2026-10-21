@@ -2,6 +2,51 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### B4: ukończone46, wejście47 z zachowaniem leków
+
+Ten sam pe-glyph-visibility-v1,bez zmian produkcji. Oryginalne field PE
+Heal3 przy130146 odnawiaHP405→685,bez zużycia przedmiotów. Zamknięcie
+menu,Up312→M305130878/slot1,Up85/Right180→M408131443/slot2.
+Right80 uruchamia dwóch wrogów131523,wygrana134039 przy613HP,
+EXP230. END135463,Right40/Down150→M405135953/slot5,
+Down112 trigger136065 dwóch,wynik137613 przy469HP,EXP259.
+END139069,Down280→slot8/139649 w tej samej scenieM405;
+Down340→M432140289/slot13. Down120/Left110/Up24/Left56→
+M406140899/slot12,Left340→M292141539/slot11,
+Left210→M294142049/slot10,Left190→M409142539/slot9.
+
+Left80 uruchamia ostatniego wroga142619;guard zatrzymał następną
+komendę po8 klatkach,ale dalsze wait300 przed walką kosztowało15HP
+(469→454). Nie uznawać tego za nieunikniony cios ani bug gry.
+Single shots/DoubleAction iHeal3 wygrywają144475 przy604/763HP,
+EXP133;panel zamknięty145591. Left90/Up160→M296146141/slot3,
+Up420→M297146861,zmienna4=47. Wszystkie10 kroków planu wykonane:
+4→1→2→5→8→13→12→11→10→9→3.
+
+PASS `/tmp/pe-ex-chrysler-floor47-B4-v1-proof/proof.json`:
+pełny cold normal/SAN/live JSON i1MiBVRAM identyczne,oba exit0 bez
+diagnostyki,B8192B źródłowy/prywatne niezmienione.
+Pełneinventory względem129865:
+jedynie rezerwa357→339;magazynek7 i wszystkie inne bajty identyczne.
+CharacterEXP303658→304280(+230+259+133),HP405→604,pulaPE221→275.
+512vars tylko4:46→47,18:3066→15354,78:154→36. PięćMedicine3,
+level35,maxHP763,BP47 zachowane. Selektor47/selected5/count24,
+seed25164,kod sali2. Runner/seed/checkpoint/verifier przy prefiksie.
+46 ukończone i potwierdzone,47 dopiero rozpoczęte.
+
+Live `/tmp/pe-ex-chrysler-B4-glyph-v1-live`,kontroler81586/native33781,
+zatrzymany146861,HP604/763,mode9/menuNULL/lock0/zero wrogów.
+Plan od5 w /tmp/pe-chrysler-floor47-B4-route-v1.json wymaga wykonania.
+Nowy tymczasowy sterownik `/tmp/pe-ex-chrysler-B4-glyph-guard-v1.py`
+zatrzymuje walk/nav także na zmianie active/code_index/selected,nie tylko
+scene. Cold replay do146861 dokładnie zgodny pełnymJSON iVRAM z
+potwierdzonym kandydatem: `/tmp/pe-glyph-guard-v1-replay-proof.json`.
+Sam stop na przejściu same-scene wymaga jeszcze testu wykonania. Obecny
+kontroler29828/native45349,root /tmp/pe-ex-chrysler-B4-glyph-guard-v1-live;
+poprzedni81586/native33781 zakończony exit0. Kod gry bez zmian.
+SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+Boss50 i cały port pozostają otwarte.
+
 ### B4: przejście całego45 na nowym zrzucie selektora, wejście46
 
 Bez zmian produkcji od pe-glyph-visibility-v1. Nowy live81586 od112305

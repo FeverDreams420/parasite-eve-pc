@@ -2,6 +2,44 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### Widoczność indeksu i układu sal bez debuggera
+
+Nowy pe-glyph-visibility-v1 rozszerza wyłącznie istniejący diagnostyczny
+zrzut stanu w src/main/boot/init.c. Pole glyph_selection podaje active,
+code_index,code,selected,load_failed,seed oraz tablicę count/codes/indices/keys.
+Tablica emitowana tylko przy aktywnym selektorze,nieNULL i count<=100;
+poza Chryslerem table=null. Brak nowych plików źródłowych,warstw logiki,
+wywołań zmieniających RNG/stany oraz zmian rozgrywki. Sama zmiana sceny
+nie wykrywa sąsiednich sal o tym samym module; indeks eliminuje ten brak
+widoczności dla sterownika. Dotychczasowe narzędzia nawigacji należy
+teraz opierać na glyph_selection.selected,nie samym scene.
+
+Fresh438 obiektów,219/profil;pełny manifest zależności,bibliotek i plików
+wykonywalnych zweryfikowany. SHA normal
+3313088399961ce576e2200ca82a63d8aec6373d5b1c6598d47ac4c9941be219,
+SAN b87a1977123e9934606d5856c6857991a509c930884cc1656f9104b7dd0de7e1.
+70/70regresji PASS `/tmp/pe-glyph-visibility-v1-verification.json`;
+13/13wybranychCTest/profil i dodatkoweM418/M436 PASS w -effects-proof.json.
+Head2/phone/medicine:nieaktywny selektor iNULLtablica potwierdzone.
+
+PASS `/tmp/pe-glyph-visibility-v1-proof/proof.json`: pełny cold B do112305,
+45/M297,normal/SAN JSON i1MiBVRAM identyczne. Po odjęciu wyłącznie
+nowego pola cały JSON iVRAM identyczne z zachowanym starym live;
+nowe pole dokładnie zgodne z niezależnym read-only LLDB starego procesu
+26158: `/tmp/pe-glyph-visibility-v1-live-reference.json`. Indeks8,count29,
+seed25164,kod sali2;wszystkie24codes i29indices/keys zgodne.
+Źródłowy/prywatneB8192B niezmienione,oba exit0 bez diagnostyki.
+Runner/seed/checkpoint/verifier oraz skrypt odczytu referencji przy prefiksie.
+SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+
+Nowy kontroler81586/native33781,root
+`/tmp/pe-ex-chrysler-B4-glyph-v1-live`,zimny replay112305,
+pełnyJSON/VRAM identyczne z potwierdzonym nowym kandydatem.
+Stary75878/native26158 zakończony exit0. Aya nadallevel35,
+HP589/763,atak147,BP47,pięćMedicine3. Nie wykonano jeszcze dalszej
+trasy45; plan od8 pozostaje w /tmp/pe-chrysler-floor45-B4-route-v1.json.
+Boss50,pozostały Chrysler i pełny zakres portu nadal nieukończone.
+
 ### B4: ukończone44, wejście na45, bez zużycia leków HP
 
 Bez zmian produkcji,pe-m436-bind-v2. Z90094/M297 zwykły pad przechodzi

@@ -163,6 +163,24 @@ static void Boot_PollHost(void) {
     for(unsigned variable=0;variable<0x200;++variable)
         printf("%s%u",variable?",":"",g_ScriptVariableBank[variable]);
     printf("]");
+    /* The shuffled room selector can change without changing the scene
+     * token. Expose its table at the same read-only diagnostic boundary. */
+    printf(",\"glyph_selection\":{\"active\":%u,\"code_index\":%u,\"code\":%u,\"selected\":%u,\"load_failed\":%u,\"seed\":%u,\"table\":",
+        (unsigned)g_FontSelectionState.active,(unsigned)g_FontSelectionState.codeIndex,
+        (unsigned)g_FontSelectionState.code,(unsigned)g_FontSelectionState.selected,
+        (unsigned)g_FontSelectionState.loadFailed,g_FontSelectionState.seed);
+    if(g_FontSelectionState.active && g_FontSelectionState.table &&
+       g_FontSelectionState.table->slots.count<=100){
+        const FontGlyphTable *table=g_FontSelectionState.table;
+        printf("{\"count\":%u,\"codes\":[",(unsigned)table->slots.count);
+        for(unsigned i=0;i<24;++i)printf("%s%u",i?",":"",(unsigned)table->groups.codes[i]);
+        printf("],\"indices\":[");
+        for(unsigned i=0;i<table->slots.count;++i)printf("%s%u",i?",":"",(unsigned)table->slots.indices[i]);
+        printf("],\"keys\":[");
+        for(unsigned i=0;i<table->slots.count;++i)printf("%s%u",i?",":"",(unsigned)table->slots.groupKeys[i]);
+        printf("]}");
+    }else printf("null");
+    printf("}");
     /* Observe live combat resources at the diagnostic boundary. Keep this
      * separate from the existing summary, including inactive scene actors. */
     printf(",\"battle_detail\":{\"frame\":%d,\"rng_frame\":%u,\"player\":",

@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: pełna sekwencja Klampa, Maeda’s Gun i Klamp Key
+
+Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live16191 od65915
+zamknął zwykłym Cross oryginalne dialogi/animacje M344: Maeda,Klamp,
+Daniel,pożar i końcową rozmowę. Przy72635 oryginalne przekazanie broni
+menu5; Cross otworzyło wymuszoną siatkę pełnego plecaka. Right i12Down,
+Cross zamieniły Junk slot25(raw20) na Maeda’s Gun268,rekord12,item97.
+Przy73499 powrót do dialogu77. Kolejne zwykłe Cross przeprowadziły scenę
+do102899,przekazanie klucza menu55. Cross,7Down,Cross zamieniły jeden
+z dwóch Tooli(slot14raw22) na Klamp Key213. Drugi Tool slot16 zachowany.
+Przy103851 M344(a8064248),story632,237/589HP,BP1156,menuNULL,lock0,
+wszystkie dialogi zamknięte,global34=185. Pozostałe klucze/fullcure/leki,
+wyposażone M8000/B Jacket1 i ich statystyki zachowane.
+
+Względem wejścia M344: wyłącznie slot14:22→213,slot25:20→268;
+rekord sprzętu zmienia tylko bajt384(flag0→1),394(ammo0→15).
+Pozostałe4094B rekordów identyczne. Zmienne wyłącznie34:183→185,
+37:132→133. Źródłowy J i utworzony K niezmienione.
+Pełny cold replay od J przez wcześniejszą trasę i całe zdarzenie:
+`/tmp/pe-ex-museum-klamp-key-J2-v1-proof/proof.json` PASS.
+Pełny JSON i1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń sanitizerów.
+SDK/SDL bez instrumentacji,brak PS1 oracle lub porównania wszystkich
+klatek/audio; dowody /tmp nie zastępują trwałego katalogu/CTest.
+Live16191 czeka103851 w `/tmp/pe-ex-museum-J2-nav-v1-live`.
+Dalej wyjście M343 i trasa z Klamp Key; reszta kampanii EX/cel otwarte.
+
+
 ### EX Museum: wschodnie schody M343 i wejście do laboratorium M344
 
 Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live16191 od60062

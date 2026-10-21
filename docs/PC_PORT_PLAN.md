@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: powrót M207→M206, zwycięstwo przy wschodnim wyjściu
+
+Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live16191 od48090:
+Up72 wróciło do M214 (kamera M207 teraz Up+Z); Down35 wróciło M207.
+Left90,Up180,Up100,Down360,Down35 prowadzą przez M207 do M20650726,
+bez walki i strat HP. M206 od153,1830:Left70,Down160,Right220,
+Down60,Right32 uruchomiło spotkanie przy51568, dwa typ3/sub31,30
+po391HP/def65. Pierwszy wybór52000,oba cele w zasięgu M8000.
+Pojedynczy strzał+DoubleAction,99 obrażeń/pocisk; nie każdy pocisk trafił.
+Wygrana55046,237/589HP,BP1156,bez leczenia. Nagrody zamknięte56546,
+menuNULL,lock0,mode9. Wszystkie50 slotów bez zmian; jedyna zmiana4096B
+rekordów od M207 to bajt426(amunicja)7→16. Zmienne1:214→207,
+21:357929045→357933141,78:24→94. Brak innych zmian ekwipunku/zmiennych.
+
+Pełny cold replay od autentycznego J obejmuje poprzednią trasę,film21,
+M217/M214,powrót M207 i zwycięstwo M206:
+`/tmp/pe-ex-museum-m206-win-J2-v1-proof/proof.json` PASS.
+Pełny JSON i1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń sanitizerów;
+J zachowany,utworzony K identyczny we wszystkich8192B. SDK/SDL bez
+instrumentacji,brak oracle PS1,dowody /tmp nie są trwałym CTest.
+Live16191 czeka56546 w `/tmp/pe-ex-museum-J2-nav-v1-live`.
+Następny etap: wschodnie wyjście M206→M205/M204 i dalsza trasa do holu.
+Cała kampania EX i pełny zakres portu nadal nieukończone.
+
+
 ### EX Museum: zwycięstwo M214, awans i powrót M207
 
 Ten sam `pe-control-aim-v1`, bez zmian źródeł produkcyjnych. Live16191

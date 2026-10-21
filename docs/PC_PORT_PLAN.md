@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### A4 prep: całe43, trzy Medicine2 i wejście na44
+
+Bez zmian kodu na pe-state-visibility-v1. Read-only układ43 seed32416,
+count31,selected16: `/tmp/pe-chrysler-floor43-table-prep-v1.json`,plan-route
+obok. Od61053:M30561665,code23 62215,trigger62295 trzech po420HP.
+Heal3/ruch/single shots; po utracie zasięgu Cancel/repozycjonowanie,
+wynik66659 HP631,read/detach7/7/7 EXP345. ALL,eksploracja67891:
+Medicine2 do slot15/18/20. M30668279,M29268949,M30469449,M30670144,
+M40670754,trigger70850 jeden580HP. Repozycjonowanie/Heal3/strzały,
+wynik73978 HP647,read/detach:id1(6nabojów),EXP160; ALL,eksploracja75210.
+Code21 75667,trigger75747 jeden460HP; Cancel/repozycjonowanie/strzały,
+wynik77463 HP609,read/detach:id2(15nabojów),EXP133; ALL,zamknięcie78695.
+M29679146,endpoint79866 M297/a80493c8,piętro44,HP609/671,BP2,
+mode9,menuNULL,lock0,zero wrogów. Bez użycia leków;wolny slot26.
+Zapas:Med2 slot8/13/15/18/20,Med4 slot12,Med3 slot28.
+
+PASS `/tmp/pe-ex-chrysler-A4-prep-floor44-state-v1-proof/proof.json`:
+cały zimny A4 normal/SAN/live JSON i1MiB VRAM identyczny,exit0 bez
+raportów,SHA gry sprawdzone. Rozszerzony inventory snapshot względem61053:
+slot15/18/20:0→7,magazynek0→9,rezerwa375→360 po21 łupu,łącznie27 strzałów;
+pozostałe rekordy/sloty/category_counts/storage/special_storage bez zmian.
+Wszystkie pola character zgodne pozaEXP249406→250044 (+638),HP545→609,
+pe_bonus3374→3437. Wszystkie512 zmiennych poza4:43→44,18:38→230,
+78:207→50 identyczne. A4 źródłowy/prywatne8192B niezmienione.
+Seed/checkpoint/runner/verifier obok;żywy prep-v2 zatrzymany79866,
+kontroler96861,pid82271. Read-only układ44:selected14,count23,seed32416
+w `/tmp/pe-chrysler-floor44-table-prep-v1.json`,plan-route obok wymaga
+wykonania. Następnie44–49,lepsze leki i boss50. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody/tmp nietrwałe,pełny port nadal nieukończony.
+
 ### A4 prep: całe42, wejście na43 z zachowanymi lekami
 
 Na pe-state-visibility-v1 bez zmian kodu. Read-only układ42 seed32416,

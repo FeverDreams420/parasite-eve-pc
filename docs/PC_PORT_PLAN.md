@@ -2,6 +2,38 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Chrysler piętro3: zachodnia trasa do M310 i audyt nawigacji
+
+Bez zmian produkcyjnych. Od56251 powrót M301→M309→M305→M308,
+przejście M311→M294 i zachodnie wyjście M294 prowadzą60216 doM308.
+Południowe wyjście M308 daje60711 M307,zachodnie M307 daje61259
+M298; przejście przez M298 prowadzi61909 doM310/a8061048.
+Aya401/671HP,BP2,menuNULL,lock0,zero wrogów,pełne inventory identyczne
+z56251,sześć Medicine3 zachowanych. Wszystkie zmienne poza78:181→138
+identyczne (licznik piętra pozostaje3).
+PASS `/tmp/pe-ex-chrysler-floor3-west-N3-v1-proof/proof.json`:
+pełny zimny replay od autentycznego muzealnego N3,normal/SAN exit0
+bez sanitizer/opcode/assertion,pełny JSON/1MiB VRAM normal=SAN=live61909,
+źródłowy/prywatne N3 8192B niezmienione. Seed/checkpoint/runner/verifier
+obok. SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+
+Odczyt LLDB read/detach przy61909: codeIndex3,code24,selected17,
+22 pozycje,wybrany kod21=M310. Bieżący snapshot zastąpił plik
+`/tmp/pe-chrysler-floor3-table-N3-v1.json`;nie traktować już tego pliku
+jako snapshot selected7 ze schodów. Tabela układu jest ta sama.
+Odczyt oryginalnego USA SLUS_006.62 przez capstone:
+`/tmp/pe-chrysler-floor-nav-original-v1.txt`,zakres80038bc0..8003999c.
+Funkcja80039678..80039894 potwierdza porównane reguły20/21/22/23
+w istniejącym Render_GetOrLoadFontGlyph. Odczyt800389dc..80038bc0
+potwierdza stride328 i kopiowanie układu w Render_LoadFontGlyph.
+Pierwsze24 nazwy g_MapFilenameTable sprawdzone bajtowo z EXE przy
+file offset8200c i zgodne ze źródłem C. To ograniczony audyt odczytu,
+nie pełny differential test ani dowód osiągalności schodów.
+Bez zmian RAM/RNG/save i bez zmiany gry na podstawie hipotez.
+Następne: dalsze wyjścia i warunki skryptów piętra3; piętro4,pozostała
+wspinaczka i pełny port pozostają otwarte.
+
+
 ### EX Chrysler piętro3: M305/M309→M301 i korekta nazw scen
 
 Bez zmian produkcyjnych. Od54735 zwykły pad prowadzi55171 doM305,

@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Triceratops: ulepszone M8000 przeszło pierwszą fazę
+
+Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live47612 od142363:
+field Heal3 245→525,zamknięcie menu,nawigacja do wyzwalacza bossa.
+Pierwszy wybór144153,525HP,PE46764189,core1001049/def139.
+Atak107 potwierdzony:36/pocisk zamiast25 na poprzednim ataku96.
+Serie,Heal3 i podejścia po odrzucie doprowadziły core do1000185 przy152365.
+Przy153065 Heal3 nie wykonało się z braku PE (161HP); anulowano PE,
+oryginalne Items/Medicine3(slot26) i pocisk dały331HP/core1000149.
+Kolejne serie:1000113→1000077→1000005; pojedynczy atak po animacji
+przekroczył próg fazy. Przy156281 nowy aktor7:30,1001259HP/def90,
+pomocniczy8:29 nadal559/def104. Aya106/589HP,PE15501427(~236),BP56,
+combat1,menuNULL,lock5. Pierwsza faza zakończona; to nie wygrana bossa.
+
+Względem przygotowanego punktu142363: slot26 Medicine3raw8→0,
+pozostałe49slotów bez zmian. Jedyna zmiana4096B rekordów sprzętu to
+bajt426:2→12 (cache amunicji; runtime aktualnie4). Zmienne wszystkie
+identyczne. Pełny cold replay od J przez BP i pierwszą fazę:
+`/tmp/pe-ex-triceratops-phase2-J2-v1-proof/proof.json` PASS,
+pełny JSON i1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń sanitizerów,
+J/K bez zmian. SDK/SDL bez instrumentacji,brak oracle PS1,dowody /tmp
+nie są CTest. Live47612 czeka156281 w
+`/tmp/pe-ex-triceratops-prep-J2-v1-live`; stara próba16191 zachowana.
+Następne: druga faza i rozwiązanie niedoboru leczenia (oryginalne PE/menu,
+ewentualnie przygotowanie zapasu przed kolejną próbą). Film22 i dalsza
+kampania nadal niezaliczone. Pełny cel otwarty.
+
+
 ### EX Triceratops: przygotowana gałąź z atakiem107
 
 Dalsza normal-only próba live16191 po152522: krążenie Right/Down/Left/Up

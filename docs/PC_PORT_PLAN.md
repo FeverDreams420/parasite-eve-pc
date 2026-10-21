@@ -2,6 +2,45 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### B4: trzy wygrane na42, boczna trasa i anulowanie pustej listy łupów
+
+Bez zmian produkcji,pe-m436-bind-v2. Od43521/M297 zwykły pad eksploruje
+42. Warianty fizycznych sal nie odpowiadają zawsze tej samej orientacji
+wyjść; początkowe traktowanie M408 jak code9 i M409 jak code16 było
+błędem nawigacji sterownika. Wcześniejsza zapowiedź ostatniego przejścia
+przed43 nie jest potwierdzeniem osiągnięcia schodów. Read-only indeks61157
+wynosi3/code21,nie koniec42; oryginalne piętro nadal42.
+
+Faktyczna sekwencja slotów,odtworzona z oryginalnych kierunków var5 oraz
+zmian scen i potwierdzona końcowym read/detach g_FontSelectionState:
+17→13→17→13→14→15→16→11→16→11→10→11→10→5→4→3.
+Sceny:M30743834,M29744206,M30744832,M29245727,M40646237,
+M30646877,M40847497,M30647545,M40848225,M40953258,
+M40853740,M40954390,M30554668,M40655541,M40961157.
+Na tej drodze wygrane trzy oryginalne spotkania,single shots/DoubleAction,
+łącznieEXP448. HP691→534/763,EXP301277→301725,pulaPE54→86,
+BP47;pięć Medicine3 zachowane. Magazynek0→7,rezerwa405→393,
+pozostały pełny inventory identyczny. Brak edycji RAM/save/RNG.
+
+Po ostatniej walce sterownik przypadkowo wybrał SEL i oznaczył pustą
+komórkę. Zwykłe Circle usuwa oznaczenie,drugie Circle po zwolnieniu
+wraca do ALL/SEL/END;Down/Cross zamyka ekran. Read-only wskazał
+appearance.cursorTargetX0→−1,a następnie zmianę current widget13→12.
+Nie był to wykazany bug produkcji; kod menu pozostał bez zmian.
+Dalsze nawigowanie powinno sprawdzać rzeczywisty indeks sali po każdym
+przejściu oraz stan oznaczenia listy przed anulowaniem,żeby unikać pętli.
+
+PASS `/tmp/pe-ex-chrysler-mid42-B4-v1-proof/proof.json`:
+pełny cold B normal/SAN/live JSON i1MiBVRAM identyczne,oba exit0 bez
+raportów,B8192B źródłowe/prywatne niezmienione. Jawny pełny inventory,
+character i512vars:poza5:20→21,18:10→42,78:89→57 wszystkie identyczne.
+Runner/seed/checkpoint/verifier przy prefiksie. Odczyt układu42 w
+`/tmp/pe-chrysler-floor42-B4-table-v1.json` aktualnie selected3,count26,
+seed25164. Plan od3 musi być wykonany i sprawdzany na bieżąco.
+Live `/tmp/pe-ex-museum-B4-loaded-v1-live`,kontroler75878/native26158,
+zatrzymany61157. 42 nieukończone,boss50 i pełny port otwarte.
+SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+
 ### B4: ukończone41, wejście na42 bez zużycia Medicine3
 
 Bez zmian produkcji,ten sam pe-m436-bind-v2. Od potwierdzonego33903

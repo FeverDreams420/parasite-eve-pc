@@ -3,6 +3,45 @@
 ## Aktualny potwierdzony stan — 21 października 2026
 
 
+### EX: awans do Liberate i sprawdzone użycie przeciw T-Rexowi
+
+Kandydat `pe-control-aim-v1` bez zmian produkcyjnych. Kolejne zwykłe
+wyjście M242→M243→M242 uruchomiło3 przeciwników447/335/335HP przy119362.
+Zwycięstwo125254,nagrody zamknięte127054:M242/a8044148,story632,
+Aya316/621HP (max604→621),BP218,cap28. Pełny ekwipunek identyczny
+z treningiem118280; zmienne tylko22:42324→46420,78:62→55.
+Cold normal/SAN pełny JSON/1MiB VRAM identyczne z live,exit0 bez
+diagnostyki,L8192B niezmieniony. PASS:
+`/tmp/pe-ex-liberate-unlock-L2-v1-proof/proof.json`; runner/verifier,
+seed/checkpoint obok. Odczyty LLDB bez zapisów i wywołań funkcji:
+rawlevel32 (wyświetlany33),EXP168229,parasite_spell_flags794623
+(bit19 ustawiony); wpis spell19 ma unlockKey32,cost1. Surowe logi
+`/tmp/pe-ex-liberate-unlock-L2-v1-{exp,spell}-readonly.log`.
+
+W drodze do M245 kolejne spotkanie M243545HP zostało wygrane133042,
+nagrody zamknięte134242. Po korekcie podejścia do schodów M245136583,
+M251139393,M255139713 odnowiło339→621HP. Długie wait1200 podczas
+sceny M255 przekroczyło początek walki M256 i dopuściło serię trafień:
+przy142442 Aya128/621,T-Rex3359,PE pełne93061120. Nie traktować tego
+jako bezpiecznej sekwencji wejścia; kolejne próby powinny obserwować
+przejście w krótszych odstępach.
+
+Wybrano Liberate przez oryginalną siatkę PE (lewa kolumna,wiersz7),
+wykonano jako jedną akcję. T-Rex3359→2374→1980; po transformacji PE0.
+Zwykły ruch/ATB i Medicine4 ze slotu0 odnowiły118→518HP. Przy144926:
+M256/a8045348,story632,Aya518/621HP,T-Rex1980/3359/def109,combat0,
+BP218,lock4. Względem127054 jedyne delty całego ekwipunku:slot0
+raw9→0,bajt426 rekordów0→4. Medicine3 slot26/27 zachowane. Zmienne:
+1:243→255,22:46420→62804,34:200→204,78:55→101; reszta identyczna.
+Cold normal/SAN pełny JSON/1MiB VRAM normal=SAN=live,exit0 bez
+raportów sanitizera,L8192B niezmieniony. PASS:
+`/tmp/pe-ex-trex-liberate-L2-v1-proof/proof.json`, runner/verifier/seed
+oraz checkpoint obok. SDK/SDL nieinstrumentowane,brak referencji PS1.
+Live `/tmp/pe-ex-trex-training-L2-v1-live` pozostaje144926.
+T-Rex nadal niepokonany; dalsza kampania EX i pełny cel otwarte.
+
+
+
 ### EX trening: M242 ponownie wygrane, dodatkowy lek i 4233 EXP
 
 Na niezmienionym `pe-control-aim-v1`, po sprawdzonym M24398265, zwykły

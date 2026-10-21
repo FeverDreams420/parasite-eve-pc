@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: nagrody M333, leczenie i przejście M267 → drabina M268
+
+Bez zmian kodu, `pe-control-aim-v1`: po zwycięstwie55408 oryginalny ekran nagród zamyka się56608. Zwykłe Heal3 w menu pola podnosi138→418/437HP (57244). Ruch na zachód prowadzi M333→M267 (`a80463c8`,57954), obejście przeszkód i Cross przy drabinie prowadzą do M268 (`a8046448`,60099). Ten endpoint jest w oryginalnej animacji drabiny, move_lock3; nie oznacza jeszcze swobodnego sterowania ani wejścia M269. Pełny ekwipunek identyczny z55408; zmienne zmieniają wyłącznie1=267,20=341050725.
+
+`/tmp/pe-ex-warehouse-m268-G2-v1-proof/proof.json`: pełny replay od zimnego G2, normal/SAN exit0, pełny JSON i VRAM identyczne z live60099, wszystkie inventory/zmienne sprawdzone, G bez zmian, H identyczny ze źródłowym H2. SDK/SDL nieinstrumentowane, brak niezależnego oracle PS1 i trwałego CTest. Następne: dokończenie drabiny i M269; Warehouse i kampania nadal nieukończone.
+
+
 ### EX M333: walka po powrocie od telefonu wygrana
 
 `pe-control-aim-v1`, bez zmian kodu: zwykły powrót od telefonu M266 przez drzwi do M333, ruch na zachód uruchamia czterech przeciwników (338/338/13/13HP). Double Action z pojedynczymi strzałami i jedno Heal3 prowadzą do zwycięstwa55408,EXP,zero przeciwników,Aya138/437HP. Przed leczeniem89HP,po leczeniu369HP; nie przyjęto żadnych zmian RAM/RNG/zapisu. Względem FileSavedH50867 pełny ekwipunek zmienia wyłącznie amunicję M8000:13→5; zmienne skryptowe wyłącznie1=266,78=194.

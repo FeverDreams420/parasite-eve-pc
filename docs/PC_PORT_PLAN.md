@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX M269: potwierdzone obrażenia segmentu i opancerzonego rdzenia
+
+Bez zmian kodu, `pe-control-aim-v1`: zwykły input od G2 do66071 obejmuje początek walki M269 i osiem pojedynczych strzałów w Double Action. Sześć trafień po64 obniża segment5:29 z587 do203HP; dwa trafienia rdzenia3:31 obniżają1001198→1001196,po1HP. Pozostałe segmenty nadal587. Aya cały czas418/437HP; przeładowanie z początkowych5 daje runtime ammo15,rekord inventory426=18 (wartość zapisana przy przeładowaniu; nie utożsamiać ze stanem magazynka w trakcie walki). Względem62999 inventory zmienia wyłącznie rekord426:5→18,zmienne wyłącznie11=458,78=203. Endpoint to wybór celu,nie zwycięstwo.
+
+`/tmp/pe-ex-m269-damage-G2-v1-proof/proof.json`: pełny replay normal/SAN exit0,pełny JSON/VRAM identyczny z live66071,pełne inventory/zmienne sprawdzone,G niezmieniony,H zgodny ze źródłowym H2. SDK/SDL nieinstrumentowane,brak oracle PS1 i trwałego CTest. Dalsza taktyka: segmenty; obserwacja1HP nie uzasadnia zmiany balansu ani oryginalnego kodu bossa. Cała walka i Warehouse nadal otwarte.
+
+
 ### EX: pełne zejście M268 → M269
 
 Bez zmian kodu, `pe-control-aim-v1`: oryginalna drabina M268 wymaga zwykłego Down; Down z Circle/biegiem nie przesuwa Ayi. Po zwykłym schodzeniu wejście M269 (`a80464c8`) i swobodne sterowanie potwierdzone62999:418/437HP,move_lock0,brak przeciwników/menu,pozycja[207.669,−225,−911.008]. Pełny ekwipunek identyczny z M26860099,zmienne różnią się wyłącznie1=268.

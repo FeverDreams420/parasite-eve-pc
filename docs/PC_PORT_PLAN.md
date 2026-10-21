@@ -3,6 +3,38 @@
 ## Aktualny potwierdzony stan — 21 października 2026
 
 
+### EX trening: M242 ponownie wygrane, dodatkowy lek i 4233 EXP
+
+Na niezmienionym `pe-control-aim-v1`, po sprawdzonym M24398265, zwykły
+powrót dał M242/a8044148 przy98765. Krążenie nie dawało nowej walki;
+wyjścia do M229/M243/M245 i powroty również nie gwarantują spotkania.
+Oryginalny skrypt ma strefy przestrzenne, flagi wizyty i próg zależny
+od wariantu; wartość global78 aktualizuje wyrażeniem `(old*5+1)&255`.
+Nie traktować jej jako prostego licznika kroków ani każdej wizyty jako
+obowiązkowej walki. Nie zmieniano skryptu ani RNG. W śladzie przy110176
+ponowne wejście M243→M242 i przekroczenie pierwszej strefy uruchomiło
+trzech przeciwników:447HP/def69 oraz2×335HP/def99,global78=62.
+
+Zwykłe Heal3 i strzały wygrały przy117080; nagrody zamknięte118280:
+M242/a8044148,story632,Aya559/604HP,BP218,cap28,bez menu/przeciwników.
+Względem M24398265 pełny ekwipunek identyczny poza slot27 raw0→8
+(dodatkowe Medicine3); nawet rekordy sprzętu identyczne, bajt426=0.
+Medicine4 slot0,Medicine3 slot26 zachowane. Dokładne delty zmiennych:
+1:245→243,22:38228→42324,78:28→62; wszystkie pozostałe identyczne.
+Pełny JSON i1MiB VRAM normal=SAN=live,oba exit0 bez diagnostyki,
+źródłowy L8192B niezmieniony. PASS:
+`/tmp/pe-ex-trex-training2-L2-v1-proof/proof.json`; runner/verifier/seed
+oraz checkpoint obok. SDK/SDL nieinstrumentowane, brak referencji PS1.
+Live `/tmp/pe-ex-trex-training-L2-v1-live` zatrzymany118280.
+
+Odczyt LLDB tylko do odczytu: rawlevel31,EXP163996; +4233 względem
+159763 po M243,do progu168061 pozostało4065EXP. Surowy log:
+`/tmp/pe-ex-trex-training2-L2-v1-exp-readonly.log`.
+Następne: dalsze spotkania do Liberate i ponowny T-Rex. Zwycięstwo nad
+T-Rexem, dalsza kampania EX i cały port pozostają nieukończone.
+
+
+
 ### EX przygotowanie do T-Rexa: powrót M243 i oryginalna krzywa EXP
 
 Próba `/tmp/pe-ex-trex-distance-L2-v1-live` zakończona porażką przy99787:

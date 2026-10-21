@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A4: boss50 — odtworzony crash zdarzenia animacji
+
+Na pe-m410-bind-v1 wejście228178,trigger228282,jeden wróg type3/sub31
+HP1004200. Oryginalne Liberate od229086 obniża go do1002660;
+po230686 pojawia się type4/sub30 HP1200. Kolejne dwa pojedyncze
+strzały obniżają głównego do1002498. Ostatni żywy stan231066:
+HP552/671,dwóch wrogów,mode0. Ruch80 raw8288 do231146 kończy proces.
+To nie zwycięstwo i nie utrata samej sesji narzędzia.
+
+Zimny A4 z dokładnym inputem odtwarza błąd w obu profilach:
+`/tmp/pe-ex-chrysler-boss50-start-A4-v1-proof/failure.json`:
+normal exit-11,SAN exit-6,UBSan context.c:140:23 member access within
+null EnemyActionEffect. Istniejące Entity_TriggerAnimEvent odczytuje
+core->active->state bez aktywnego rekordu. Sprawdzone instrukcje USA
+8002faf8,odczyt8002fdf4..fdfc również używa wskaźnika core+18.
+Wymaga dalszej inspekcji rekordu/trybu/wywołania przed wyborem poprawki;
+na tym etapie kod produkcyjny niezmieniony. Seed/runner/logi obu profili
+obok. Kontroler v7 zakończony,nie restartować tej sesji; następny kontroler
+musi odtwarzać autentyczny zapis/input. Boss50 i pełny port nieukończone.
+
 ### EX A4: wejście do pokoju bossa50
 
 Bez zmian kodu na pe-m410-bind-v1. Od220216:walka z dwoma

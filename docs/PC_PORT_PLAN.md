@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A2: M304 przed bossem30, wolne miejsce na klucz
+
+Bez zmian kodu na pe-m392-bind-v1. Z176643: code20 177159, code22/a8069248
+177749. Pięciu wrogów pokonanych przy631HP; Heal3 przy179121:351→631HP,
+read/detach łupu id13 pozostawiony. Kolejne M392181418/182058,
+code23 182698, code20 183253, code21 183793, code9 184343,
+code23 185033, M292185611 i M304/a8060248 186111.
+Oryginalne menu Items: slot28 (Junk20), Discard, potwierdzenie Yes;
+slot28 zostaje0, bez przesuwania innych przedmiotów. Endpoint187123:
+HP631/671,BP2,menuNULL,lock0,zero wrogów,oba klucze i pięć Medicine3.
+Jedno wolne miejsce w pojemności29. Boss30 jeszcze nieuruchomiony.
+
+PASS `/tmp/pe-ex-chrysler-preboss30-A2-v1-proof/proof.json`: zimne replaye
+tylko z autentycznego A2, normal/SAN exit0 bez raportów; cały JSON i1MiB
+VRAM zgodne również z obserwowanym przebiegiem. Pełny ekwipunek względem
+176643 różni się tylko slot28:20→0 i amunicją426:9→2; wszystkie zmienne
+poza18:3122033→4170611 identyczne. Źródłowy i prywatne A8192B niezmienione;
+SHA256 obu zamrożonych binariów sprawdzone. Seed/checkpoint/runner/verifier obok.
+Dowody /tmp nietrwałe, SDK/SDL nieinstrumentowane, brak oracle PS1.
+Następne wyjście20 z M304 do code0; pełny zakres portu pozostaje otwarty.
+
 ### EX A2: początek piętra30, dwie walki
 
 Bez zmian kodu na pe-m392-bind-v1. Z169947 wejście do code23/a80691c8

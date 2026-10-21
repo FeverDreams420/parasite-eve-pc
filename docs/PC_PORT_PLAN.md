@@ -3,6 +3,45 @@
 ## Aktualny potwierdzony stan — 21 października 2026
 
 
+### EX T-Rex: alternatywne wejście,1844HP i odczyt geometrii podłogi
+
+Poprzedni live `/tmp/pe-ex-trex-training-L2-v1-live` zakończony porażką
+147576(Aya0,T-Rex1980),quit exit0. Nie ma niezależnego SAN tej porażki.
+Nowy kontroler `/tmp/pe-ex-trex-liberate-early-L2-v2.py` odtworzył cold L
+do140333,M255621/621HP. Pierwszy start v1 odrzucony przez walidację
+harmonogramu: przyszłe wejścia wykraczały poza cap. Przygotowano krótszy
+seed przez istniejące merge-input,bez zmiany produkcji/walidacji.
+Krótkie wait64 złapały M256141472 z621HP; pierwsze ATB z611HP.
+PE nie było jeszcze pełne po poprzednim leczeniu,więc Liberate nie było
+dostępne. Po zamknięciu menu i ruchu PE osiągnęło93061120 przy143920,
+lecz silne trafienia zostawiły216HP. Oryginalne Liberate dało3359→1980.
+Medicine4 i strzał dały616HP/boss1912 przy146532; kolejny strzał1844.
+
+Ruch orbitujący pozwala na kilkaset klatek regeneracji bez obrażeń,
+ale nadal dopuszcza silne trafienia i zatrzymania przy ścianie.
+Medicine3 slot26 zużyto,Heal3 odnowiło199→479,trafienie237 zostawiło242.
+Przy148920:M256/a8045348,story632,Aya242/621HP,T-Rex1844/3359/def109,
+BP218,Medicine3 slot27 zachowane. Względem127054 pełny ekwipunek
+identyczny poza slot0 raw9→0,slot26 raw8→0; rekordy sprzętu identyczne.
+Zmienne tylko1:243→255,22:46420→62804,34:200→204,78:55→101.
+Cold normal/SAN pełny JSON i1MiB VRAM normal=SAN=live,oba exit0 bez
+raportów,L8192B niezmieniony. PASS:
+`/tmp/pe-ex-trex-orbit-L2-v1-proof/proof.json`,runner/verifier/seed
+oraz checkpoint obok. SDK/SDL nieinstrumentowane,brak referencji PS1.
+Live `/tmp/pe-ex-trex-liberate-early-L2-v2-live` zatrzymany148920.
+
+Odczyt LLDB bez zapisów/wywołań funkcji pokazał oryginalny wielokąt
+podłogi M256:11 wierzchołków; CollisionDatabase ma294 trójkąty.
+Surowe odczyty `/tmp/pe-ex-trex-orbit-L2-v1-floor{,-polygon}-readonly.log`.
+Zapis współrzędnych i proponowanej trasy450 jednostek do środka:
+`/tmp/pe-ex-m256-floor-polygon-L2-v1.json`. Trasa NIE jest jeszcze
+sprawdzonym sposobem unikania ataków. Zgadywana wcześniejsza granica
+Z=-2100 była zbyt ciasna: rzeczywisty wielokąt dochodzi doZ24 iX-939.
+Następny krok: sterowanie względem tej geometrii z wykrywaniem braku
+ruchu,leczenie i dalsza walka. T-Rex oraz pełny cel nadal nieukończone.
+
+
+
 ### EX: awans do Liberate i sprawdzone użycie przeciw T-Rexowi
 
 Kandydat `pe-control-aim-v1` bez zmian produkcyjnych. Kolejne zwykłe

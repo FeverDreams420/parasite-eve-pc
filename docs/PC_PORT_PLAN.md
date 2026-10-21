@@ -2,6 +2,38 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### A4 prep: pełna trasa do pokoju bossa50
+
+Na pe-state-visibility-v1 bez zmian kodu. Od176330:
+M306176782;Right70/Left70 korekta położenia,Down160/Left210 daje
+M406177592. Code23 178232,code9 178787,kolejny code9 179477
+(potwierdzony reset pozycji do-1781,-693),code21 180167,M292180727,
+code22 181227,code9 181757,code21 182447,M406183007,M294183647,
+M410184147. Do tego miejsca brak walk i zużycia zasobów.
+Trigger184235 jeden type3 HP580;Heal3/ruch/single shots,
+wynik186219 HP610. Read/detach:id1(6nabojów),EXP160;
+ALL,zamknięcie187451. Z pozycji-607,-613 Right10/Up224 daje
+code9 187985;trigger188153 dwóch type5 po460HP. Cancel/repozycjonowanie
+przy utracie zasięgu,Heal3 i single shots dały wynik192633 HP529,
+read/detach:id2/id2(30nabojów),EXP266. ALL,zamknięcie193865.
+M307194437;Left170/Up272 daje pokój bossa195179/a8080248,
+piętro50,HP529/671,BP2,mode9,menuNULL,lock0,zero wrogów.
+Walka z bossem jeszcze niewywołana. Dwa Medicine4,Medicine3 i trzy
+Medicine2 zachowane;magazynek16,rezerwa312.
+
+PASS `/tmp/pe-ex-chrysler-A4-prep-preboss50-state-v1-proof/proof.json`:
+zimny A4 normal/SAN/live checkpoint pełny JSON i1MiB VRAM identyczne,
+oba exit0 bez raportów,SHA kandydatów i niezmienione źródłowe/prywatne
+karty8192B sprawdzone. Cały inventory względem176330 identyczny poza
+magazynkiem15→16,rezerwą294→312;36łupu oznacza17strzałów.
+Character wyłącznie EXP252590→253016(+426),HP671→529,
+pe_bonus3626→3658. Wszystkie512 zmiennych poza5:22→20,
+18:3695590→1598436,78:37→71 identyczne.
+Seed/checkpoint/runner/verifier obok. Żywy prep-v2 zatrzymany195179,
+kontroler96861,pid82271. Następnie przygotowanie i boss50;piętra51–77
+oraz pozostały pełny zakres otwarte. SDK/SDL nieinstrumentowane,
+brak oracle PS1,dowody/tmp nietrwałe,pełny port nadal nieukończony.
+
 ### A4 prep: dalsza trasa50, pełne HP i drugie Medicine4
 
 Bez zmian kodu na pe-state-visibility-v1. Od167750 M406:

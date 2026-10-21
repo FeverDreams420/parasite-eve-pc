@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Triceratops: przygotowana gałąź z atakiem107
+
+Dalsza normal-only próba live16191 po152522: krążenie Right/Down/Left/Up
+po70frames kosztowało267→130HP,PE9965809→10929100; nie było skuteczną
+regeneracją. Zachowana próba stoi152930 w menu Items,bez zużycia leku.
+Nie zaliczać tego jako zwycięstwa ani dowodu bezpiecznego uniku.
+
+Osobny controller live47612 odtworzył ten sam autentyczny J i zwykły
+prefiks do140891,przed bossem M245 (bez edycji RAM/zapisu).
+`/tmp/pe-ex-triceratops-prep-J2-v1.py`,root
+`/tmp/pe-ex-triceratops-prep-J2-v1-live`. Oryginalne BP menu wybrało
+M8000 iAttack. Właściwy przydział jest Down w dialogu9,100BP/punkt;
+początkowe próby Up/Left nie wydały BP. Zatwierdzono1100BP za11ataku,
+bonus39→50,całość96→107,pozostało56BP. Przy142363 menu główne
+(mode2/selection0/cursor0,7),M245,245/589HP,lock0,bez wrogów.
+
+Względem końca M243139501: wszystkie50slotów bez zmian,jedyna zmiana
+4096B rekordów to bajt430(bonusAttackM8000)39→50. Zmienne tylko1:242→243.
+Pełny cold replay od J przez oryginalne menu:
+`/tmp/pe-ex-triceratops-bp-J2-v1-proof/proof.json` PASS,
+pełny JSON i1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń sanitizerów,
+J/K bez zmian. Produkcyjny kandydat niezmieniony `pe-control-aim-v1`.
+SDK/SDL bez instrumentacji,brak oracle PS1,dowody /tmp nie są CTest.
+Kontynuować nową gałąź47612: przygotować HP/PE przed wyzwoleniem bossa,
+sprawdzić wpływ ulepszenia i oszczędniejsze uniki. Triceratops i film22
+nadal niezaliczone; pełny cel otwarty.
+
+
 ### EX: M245 i Triceratops — pierwsza faza w toku
 
 Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live16191 od139501:

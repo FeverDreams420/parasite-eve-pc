@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: wschodnie schody M343 i wejście do laboratorium M344
+
+Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live16191 od60062
+przeszedł M340 do wschodnich schodów,omijając ekspozycję od południa.
+M34362037; pierwsze Up/Right przecięło strefę powrotną do M34062152.
+Ponowne wejście63592,Left80,Down110 sprowadziło Ayę do24,292.
+Up43,Right220 dało2396,645 (za daleko na północ od drzwi).
+Down20 bez biegu,Right2 iCross uruchomiło oryginalny dialog174;
+przy65915 M344(a8064248),dialog66,state2,move_lock1 zgodnie z cutsceną.
+237/589HP,BP1156,menuNULL,brak przeciwników. Cały ekwipunek identyczny
+z M340; jedyna zmiana zmiennych1:201→343.
+
+Pełny cold replay od J do wejścia laboratorium:
+`/tmp/pe-ex-museum-m344-entry-J2-v1-proof/proof.json` PASS.
+Pełny JSON i1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń sanitizerów;
+J zachowany,K identyczny we wszystkich8192B. SDK/SDL bez instrumentacji,
+brak oracle PS1; dowody /tmp nie są trwałym katalogiem/CTest.
+Sekwencja Klampa,odbiór broni/klucza i dalsza kampania jeszcze otwarte.
+Live16191 czeka65915 w `/tmp/pe-ex-museum-J2-nav-v1-live`.
+
+
 ### EX Museum: M206→M205→M204→M201→poalarmowy hol M340
 
 Ten sam `pe-control-aim-v1`, bez zmian produkcyjnych. Live16191 od56546:

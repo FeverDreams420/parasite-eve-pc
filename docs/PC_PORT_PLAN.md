@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: awans po M205 i zwycięstwo M206
+
+Bez zmian kodu, `pe-control-aim-v1`: nagrody M205/awans podnoszą maxHP532→547,capacity26→27,BP914→1028,nowy slot26 przyjmuje raw8. Oryginalne zachodnie drzwi przyx≈−1480,z≈0 prowadzą do M206143514 (`a8040348`). Ruch uruchamia dwa cele279HP/def55 i raptora391HP/def65. Pojedyncze strzały w Double Action zadają po103/93; zwycięstwo147464,EXP,zero przeciwników,Aya364/547HP,bez leczenia w M206.
+
+Względem140839 pełny inventory zmienia wyłącznie capacity27,slot26=8,rekord amunicji426:13→2; zmienne wyłącznie1=205,34=64,78=238. `/tmp/pe-ex-museum-m206-win-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live147464,pełne inventory/zmienne i pośrednie stany sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Nagrody M206 i dalsza droga Museum/kampanii/EX nadal otwarte.
+
+
 ### EX Museum M205: Sound Burst, dwa Heal3 i zwycięstwo
 
 Bez zmian kodu, `pe-control-aim-v1`: droga M204 na północ/zachód i Cross prowadzą do M205 (`a80402c8`)134595,oryginalny dialog23/185. Dalszy ruch uruchamia przeciwnika4:31,601HP,def109. Zwykłe pojedyncze strzały w Double Action zadają po47; Sound Burst/odrzut wymuszają ponowne podejścia. Dwa zwykłe Heal3 pozwalają wygrać140839,EXP,zero przeciwników,Aya386/532HP. Po pierwszym leczeniu stan137837:489HP,cel366HP; drugie po zejściu do168HP. Bez zmian RAM/RNG/save i balansu. Endpoint ma oryginalny move_lock5 w stanie wyników,nie oznacza swobodnej eksploracji.

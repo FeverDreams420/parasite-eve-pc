@@ -3,6 +3,40 @@
 ## Aktualny potwierdzony stan — 21 października 2026
 
 
+### EX przygotowanie do T-Rexa: powrót M243 i oryginalna krzywa EXP
+
+Próba `/tmp/pe-ex-trex-distance-L2-v1-live` zakończona porażką przy99787:
+Aya0/604, T-Rex2488/3359; quit exit0. Zakończenie tej próby nie ma
+osobnego replayu SAN i nie jest dowodem zwycięstwa.
+
+Nowy cold Continue L na niezmienionym `pe-control-aim-v1` odtworzył
+Triceratopsa do90699. Zwykły powrót schodami dał M243 przy93334;
+ponowne spotkanie typ3/sub31 HP545/def109 wygrała Aya z Heal3 i strzałami.
+Przy98265 nagrody zamknięte, M243/a80441c8, story632,335/604HP,
+BP218,cap28,lock0,bez przeciwników/menu. Względem zwycięstwa Triceratopsa:
+slot1 raw0→13 (łup), bajt426 rekordów sprzętu9→0; pozostały ekwipunek
+identyczny, Medicine4 slot0 i Medicine3 slot26 zachowane. Zmienne:
+1:243→245,22:21844→38228,78:159→28; wszystkie pozostałe identyczne.
+Pełny JSON i cały1MiB VRAM normal=SAN=live,oba exit0 bez diagnostyki,
+8192 bajty źródłowego L niezmienione. Dowód PASS:
+`/tmp/pe-ex-trex-training-L2-v1-proof/proof.json`; runner,verifier,seed,
+checkpoint obok. SDK/SDL nieinstrumentowane, brak referencji PS1.
+Live `/tmp/pe-ex-trex-training-L2-v1-live` zatrzymany na98265.
+
+Odczyty LLDB bez wywołań funkcji/zapisów pamięci potwierdziły rawlevel31
+(wyświetlany32),EXP157727 przed treningiem i159763 po nim: +2036.
+Następny próg168061,pozostaje8298EXP. Tabela99 progów została odczytana
+z `g_ResidentDataPack.directory.levelExp`: progi raw37=725158,
+raw38=729658,raw97=995158,raw98=999999. Każdy awans między wyświetlanymi
+poziomami38 i98 kosztuje4500EXP; ostatni98→99 kosztuje4841.
+Sprawdzenie wszystkich tych różnic: `/tmp/pe-ex-trex-training-L2-v1-exp-proof.json`;
+surowe odczyty `-exp-readonly.log`, `-exp-table-readonly.log`,
+`-post-exp-readonly.log`. Ten odczyt tabeli nie jest niezależnym testem PS1
+ani dowodem ukończenia treningu/Chryslera. Następny krok: dalsze zwykłe
+EXP do Liberate, następnie powrót do T-Rexa; pełny cel pozostaje otwarty.
+
+
+
 ### EX T-Rex: zweryfikowana próba walki i Medicine 4, bez zwycięstwa
 
 Kandydat pozostaje `pe-control-aim-v1` (kod produkcyjny bez zmian).

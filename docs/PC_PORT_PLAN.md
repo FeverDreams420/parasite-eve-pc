@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: piętro19, dwie walki M385 i leczenie PE
+
+Bez zmian produkcji. Read/detach układu19: code13,selected15,count20;
+`/tmp/pe-chrysler-floor19-table-O1-v1.json`, plan obok z-route.
+Z168086: M306168698, M386169308, M306169863, M389170443,
+M385170983. Trzech przeciwników pokonanych przy621HP po Heal3.
+Live ślad174223 pokazuje354→634HP i PE98566144→68873536;
+pośredni punkt nie ma osobnego replayu. Łup7/14/6 potwierdzony
+read/detach, pozostawiony. Następny korytarz M385175805 uruchamia
+kolejną walkę z trzema wrogami. Przy jednym pozostałym NO TARGET,
+Circle oraz zwykły Left80 umożliwiają zakończenie przy596HP. Końcowy
+łup6/6/7 potwierdzony read/detach, pozostawiony. Dalej M388178681,
+a8068448,piętro19,596/671HP,BP2,menuNULL,lock0,zero wrogów.
+
+PASS `/tmp/pe-ex-chrysler-mid19-O1-v1-proof/proof.json`:
+niezależne zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live178681. Pełny ekwipunek względem168086
+różni się tylko amunicją426:11→3; Key1 i sześć Medicine3 zachowane.
+Wszystkie zmienne poza5:20→21,18:180190→704478,78:33→60 identyczne.
+Źródłowy i prywatne O8192B bez zmian. Seed/checkpoint/runner/verifier obok.
+SDK/SDL nieinstrumentowane,brak oracle PS1,dowody /tmp nietrwałe.
+Piętro19 nieukończone; następne wyjście20 z M388. Pełny cel nadal otwarty.
+
 ### EX O1: ukończone piętro18, wejście na19
 
 Bez zmian produkcji. Read/detach układu18: code52,selected17,count26;

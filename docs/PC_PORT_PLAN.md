@@ -2,6 +2,38 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### A4 prep: całe47, dodatkowe Medicine2 i wejście na48
+
+Bez zmian kodu na pe-state-visibility-v1. Od120964:code23 121576,
+M406122154,code22 122794,M410123324,code23 123974,code9 124529.
+Pierwsze pomieszczenia bez walk; guarded Down zatrzymał się przy124681
+na dwóch wrogach. Oryginalny pad,single shots/Heal3/ruch; ostatni wróg
+zniknął127445,wynik127745 HP560/671. Read/detach:
+`/tmp/pe-prep47-battle1-reward-v1.txt`:Medicine2(id7),EXP259.
+ALL128669 dodało lek do wolnego slot8,eksploracja128977.
+M335129429; pierwszy ruch Up wrócił do code9 przy129517,bez utraty HP.
+Powrót M335130413 ujawnił wejście północne(17,895),więc Down120,
+Right200: M292131033,M294131533,M410132033,M296132623,
+endpoint133343 M297/a80493c8,piętro48,HP560/671,BP2,mode9,
+menuNULL,lock0,zero wrogów. Leki niezużyte; sześć Medicine2,
+Medicine4 iMedicine3,ekwipunek29/29. Magazynek9,rezerwa327.
+
+PASS `/tmp/pe-ex-chrysler-A4-prep-floor48-state-v1-proof/proof.json`:
+zimny A4 normal/SAN/live checkpoint pełny JSON i1MiB VRAM identyczne,
+exit0 bez raportów,SHA kandydatów i niezmienione źródłowe/prywatne
+karty8192B sprawdzone. Inventory względem120964:slot8:0→7,
+magazynek1→9,rezerwa345→327;bez łupu amunicji oznacza10strzałów.
+Pozostałe inventory/category_counts/storage/special_storage identyczne.
+Character wyłącznie EXP251128→251387(+259),HP585→560,
+pe_bonus3505→3526. Wszystkie512 zmiennych poza4:47→48,
+18:9189→25573,78:36→135 identyczne. Seed/checkpoint/runner/verifier obok.
+Żywy prep-v2 zatrzymany133343,kontroler96861,pid82271. Układ48 odczytany
+read-only:selected18,count23,seed32416;
+`/tmp/pe-chrysler-floor48-table-prep-v1.json`,route obok wymaga wykonania.
+Następnie48–49,przygotowanie boss50 i pozostały pełny zakres portu.
+SDK/SDL nieinstrumentowane,brak oracle PS1,dowody/tmp nietrwałe,
+pełny port nadal nieukończony.
+
 ### A4 prep: piętra45–46 i wejście na47 bez zużycia leków
 
 Na pe-state-visibility-v1 bez zmian kodu. Od102947 piętro45 bez walk:

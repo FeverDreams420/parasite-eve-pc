@@ -2,6 +2,39 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Chrysler N3: piętro4→5,wyjścia M304 i dwie wygrane
+
+Na niezmienionym pe-control-aim-v1 od84372 zwykły pad prowadzi przez
+M310/M309/M305/M298/M311 doM308. Czteroosobowe spotkanie87867
+wygrane,391/671HP (−6),nagrody zamknięte90803. Dalej M298/M307,
+z korektą błędnego pierwszego podejścia,prowadzą93334 doM304/a8060248.
+Odczyt aktywnego skryptu M304 read/detach potwierdza177=20/21/23,
+co uzupełnia planer o kod16. Wyjście23 daje94032 M309,następnie
+M31094562→M29495122→M29995622. Trzech wrogów w M299 przy95710;
+wygrana bez strat HP/leków,nagrody zamknięte98890. Dalej M31199760,
+M298100380,M296101030 i schody101750 doM297/a80493c8.
+Oryginalny licznik piętra4→5. Aya391/671HP,BP2,menuNULL,lock0,
+zero przeciwników,sześć Medicine3 zachowanych.
+
+Pełne inventory względem84372 zmienia tylko byte426:13→17;
+wszystkie zmienne poza4:4→5,18:433→947,78:127→34 identyczne.
+PASS `/tmp/pe-ex-chrysler-floor5-N3-v1-proof/proof.json`: pełny zimny
+replay od autentycznego muzealnego N3,normal/SAN exit0 bez raportów,
+pełny JSON/1MiB VRAM normal=SAN=live101750,źródłowy/prywatne N3
+8192B niezmienione. Seed/checkpoint/runner/verifier obok.
+SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+
+`/tmp/pe-chrysler-floor-route-v1.py` uzupełniony wyłącznie o runtime
+potwierdzone M30416=20/21/23. Wyznaczył dalszą trasę czwartego piętra
+odslot19 do12 przez20/24/25/26/27/22,wykonaną powyżej.
+Tabela piątego piętra read/detach w osobnym
+`/tmp/pe-chrysler-floor5-table-N3-v1.json`:codeIndex5,code38,selected6,
+count16. Plan `/tmp/pe-chrysler-floor5-route-N3-v1.json` zawiera13
+przejść do kodu1 wyłącznie po znanych typach. Jest planem,nie dowodem
+wykonania. Następne: przejście piętra5; reszta Chryslera i pełny port
+pozostają otwarte. Nie zmieniano RAM/RNG/save ani kodu gry/PsyZ.
+
+
 ### EX Chrysler piętro4: trzy wyjścia M306 i wygrana M310→M309
 
 Bez zmian produkcyjnych. Od78221 zwykły pad prowadzi79137 doM306.

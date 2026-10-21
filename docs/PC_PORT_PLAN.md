@@ -2,6 +2,15 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Warehouse M265: potwierdzone zwycięstwo z G2
+
+Kandydat `pe-control-aim-v1`, bez zmian kodu produkcyjnego: pełny replay od zimnego Continue G2 do klatki 42553 kończy oryginalną walkę w M265 (`a80462c8`, story 600). Trzech przeciwników pokonanych, ekran EXP, Aya 251/437 HP. Zwykły input pada: pojedyncze strzały z Double Action, podejścia do celów i dwa użycia Heal3. Bez zmian RAM, RNG lub zapisu. Warehouse Key 220 i Gate Key 219 pozostają w ekwipunku. Względem potwierdzonego M263/36531 pełny ekwipunek różni się wyłącznie amunicją M8000 (3 → 13, z przeładowaniem); zmienne skryptowe wyłącznie 1 (262 → 263) i 78 (28 → 141).
+
+Dowód tymczasowy: `/tmp/pe-ex-warehouse-m265-win-G2-v1-proof/proof.json`, seed i checkpoint o tym samym prefiksie. Normalny build i ASan/UBSan kończą z kodem 0, pełny JSON i VRAM są identyczne także z żywym przebiegiem. Źródłowa i prywatne karty G2 pozostają bez zmian. SDK/SDL bez instrumentacji; brak niezależnego oracle PS1 i trwałego testu CTest. Nie potwierdza to jeszcze wyjścia M266 ani całego Warehouse.
+
+Wskazówka użytkownika do ewentualnej dalszej progresji: farming junk dla Wayne'a i broń z Chrysler Building mogą zastąpić trudniejsze walki niedostatecznie rozwiniętym wyposażeniem. Szczegółowe progi, dropy i warunki nagród z wiadomości wymagają sprawdzenia w oryginalnych danych przed wykorzystaniem. Preferencja pozostaje: pojedynczy strzał, Double/Triple Action; nie dodawać multishot jako domyślnego ulepszenia. Bez farmienia ani zmian wyposażenia w tym dowodzie.
+
+
 ### EX Warehouse Key220 zdobyty w M263
 
 Nagrody M263 zamknięte31972 pola;inventory bez zmian przy pełnych26

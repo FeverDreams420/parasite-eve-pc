@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: wyjście z Klamp Key do M229,global34=186
+
+Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live16191 od103851:
+Up32,Left130 w laboratorium zatrzymało Ayę przy−324,−844;Down20,Left30
+doprowadziło do M343104863. Ze spawnu2200,550:Left195,Up180 prowadzą
+do M229105638. Dalsze podejścia zwykłym padem nie uruchomiły walki;
+kolizja ekspozycji wymaga jeszcze ustalenia trasy do zachodnich drzwi.
+Nie zaliczać wejścia M242 ani użycia klucza. Przy111269 M229(a8043148),
+237/589HP,BP1156,menuNULL,lock0,zero wrogów,pozycja−590,268.
+Cały ekwipunek identyczny z końcem sceny Klampa; MaedaGun268slot25,
+KlampKey213slot14,drugi Tool22slot16 zachowane. Zmienne wyłącznie
+34:185→186 i78:239→172 względem końca M344.
+
+Pełny cold replay od J do tego punktu:
+`/tmp/pe-ex-museum-m229-klamp-J2-v1-proof/proof.json` PASS,
+pełny JSON i1MiB VRAM normal=SAN=live,oba exit0,bez zgłoszeń sanitizerów.
+Źródłowy J i utworzony K bez zmian. SDK/SDL bez instrumentacji,brak
+PS1 oracle/porównania wszystkich klatek i audio,dowody /tmp nie są CTest.
+Live16191 czeka111269 w `/tmp/pe-ex-museum-J2-nav-v1-live`.
+Dalej ustalić obejście do M242 na podstawie pierwotnej kolizji i starszego
+inputu `/tmp/pe-m243-missing-descriptor-v1-args.json`,bez zmian geometrii.
+Pełny cel nadal otwarty.
+
+
 ### EX Museum: pełna sekwencja Klampa, Maeda’s Gun i Klamp Key
 
 Ten sam `pe-control-aim-v1`,bez zmian produkcyjnych. Live16191 od65915

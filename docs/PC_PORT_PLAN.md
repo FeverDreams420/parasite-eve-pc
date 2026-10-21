@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### A4 prep: porażka po Liberate; następna gałąź sprawdza boczny pokój50
+
+Od199843:Right200/otwarcie200067 po zakończeniu Liberate,
+HP564,PE4530411raw,cel główny poza zasięgiem1549.
+Cancel/Left80,po kolejnym ataku i ruchu endpoint200731 HP0/mode3,
+żywi3:31 HP1002336 i3:29 HP1004200. Bez Haste również porażka;
+Liberate samo nie wystarczyło. Nie jest to dowód błędu portu.
+
+PASS `/tmp/pe-ex-chrysler-A4-prep-boss50-nohaste-loss-state-v1-proof/proof.json`:
+zimny normal/SAN/live checkpoint pełny JSON i1MiB VRAM identyczne,
+oba exit0 bez raportów,SHA gry i niezmienione karty8192B sprawdzone.
+Cały zapisany inventory,character i512 zmiennych identyczne z199843;
+żywe pola walki są odrębne od zapisanych statystyk. Endpoint lock5,
+menuNULL,HP0/mode3,nie zwycięstwo. Seed/checkpoint/runner/verifier obok.
+Kontroler nohaste-v1 zamknięty native exit0,karta niezmieniona.
+
+Odtwarzany oryginalny punkt195179 sprzed prób:
+`/tmp/pe-ex-chrysler-A4-prep-floor50-loot-v1.py`,live obok,
+kontroler20114. Następny krok:sprawdzenie bocznego pokoju code14
+(potencjalny łup i możliwość ulepszenia wyposażenia oryginalnym Tool),
+bez kolejnej identycznej próby walki. Read-only plan
+`/tmp/pe-chrysler-floor50-loot-route-v1.json`:slot14/code0→22→23/M307,
+następnie23→24/code14. Powrót wykonany w żywej gałęzi:Down56 daje M307195535,
+wejście1266,-81;Down110/Right220 daje M303196165/a80601c8,
+wejście336,-554. Right180/wait60 kończy196405,HP529 bez zmian,
+menuNULL,zero wrogów. Obraz przy wejściu i prawym końcu korytarza
+(`/tmp/pe-floor50-loot-m303-entry.png`, `...-right.png`) nie pokazuje
+skrzyni ani przedmiotu;nie uznano tego za zebrany łup. Ten nowy odcinek
+ma na razie tylko dowód żywego przebiegu,bez zimnego normal/SAN.
+Żywy floor50-loot-v1 zatrzymany196405,kontroler20114;następnie
+sprawdzenie pozostałych bocznych pokoi i ewentualnych ulepszeń.
+Planer wariantowy w/tmp;zmian kodu gry brak. Boss50 nadal niepokonany,
+SDK/SDL nieinstrumentowane,brak oracle PS1,dowody/tmp nietrwałe,
+pełny port nadal nieukończony.
+
 ### A4 prep: wariant bez Haste, pełne PE i Liberate
 
 Bez zmian kodu na pe-state-visibility-v1. Zimny A4 odtworzony do195179,

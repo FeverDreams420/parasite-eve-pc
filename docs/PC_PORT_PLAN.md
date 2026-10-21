@@ -2,6 +2,37 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### Boss50: żywa gałąź po Heal3 i Haste, odczyt krzywej EXP
+
+Na tym samym pe-anim-event-null-v1 kontroler v11 odtwarza235518
+całym JSON identycznie z poprzednią próbą. Zamiast śmiertelnego Left210
+oryginalne menu kolejkuje Heal3+Haste;236558 HP671 i flaga Haste0x100.
+Dalszy ruch daje237118 HP658. Kolejne uniki odnawiają PE,ale seria
+trafień do237769 redukuje HP do230. Heal3+Medicine2(slot26),ruchRight160,
+endpoint238905:HP263/671,mode0,dwóch żywych wrogów1002336/1004200.
+To żywy checkpoint,nie pokonanie bossa. Poprzednio śmiertelny odcinek
+przeżyty; dalszy bilans leczenia/obrażeń wymaga poprawy.
+
+PASS `/tmp/pe-ex-chrysler-boss50-branch3-A4-v1-proof/proof.json`:
+zapisany przebieg normal/SAN/live identyczny całym JSON/1MiB VRAM,
+exit0 bez diagnostyki. Cały ekwipunek względem wejścia poza slotami
+12/13/15/26→0 i amunicją426:5→1 identyczny; wszystkie512 zmiennych
+poza7:270→782,11:123338→254410,18:2873702→0,78:105→14 identyczne.
+Źródłowy/prywatne A4 niezmienione. Kontroler v11 pozostaje żywy238905.
+
+Read-only LLDB: g_ActiveActor.field04.fieldId04=34 jest poziomem walki,
+a g_SaveRuntimeState.player.aya.level=33 oznacza wyświetlany poziom34;
+total_exp254614. Pierwszy odczyt traktujący34 jako indeks był błędny.
+Ślady /tmp/pe-boss50-branch3-stats-v1.txt i pe-boss50-save-level-v3.txt.
+Krzywa z rzeczywistej rezydentnej tabeli,bez wywołań/zapisów pamięci:
+`/tmp/pe-boss50-level-curve-v1.json`. Poziom38 total725158,od38 do98
+każdy następny próg+4500,98→99 +4841 do999999. Do38 z obecnego
+stanu brakuje470544 EXP; sama informacja o płaskiej krzywej nie dowodzi
+przeprowadzonego grindu ani ukończenia bossa. Następne kroki: dalsza
+próba/inspekcja trafień lub oryginalny rozwój poziomu i ekwipunku.
+SDK/SDL nieinstrumentowane,brak oracle PS1,dowody /tmp nietrwałe,
+boss50 i pełny port nieukończone.
+
 ### Boss50: druga próba i punkt przed śmiertelną serią
 
 Na pe-anim-event-null-v1 kontroler v10 odtwarza wejście228178.

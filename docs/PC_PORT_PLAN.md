@@ -2,6 +2,61 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### B4: całe48 bez walk i zużycia zasobów, wejście49
+
+Ten sam pe-glyph-visibility-v1,bez zmian produkcji. Od153859 sześć
+planowanych przejść48:19→14→13→12→17→16→7. Up312→M305154471,
+Up85/Left180→M292155036,Left210→M307155546,
+Left165/Down105→M304156116,Down190/Left190→M307156796,
+Left165/Up200→M296157461,Up420→M297158181,zmienna4=49.
+Wszystkie indeksy potwierdzone bez debuggera,z JSON. Nie było spotkań,
+leczenia,przedmiotów lub innych zmian zasobów;nie zmieniano RNG/skryptów.
+
+PASS `/tmp/pe-ex-chrysler-floor49-B4-v1-proof/proof.json`:
+pełny cold normal/SAN/live JSON i1MiBVRAM identyczne,oba exit0 bez
+diagnostyki,B8192B źródłowy/prywatne niezmienione. Cały inventory i character
+identyczny ze153859:level35,EXP304280,HP604/763,BP47,pulaPE275,
+pięćMedicine3,clip7,rezerwa339. Wszystkie512vars poza4:48→49 identyczne.
+Selektor49,selected6,count26,seed25164,kod sali2.
+Runner/seed/checkpoint/verifier przy prefiksie. 48 ukończone i potwierdzone,49 dopiero rozpoczęte.
+
+Live `/tmp/pe-ex-chrysler-B4-glyph-guard-v1-live`,kontroler29828/
+native45349,zatrzymany158181,mode9/menuNULL/lock0/zero wrogów.
+Plan od6 w /tmp/pe-chrysler-floor49-B4-route-v1.json wymaga wykonania.
+SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+Boss50 i cały port pozostają otwarte. Oryginalny B4 zachowany.
+
+### B4: całe47 bez walk i zużycia zasobów, wejście48
+
+Ten sam pe-glyph-visibility-v1 i tymczasowy sterownik29828 z guardem
+scene/active/code_index/selected. Od146861/M297 przejście47 według10
+kroków planu:5→2→1→4→8→7→12→11→10→9→3. Wszystkie indeksy
+potwierdzone zJSON po przejściach,bez debuggera. Up312→M408147474,
+Up70/Left200→M305148044,Left120/Down110→M405148574,
+Down340→M306149214. Down150/Left150 doszło do z700,wymagane
+Left45→M407150159/slot7. Left145/Down110→M432150714/slot12,
+Down120/Left110/Up24/Left56→M292151324/slot11,
+Left210→M406151834/slot10,Left340→M307152474/slot9,
+Left165/Up200→M296153139/slot3,Up420→M297153859,zmienna4=48.
+Nie uruchomiono spotkania;nie zmieniano skryptów lub RNG.
+
+PASS `/tmp/pe-ex-chrysler-floor48-B4-v1-proof/proof.json`:
+pełny cold normal/SAN/live JSON i1MiBVRAM identyczne,oba exit0 bez
+diagnostyki,B8192B źródłowy/prywatne niezmienione. Cały inventory i character
+identyczne z146861:level35,EXP304280,HP604/763,BP47,pulaPE275,
+pięćMedicine3,clip7,rezerwa339. 512vars tylko4:47→48,
+18:15354→15352,78:36→129. Selektor48,selected19,count21,seed25164,
+kod sali2. Runner/seed/checkpoint/verifier przy prefiksie.
+47 ukończone i potwierdzone;dalsze48 opisane wyżej.
+
+Live `/tmp/pe-ex-chrysler-B4-glyph-guard-v1-live`,kontroler29828/
+native45349,zatrzymany153859,mode9/menuNULL/lock0/zero wrogów.
+Plan od19 w /tmp/pe-chrysler-floor48-B4-route-v1.json wymaga wykonania.
+Strażnik działał przy zmianach sceny;na47 nie było sąsiedniego przejścia
+same-scene,więc jego osobny teststop pozostaje niepotwierdzony.
+SDK/SDL nieinstrumentowane,brak oraclePS1,dowody/tmp nietrwałe.
+Boss50 i cały port pozostają otwarte.
+
 ### B4: ukończone46, wejście47 z zachowaniem leków
 
 Ten sam pe-glyph-visibility-v1,bez zmian produkcji. Oryginalne field PE

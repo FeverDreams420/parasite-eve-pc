@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: zwycięstwo M217 i wyjście M214
+
+Bez zmian produkcyjnych, ten sam `pe-control-aim-v1`. Kontynuacja live16191
+od32871: Up nie przekraczało przeszkody przyx1250,z17; Left uruchomiło
+wariant dwóch typ4/sub31,30 po391HP/def65. Pierwszy wybór celu33835,
+M8000 pojedynczy strzał+DoubleAction,96 obrażeń/pocisk.
+Zwykłe serie oraz pojedynczy atak Square zabiły oba cele; przy37557
+zero wrogów,352/573HP,bez leczenia. Opóźniony pojedynczy atak wymagał
+odczekania animacji/ATB; nie był pominięty ani zastąpiony zmianą stanu.
+Nagrody zamknięte39057,menuNULL,move_lock0,mode9,BP1100.
+Wszystkie50 slotów bez zmian, jedyna zmiana4096B rekordów sprzętu to
+bajt426 (amunicja M8000)9→17. Zmienne względem wejścia M217:
+21:357601365→357863509,78:226→107.
+
+Pełny cold replay od J2 obejmujący alarm/K/film21 i walkę:
+`/tmp/pe-ex-museum-m217-win-J2-v1-proof/proof.json` PASS,
+pełny JSON i1MiB VRAM normal=SAN=live, oba exit0,bez zgłoszeń sanitizerów,
+źródłowy J i utworzony K bez zmian.
+
+Po nagrodach Up220 zatrzymało Ayę przy605,1434; Left/Up również blokowała
+oryginalna przeszkoda. Down35,Left50,Up100 ominęło ją i prowadzi do M214
+(a8041248),przy40652,352/573HP,lock0,bez wrogów. Cały ekwipunek i zmienne
+jak po walce z jedyną zmianą1:234→217. Osobny pełny cold replay:
+`/tmp/pe-ex-museum-m214-J2-v1-proof/proof.json` PASS,znowu całe JSON/VRAM
+zgodne normal/SAN/live i karty zachowane. Live16191 czeka40652 w
+`/tmp/pe-ex-museum-J2-nav-v1-live`. Dalej walka M214 i trasa do M207.
+Dowody /tmp nie zastępują trwałego katalogu/CTest ani niezależnego oracle
+PS1; SDK/SDL bez instrumentacji. Dalsza kampania EX pozostaje nieukończona.
+
+
 ### EX Museum: film21, story632 i wejście M217
 
 Ten sam `pe-control-aim-v1`, bez zmian produkcyjnych. Live16191 od J2

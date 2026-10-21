@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: korekta kolejności — muzealny N3 → Chrysler przed finałem
+
+Zgodnie z korektą użytkownika najpierw Chrysler Building, potem finał.
+Bez zmian produkcji, ten sam `pe-control-aim-v1`. Zimny Continue N3
+przez M340/M201, dodatkową wygraną w M201, powrót M340 i południowe
+wyjście M192 prowadzi do mapy miasta. Wybór strony10 i dwa potwierdzenia
+przy24932 dają M290/a8049048,story632,401/671HP,BP2,menuNULL,lock0.
+Sześć Medicine3 zachowanych. Pełny inventory względem coldN3 zmienia
+wyłącznie slot27:0→7,slot28:0→20,byte426:8→2. Wszystkie zmienne
+poza1:998→999,21:357933141→357933205,78:206→7 identyczne.
+
+PASS `/tmp/pe-ex-chrysler-entry-N3-v1-proof/proof.json`: niezależne
+zimne normal/SAN, pełny JSON i1MiB VRAM normal=SAN=live24932,
+oba exit0 bez sanitizer/opcode/assertion. Źródłowy i prywatne N3
+8192B niezmienione, SHA766cc437015bf7460da2542ece539bb8bbefb7e33daf5d042d131b45ab6c27d3.
+Seed/checkpoint/runner/verifier obok. Aktywny kontroler
+`/tmp/pe-ex-chrysler-N3-nav-v1.py`,prywatny katalog z sufiksem-live.
+SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oraclePS1.
+To wejście przed finałem,nie dowód przejścia pięter lub całego Chryslera.
+
+
 
 ### EX przygotowanie finału: sześć Medicine3,awans,BP i autentyczny zapis N3
 
@@ -52,8 +73,9 @@ raportów. PASS `/tmp/pe-ex-stock-N3-loaded-v1-proof/proof.json`.
 SDK/SDL nieinstrumentowane,brak oracle PS1,dowody /tmp nie są CTest.
 Stare kontrolery zamknięte quit exit0; nowy
 `/tmp/pe-ex-stock-N3-nav-v1.py` startuje z samegoN3 w
-`/tmp/pe-ex-stock-N3-nav-v1-live`. Następne: ponowna droga M246/Eve,
-lotniskowiec i próba finału z zapasem leków. Finał EX i pełny cel otwarte.
+`/tmp/pe-ex-stock-N3-nav-v1-live`. Następne: z muzealnego N3 wrócić na mapę miasta i wejść do Chrysler
+Building przed finałem. Użytkownik skorygował kolejność: nie przechodzić
+na lotniskowiec przed ukończeniem Chryslera. Finał EX i pełny cel otwarte.
 
 
 

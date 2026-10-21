@@ -2,6 +2,44 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### Wytrenowana gałąź: autentyczny zapis B4 i zweryfikowane Continue
+
+Po potwierdzonym level35/BP153606 oryginalny pad wrócił
+M242→M229→M343→M226→M343→M340. Barierki schodów wymagają obejścia:
+w M343 przejście przez xokoło−1220,z1550 pozwala dojść do prawego zejścia;
+bezpośrednie Up przy x1080 blokuje oryginalna barierka przy z842.
+Bez kolejnych walk/utraty HP/zużycia zasobów. Telefon przy x−1668,z−594,
+facingLeft,Cross/dialog6,Save/Slot1/Down do pustego B1. Oryginalny zapis
+utworzony przy162471; zamknięcie menu163367/M340,story632,HP644/763.
+Character identyczny z endpointem treningu:level35,EXP300655,BP47,
+M8000bonus90/atak147,piec Medicine3 zachowane. Inventory tylko cache
+category_counts[0]387→405 (rzeczywista rezerwa była405 już po treningu);
+wszystkie512vars poza1:243→998 i78:31→156 identyczne.
+
+Nowy `/tmp/pe-ex-museum-trained-save-B4-v1-source/BASLUS-006620000000B`,
+8192B,SHA256 `b0b95ee052db09a0481fb8e14a43c93573b774970779ab20e84199787a7f298c`.
+Źródłowy A4 i jego prywatna kopia zachowane. PASS
+`/tmp/pe-ex-museum-trained-save-B4-v1-proof/proof.json`:
+pełny cold normal/SAN/live JSON i1MiBVRAM oraz wszystkie8192B nowego B
+identyczne,oba exit0 bez diagnostyki. Jawne porównanie pełnego inventory,
+character i512vars względem poziom35/BP. Runner/verifier/seed/checkpoint obok.
+
+Pierwszy zimny Continue z samym B przy13200 pozostał na pustym A0;
+oryginalne Down/Cross wybrało B1 i przy13320 wczytało M340,632.
+Przy14328:HP644/763,menuNULL,lock0,battle0/live0. PASS
+`/tmp/pe-ex-museum-trained-B4-continue-v1-proof/proof.json`:
+nowy proces tylko z B,normal/SAN/live JSON i1MiBVRAM identyczne,
+pełne inventory/character/512vars identyczne ze stanem po telefonie,
+B8192B niezmienione,oba exit0 bez raportów. Runner/verifier/seed/checkpoint obok.
+
+Stary kontroler5905/native20713 zakończony exit0. Obecny live
+`/tmp/pe-ex-museum-B4-loaded-v1-live`,kontroler75878/native26158,
+zatrzymany14328 po Continue. Kandydat nadal pe-m436-bind-v2,
+bez zmian kodu gry,RNG,pamięci lub zapisów. SDK/SDL nieinstrumentowane,
+brak oraclePS1,dowody/tmp nietrwałe. Następna gałąź testów Chryslera
+powinna wychodzić z tego oryginalnego B zamiast ponownie tracić trening.
+Boss50 i pełny port pozostają nieukończone; finału Eve nie uruchamiano.
+
 ### Muzeum: poziom35 i ulepszenie M8000 przez oryginalne BP
 
 Na niezmienionym pe-m436-bind-v2 autentyczna gałąź A4 została podlevelowana

@@ -2,6 +2,43 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### A4 prep: całe48 i dwie walki na49; nadal przed bossem50
+
+Bez zmian kodu na pe-state-visibility-v1. Od133343:M305133955,
+M292134505,M406135005,code22 135645,M304136175,M306136835,
+M296137495,endpoint138215 M297/piętro49 HP560. Piętro48 bez walk,
+cały inventory i character identyczne z133343;512 zmiennych poza
+4:48→49,18:25573→25572,78:135→221 identyczne.
+PASS `/tmp/pe-ex-chrysler-A4-prep-floor49-state-v1-proof/proof.json`:
+pełny zimny A4 normal/SAN/live JSON i1MiB VRAM zgodne,oba exit0 bez
+raportów,sprawdzone SHA gry i niezmienione źródłowe/prywatne A8192B.
+
+Układ49 read-only:selected15,count19,seed32416;
+`/tmp/pe-chrysler-floor49-table-prep-v1.json`,route obok.
+Code22 138827,trigger138899 dwóch. Heal3/ruch/single shots:
+wynik142051 HP657,read/detach:brak łupu,EXP288;eksploracja142667.
+Down60/Left100 daje code23 143099;Left145/Down110 daje M306143654.
+Up60/Left110 zawraca do code23 przy143770 i uruchamia dwóch wrogów.
+Cancel/Up80 po utracie zasięgu,focus,single shots:wynik146626 HP657,
+read/detach:id7/id7,EXP230. Przy pełnym ekwipunku wybrano END,
+oba Medicine2 pozostawione;eksploracja147582. M306148002;
+Right140/Down120 nie wychodzi,Left110/Down150 daje M301149122,
+a80600c8,piętro49,HP657/671,mode9,menuNULL,lock0,zero wrogów.
+Read-only selected18/code12 potwierdza boczny pokój zamiast planowanej
+trasy21 do M292. Następny krok:powrót i skorygowanie wyjścia M306;
+piętro49 i boss50 nadal nieukończone.
+
+PASS `/tmp/pe-ex-chrysler-A4-prep-mid49-state-v1-proof/proof.json`:
+pełny zimny normal/SAN/live JSON i1MiB VRAM zgodne,oba exit0 bez raportów,
+SHA kandydatów i niezmienione źródłowe/prywatne karty8192B sprawdzone.
+Inventory względem138215 identyczny poza magazynkiem9→6 i rezerwą327→309,
+bez łupu amunicji21strzałów. Character wyłącznie EXP251387→251905(+518),
+HP560→657,pe_bonus3526→3597. Wszystkie512 zmiennych poza5:20→22,
+18:25572→549861,78:221→8 identyczne. Żaden lek niezużyty.
+Seed/checkpoint/runner/verifier obok. Żywy prep-v2 zatrzymany149122,
+kontroler96861,pid82271. SDK/SDL nieinstrumentowane,brak oracle PS1,
+dowody/tmp nietrwałe,pełny port nadal nieukończony.
+
 ### A4 prep: całe47, dodatkowe Medicine2 i wejście na48
 
 Bez zmian kodu na pe-state-visibility-v1. Od120964:code23 121576,

@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX O1: piętro20, wolny slot i pierwsza wygrana
+
+Bez zmian produkcji. Z181809 oryginalne menu Items/Use Medicine3
+slot0 przy181993 przywraca596→671HP i zwalnia slot0; pięć Medicine3
+pozostaje. Read/detach układu20: code1,selected13,count22;
+`/tmp/pe-chrysler-floor20-table-O1-v1.json`, plan do code0 obok z-route.
+Dalej M384182669, M386183359 i trzech wrogów pokonanych bez utratyHP.
+Read/detach łupu: trzy id1; po ALL slot0 nadal pusty. M294185411,
+M389185911/a80684c8,piętro20,671/671HP,BP2,menuNULL,lock0,zero wrogów.
+
+PASS `/tmp/pe-ex-chrysler-mid20-O1-v1-proof/proof.json`:
+niezależne zimne replaye odO1,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live185911. Pełny ekwipunek względem181809
+różni się tylko slot0:8→0 i amunicją426:3→0; Key1 zachowany.
+Wszystkie zmienne poza5:20→23,18:704478→1753053 identyczne.
+Źródłowy i prywatne O8192B bez zmian. Seed/checkpoint/runner/verifier obok.
+SDK/SDL nieinstrumentowane,brak oracle PS1,dowody /tmp nietrwałe.
+Boss20 jeszcze niepodjęty; zachować wolny slot na klucz przy dalszych
+łupach. Następne wyjście20 z M389. Pełny zakres portu nadal otwarty.
+
 ### EX O1: ukończone piętro19, wejście na20
 
 Bez zmian produkcji. Z178681 zwykły pad: M384179231,

@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX: wyjście M265 → M266 po zwycięstwie
+
+Bez zmian kodu, ten sam `pe-control-aim-v1`: zimne Continue G2, walka i nagrody M265, dojście do bocznych drzwi przy x≈−1111,z≈−2002, Cross i oryginalne przejście do M266 (`a8046348`) w klatce 45352. Aya 251/437HP, brak przeciwników/menu/blokady ruchu, pozycja startowa [829,0,911]. Pełny ekwipunek identyczny z ekranem zwycięstwa 42553; oba klucze 220/219 zachowane. Zmienne względem 42553 zmieniają się wyłącznie: 1=265 i 20=336856421.
+
+`/tmp/pe-ex-warehouse-m266-G2-v1-proof/proof.json`: pełny JSON i VRAM normal/SAN/live równe, exit0, źródłowa/prywatne G2 niezmienione; replay obejmuje całe przejście od Continue. SDK/SDL nieinstrumentowane, brak oracle PS1 i trwałego CTest. Następne: drzwi M333, telefon i reszta Warehouse; samo wejście M266 ich nie potwierdza.
+
+
 ### EX Warehouse M265: potwierdzone zwycięstwo z G2
 
 Kandydat `pe-control-aim-v1`, bez zmian kodu produkcyjnego: pełny replay od zimnego Continue G2 do klatki 42553 kończy oryginalną walkę w M265 (`a80462c8`, story 600). Trzech przeciwników pokonanych, ekran EXP, Aya 251/437 HP. Zwykły input pada: pojedyncze strzały z Double Action, podejścia do celów i dwa użycia Heal3. Bez zmian RAM, RNG lub zapisu. Warehouse Key 220 i Gate Key 219 pozostają w ekwipunku. Względem potwierdzonego M263/36531 pełny ekwipunek różni się wyłącznie amunicją M8000 (3 → 13, z przeładowaniem); zmienne skryptowe wyłącznie 1 (262 → 263) i 78 (28 → 141).

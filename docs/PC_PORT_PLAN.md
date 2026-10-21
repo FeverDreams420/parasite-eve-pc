@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### A4 prep: ukończone49 i wejście na50
+
+Bez zmian kodu na pe-state-visibility-v1. Od149122 M301:
+Up104 wraca do M306149526,boczne wejście(-569,-971).
+Left70/Up130/Left110 daje M292150136;Left200 M305150636,
+Left328 code21 151264. Up180 zatrzymał się na przeszkodzie,
+pozycja654,-1871;Left90/Up112 daje M307152246. Z wejścia(-712,-81)
+Left170/Up272 daje M296152988. Schody do M297153708,
+piętro50,HP657/671,BP2,mode9,menuNULL,lock0,zero wrogów.
+Ostatni odcinek49 bez walk i zużycia zasobów; pełny inventory i character
+identyczne z149122. Wszystkie512 zmiennych poza4:49→50,5:22→20,
+18:549861→549862,78:8→219 identyczne.
+
+PASS `/tmp/pe-ex-chrysler-A4-prep-floor50-state-v1-proof/proof.json`:
+zimny A4 normal/SAN/live checkpoint pełny JSON i1MiB VRAM identyczne,
+oba exit0 bez raportów,SHA kandydatów i niezmienione źródłowe/prywatne
+karty8192B sprawdzone. Seed/checkpoint/runner/verifier obok.
+Układ50 read-only:selected19,count32,seed32416;
+`/tmp/pe-chrysler-floor50-table-prep-v1.json`,route obok wymaga wykonania.
+Pierwsze wejście na50:code9 154320,HP657,bez walk. Żywy prep-v2
+zatrzymany154320,kontroler96861,pid82271. Kolejny krok:trasa przez50
+oraz boss; boss50 i piętra51–77 nadal nieukończone. Wszystkie leki
+zachowane,sześć Medicine2,jedno Medicine3,jedno Medicine4.
+SDK/SDL nieinstrumentowane,brak oracle PS1,dowody/tmp nietrwałe,
+pełny port nadal nieukończony.
+
 ### A4 prep: całe48 i dwie walki na49; nadal przed bossem50
 
 Bez zmian kodu na pe-state-visibility-v1. Od133343:M305133955,

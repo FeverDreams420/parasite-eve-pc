@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX A2: druga walka piętra21, code22
+
+Bez zmian produkcji. Z28992 zwykły pad: code21/a80692c8 przy29682,
+M29430242,M29230742,code22/a8069248 przy31242. Pięciu przeciwników
+pokonanych przy387HP,bez zużycia leków. Read/detach łupu: jeden id1,
+pozostałe puste. Wyjście22 prowadzi33804 do code9/a80690c8,
+piętro21,387/671HP,BP2,menuNULL,lock0,zero wrogów. Oba klucze
+oraz pięć Medicine3 zachowane.
+
+PASS `/tmp/pe-ex-chrysler-second21-A2-v1-proof/proof.json`:
+niezależne zimne replaye tylko zA,normal/SAN exit0 bez raportów,pełny JSON
+oraz1MiB VRAM normal=SAN=live33804. Pełny ekwipunek względem28992
+różni się tylko amunicją426:13→8; wszystkie zmienne poza18:5→10 identyczne.
+Źródłowy i prywatne A8192B bez zmian. Seed/checkpoint/runner/verifier obok.
+SDK/SDL nieinstrumentowane,brak oracle PS1,dowody /tmp nietrwałe.
+Piętro21 nieukończone; następne wyjście22 zcode9.
+Pełny zakres portu pozostaje otwarty.
+
 ### EX A2: pierwsza walka piętra21 i nowe warianty scen
 
 Bez zmian produkcji. Read/detach układu21: code59,selected6,count26;

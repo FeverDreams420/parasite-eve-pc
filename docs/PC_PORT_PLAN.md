@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### A4 prep: wariant bez Haste, pełne PE i Liberate
+
+Bez zmian kodu na pe-state-visibility-v1. Zimny A4 odtworzony do195179,
+root `/tmp/pe-ex-chrysler-A4-prep-boss50-nohaste-v1-live`,pid304,
+kontroler51572. Oryginalne Items zużywa Medicine2 slot18/20:
+529→619→671HP;zamknięte195803,bez polowego Heal3 i zużycia PE.
+Trigger195907,walka196207,po Up80/otwarciu196311 HP658,
+PE76046664raw,cel główny1004200. Dwa strzały do196495 dają1004038;
+pojawia się type4/sub30 HP1200. Up160/otwarcie196679 HP337,
+PE92336576raw;lista celów zawiera tylko głównego bossa.
+Medicine4 slot8 +Heal1 jako druga akcja (cel poza zasięgiem),
+przy197335 HP671. Ruch i następne otwarcie197743 HP564,
+PE98566144raw=max. Liberate wybrane przy198335,kolejka7;
+druga komenda Cross uruchamia198343. Po1500vblank endpoint199843:
+HP564,mode0,dwóch wrogów,menuNULL,lock4,PE0,action_mode18.
+Główny boss1002498 (delta1540 od dwóch pierwszych strzałów),
+type4 nadal1200HP. Walka trwa,nie jest zwycięstwem.
+
+PASS `/tmp/pe-ex-chrysler-A4-prep-boss50-nohaste-liberate-state-v1-proof/proof.json`:
+zimny normal/SAN/live checkpoint pełny JSON i1MiB VRAM zgodne,
+oba exit0 bez raportów,SHA kandydatów i niezmienione źródłowe/prywatne
+karty8192B sprawdzone. Inventory względem195179 wyłącznie slot8:9→0,
+slot18/20:7→0,zapisany magazynek16→14;rezerwa312 bez zmian.
+Character wyłącznie saved_hp529→564,wszystkie512 zmiennych poza
+7:270→782,11:123338→254410,18:1598436→0,78:71→100 identyczne.
+Type4/sub30 ma flags0x1624480,bit0x4000;bieżący Battle_BuildTargetList
+w setup.c:410 wyklucza taki rekord,nie filtruje samego type4.
+Lista celów rzeczywiście zawiera tylko3:31. Jest to wyjaśnienie
+zachowania PC,nie porównanie z oracle PS1.
+Seed/checkpoint/runner/verifier obok. Żywy nohaste-v1 zatrzymany199843,
+pid304,kontroler51572;pozostałe leki Medicine4 slot12,Medicine3 slot28,
+Medicine2 slot26. Następny krok:kontynuacja walki po Liberate.
+SDK/SDL nieinstrumentowane,brak oracle PS1,dowody/tmp nietrwałe,
+pełny port nadal nieukończony.
+
 ### A4 prep: koniec wariantu Haste i źródło śmiertelnego trafienia
 
 Od200555 odnowienie Haste i strzał,krótkie odcinki oryginalnego pad

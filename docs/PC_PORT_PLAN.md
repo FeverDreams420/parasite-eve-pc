@@ -2,6 +2,13 @@
 
 ## Aktualny potwierdzony stan — 21 października 2026
 
+### EX Museum: M197 → hol M196 → M201, zwycięstwo i wejście M204
+
+Bez zmian kodu, `pe-control-aim-v1`: po nagrodach M197 oryginalne drzwi prowadzą do holu M196128052; północne przejście do Rain Forest M201 (`a80400c8`)129402. Ruch uruchamia dwóch przeciwników3:31/30 po279HP; pojedyncze strzały w Double Action i jedno podejście do oddalonego celu kończą walkę132021,zero przeciwników,Aya444/532HP bez utraty HP w M201. Po nagrodach Up prowadzi do M204 (`a8040248`)133771,brak menu/przeciwników/blokady ruchu,story608,BP914.
+
+Względem125797 pełny inventory zmienia wyłącznie rekord amunicji426:14→8; zmienne wyłącznie1=201,21=85,78=125. `/tmp/pe-ex-museum-m204-G2-v1-proof/proof.json`: pełny replay od zimnegoG2,normal/SAN exit0,pełny JSON/VRAM identyczne z live133771,pełne inventory/zmienne i pośrednie wejście/walka sprawdzone,G bez zmian,H/I zgodne ze źródłami. SDK/SDL nieinstrumentowane,dowody/tmp nietrwałe,brak oracle PS1/trwałego CTest. Dalsze Museum,kampania i Chrysler nadal otwarte.
+
+
 ### EX Museum M197: powrotna walka wygrana
 
 Bez zmian kodu, `pe-control-aim-v1`: nagrody M198 zamknięte120774,oryginalne wyjście prowadzi do M197121394. Zwykły ruch uruchamia391/279/279HP; podejścia do oddalających się celów i pojedyncze strzały w Double Action kończą walkę125797,EXP,zero przeciwników,Aya444/532HP. Bez leczenia w M197,edycji RAM/RNG/save ani zmian balansu. Względem119574 pełny inventory zmienia wyłącznie rekord amunicji426:7→14; zmienne wyłącznie1=198,21=20,78=76. Story608,BP914 zachowane.

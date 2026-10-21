@@ -2,6 +2,61 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### B4: pokój bossa50 osiągnięty i zweryfikowany, siedem Medicine3
+
+Na pe-glyph-visibility-v1 od176229 dokończono pierwszą walkę50
+(przeciwnicy420/410/410HP),wygrana178853,HP483,EXP403. Medicine2
+pozostawioneEND180309. Pierwszy nav cel−2050 poX zatrzymał się przed
+progiem drzwi;cel−2500 poprawnie przeszedł przy181617,slot11/M408181917.
+Poprawiono wyłącznie punkty sterownika w /tmp,nie geometrię/skrypty gry.
+
+Nav uruchomił dwóch wrogów181997,wygrana184249 przy683HP poHeal3,
+EXP288. OryginalneSEL:Medicine3 zamieniono z niewyposażonym M79-3
+raw267slot8,END186353. Kolejne nav:slot10/M406187733,
+slot9/M409189553,slot5/M405190957,slot3/M408192801,
+slot2/M406194181,slot1/M406196001,slot0/M407197821,
+slot4/M405199129. Nav zatrzymał się na trzech wrogach199369,
+wynik204269 przy435HP,EXP392. OryginalneSEL zamieniło drugi Medicine3
+z niewyposażoną broniąraw266slot18;END206693. Łącznie siedem Medicine3,
+bez użycia lekówHP w tych walkach. Wyposażone M8000atak147 iB Jacket1
+zachowane. Wszystkie26 przejść planu wykonane,do slot14/code0:
+19→15→11→10→9→5→3→2→1→0→4→8→7→6→12→16→20→21→22→25→
+28→29→30→31→27→23→14. Pokój bossaM404 przy230909,jeszcze bez triggera.
+
+Sterownik sprawdzony na rzeczywistych przejściach same-scene:
+slot2→1 przy195701 wM406 oraz12→16 przy214325 wM405. Nav zatrzymuje
+się po zmianie indeksu,pomimo identycznego scene. To zastępuje wcześniejszy
+status „teststop pending”. Helper /tmp/pe-chrysler-native-nav-v1.py ma
+teraz również M410. Pierwsza próba przy slot31 dała KeyError410 i nie
+wysłała wejścia;po uzupełnieniu mapowania poprawnie przeszła do27.
+Sprostowanie nazw:obsługiwany L-shaped moduł toM410/tokena8081048,
+nie M432. Audyt dwóch pełnych logówB4:599snapshotówM410,zeroM432.
+Poprawiono nazwy w powyższej historii gałęzi B4;payloady dawnych proofów,
+które porównują rzeczywiste tokeny/JSON,nie zostały zmienione.
+
+Próba fieldHeal3 w pokoju bossa nie działała z powodu małej ilościPE
+(grayed out),HP435 pozostało bez zmian. Menu zamknięte231309.
+Nie uznawać Ayi za pełneHP/PE;następna próba bossa wymaga świadomego
+leczenia dostępnymi oryginalnymi komendami lub uzupełnieniaPE w walce.
+
+PASS `/tmp/pe-ex-chrysler-preboss50-B4-v1-proof/proof.json`:
+pełny cold B normal/SAN/live JSON i1MiBVRAM identyczne,oba exit0 bez
+raportów,B8192B źródłowy/prywatne niezmienione. Pełny inventory względem
+176229 tylko slot8:267→8,slot18:266→8,clip426:17→8,rezerwa336→318;
+wszystkie pozostałe bajty w tym rekordy wymienionych broni identyczne.
+Character tylkoEXP304546→305629(+403+288+392),HP763→435,pulaPE299→367.
+512vars poza18:539640→3685371 i78:7→227 identyczne. Selektor50,
+selected14/code0,count32,seed25164. Endpoint231309/M404,mode9,
+menuNULL/lock0/zero wrogów,level35,maxHP763,BP47,siedemMedicine3.
+Runner/seed/checkpoint/verifier przy prefiksie. Merge cap231301 kończy
+ostatni neutralny wait8 klatek przed endpointem;replay do231309 kontynuuje
+neutralny input i dokładnie zgadza się z pełnym live,nie edytowano stanu.
+
+Live `/tmp/pe-ex-chrysler-B4-route-v1-live`,kontroler36411/native50083,
+zatrzymany231309 przed bossem. Boss50 nadal niepokonany,przejście dalej
+niepotwierdzone. Kod gry bez zmian w tym odcinku. SDK/SDL nieinstrumentowane,
+brak oraclePS1,dowody/tmp nietrwałe. Cały zakres portu pozostaje otwarty.
+
 ### Sterownik tras: pełne HP i zatrzymanie na pierwszej walce50
 
 Bez zmian produkcji,pe-glyph-visibility-v1. Tymczasowy
@@ -44,7 +99,7 @@ Boss50 i cały port nadal nieukończone.
 Ten sam pe-glyph-visibility-v1,bez zmian produkcji. Od158181 trasa49:
 6→2→1→5→4→3→8→11→12→13→14→19→23→24→25→21→20→15→7.
 Wszystkie18 przejść planu potwierdzone glyph_selection.selected.
-M408158794,M407159364,M432159919;naDown88 uruchomiony jeden wróg
+M408158794,M407159364,M410159919;naDown88 uruchomiony jeden wróg
 160007. Następne zaplanowane ruchy zatrzymane przezguard po8 klatkach;
 walka wygrana160971,HP549/763,EXP133. END162395,
 Down67/Left136→M304162898/slot4,Left340→M407163538/slot3,
@@ -52,7 +107,7 @@ Left145/Down110→M405164093/slot8,Down340→M409164733/slot11,
 Down90/Right150→M294165273/slot12,Right190→M292165763,
 Right210→M408166273/slot14,Right145/Down110→M405166828/slot19,
 Down340→M304167468/slot23,Down190/Right190→M406168148/slot24,
-Right340→M432168788/slot25,Right130/Up160→M306169378/slot21,
+Right340→M410168788/slot25,Right130/Up160→M306169378/slot21,
 Up50/Left195→M409169923/slot20. Left80 uruchamia jednego170003,
 wygrana171871 przy510/763HP,EXP133,nagrody zamknięte172987.
 Left90/Up168→M405173545/slot15,Up340→M296174185/slot7,
@@ -106,7 +161,7 @@ kroków planu:5→2→1→4→8→7→12→11→10→9→3. Wszystkie indeksy
 potwierdzone zJSON po przejściach,bez debuggera. Up312→M408147474,
 Up70/Left200→M305148044,Left120/Down110→M405148574,
 Down340→M306149214. Down150/Left150 doszło do z700,wymagane
-Left45→M407150159/slot7. Left145/Down110→M432150714/slot12,
+Left45→M407150159/slot7. Left145/Down110→M410150714/slot12,
 Down120/Left110/Up24/Left56→M292151324/slot11,
 Left210→M406151834/slot10,Left340→M307152474/slot9,
 Left165/Up200→M296153139/slot3,Up420→M297153859,zmienna4=48.
@@ -138,7 +193,7 @@ Right80 uruchamia dwóch wrogów131523,wygrana134039 przy613HP,
 EXP230. END135463,Right40/Down150→M405135953/slot5,
 Down112 trigger136065 dwóch,wynik137613 przy469HP,EXP259.
 END139069,Down280→slot8/139649 w tej samej scenieM405;
-Down340→M432140289/slot13. Down120/Left110/Up24/Left56→
+Down340→M410140289/slot13. Down120/Left110/Up24/Left56→
 M406140899/slot12,Left340→M292141539/slot11,
 Left210→M294142049/slot10,Left190→M409142539/slot9.
 
@@ -192,7 +247,7 @@ Left145/Down110→M405121159/slot18,Down340→M409121799/slot23,
 Down90/Right150→M406122339/slot24. KolejneRight340/300wait dają
 slot25/122979 i26/123619,ta sama scena. Guard zatrzymujeRight88 na
 jednym wrogu123707,wygrana125911,HP405/763,EXP160;END127335.
-Right280→slot27/127915,Right340→M432128555/slot28,
+Right280→slot27/127915,Right340→M410128555/slot28,
 Right130/Up160→M296129145/slot17,Up420→M297129865,zmienna4=46.
 
 PASS `/tmp/pe-ex-chrysler-floor46-B4-v1-proof/proof.json`:
@@ -257,17 +312,17 @@ Bez zmian produkcji,pe-m436-bind-v2. Z90094/M297 zwykły pad przechodzi
 Wszystkie14 przejść planu wykonane i potwierdzone read-only.
 Pierwsze M40590707 ma obróconą kamerę Up po−X;Up128 uruchamia dwóch
 wrogów90843,wygrana94103,HP486/763,EXP266. END95559,
-M30796115,M29496710,M43297200. Jeden wróg97288 wygrany98900,
+M30796115,M29496710,M41097200. Jeden wróg97288 wygrany98900,
 HP687/763 po leczeniuPE,EXP133,nagrody zamknięte100016.
 
-W M432 próby prostegoUp orazDown/Right dotarły do ścian; poprawne
+W M410 próby prostegoUp orazDown/Right dotarły do ścian; poprawne
 obejście zakrętu od x0,z−1503:Left80/Up168 dajeM407102747/slot2.
 To korekta sterownika,bez zmian geometrii lub kodu gry. Up70/Right208→
 M406103333/slot3,Right340→M408103973/slot4,
 Right145/Down110→M405104528/slot9. Down112 uruchamia dwóch wrogów,
 wygrana106220,HP589/763,EXP259. END107676,Down240 daje kolejne
 M405108216/slot13. Down340→M405108856/slot18,
-Down340→M432109496/slot20. Down120/Left110,Up24/Left56→
+Down340→M410109496/slot20. Down120/Left110,Up24/Left56→
 M409110406/slot19,Left110/Up168→M306110984/slot17,
 Up300→M296111584/slot8,Up420→M297112304 i zmienna4=45.
 
@@ -301,12 +356,12 @@ pokonany80045,HP575,EXP133,nagrody zamknięte81161.
 
 Dalsze rzeczywiste indeksy potwierdzone read-only po przejściach:
 5→9→14→13→12→15→16→17→18→10. Right115/Down110→M40581686,
-Down340→M43282326,Down130/Left170→M29282924,
+Down340→M41082326,Down130/Left170→M29282924,
 Left210→M30783434,Left165/Down105→M40984004,
 Down90/Right150→M40684544. Right88 uruchamia jednego wroga;
 wygrana86140,HP620 po leczeniu PE,EXP160. END87564,
 Right280 daje slot17 w tej samej scenieM40688144;
-Right340→M43288784/slot18,Right130/Up160→M29689374/slot10,
+Right340→M41088784/slot18,Right130/Up160→M29689374/slot10,
 Up420→M29790094 i oryginalna zmienna4=44. Wszystkie14 kroków planu
 43 wykonane,slot11→6→2→3→4→5→9→14→13→12→15→16→17→18→10.
 
@@ -338,7 +393,7 @@ Right280→M30565115;Right120/Down110→M40965645,
 Down90/Right150→M40866185,Right145/Down110→M30666740.
 Tym razem właściwe Down260 zamiast Up w M306 wybiera22→slot20,
 M40567300. Down340→M30467940;Down130/Right170,Down60/Right45
-obchodzą obrócony wariant i wybierają23→M43268945/slot25.
+obchodzą obrócony wariant i wybierają23→M41068945/slot25.
 Right130/Up160→M40569535/slot21,Up340→M29670175,
 Up420→M29770895:oryginalna zmienna4=43,powodzenie schodów na43.
 
@@ -410,8 +465,8 @@ Pięć Medicine3 niezużyte,HP487→691 dzięki PE. Magazynek6→0,
 EXP301018→301277,pulaPE30→54,BP47 bez zmian.
 
 Down260→M30739283,Down130/Right170 nie sięga końca korytarza;
-dodatkoweRight50→M29240233. Right130+80→M43241043,
-Right130/Up160→M40741633,Up70/Right208→M43242211,
+dodatkoweRight50→M29240233. Right130+80→M41041043,
+Right130/Up160→M40741633,Up70/Right208→M41042211,
 Right130/Up160→M29642801,Up420→M29743521,piętro42.
 Na tej części nie było nowych walk. Oryginalna trasa41 wykonana w całości;
 42 tylko rozpoczęte. Endpoint691/763HP,menuNULL,lock0,mode9,zero wrogów.

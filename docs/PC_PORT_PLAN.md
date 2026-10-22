@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Poprawiony kandydat: cold transfer M96R i64regresje PASS
+
+`/tmp/pe-N4-triple-cold-v2-proof.json`: inv-mask-v1 cold genuineN→128729
+normal iSAN oba exit0/czysto. Cały JSON i1MiBVRAM identyczne między
+profilami i z zamrożoną sesją live starego kandydata. SourceN i karty
+wyjściowe niezmienione. Obejmuje dwie walki na64piętrze, level99,
+BArmor/M96R/SuperTool/Tool i oryginalne przeniesienie+1ATK/TripleCommand.
+Potwierdza naprawę signedshift bez zaobserwowanej zmiany stanu/obrazu.
+
+`/tmp/pe-inv-mask-v1-fixture-regression-proof.json`:64/64 terminalne
+fixture normal/SAN PASS. Wszystkie438obiekty i zależności zhashowane;
+wcześniejsze38CTest również PASS. Sześć starych replayów odtworzono
+z zachowanych enemy-atb-v1 args/kart/logów/VRAM, z weryfikacją SHA kartA/B;
+nowe wykonania nadal trwają, nie są jeszcze zaliczone. Wcześniejsza wzmianka
+o brakujących danych dotyczyła usuniętych pierwotnych ścieżek /tmp.
+Pełny port i PS1 oracle nadal nieukończone. Nowa sesjaN5 odtwarza ten
+sam coldprefix na poprawionym kandydacie, bez przenoszenia RAM/stanu.
+
 ### Nowy błąd UBSan w oryginalnej selekcji ekwipunku
 
 Pełny cold N→128729 odbioru M96R i transferów: normal PASS, cały JSON

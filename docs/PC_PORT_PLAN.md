@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N5: floor68 ukończone, cold do244341 PASS; trudna walka69 trwa
+
+`/tmp/pe-N5-floor68-cold-v1-proof.json`: genuineN→244341 normal/SAN
+oba exit0/czysto, całyJSON/1MiBVRAM równy frozenlive, źródłowyN/karty
+bez zmian. Obejmuje całe65/66/67 i Revive swap. Na live68 jedna walka
+M419 wygrana251061,HP768,EXP1019508,pool969; fieldHeal3→869.
+Reszta10przejść doM296 bez dalszych walk. Endpoint265321/M297/floor69,
+HP869,Revive3; zamrożone `/tmp/pe-N5-floor69-entry-v1`.
+
+Na69 w slot4/M423 przy270925 dwa centaury980 i goat880.
+GuardHP0 przy271661; Preraise przy271981→434HP,Revive3 zachowane.
+Heal3 i dwa strzały przy272653→714HP, goat880→558 (jeden strzał nie
+zadał obrażeń). Dwie próby podejścia zatrzymane przez rangeguard1375/1281;
+trzecia dała trafienie Ayę do425HP i cel1257. Zmieniono cel na centaura31:
+Heal3+2gun przy273437→705HP,centaur980→352. Następna tura dobiła31,
+ale trafienia obniżyłyHP do116 przy273669. Ammo0, goat558,centaur1/980,
+Revive3, walka nadal trwa. Nie jest to ukończenie69 ani dowód wygranej.
+Nowy odcinek po244341 nie ma jeszcze cold dowodu.
+
 ### N5: cold centaury PASS; sześć zwycięstw67, wejście68
 
 `/tmp/pe-N5-centaurs-cold-v1-proof.json`: genuineN→170069 normal/SAN

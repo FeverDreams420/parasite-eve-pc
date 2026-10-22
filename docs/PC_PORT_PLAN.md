@@ -2,6 +2,35 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### L→Chrysler62: trzy wygrane, poziom62, pełny replay PASS
+
+Kandydat `/tmp/pe-m424-bind-v1-game`, zwykłe Continue L i wyłącznie
+oryginalny input/menu. M420 na61: +3306EXP, dwa Medicine4 użyte,
+813HP po walce; oba Revive zachowane. Cała zaplanowana trasa61 przebyta,
+wejście62 przy54149. M419 na62: Liberation przez oryginalne menu PE,
++4173EXP, poziom61,807/815HP, oba Revive zachowane. Następnie M422:
++2364EXP, poziom62,633/817HP, oba Revive zachowane. Nie stwierdzono
+potrzeby zmiany kodu gry podczas tych trzech walk.
+
+Zamrożony checkpoint73653, piętro62/selector5:
+`/tmp/pe-L1-floor62-two-wins-v1-checkpoint/checkpoint.json` oraz kopie
+JSON, VRAM, argumentów i pełnego ledgeru inputu. PASS pełny cold replay:
+`/tmp/pe-L1-floor62-two-wins-v1-proof/proof.json`. Cały JSON i1MiBVRAM
+normal/SAN/zamrożony live identyczne, oba native0/czysto, source/privateL
+bez zmian. Wszystkie inventory delty: capacity37→38, item20 w slot30/37,
+magazynek4→5, rezerwa999→961. Sprzęt, bonusy i oba Revive zachowane.
+Character wyłącznie jawne delty poziomu62/EXP834227/HP633/max817/BP393
+i alokacji610; wszystkie512vars tylko1/4/5/6/18. Łącznie9843EXP/322PE.
+SDK/SDL pozostają nieinstrumentowane; to nie dowód zgodności PS1.
+Pomocnicze skrypty sterowania zarchiwizowane w
+`/tmp/pe-L1-control-helpers-v2.json`; bieżący proces pozostaje headless.
+Nie uzyskano jeszcze Three Commands; bossowie70/77 pozostają otwarci.
+
+Przy drugim Medicine4 automat wszedł w oryginalny tryb przesuwania
+przedmiotu zamiast Use. Wyjście Circle i ponowne otwarcie panelu z
+kursorem Use pozwoliło zakolejkować i zastosować lek. Brak dowodu błędu
+gry lub zdublowanego inventory; nie zmieniano z tego powodu źródeł.
+
 ### K→L: poziom60, ATK210 i nowy oryginalny zapis
 
 PASS `/tmp/pe-K8-museum-level60-v1-proof/proof.json`: pełny coldContinueK,

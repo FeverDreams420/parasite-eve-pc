@@ -26,9 +26,33 @@ Pomocniki: `/tmp/pe-L4-control-helpers-v1.json`.
 
 Następnie cała pozostała trasa62 przebyta bez walki/utratyHP. Live wejście63
 przy108169,selector3, HP503 i dwa Revive:
-`/tmp/pe-L4-floor63-entry-v1-checkpoint`. Pełny cold normal/SAN replay
-tego dalszego odcinka uruchomiony; wynik jeszcze wymaga sprawdzenia.
+`/tmp/pe-L4-floor63-entry-v1-checkpoint`. PASS pełny cold normal/SAN replay:
+`/tmp/pe-L4-floor63-entry-v1-proof/proof.json`, cały JSON/1MiBVRAM
+normal/SAN/live zgodne, native0/czysto, source/privateL bez zmian.
+Względem82917 całe inventory/character bez zmian,512vars tylko4/5/18.
 Nie uzyskano Three Commands, bossowie70/77 i pełny port nadal otwarte.
+
+### L4 po wejściu63: nieudana walka i odwrót; powrót do treningu
+
+Live pierwsza grupa63 w M421: po trzech Medicine4, dwóch Medicine3
+i automatycznym Revive nadal trzech przeciwników. Ucieczka przez oryginalne
+menu (Triangle, Up z pierwszej pozycji do indeks4, Cross) potwierdzona
+mode10; przejście przez środek ponownie wyzwalało starcie, bezpośrednie
+dojście do schodów pozwoliło zejść62. Kolejna nieudana ucieczka M422
+zużyła ostatni Revive; następna udana. Trasy przy krawędzi M422/M423
+po ucieczce pozwoliły opuścić pokoje bez ponownego spotkania. Medicine3
+slot34 podniosło408→588HP. Cały odwrót62 do niższych schodów przebyto,
+następnie wejście61. W M424 ucieczka nieudana, HP0 przy151893,
+oryginalny Game Over `0xa9400048`/mode-1 przy152493. Ta końcówka jest
+obserwacją live; nie ma jeszcze jej pełnego cold normal/SAN dowodu.
+`/tmp/pe-L4-retreat-gameover-v1-checkpoint` przechowuje stan/VRAM/ledger.
+L4 zamknięte native0, źródłowy zapis L niezmieniony. Nowy proces L5
+zwykłym Continue L wraca do muzeum na dalszy trening i ulepszenia.
+
+Pomocniczy planner v2 w `/tmp/pe-chrysler-floor-route-v2.py` wyklucza
+action20 z code1: schody nie są przejściem na skróty między komórkami
+tego samego piętra. Wcześniejsze BFS v1 potrafiło zaplanować taki błędny
+skrót podczas odwrotu; nie zmieniano skryptów gry, by go umożliwić.
 
 ### Dalsze62: Game Over i poprawka sterownika testu
 

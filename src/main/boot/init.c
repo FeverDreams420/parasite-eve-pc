@@ -226,10 +226,14 @@ static void Boot_PollHost(void) {
     if(g_GameStateFlags&2)for(const FieldActor *actor=g_FieldActorListHead;actor;actor=actor->next){
         if(actor==g_PlayerEntity || !actor->state)continue;
         const EnemyCombatant *enemy=(const EnemyCombatant *)actor->state;
-        printf("%s{\"type\":%u,\"sub\":%u,\"mode\":%u,\"hp\":%d,\"hp_limit\":%d,\"defense\":%u,\"core_flags\":%u,\"state_flags\":%u,\"status_flags\":%u}",
+        /* The legacy curHP member is the enemy's ATB charge, not its HP.
+         * Observe its increment as well so input runners can account for
+         * attacks that land after an enemy starts its next scripted action. */
+        printf("%s{\"type\":%u,\"sub\":%u,\"mode\":%u,\"hp\":%d,\"hp_limit\":%d,\"defense\":%u,\"core_flags\":%u,\"state_flags\":%u,\"status_flags\":%u,\"atb\":%u,\"atb_step\":%u}",
             combatant_index++?",":"",actor->type_id,actor->sub_id,actor->mode,
             enemy->hpAlive,enemy->hpAliveCap,(unsigned)enemy->defense,
-            enemy->coreFlags,enemy->stateFlags,enemy->statusFlags2);
+            enemy->coreFlags,enemy->stateFlags,enemy->statusFlags2,
+            (unsigned)enemy->curHP,(unsigned)enemy->chargeStep);
     }
     printf("]}");
     if(g_BootHostControlAt){

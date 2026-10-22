@@ -2,6 +2,54 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### Eve77: opóźnione trafienie, dwie regeneracje i obserwacja ATB przeciwnika
+
+Pełny cold N do511973 na poprawionym kandydacie arm-ribbon-v1 PASS:
+`/tmp/pe-N2-boss70-ribbonfix-v1-proof/proof.json`, oba native exit0/czysto,
+cały JSON/1MiBVRAM normal=SAN=stary live, sourceN bez zmian. To potwierdza
+naprawę faktycznego crasha ASan podczas QueenBee; nie pełny port/PS1 oracle.
+
+Stary diagnostyczny N2: Medic usuwa stiffness przy542581, HP869. Ruch112
+bez strzału do542693 chowa4:29. Jedna akcja broni + Square przy542901:
+HP Eve1040000→1039766, Aya869, ammo18 po automatycznym przeładowaniu,
+Maya nadal ukryta. Dalszy pilot do548253 zatrzymał się przy pojawieniuMayi,
+lecz trafienie rozpoczęte wcześniej zdążyło uruchomić leczenie: przy548709
+1036724→1037724 (+1000). Samo render visibility nie wystarcza.
+
+Skrypt Eve35136/35392/35580 ma mode4 i40 klatek przed wysłaniem polecenia
+przywołania. Dodano hostowy stop na mode4. Kolejny odcinek do553029 ma
+Eve1035150/HP732 i mode4, ale ostatni strzał już wykonywał się. Ruch/Medic
+bez nowych ataków do554221 dał1037150 (+2000). To druga rzeczywista
+regeneracja, nie sukces bramki przewidującej; zakres kolejki pozostaje otwarty.
+Wszystkie trzyRevive i czteryM4 zachowane, Preraise aktywne. Freeze:
+`/tmp/pe-N2-Eve77-telegraph-after-v1-checkpoint`, tylko stary live.
+
+Zamiast zmieniać mechanikę, w istniejącym boot/init.c raport battle_detail
+zawiera teraz atb/atb_step każdego przeciwnika: EnemyCombatant.curHP to
+oryginalny zegar, hpAlive to rzeczywisteHP. turn.c zwiększa zegar ochargeStep
+przed wyborem akcji. Odczyt LLDB bez zapisu przy554221: Eve i obaj pomocnicy
+atb9000/step128; `/tmp/pe-N2-Eve77-atb-read-v1.json`. Potrzebna jest jeszcze
+weryfikacja czasu trafienia i marginesu na ponowne przywołanie, nie zakładamy
+że sama ekspozycja ATB rozwiązała strategię.
+
+Nowy cały kandydat `/tmp/pe-enemy-atb-v1`:438 świeżych obiektów, testy
+M418/loaderów/CTest19/19 na profil PASS, normal/SAN sygnatury równe.
+70 regresji PASS, wszystkie terminalne exit0, nowe pełne JSON normal/SAN
+równe, stare pola i VRAM bez zmian: `/tmp/pe-enemy-atb-v1-verification.json`. Normalny live N3b (PTY7589) oraz SAN
+replay idą od genuineN do554221 z całym oryginalnym inputem N2; verifier
+`/tmp/pe-enemy-atb-N3b-verify-v1.py` porówna cały stan/VRAM, w tym noweATB
+z niezależnym LLDB. Wyniki jeszcze niepotwierdzone. Pierwszy bootstrapN3
+zatrzymano po wykryciu zamkniętego stdin hostowego kontrolera; N3b ma
+otwartePTY. Nie jest to crash gry ani powód do utraty starego N2.
+Całe554221 klatek16bitowego pada po kompaktowaniu dokładnie równe N2:
+`/tmp/pe-enemy-atb-N3-input-proof-v1.json`. Wszystkie438 obiektów, zależności,
+archiwa i executables ponownie zahashowane, PASS:
+`/tmp/pe-enemy-atb-v1-final-rehash-proof.json`. Pilot hostowy blokuje odtąd
+atak M318 bez nowych pólATB; stary N2 nie powinien dalej automatycznie
+strzelać. PrógATB1000 jest wyłącznie roboczym kandydatem do sprawdzenia czasu
+trafienia na nowym live, nie zweryfikowaną strategią. Przygotowano helper
+oczekujący ruchem/PE w krokach8, nie modyfikujący stanu ani zegara w RAM.
+
 ### Eve77: pierwsza walka i rzeczywista blokada strzału przy Mayi
 
 Dalsza diagnostyka starego N2: zwykłe potwierdzenia dialogów83–111

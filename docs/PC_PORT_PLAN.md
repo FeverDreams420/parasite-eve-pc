@@ -2,6 +2,42 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N5: cold centaury PASS; sześć zwycięstw67, wejście68
+
+`/tmp/pe-N5-centaurs-cold-v1-proof.json`: genuineN→170069 normal/SAN
+oba exit0/czysto; pełnyJSON/1MiBVRAM identyczne z frozenlive,
+sourceN/karty bez zmian. Potwierdza Preraise zHP0, dwaM4, mieszane
+tury TripleCommand/PE i zwycięstwo trzech centaurów na inv-mask-v1.
+
+Po odebraniu Revive na67 piąta walka M422 wygrana223745,HP700,
+EXP1012884,pool758; fieldHeal3→869. Szósta M420/pięćenemy wygrana239881,
+HP865,EXP1017006,pool885. Cała pozostała trasa do slot18/M296 i schody
+przeszły bez zmiany Revive3. Endpoint244341/M297/floor68,HP865/869,
+ATK235/TripleCommand,82BP. Zamrożone `/tmp/pe-N5-floor68-entry-v1`.
+Pełny cold normal/SAN do244341 uruchomiony:
+`/tmp/pe-N5-floor68-cold-v1.py`; wynik jeszcze niepotwierdzony.
+Pełnego portu, końca Chryslera ani zgodności obrazuPS1 nie zaliczono.
+
+### N5: floor66 ukończone; cztery wygrane67 i Revive z pełnego lootu
+
+Reszta trasy66 po centaurach6→5→4→9→13→17→18→19→20→21→12/M296
+wykonana bez dalszych walk. Przy185889 M297/floor67,HP869,Revive2.
+Zamrożone `/tmp/pe-N5-floor67-entry-v1` (live-only).
+Ograniczony hostpilot przeszedł67 po oryginalnej tabeli, zatrzymując
+się przy nieoczekiwanym łupie. M422 wygrana192697,HP833/EXP1004196;
+M421 wygrana199937,HP869/EXP1006233; M420/pięćenemy wygrana208041,
+HP766/EXP1009539,fieldHeal3→869. M423/trzyenemy wygrana216621,
+HP869,+981EXP/pool65. Pełny plecak; lootRevive18 celowo nieodrzucony.
+
+Oryginalne wyniki SEL→prawa lista14→slot9/Junk20→Cross przy217053
+zamieniły Junk na Revive. Na liście wyniku pozostał wyłącznie Junk,
+zamknięto END przy217289. Całe inventory zmieniło tylko slot9:20→18,
+wszystkie4096B equipmentrecords bez zmian. Revive2→3.
+`/tmp/pe-N5-floor67-Revive-swap-after-v1/proof.json` live PASS,
+cold nowego odcinka nadal pending. Sesja w slot10/M423, menu zamknięte,
+HP869. Hostguard aktualizowany z faktycznej liczby Revive; nie zmieniano
+żadnego stanu gry ani RNG. Floor67 jeszcze nieukończone.
+
 ### N5/M424: trzy centaury pokonane, pełneHP i oba Revive zachowane
 
 Po Preraise dalszy ruch i leczeniePE nie wystarczyły od razu. Przy166625

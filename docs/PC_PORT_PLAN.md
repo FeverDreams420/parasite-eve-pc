@@ -2,6 +2,84 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### I: powrót do Chrysler i potwierdzone całe41–43
+
+Kandydat kernel-clock-v1/PsyZ6e7f6f4 bez zmian kodu. Nowy live z samegoI
+`/tmp/pe-kernel-clock-I1-live`,kontroler49047/native18513; start14552
+pełnym JSON identyczny z potwierdzonym ContinueI. Stary H1 po telefonieI
+zamknięty quit/native0. Aktualny żywy stan134808/M297/piętro45:
+level45,761156EXP,767/783HP,pulaPE195,BP0,ATK177,11Medicine3,dwa pancerze.
+Do46 brakuje2EXP (próg761158). Nie zapisano nowego telefonu poI;
+postęp odtwarzalny przez pełne seedy/input, bez edycji RAM/RNG/payloadu.
+
+M340→M19215918→mapa17050,Left3/Cross daje ChryslerM29017986.
+Tymczasowy nav do windy zatrzymał się na zamkniętych drzwiach przyX2259;
+oryginalny panel po Right20/normalRight/Up/Cross,Left22/Up45 daje
+M29320673. Nie zmieniano drzwi ani geometrii gry. Panel39Up wybiera40
+(zmienna6=40),wyjścieM29223598. Seed25885,table40 count21;
+read-only plan `/tmp/pe-I1-floor40-route-v1.json`. M33524028, dalej
+selektory17/18/19/12/13/6/5/4/0;M39729318,bez odrodzenia pokonanego
+bossa40;Up470 dajeM29730088/piętro41,HP783 bez strat zasobów.
+
+PASS `/tmp/pe-I1-chrysler-floor41-v1-proof/proof.json`: pełny zimnyI→30088
+normal/SAN/live,cały JSON i1MiBVRAM identyczne,exit0 bez diagnostyki,
+kartyI8192 niezmienione. Cały inventory i character identyczne zContinueI;
+512vars tylko1:998→999,4:1→41,5:0→20,6:1→40.
+
+Piętro41: po Up312 start306/slot11 przy30700,plan18 przejść do slot12
+(code1/M296),każde sprawdzone na faktycznym selektorze. Walki w slot20
+M408 i slot24M409 po133EXP; HP783→700→686,pulaPE0→28,zero łupu.
+Fighter używa oryginalnego padu,pojedynczych strzałów/DoubleAction i
+właściwych osi kamery. Schody dają42 przy62220.
+PASS `/tmp/pe-I1-chrysler-floor42-v1-proof/proof.json`: cały coldI normal/
+SAN/live JSON/1MiBVRAM identyczne,native0 czysto,niezmienioneI.
+Cały inventory tylko clip14→8;character EXP759655/HP686/pula28;
+512vars poza1/4/5/6/18:0→10/78:151→249 bez zmian.
+
+Piętro42: trzy zwycięstwa230/133/259=622EXP. DwaMedicine2 i kolejny
+Medicine2 pozostawioneEND przy pełnym ekwipunku;ammo15 odbierane przez
+oryginalny wynik. Heal3 w walce przy79416:401→681. Endpoint88472/M297,
+piętro43,760277EXP/681HP/pula103. Plan11 przejść po wejściu zM297.
+PASS `/tmp/pe-I1-chrysler-floor43-v1-proof/proof.json`: pełny coldI normal/
+SAN/live JSON/1MiBVRAM identyczne,native0 czysto,niezmienioneI.
+Cały inventory tylko clip14→11 i reserve999→995;wholecharacter jawne
+EXP/HP/pulaPE;512vars poza1/4/5/6/18:0→59/78:151→81 bez zmian.
+
+Piętro43: pięć zwycięstw160/133/160/133/133=719EXP. FieldHeal3 przy
+98888:453→733. Endpoint119980/M297,piętro44,760996EXP/553HP/pula179.
+PASS `/tmp/pe-I1-chrysler-floor44-v1-proof/proof.json`: pełny coldI normal/
+SAN/live JSON/1MiBVRAM identyczne,native0 czysto,niezmienioneI.
+Cały inventory tylko clip14→13 i reserve999→980;wholecharacter jawne
+EXP/HP/pulaPE;512vars poza1/4/5/6/18:0→121/78:151→131 bez zmian.
+Łącznie10 zwycięstw1607EXP179PE,dwaHeal3+560,790 obrażeń,11Medicine3
+we wszystkich obserwowanych stanach. Bilans `/tmp/pe-I1-floor44-ammo-ledger.py`:
+39 pojedynczych strzałów,dwa zaobserwowane przeładowania0→19 przy73932/
+111140. Ammo drops15/6/15/6=42;limit999 odrzucił0/2/15/6=23 naboje:
+clip14+38−39=13,reserve999+42−38−23=980. Nie zakładać trzeciego
+przeładowania tylko z różnicy końcowych zasobów. Ledger/heal/Medicine
+w checkpoint-floor44; pośrednie stany nie są osobnymi cold-capture.
+
+Piętro44: siedem przejść planu, jedna wygrana160EXP16PE. HP553→487,
+fieldHeal3 przy132676 daje487→767. Endpoint134808/M297/piętro45,
+761156EXP,pula195,clip9/reserve986. Cały inventory nadal ma11Medicine3,
+ATK177/DoubleAction/single/dwa pancerze; pozostałe zasoby poza amunicją
+bez zmian. Pełny seed/checkpoint/runner/verifier:
+`/tmp/pe-I1-chrysler-floor45-v1-*`. PASS `/tmp/pe-I1-chrysler-floor45-v1-proof/proof.json`: cały coldI→134808
+normal/SAN/live JSON i1MiBVRAM identyczne, oba exit0 bez diagnostyki,
+źródłowe/prywatneI8192 niezmienione. Cały inventory tylko clip14→9 i
+reserve999→986; całycharacter wyłącznie EXP761156/HP767/pula195;512vars
+poza1/4/5/6/18:0→376/78:151→103 bez zmian. Pozostałe zasoby, cała
+alokacja440,level45 iBP0 zachowane. Łącznie11win1767EXP195PE,
+trzyHeal3+840 i856 obrażeń; żaden Medicine3 niezużyty.
+
+Plany i wszystkie punkty wejścia są w/tmp pod prefiksami pe-I1-floor40..44.
+Sterownik zatrzymuje nav także przy zmianie indeksu bez zmiany sceny,
+wrogach/HP/menu; po walkach sprawdza ponownie bieżący selektor. Wersja
+nav-v2 ma dodatkowe punktyM335 (nie wykonano ich w generycznym planerze;
+M335 na40 przeszedł potwierdzony pad),reszta geometrii bez zmian. Źródła
+produkcyjne i fork bez zmian w tym odcinku. SDK/SDL nieinstrumentowane,
+brak nowej referencjiPS1 dla labiryntu. Boss50/77 i cały port nadal otwarte.
+
 ### I: poziom45, ATK177, pełneHP i oryginalny zapis/Continue
 
 Na tym samym kandydacie kernel-clock-v1 (PsyZ6e7f6f4) oryginalne menuBP

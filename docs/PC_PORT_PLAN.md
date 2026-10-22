@@ -2,6 +2,81 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### N1: poziom99 i rzeczywisty GameOver68; N2 zachowuje obaRevive
+
+N1 dalszy live z124549: M421/floor65 wygrane130073, EXP+2364,
+level99/HP691/869/BP824,pool0. FieldHeal3→869. Floor66 M422 wygrane
+148557,+2037EXP,HP805,pool71; FieldHeal3→869. Floor67 M422/cap169113,
++3550EXP,HP801,pool189; Heal3→869; M420/cap178693,+4122EXP,HP869,pool302.
+Cała droga65–67 przebyta. M298/code5 nie jest skrzynią, tylko przejściem;
+M300/code11 jest pustym ślepym korytarzem (wejście197269, powrót197705),
+nie skrzynią/nowym Toolem. Nie pozyskano tam nowego sprzętu. Trasy/tabele
+`/tmp/pe-N1-floor{65,66,67,68}-*-v1.json`; wszystkie zwykłym padem.
+
+Floor68/start14 przy204301. M422 czterech wrogów przy206609,HP869;
+HP774/543/514/21/301/0 przy206817/206849/207353/207385/207953/207985.
+Stan0x1000 pojawił się przed dużymi obrażeniami; wszystkie wcześniejsze
+Revive już zużyte. Wait600 dało rzeczywisty GameOver208585,
+sceneA9400048,mode−1. PASS pełny cold N doGameOver:
+`/tmp/pe-N1-floor68-gameover-v1-proof/proof.json`; całe JSON/1MiBVRAM
+normal=SAN=frozenlive, oba native exit0/czysto, N8192B bez zmian.
+GameOver resetuje character dolevel1; pierwsza wersja verifiera błędnie
+żądała99 na końcowym ekranie i została poprawiona do rzeczywistego zakresu.
+To potwierdzona porażka, nie zaliczenie68. N1 quit/exit0, źródłoN zachowane.
+
+Nowy N2 `/tmp/pe-m424-N2-live.py` wyłącznie z genuine N, normalnie odtwarza
+cały prefix wejść do116085, przed M423. Wszystko JSON identyczne z N1
+w tym punkcie, HP720/866 i dwaRevive. FieldHeal3→866; dalszy zwykły ruch
+nie uruchomił losowego M423, bez zaliczenia wygranej/EXP. Wejście65
+119197,level96/EXP987801/BP709/pool0, obaRevive i źródłowe leki zachowane.
+PASS `/tmp/pe-N2-floor65-entry-v1-proof/proof.json`: pełny cold N,
+cały JSON/1MiBVRAM normal=SAN=frozenlive, native0/czysto,N bez zmian.
+Inventory względemN tylkocapacity46, dwaJunk18/44, M4łup45,
+clip12→6,reserve997→980; wszystkie modifier/efekty/pancerze/klucze zachowane.
+
+Analiza oryginalnego entity/combat.c:0x1000 zmniejsza obronę do3/10;
+Medic i FullRecover go usuwają, Heal3 nie. Pilot `/tmp/pe-museum-autofarm-v1.py`
+odtąd priorytetyzuje FullRecover przy utracieHP i dostatecznymPE, inaczej
+Medic. Na trudnych M422/423 próbuje też Preraise. Nie zmieniano mechaniki
+gry ani stanu przez debugger. W N2 M422/floor65 trzech z czterech pokonanych,
+lecz stary aktywny pilot utknął: przy dalszym celu poza zasięgiem cofał PE
+przezCircle, więc Medic nie wykonywało się. Kod turn.c/Boot_BuildRenderFlagTable
+potwierdza Square/raw32768→field0x2000 do pominięcia pozostałego polecenia
+DoubleAction i wykonania kolejki, Circle→Undo. Nowy pilot ma tę poprawkę,
+limit120 iteracji bez zmianyHP/przeciwników oraz odrzuca farm−1 bez aktywnej
+walki zamiast drukować pozorną wygraną. Stara pętla skończyła się limitem1200 przy308473, bez zmianyHP583 ani
+stanu jednego przeciwnika; to błąd pilota i długi test menu, nie crash gry.
+Nowy pilot przy308985 wykonał samoMedic przezSquare i podszedł do celu.
+Ponowny stan0x1000/HP674 i za małoPE przy309401 zatrzymały automat.
+Zwykłe dwaSquare pomijają pustą turę; ruch96DownLeft+24Left zachowałHP674
+oraz podniósłPE27941581→44649185, wystarczająco naMedic. Dalszy pilot
+zakończył rzeczywistą wygraną M422 przy312769: czterech wrogów pokonanych,
+level99/EXP991351/HP391/869/BP812/pool0. ObaRevive i wszystkie lekarstwa
+względem N2entry65 zachowane. Cały inventory wyłącznie clip6→11 i
+rezerwa980→999; wszystkie modifier/efekty/pancerze/klucze bez zmian.
+512vars tylko5:20→21 i18:413→1436. Wcześniejsze snapshoty N2 pokazują
+FullRecover dwa razy: HP677→866 i0x1000→0 przy123617/124409. Medic/PE
+wykonywane oryginalnym menu; nie zmieniano zasad walki dla pilota.
+
+Pełny zimny replay N do312769 normal/SAN w trakcie, session85992:
+`/tmp/pe-N2-m422-win-v1-proof/`; verifier
+`/tmp/pe-N2-m422-win-v1-verify.py` przygotowany, jeszcze niePASS.
+Odcinek obejmuje także długą pętlę cofaniaPE, nie pomija jej w dowodzie.
+Checkpoint `/tmp/pe-N2-m422-win-v1-checkpoint`. Brak nowych zmian C/PsyZ;
+oryginalne wejścia i pełne snapshoty, sourceN bez nadpisania.
+
+Po walce dwie próby fieldHeal3 nie działały (wyszarzone, za małoPE), HP391;
+nie zaliczono pozornego leczenia ani zmiany sprzętu. Dwa dostępne Heal2
+przy314581/314801 dały391→451→511. Potem oryginalne Items/Use:
+Medicine2 slot0 HP601,Medicine2 slot9 HP691,Medicine3 slot10 HP869.
+To awaryjne uzupełnienie po dostępnych PE, wszystkieMedicine4 i obaRevive
+zachowane, trzy miejsca na łupy zwolnione. Pole zamknięte316405, M422/floor65,
+HP869/869,99level,EXP991351,BP812. `/tmp/pe-N2-m422-restored-v1-checkpoint`
+(live-only po312769). Polecenie fieldHeal3 pilota odtąd sprawdza faktyczny
+wzrostHP i przerywa przy niedostępnym zaklęciu zamiast sugerować sukces.
+Aktywny kontroler/session49164, helpery `/tmp/pe-N2-control-helpers-v1.json`.
+Floor68/boss70/ThreeCommands/boss77 i pełny port nadal nieukończone.
+
 ### Genuine N: Chrysler61–63, wygrana M424 i wejście64
 
 Poprzedni odcinek jest postępem: autentyczny zapisN i niezależne Continue
@@ -64,9 +139,11 @@ pancerze i storageKey1–5/Key6 zachowane. Cały inventory względemN tylko:
 capacity45→46; slot12 M4 zużyty; Revive28/35 zużyte; Junk20 w18/44;
 M4 łup45; clip12→15 i rezerwa997→999. Wszystkie4096B equipment records
 poza clip426 bez zmian. AutentycznyN nie nadpisany. Checkpoint
-`/tmp/pe-N1-floor65-entry-v1-checkpoint`; pełny zimny normal/SAN w trakcie
-`/tmp/pe-N1-floor65-entry-v1-proof/` (session24091), verifier
-`/tmp/pe-N1-floor65-entry-v1-verify.py` przygotowany, jeszcze niePASS.
+`/tmp/pe-N1-floor65-entry-v1-checkpoint`; PASS pełny zimny N do124549:
+`/tmp/pe-N1-floor65-entry-v1-proof/proof.json`. Całe JSON/1MiBVRAM
+normal=SAN=frozenlive, oba native exit0/czysto, wszystkie8192B N bez zmian.
+Weryfikator sprawdza pełny inventory/character/512vars względem genuine N,
+w tym oba prawdziwie zużyte Revive i oryginalne Medicine4/łup.
 Odcinek po93761 jeszcze live-only. M418/boss70,
 ThreeCommands, boss77 i cały port nadal nieukończone. Brak zmian
 produkcyjnego C/PsyZ; SDK/SDL nieinstrumentowane, brak nowego oraclePS1.

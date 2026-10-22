@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### Cel treningu90, PE jako podstawowe leczenie; L5 poziom62 PASS
+
+Aktualna dyspozycja: osiągnąć poziom90 przed kolejną próbą Chrysler/Eve;
+preferować odnawialne leczenie PE, przedmioty zachować awaryjnie.
+PASS `/tmp/pe-L5-museum-level62-v1-proof/proof.json`: cały cold ContinueL
+przez dwie M242 do51912, pełny JSON/1MiBVRAM normal/SAN/live zgodne,
+native0/czysto, source/privateL bez zmian. Druga walka4233EXP/26PE,
+poziom62/EXP833178, HP547/817, BP97, oba Revive zachowane, bez leków.
+Względem pierwszej wygranej cały inventory tylko capacity37→38/clip17→11;
+cały character jawne delty awansu/EXP/HP/BP/alokacji610;512vars tylko78.
+
+L6 cold replay dał dokładnie checkpoint51912 JSON/VRAM; L5 zamknięte
+native0. Tymczasowy sterownik farm zatrzymał się przed pierwszą nową
+walką: waypoint -1700 kończył na progu drzwi zamiast za nim. Korekta
+zewnętrznej nawigacji -1900 pozwoliła przejść M243. L6 następnie zakończył
+się native0 przy53456 przed nowym starciem; źródłowy L bez zmian.
+Nie utożsamiać tego z awarią gry ani ukończeniem treningu. L7 odtwarza
+pełny ledger do53456 i dodaje logowanie wyjątków sterownika, przeładowanie
+wyłącznie hostowego sterownika między seriami oraz stop przy poziomie90.
+Kod gry bez zmian, brak edycji RAM/RNG/save payload. Trening90 otwarty.
+
 ### L5: muzeum, pierwsza wygrana i poziom61
 
 PASS `/tmp/pe-L5-museum-firstwin-v1-proof/proof.json`: cały cold Continue L

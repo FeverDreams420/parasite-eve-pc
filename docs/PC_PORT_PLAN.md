@@ -2,6 +2,55 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### I: potwierdzone zwycięstwo nad bossem50, dojście do51
+
+Bez zmian kodu produkcyjnego, nadal kernel-clock-v1/PsyZ6e7f6f4.
+PASS `/tmp/pe-I1-chrysler-floor47-v1-proof/proof.json` (194540) oraz
+`/tmp/pe-I1-chrysler-preboss50-v1-proof/proof.json` (330912): zimny start
+z autentycznego I, normal/SAN/live mają identyczny cały JSON i1MiB VRAM,
+exit0 bez diagnostyki, źródłowe i prywatne I8192B niezmienione.
+Trasa obejmuje całe piętra45–49 i dojście przez labirynt50 do sali bossa.
+Oryginalne menu wymieniło trzy Medicine3 na Medicine4 z łupu i wydało
+200BP na +2ATK M8000: ATK179, pojedynczy strzał/DoubleAction.
+Oba pancerze zachowane. Przed walką level46,764722EXP,785/785HP,BP19.
+
+PASS `/tmp/pe-I1-chrysler-boss50-win-v1-proof/proof.json`, verifier
+`/tmp/pe-I1-chrysler-boss50-win-v1-verify.py`: pełny zimny I→347320,
+normal/SAN/live identyczny cały JSON i1MiB VRAM, oba native0 czysto,
+I8192B niezmienione. Tylko oryginalny pad: ruch po obwodzie, skupiony
+ostrzał, Heal3 i jedna Liberation przy pełnym PE. W walce Circle+kierunek
+obraca postać; rzeczywisty ruch wymaga samego kierunku. Poprawiono
+wyłącznie sterownik testowy, nie mechanikę gry. move_lock4 jest normalnym
+stanem aktywnej walki, nie blokadą intra. PE odnawia się w walce;
+1000 neutralnych VBlanków w polu nie przywróciło PE po Heal3.
+
+Wynik: obaj rodzice i pomocnicy HP0, +5010EXP/+195PE, level47,
+769732EXP,669/787HP,BP548,pulaPE0,stats460,capacity35. Key5/raw60
+zebrany ALL do slot8. Zużyto pięć Medicine3 i dwie Medicine4;
+pozostają trzy M3 i jedna M4. 30 strzałów, dwa przeładowania po19,
+magazynek0→8,zapas976→938. Verifier sprawdza cały inventory/character
+oraz512vars: względem preboss zmieniają się tylko7/11/18/78,
+flaga7:270→782 (+512),11:123338→254410. Bez edycji RAM/RNG/save.
+
+Na żywo schody po zwycięstwie prowadzą przy349228 do M297/piętro51;
+checkpoint `/tmp/pe-I1-chrysler-floor51-v1-checkpoint` i seed obok.
+Ten dalszy endpoint nie ma jeszcze osobnego cold proof. Powrót przez
+pokonaną salę i labirynt do windy50 nie wywołał kolejnej walki.
+Key5 udostępnia50 w oryginalnym selektorze; zejście do holu1 przy368261.
+Na żywo powrót do muzeum M340 przy372136, telefon374542,
+lista375466/slotI8, Down wybiera pustyJ9, FileSaved375586,
+zamknięcie376070. Autentyczny nowy J8192B ma SHA256
+`884e452444ce29e22b9cd9ea18887a1fd737ad25b51f16fe88ac478f081823aa`,
+źródło `/tmp/pe-ex-chrysler-boss50-save-J1-v1-source`.
+Cały character bez zmian od wyniku bossa; inventory tylko cache ammo
+category_counts999→938,512vars tylko1/4/5/6 powrotu na mapę świata.
+Pełny cold I→telefonJ normal/SAN uruchomiony (sesja47977), osobny
+Continue samegoJ uruchomiony (36479); te dwa dowody oczekują weryfikacji,
+nie są jeszcze PASS. Dowody /tmp są nietrwałe,
+SDK/SDL nieinstrumentowane; brak oracle PS1 tej walki. Pełna kampania,
+Chrysler77 i cały zakres portu pozostają otwarte. Poniższe wpisy I opisują
+wcześniejsze checkpointy, nie aktualny stan zwycięskiej postaci.
+
 ### I: powrót do Chrysler i potwierdzone całe41–43
 
 Kandydat kernel-clock-v1/PsyZ6e7f6f4 bez zmian kodu. Nowy live z samegoI

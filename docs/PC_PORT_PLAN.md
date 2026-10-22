@@ -2,18 +2,57 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### N2: floor68 PASS, wejście do bossa70 i ATK178
+
+Poprzedni odcinek audytu efektów pancerzy dostarczył dowodu: oryginalne
+stats.c/combat.c obsługują Auto Medicine i Auto Cure; attack.c redukcję
+kosztu PE. Obecny B Jacket1 ma odporność na truciznę, Sv Protector +1
+slot ekwipunku. Auto-Haste/Auto-Life pozostają niepotwierdzone.
+
+Korekta nazw modułów w dwóch poniższych sekcjach N1/N2: token sceny
+jest autorytatywny. A8082048=M420, A80820C8=M421, A8082148=M422,
+A80821C8=M423, A8082248=M424; A8081448=M418. Poprawiono opisy;
+historyczne nazwy plików proof/checkpoint pozostają bez zmian.
+
+PASS `/tmp/pe-N2-floor68-win-v1-proof/proof.json`: cold od genuine N
+przez wygraną czterech przeciwników M421/floor68 przy403913. Całe JSON
+oraz1MiBVRAM normal=SAN=frozenlive, oba native exit0/czysto, N bez zmian.
+Weryfikacja obejmuje cały inventory/character/512vars; level99, EXP1009023,
+HP869/869, BP812, trzyRevive i sześćMedicine4. Wszystkie modyfikatory,
+pancerze oraz przechowywane klucze1–5/posiadanyKey6 zachowane. Kompaktowanie
+wejść zachowuje wszystkie403913 klatek identycznego16bitowego pada, także
+długą błędną pętlę cofaniaPE; nie wycina czasu gry. Dowód wejść:
+`/tmp/pe-N2-floor68-win-v1-input-compaction.json`.
+
+Dalsza zwykła gra do476777 przeszła resztę68 i69, pełneHP oraz wszystkie
+trzyRevive zachowane. Oryginalne menu BP na70: 800BP,812→12,
+M8000 bonusATK170→178 (łącznie235), DoubleAction i range14 bez zmian.
+Dokładna delta inventory tylko equipment byte430, character tylkoBP,
+512vars bez zmian: `/tmp/pe-N2-BP178-after-v1/proof.json` (live-only).
+Trasa70:41→33→34→26→27→15. M418/boss room załadowany przy484341;
+normalny ruch wyzwolił bossa przy484453, HP869, jeden przeciwnik type5/sub31.
+To wejście do walki, nie wygrana. Dalszy odcinek po403913 jeszcze live-only;
+boss70/ThreeCommands/boss77, PS1 oracle i pełny port nadal nieukończone.
+Nie zmieniano produkcyjnego C/PsyZ ani RAM/RNG/save payloadu.
+
+Boss70 dalszy live: typ5/sub31 HP1012000→1003342, pomocnicy type3/4
+przywoływani oryginalnymi skryptami. Przy500589 HP0, automat zatrzymał się;
+kroki16 do500925 uchwyciły HP434/869 i nadal trzyRevive. Ochrona Preraise
+zadziałała bez zużycia przedmiotu (stan0x800 zniknął), PE37507946.
+`/tmp/pe-N2-boss70-revive-review-v1-checkpoint`, tylko live; boss nadal żywy.
+
 ### N1: poziom99 i rzeczywisty GameOver68; N2 zachowuje obaRevive
 
-N1 dalszy live z124549: M421/floor65 wygrane130073, EXP+2364,
-level99/HP691/869/BP824,pool0. FieldHeal3→869. Floor66 M422 wygrane
-148557,+2037EXP,HP805,pool71; FieldHeal3→869. Floor67 M422/cap169113,
+N1 dalszy live z124549: M422/floor65 wygrane130073, EXP+2364,
+level99/HP691/869/BP824,pool0. FieldHeal3→869. Floor66 M421 wygrane
+148557,+2037EXP,HP805,pool71; FieldHeal3→869. Floor67 M421/cap169113,
 +3550EXP,HP801,pool189; Heal3→869; M420/cap178693,+4122EXP,HP869,pool302.
 Cała droga65–67 przebyta. M298/code5 nie jest skrzynią, tylko przejściem;
 M300/code11 jest pustym ślepym korytarzem (wejście197269, powrót197705),
 nie skrzynią/nowym Toolem. Nie pozyskano tam nowego sprzętu. Trasy/tabele
 `/tmp/pe-N1-floor{65,66,67,68}-*-v1.json`; wszystkie zwykłym padem.
 
-Floor68/start14 przy204301. M422 czterech wrogów przy206609,HP869;
+Floor68/start14 przy204301. M421 czterech wrogów przy206609,HP869;
 HP774/543/514/21/301/0 przy206817/206849/207353/207385/207953/207985.
 Stan0x1000 pojawił się przed dużymi obrażeniami; wszystkie wcześniejsze
 Revive już zużyte. Wait600 dało rzeczywisty GameOver208585,
@@ -25,9 +64,9 @@ GameOver resetuje character dolevel1; pierwsza wersja verifiera błędnie
 To potwierdzona porażka, nie zaliczenie68. N1 quit/exit0, źródłoN zachowane.
 
 Nowy N2 `/tmp/pe-m424-N2-live.py` wyłącznie z genuine N, normalnie odtwarza
-cały prefix wejść do116085, przed M423. Wszystko JSON identyczne z N1
+cały prefix wejść do116085, przed M424. Wszystko JSON identyczne z N1
 w tym punkcie, HP720/866 i dwaRevive. FieldHeal3→866; dalszy zwykły ruch
-nie uruchomił losowego M423, bez zaliczenia wygranej/EXP. Wejście65
+nie uruchomił losowego M424, bez zaliczenia wygranej/EXP. Wejście65
 119197,level96/EXP987801/BP709/pool0, obaRevive i źródłowe leki zachowane.
 PASS `/tmp/pe-N2-floor65-entry-v1-proof/proof.json`: pełny cold N,
 cały JSON/1MiBVRAM normal=SAN=frozenlive, native0/czysto,N bez zmian.
@@ -37,8 +76,9 @@ clip12→6,reserve997→980; wszystkie modifier/efekty/pancerze/klucze zachowane
 Analiza oryginalnego entity/combat.c:0x1000 zmniejsza obronę do3/10;
 Medic i FullRecover go usuwają, Heal3 nie. Pilot `/tmp/pe-museum-autofarm-v1.py`
 odtąd priorytetyzuje FullRecover przy utracieHP i dostatecznymPE, inaczej
-Medic. Na trudnych M422/423 próbuje też Preraise. Nie zmieniano mechaniki
-gry ani stanu przez debugger. W N2 M422/floor65 trzech z czterech pokonanych,
+Medic. Preraise skonfigurowano dla rzeczywistych M422/M423; nie jest to
+dowód jego wykonania w M421/M424. Nie zmieniano mechaniki
+gry ani stanu przez debugger. W N2 M421/floor65 trzech z czterech pokonanych,
 lecz stary aktywny pilot utknął: przy dalszym celu poza zasięgiem cofał PE
 przezCircle, więc Medic nie wykonywało się. Kod turn.c/Boot_BuildRenderFlagTable
 potwierdza Square/raw32768→field0x2000 do pominięcia pozostałego polecenia
@@ -50,7 +90,7 @@ Nowy pilot przy308985 wykonał samoMedic przezSquare i podszedł do celu.
 Ponowny stan0x1000/HP674 i za małoPE przy309401 zatrzymały automat.
 Zwykłe dwaSquare pomijają pustą turę; ruch96DownLeft+24Left zachowałHP674
 oraz podniósłPE27941581→44649185, wystarczająco naMedic. Dalszy pilot
-zakończył rzeczywistą wygraną M422 przy312769: czterech wrogów pokonanych,
+zakończył rzeczywistą wygraną M421 przy312769: czterech wrogów pokonanych,
 level99/EXP991351/HP391/869/BP812/pool0. ObaRevive i wszystkie lekarstwa
 względem N2entry65 zachowane. Cały inventory wyłącznie clip6→11 i
 rezerwa980→999; wszystkie modifier/efekty/pancerze/klucze bez zmian.
@@ -58,9 +98,11 @@ rezerwa980→999; wszystkie modifier/efekty/pancerze/klucze bez zmian.
 FullRecover dwa razy: HP677→866 i0x1000→0 przy123617/124409. Medic/PE
 wykonywane oryginalnym menu; nie zmieniano zasad walki dla pilota.
 
-Pełny zimny replay N do312769 normal/SAN w trakcie, session85992:
-`/tmp/pe-N2-m422-win-v1-proof/`; verifier
-`/tmp/pe-N2-m422-win-v1-verify.py` przygotowany, jeszcze niePASS.
+PASS pełny zimny N do312769:
+`/tmp/pe-N2-m422-win-v1-proof/proof.json`; całe JSON/1MiBVRAM
+normal=SAN=frozenlive, oba native exit0/czysto, N8192B bez zmian.
+Weryfikator sprawdza cały inventory/character/512vars względem N2entry65,
+w tym obaRevive, wszystkie leki, DoubleAction/bonusy/pancerze i klucze.
 Odcinek obejmuje także długą pętlę cofaniaPE, nie pomija jej w dowodzie.
 Checkpoint `/tmp/pe-N2-m422-win-v1-checkpoint`. Brak nowych zmian C/PsyZ;
 oryginalne wejścia i pełne snapshoty, sourceN bez nadpisania.
@@ -70,14 +112,14 @@ nie zaliczono pozornego leczenia ani zmiany sprzętu. Dwa dostępne Heal2
 przy314581/314801 dały391→451→511. Potem oryginalne Items/Use:
 Medicine2 slot0 HP601,Medicine2 slot9 HP691,Medicine3 slot10 HP869.
 To awaryjne uzupełnienie po dostępnych PE, wszystkieMedicine4 i obaRevive
-zachowane, trzy miejsca na łupy zwolnione. Pole zamknięte316405, M422/floor65,
+zachowane, trzy miejsca na łupy zwolnione. Pole zamknięte316405, M421/floor65,
 HP869/869,99level,EXP991351,BP812. `/tmp/pe-N2-m422-restored-v1-checkpoint`
 (live-only po312769). Polecenie fieldHeal3 pilota odtąd sprawdza faktyczny
 wzrostHP i przerywa przy niedostępnym zaklęciu zamiast sugerować sukces.
 Aktywny kontroler/session49164, helpery `/tmp/pe-N2-control-helpers-v1.json`.
 Floor68/boss70/ThreeCommands/boss77 i pełny port nadal nieukończone.
 
-### Genuine N: Chrysler61–63, wygrana M424 i wejście64
+### Genuine N: Chrysler61–63, wygrana M423 i wejście64
 
 Poprzedni odcinek jest postępem: autentyczny zapisN i niezależne Continue
 potwierdziły Tool/storage. Nowy live `/tmp/pe-m424-N1-live` uruchomiony
@@ -98,7 +140,7 @@ przejściem; sam plan nie jest zaliczeniem piętra.
 
 Floor61: count18,start10, trasa10→4→3→9→8→7→6→5→0, bez walk/strat.
 Floor62: count30,start29, Heal3 przez zwykłe menu PE738→864, wygrana
-M421/cap59893 czterech przeciwników, EXP+1901,pool56,HP810/864.
+M422/cap59893 czterech przeciwników, EXP+1901,pool56,HP810/864.
 Trasa29→26→25→18→19→12→11→1, wejście63/cap69413,start7.
 PASS `/tmp/pe-N1-floor63-entry-v1-proof/proof.json`: pełny cold tylkoN,
 całe JSON/1MiBVRAM normal=SAN=frozenlive, oba native exit0/czysto, N bez
@@ -107,9 +149,9 @@ bez zmian; DoubleAction, modyfikatory, oba pancerze/dwaRevive, storageKeys1–5
 oraz Key6 przy postaci zachowane. Cały character jawne delty EXP/HP/pool,
 512vars tylko1/4/5/6/18. Brak leków/Revive i zmian gry/RNG/payloadu.
 
-Na63 druga wygrana M421/cap75249, +2364EXP,level95,HP838/865,pool0;
-później pełna wygrana M424/cap89881 z trzema przeciwnikami, +2695EXP,
-HP769/865,pool101. To rzeczywisty test pełnego modułu M424; wcześniejsza
+Na63 druga wygrana M422/cap75249, +2364EXP,level95,HP838/865,pool0;
+później pełna wygrana M423/cap89881 z trzema przeciwnikami, +2695EXP,
+HP769/865,pool101. To rzeczywisty test pełnego modułu M423; wcześniejsza
 słabsza gałąź L4 zakończyła to spotkanie porażką. Oryginalne PE używane do
 leczenia, obaRevive zachowane. Trasa63:7→3→2→6→10→15→14→13→12→8→0.
 Wejście64/cap93761,start5,count20: level95,EXP984495,BP510,HP769/865.
@@ -119,7 +161,7 @@ normal=SAN=frozenlive, oba native0/czysto, N bez zmian. PoN62 wszystkie modifier
 efekty zachowane; dwa Junk20 w wolnych18/44, clip2→0.
 
 Dalszy live64 wygrał M420 pięciu przeciwników/cap102705, +3306EXP,
-level96,HP720/866,BP709,pool0. M423 z trzema wrogami zaczęło się116473.
+level96,HP720/866,BP709,pool0. M424 z trzema wrogami zaczęło się116473.
 Przy118153 HP0, obaRevive jeszcze obecne; automat zatrzymany. Następne
 czekanie180+600 było zbyt długie na interwencję: po pierwszym Revive
 Aya ponownie straciłaHP. Dalsze kroki16 uchwyciły119013 HP433 i drugi
@@ -127,7 +169,7 @@ Revive zużyty. Nie był to GameOver ani brak obsługi Revive. Oryginalny
 ruch +X pozwolił odnowić PE; ręczne Heal3 przy119593 dało433→713HP.
 Kolejny atak549HP przy119737, za małoPE, pilot poprawnie zatrzymany.
 Oryginalne Items/Use Medicine4 slot12 + strzał przy120305 przywróciło866HP;
-M423 pokonane122353, +2167EXP,pool31. Brak nieudowodnionego zaliczenia
+M424 pokonane122353, +2167EXP,pool31. Brak nieudowodnionego zaliczenia
 porażki; walka faktycznie wygrana po zużyciu obuRevive i jednegoM4.
 Hostowy farm odtąd zapamiętuje zastaną liczbę Revive przy starcie i
 zatrzymuje się, gdy liczba się zmieni lub HP0; pozwala też kontynuować
@@ -144,7 +186,7 @@ poza clip426 bez zmian. AutentycznyN nie nadpisany. Checkpoint
 normal=SAN=frozenlive, oba native exit0/czysto, wszystkie8192B N bez zmian.
 Weryfikator sprawdza pełny inventory/character/512vars względem genuine N,
 w tym oba prawdziwie zużyte Revive i oryginalne Medicine4/łup.
-Odcinek po93761 jeszcze live-only. M418/boss70,
+Pełny odcinek do124549 ma powyższy dowód cold. M418/boss70,
 ThreeCommands, boss77 i cały port nadal nieukończone. Brak zmian
 produkcyjnego C/PsyZ; SDK/SDL nieinstrumentowane, brak nowego oraclePS1.
 

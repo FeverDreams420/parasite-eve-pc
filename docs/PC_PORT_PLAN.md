@@ -2,6 +2,18 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N5: całe piętro65 ukończone live, cold normal/SAN uruchomiony
+
+Trzecia walka M419 wygrana153441,HP722,EXP999072,pool313,Revive2
+zachowane. Oryginalne fieldHeal3→869. Reszta planu3→8/M314→7/M423→0/M296
+wykonana przy158253 bez kolejnych walk; runUp do zmiany sceny i300neutral
+dały159089/M297/floor66,HP869,level99,M8000ATK235/TripleCommand.
+Zamrożono pełny JSON,VRAM i pad: `/tmp/pe-N5-floor66-entry-v1`.
+Pełny cold genuineN do159089 normal/SAN na inv-mask-v1 uruchomiony:
+`/tmp/pe-N5-floor66-cold-v1.py`, kontrolerPTY27596. Brak jeszcze wyniku;
+ukończenie live piętra65 nie zastępuje tego dowodu. SesjaN5 zatrzymana
+bezpiecznie na wejściu66; nie zmieniano stanu, zapisów ani RNG.
+
 ### N5: wyjście z treasure i rzeczywista kolejka trzech komend
 
 Oryginalny pad wyprowadził N5 z M437 przez wejście w dolnej części pokoju:

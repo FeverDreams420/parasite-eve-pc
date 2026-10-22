@@ -687,6 +687,13 @@ int Scene_LoadRoom(unsigned int roomId)
             if (slot == 122 && record[i].u.handlerAddress == 0x80191b88u)
                 native = &g_RoomDroppedFlareProgram;
         }
+        /* Complete USA M424 paired-glow/orbit module. */
+        if (map + 1 == 424) {
+            if (slot == 35 && record[i].u.handlerAddress == 0x80190d6cu)
+                native = &g_RoomPairedGlowHandlers;
+            if (slot == 115 && record[i].u.handlerAddress == 0x80190e44u)
+                native = &g_RoomOrbitFlareEffects;
+        }
         /* Complete identical USA actor/joint-spray modules. */
         if (map + 1 == 413 || map + 1 == 416 || map + 1 == 417 || map + 1 == 437) {
             if (slot == 70 && record[i].u.handlerAddress == 0x801930f0u)
@@ -1221,7 +1228,7 @@ int Scene_LoadRoom(unsigned int roomId)
             g_RoomBeamSparkAsset = NULL;
             memset(RoomLib_SlotTable, 0, 8 * sizeof(*RoomLib_SlotTable));
             memset(&g_RoomSparkCapture, 0, sizeof(g_RoomSparkCapture));
-        } else if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || orbit_library || map + 1 == 30 || map + 1 == 113 || map + 1 == 263 || map + 1 == 265 || map + 1 == 333 || map + 1 == 414 || map + 1 == 415 || map + 1 == 412 || (map + 1 >= 421 && map + 1 <= 423)) && slot == 115) {
+        } else if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || orbit_library || map + 1 == 30 || map + 1 == 113 || map + 1 == 263 || map + 1 == 265 || map + 1 == 333 || map + 1 == 414 || map + 1 == 415 || map + 1 == 412 || (map + 1 >= 421 && map + 1 <= 424)) && slot == 115) {
             g_FieldFxTaskPrograms[slot - 85] = &g_RoomOrbitFlareEffects;
             memset(g_RoomScriptArgs, 0, sizeof(g_RoomScriptArgs));
         } else if(shared_actor && slot==75){
@@ -1235,7 +1242,7 @@ int Scene_LoadRoom(unsigned int roomId)
         } else if ((map+1==126 || map+1==129 || map+1==137 || map+1==139 || map+1==140 || map+1==141 || map+1==147 || map+1==149 || map+1==152 || map+1==324 || map+1==326 || map+1==327 || map+1==328 || (map+1>=421 && map+1<=423) || map+1==419 || map+1==420) && slot==122) {
             g_FieldFxTaskPrograms[37]=&g_RoomDroppedFlareProgram;
             memset(g_RoomDroppedFlareArgs,0,sizeof(g_RoomDroppedFlareArgs));
-        } else if ((map + 1 == 107 || map + 1 == 111 || map + 1 == 114 || map + 1 == 118 || map + 1 == 122 || (map + 1 >= 421 && map + 1 <= 423)) && slot == 35) {
+        } else if ((map + 1 == 107 || map + 1 == 111 || map + 1 == 114 || map + 1 == 118 || map + 1 == 122 || (map + 1 >= 421 && map + 1 <= 424)) && slot == 35) {
             g_PmCmdHandlerTable[slot]=&g_RoomPairedGlowHandlers;
             memset(&g_RoomPairedGlowSprite,0,sizeof(g_RoomPairedGlowSprite));
             g_RoomPairedGlowPacket__paired=NULL;

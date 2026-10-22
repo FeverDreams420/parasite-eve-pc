@@ -2,6 +2,49 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### K: cały M424 podłączony; trening muzeum do56 na żywo
+
+K7 odtworzył M419 przy55920 i zaczął ruchem przed atakiem. Pozycja Ayi
+faktycznie zmieniała się, ale salwa nadal zakończyła próbę śmiercią gracza.
+Proces zamknięty quit/native0; nie zmieniano mechaniki/statystyk na podstawie
+porażek. Dalsza strategia: oryginalny trening w muzeum i mocniejszy zestaw.
+
+Pełny M424: PASS `/tmp/pe-m424-audit-v1-proof.json`,1859instrukcji
+(1062paired glow,797orbit flare), rodata, skrypty, deskryptory, seedy i skalary
+zgodne z istniejącymi całymi jednostkami po jawnych ograniczonych relokacjach.
+7856B, SHA2568432d94e054a43d6f77508cd5f883bce274b5749a31c4866c7a89dba5aaa968f.
+Istniejący room_load.c mapuje PM35/task115 i rozszerza ich istniejące resety.
+Istniejący original_actor_animation.c --m424-load sprawdza cały fingerprint,
+oba skrypty/kolory, oba banki i dwukrotny reset po zatruciu; rejestracja w
+istniejącym CMake. Bez nowych plików produkcyjnych i przenoszenia funkcji.
+
+Świeży kandydat `/tmp/pe-m424-bind-v1`:438obiektów, PASS70/70regresji
+-verification.json i19/19CTest na profil, zgodne normal/SAN sygnatury
+-effects-proof.json. PASS -final-rehash-proof.json dla obiektów, wszystkich
+zależności, archiwów i exeków. PASS ContinueK:
+`/tmp/pe-m424-K1-continue-v1-proof/proof.json`, pełny JSON/VRAM normal/SAN
+zgodny, cały inventory/character/512vars identyczny z telefonem K,
+privateK niezmieniony, oba native0/czyste logi. M424 w pełnym dalszym
+przejściu Chrysler nadal wymaga dowodu poza testem ładowania.
+
+Zwykłe ContinueK w `/tmp/pe-m424-museum-K8-live` (kontroler85152), oryginalna
+trasa M340→M343→M185→M242. PASS
+`/tmp/pe-K8-museum-firstwin-v1-proof/proof.json` przy23310:4233EXP/26PE,
+poziom55, EXP802563, BP1101, HP704/803 bez utraty HP ani zużycia leków.
+Cały JSON/1MiBVRAM normal/SAN/zamrożony live zgodne, privateK niezmieniony,
+native0/czysto. Cały inventory tylko magazynek7→15,rezerwa942→953
+(11strzałów, reload19, łup30); character jawne delty awansu;512vars tylko1/78.
+
+Powtórzenie przez sąsiedni M243 i powrót do M242 uruchomiło kolejne spotkanie.
+Kierunki M242 zweryfikowane małym wejściem pada: field/battle basis1024.
+Druga wygrana4561EXP/71PE również bez utraty HP. Przy28018 na żywo:
+poziom56, EXP807124, BP1172/pool0, HP704/805, całe wyposażenie i klucze
+zachowane. Trwa wspólne coldContinueK przez obie wygrane:
+`/tmp/pe-K8-museum-level56-v1-proof`, przygotowany -verify.py; nie zaliczać
+tego dalszego etapu jako PASS przed wykonaniem weryfikatora. SDK/SDL nadal
+nieinstrumentowane, dowody w `/tmp`, brak nowego orakla PS1, pełny port
+nieukończony; M419 i całe61–77 pozostają otwarte.
+
 ### K: pierwsza wygrana M420 potwierdzona; M419 pozostaje otwarte
 
 PASS `/tmp/pe-K4-m420-win-v1-proof/proof.json`: pełny coldContinueK przez

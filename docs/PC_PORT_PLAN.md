@@ -2,6 +2,39 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### K: muzeum57 potwierdzone; poprawione rozpoznawanie Revive w sterowniku
+
+PASS `/tmp/pe-K8-museum-level57-v1-proof/proof.json`: fullcoldContinueK,
+trzy wygrane M242 i powroty przez M243,46592. Cały JSON i1MiBVRAM
+normal/SAN/zamrożony live zgodne, native0/czysto, source/privateK bez zmian.
+13027EXP/143PE, poziom57, EXP811357, HP704/807, BP1218/pool0.
+Cały inventory tylko magazynek7→3 i rezerwa942→999:23strzały, reload19,
+łup90 z oryginalnym overflow14. Bez zużycia leków, zmian sprzętu lub kluczy.
+Cały character jawne delty awansu, HP704 bez zmian;512vars tylko1/78.
+Samo wejście nie gwarantuje spotkania: dawna zweryfikowana trasa H→I także
+wymagała czasem kilkudziesięciu powrotów. Dokładna pętla wejść odtworzona
+z oryginalnego ledgeru; sterowanie wyłącznie padem, bez zmian RNG/flag.
+
+Ważna korekta interpretacji wcześniejszych prób Chrysler: testowy sterownik
+przerywał na mode3/HP0, mimo posiadania Revive. To było przedwczesne
+określanie porażki, a nie dowód końcowego GameOver. Oryginalny
+Battle_UpdateBattleState w encounter.c dla mode3 obsługuje Preraise albo
+Inv_CountByValue(0x12), potem przywraca połowę HP przez Battle_StepVictory.
+Kod gry nie wymagał zmiany. Sterownik w `/tmp/pe-K8-control-helpers-v3.json`
+ma warianty peK8FightRevive*, które czekają w tym stanie, gdy jest Revive
+lub Preraise; brak obu wymaga osobnej weryfikacji rzeczywistego GameOver.
+
+PASS `/tmp/pe-m424-revive-K2-v1-proof/proof.json`: fullcoldContinueK do
+dawnego HP0 w M42040840, potem oryginalne automatyczne Revive41128.
+Normal/SAN/zamrożony live: cały JSON i1MiBVRAM identyczne,native0/czysto,
+source/privateK nietknięte. Względem HP0 checkpoint cały inventory wyłącznie
+Revive slot28→0; drugi slot35 zachowany. Cały character i512vars bez zmian;
+żywe HP400=floor801/2, mode0, pięciu wrogich aktorów nadal obecnych.
+To dowód wznowienia walki, nie zwycięstwa ani pełnego GameOver bez Revive.
+Pomocniczy proces zamknięty quit/native0. Główny trening K8 nadal przy46592,
+poziom57, bez utraty któregokolwiek Revive. SDK/SDL nieinstrumentowane,
+dowody w `/tmp`, brak nowego orakla PS1; cały port nadal nieukończony.
+
 ### K: cały M424 podłączony; trening muzeum do56 na żywo
 
 K7 odtworzył M419 przy55920 i zaczął ruchem przed atakiem. Pozycja Ayi

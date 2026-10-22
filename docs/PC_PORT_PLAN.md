@@ -2,6 +2,39 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### J: całe51–58 potwierdzone; boss60 wygrany na żywo, replay trwa
+
+PASS `/tmp/pe-J5-chrysler-floor57-v1-proof/proof.json` (257216),
+`/tmp/pe-J5-chrysler-floor58-v1-proof/proof.json` (287876) i
+`/tmp/pe-J5-chrysler-floor59-v1-proof/proof.json` (316240): pełne cold
+starty autentycznego J do schodów57/58/59, cały JSON i1MiBVRAM
+normal/SAN/live zgodne, native0, czyste logi i niezmienione prywatne J.
+Każdy weryfikator sprawdza cały inventory/character i512zmiennych,
+z jawnymi deltami względem poprzedniego zamrożonego etapu.
+Piętro57:1582EXP/244PE, oryginalna wymiana M3→M4 przy pełnym inventory.
+Piętro58:1138EXP/86PE; obejmuje dodatkowe starcie0EXP/0PE, którego
+wierność wymaga niezależnego orakla PS1, a nie tylko zgodności natywnych
+profili. Zapis wejść zachowany. FieldHeal3:439→719HP, bez zużycia leków.
+
+Na żywo osiągnięto schody60 przy340164: poziom51, EXP784840,
+HP521/795, BP874/pool30, pojemność36 i drugi Revive w nowym slocie35.
+Trwa `/tmp/pe-J5-chrysler-floor60-v1-proof`, przygotowany pełny weryfikator.
+Następnie oryginalne menu: Heal3→795HP, BP800→ATK197 (bonus140), BP74.
+Cztery zwykłe walki na60:3490EXP/218PE. M411 załadowany w pełnej grze,
+siedmioczęściowy boss uruchomiony i pokonany:10000EXP/753PE, klucz6raw61.
+Zakończenie wyników i wymiana M3slot16→klucz6 przez oryginalne menu;
+wszystkie wcześniejsze klucze i oba pancerze zachowane. Przy401368:
+poziom54, EXP798330, HP704/801, BP1075/pool0, M8000ATK197,
+magazynek7, rezerwa942. Brak nowej broni/Three Commands z tej walki.
+
+Boss60 NIE ma jeszcze PASS normal/SAN. Uruchomiony osobny cold replay
+`/tmp/pe-J5-boss60-win-v1-proof`, checkpoint i weryfikator o tym samym
+prefiksie; wymagane rzeczywiste wykonanie weryfikatora po obu native0.
+Cały etap wyłącznie oryginalnym padem, bez edycji RAM/RNG/zapisów;
+bez nowych zmian kodu gry ani plików produkcyjnych. SDK/SDL nadal
+nieinstrumentowane; tymczasowe dowody w `/tmp`, brak nowego orakla
+PS1 dla bossa, port nadal nieukończony. Żywy proces pozostaje w M411.
+
 ### J: całe piętra54–55 potwierdzone, na żywo schody57
 
 PASS `/tmp/pe-J5-chrysler-floor55-v1-proof/proof.json`: pełny coldJ do

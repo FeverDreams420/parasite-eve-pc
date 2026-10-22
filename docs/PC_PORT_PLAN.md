@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### inv-mask-v1: brakujące sześć replayów PASS; N5 z ATK235/TripleCommand
+
+`/tmp/pe-inv-mask-v1-six-replay-proof.json`:6/6 terminalnych replayów
+head2/phone/medicine normal iSAN PASS. Cały aktualny JSON,1MiBVRAM i karty
+identyczne z enemy-atb-v1; źródłowe A/B sprawdzone SHA256 i niezmienione.
+Łącznie64fixture+6replay=70/70,38CTest PASS na tym samym kandydacie.
+Nie obejmuje to pełnego portu, kampanii ani oracleobrazuPS1.
+
+N5 nativePID83322/controllerPTY98364 cold do128729: całyJSON/VRAM
+identyczny z frozenlive N4. Stare N4 zamknięte oryginalnym quit/exit0,
+źródłowy N bez zmian. N5 działa na poprawionym inv-mask-v1.
+Oryginalne menu BP wydało700 punktów na M8000:782→82;
+przy129801 bonusATK171→178 (total57+178=235), cały rekord4096B zmienił
+jedynie430:171→178. Pojedynczy strzał, range14 i TripleCommand zachowane.
+`/tmp/pe-N5-BP178-after-v1/proof.json`: live-only, dalszy cold pending.
+Aktualna lokacjaM437/floor64, HP869/869, level99. Nie przeniesiono stanu
+N3b/Eve do N5; to zwykłe niezależne przejście z autentycznego N.
+
 ### Eve: ograniczony odwrót pozwala użyć PE zamiast Medicine
 
 W zatrzymanym N3b przy607221 (HP230, PE~323) oryginalny pad UpRight48

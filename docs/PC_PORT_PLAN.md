@@ -2,6 +2,48 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### N2: oryginalne galerie71–76 i wejście77
+
+Live po511973: fieldHeal3 przy512517 rzeczywiście677→869HP. M418 ma
+wyjście na wschód+x, nie północ−z (północna próba dochodzi ściany).
+M312 pojawia się515893, ustawia global4=71. Jedna omyłkowa pętla przez
+obszar powrotu ponownie M418 przy516593; dalsze przejście zwykłym padem.
+Oryginalne taskblocki z Disc2 wyznaczają wielokąty wyjść, bez edycji RAM.
+M312 gabloty ominięte przezx850,z−650, następniex250,z−750 dośrodka;
+M313522169/floor72, M314523637/floor73, M315525161/floor74,
+M316527265/floor75, M317530665/floor76. Przejścia mają fizyczne przeszkody:
+na75 trzeba obejść szerzej x−600, bliskie±350 zatrzymuje cokół.
+M318/floor77 wejście532053, HP869, trzyRevive, czteryM4, M8000+178ATK
+z DoubleAction. Boss nieuruchomiony, brak zaliczenia77. Snapshot i input:
+`/tmp/pe-N2-floor77-entry-v1-checkpoint`. Wszystko po511973 live-only.
+Aktualny kandydat ma już oryginalny M318 w linku (nm potwierdza PlayerGate
+oraz FanSweepEffects), loader wiąże sloty70/75/168–175; stary historyczny
+opis na końcu dokumentu o braku integracji nie opisuje tego kandydata.
+
+Użytkownik wskazał broń z TripleCommand po QueenBee. Inventory oraz pełny
+zapis rolled po boss70 nie zawierają M96R/id4A ani modyfikatora20; tylko
+Key7/id62. Odczyt oryginalnego taskblocku M418: skrypt type5/sub31 ustawia
+local54=62 i local55=0, następnie pola92/93; pozostali pomocnicy ustawiają0.
+Nie dopisano oczekiwanego łupu do kodu lub save. Lokalizacja źródła broni
+z TripleCommand wymaga dalszego potwierdzenia oryginalnymi danymi/oracle;
+nie jest to zaliczona funkcja ani powód do zmiany reguł nagród.
+Oryginalny M318 potwierdza leczenie Eve3:31: taskblock43924–44164
+odczytuje bieżące/maksymalne HP, dodaje local36 (początkowo1000),
+zwiększa local36 o1000 do10000 i zapisuje HP z ograniczeniem do maksimum.
+Nie należy zatem zakładać stałego1000 przez całą walkę. Samo rozpoznawanie
+okna Mayi i bezpieczne opróżnianie kolejki DoubleAction nadal wymagają testu.
+Pełny pad do511973 porównany klatka po klatce po kompaktowaniu:
+`/tmp/pe-N2-boss70-win-v1-input-compaction.json`, PASS511973×16bit.
+
+### Wskazówka użytkownika: Truebred Eve i Maya
+
+W pilocie walki77 wstrzymywać ataki na Truebred Eve, gdy Maya jest na
+ekranie: według użytkownika atak wywołuje leczenie Eve o1000HP. Przed
+automatyczną walką powiązać widoczność/stan Mayi z oryginalnymi aktorami
+oraz sprawdzić kolejkę DoubleAction, żeby już zakolejkowany strzał nie
+został wykonany w tym oknie. To wymaganie strategii i przyszłego testu;
+nie jest jeszcze zweryfikowanym dowodem zachowania portu/PS1.
+
 ### N2: floor68 PASS, boss70 wygrany live i ATK178
 
 Poprzedni odcinek audytu efektów pancerzy dostarczył dowodu: oryginalne

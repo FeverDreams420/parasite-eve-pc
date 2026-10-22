@@ -2,6 +2,81 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### I: poziom45, ATK177, pełneHP i oryginalny zapis/Continue
+
+Na tym samym kandydacie kernel-clock-v1 (PsyZ6e7f6f4) oryginalne menuBP
+wydało1000 punktów: M8000 ATK164→174,BP1070→70 przy15392. Trasa
+M340→M343→M229→M242→M243 bez zmiany reguł spotkań. Ograniczony sterownik
+zatrzymał się po osiągnięciu45 przy94438: siedem zwycięstw,
+5×4233+2×4561=30287EXP,729102→759389,poziom38→45,HP653→566,max769→783.
+Oryginalne level-up potwierdzone padem,alokacje370→440,capacity31→34.
+Przyrost BP32/56/41/46/12/22/21=230. Obserwowane Heal3 przy59662:
+415→695HP; do końca treningu367 obrażeń, bez zużycia Medicine3.
+Trzy nowe Medicine3 zajęły sloty31..33; liczba8→11 nie maleje w żadnym
+z obserwowanych stanów. Nie jest to osobna cold-weryfikacja każdego
+pośredniego ekranu. Walka50/77 nadal niepokonana.
+
+Powrót do telefonu przez oryginalne pokoje. Kolejne300BP doATK174→177,
+BP300→0 przy99686; fieldHeal3 przy99982 daje566→783, zamknięcie100078.
+TelefonI(slot8) przy103128,zamknięcie103612/M340. Źródło8192B:
+`/tmp/pe-ex-museum-trained-save-I1-v1-source/BASLUS-006620000000I`, SHA256
+`cf614cc2c93b836ffe794a066b5d3ff393c3768ae962065e779221e37172ea0d`.
+PASS `/tmp/pe-ex-museum-trained-save-I1-v1-proof/proof.json`: pełny zimny
+H→103612 normal/SAN/live, cały JSON i1MiBVRAM identyczne; exit0 bez
+wykrytej diagnostyki, H niezmienione, nowyI8192B identyczny we wszystkich
+trzech wykonaniach. Cały inventory względemH: capacity31→34, trzy M3,
+clip8→14,bonusATK107→120, pozostałe pola bez zmian. Cały character ma
+jawne delty poziomu/EXP/HP/BP/alokacji; cały512vars zmienia tylko78:76→151.
+Zachowano oba pancerze,DoubleAction i pojedynczy strzał.
+
+PASS `/tmp/pe-ex-museum-trained-I1-continue-v1-proof/proof.json`: tylkoI,
+bezH; Continue do14552/M340 normal/SAN, cały JSON i1MiBVRAM identyczne,
+exit0 bez diagnostyki, karta niezmieniona. Cały inventory,character i512vars
+identyczne z telefonemI103612. Zweryfikowane45/759389EXP/783HP/ATK177/
+11Medicine3. Wszystkie438 obiektów, ich zależności, archiwa i wykonywalne
+kandydata ponownie sprawdzone hashami. SDK/SDL nadal nieinstrumentowane.
+
+### Niezależny oryginał USA: ContinueG i muzeumM340
+
+Przywrócono brakujące zasoby hosta z
+[oficjalnej paczki DuckStation](https://github.com/stenzek/duckstation/releases/tag/latest),
+archiveSHA256 `cd77d80b55276f15340efa1c65df250f8f4d413b68d1c136e48615d780f1249c`.
+Prywatne212 plików, każdy zahashowany w
+`/tmp/pe-reference-duckstation-resources-v1/resource-proof.json`.
+Emulator regtest pozostał ten sam, SHA256
+`68d5968d485df16ebede5588ad08c944b5edd97f5f231de1e5be1750bb7aa42e`.
+HostMetal bez okna0×0, rasteryzatorsoftware, audioNull, PGXP nie włączano.
+Nowa GameDB ustawia displayactive−8/−8; konfiguracja/logi zachowane.
+Są to zasoby emulatora testowego w/tmp, nie nowy silnik portu ani pliki gry.
+
+BootUSA Disc1, host wstawia prywatną kartęG przez normalny loader karty
+emulatora przed pierwszą klatką; oryginalny pad/Continue/slotG6/„File loaded”.
+Po togglu Analog doDigital tytuł reaguje; przejście do zapisanej sceny
+wywołuje oryginalny „Insert DISC2”. Host System::InsertMedia podaje
+użytkownikowy Disc2; oryginalny kod kończy ładowanieM340. Helpery modyfikują
+wyłącznie konfigurację urządzeń hosta, nie RAM/kod/RNG ani payload zapisu.
+Odczyt GDB używa wyłącznie pakietów m(adres,długość).
+
+PASS `/tmp/pe-reference-museum-G-v1/G-original-continue-proof.json`:
+oryginał i świeży kernel-clock-v1 normal/SAN z samegoG mają zgodne:
+scenęM340,pozycję/yawAyi,HP714/767,capacity31,wszystkie50slotów,
+całe4096B rekordów sprzętu,wybrane indeksybroni5/pancerza6,cały raportowany
+character (37/638241EXP/48BP/pula538/alokacje360) i wszystkie512vars.
+ŹródłoG8192 i cała otoczka131072B karty pozostały niezmienione.
+Native ContinueG normal/SAN pełny JSON/1MiBVRAM identyczny też z poprzednim
+kandydatem: `/tmp/pe-kernel-clock-G1-reference-v1-proof/proof.json`.
+To niezależne potwierdzenie wymienionego stanu, nie całego przejścia gry.
+
+Pierwszy obraz320×224 różni się31/71680 pikseliRGB5. W dodatkowych120
+kolejnych klatkach bez inputu najmniejsza różnica to1piksel (phaseB offset21,
+łącznie45 po pierwszym obrazie). Nie znaleziono klatki bez różnic.
+Po pierwszych24 klatkach player mode21,frame0,previous0,step65536,last0,
+stop0 zgodny z portem; fazy pozostałych efektów nie wyrównano.
+Mapy różnic, wszystkie próbki i skrypty w tym samym katalogu. To test
+obrazowy diagnostyczny, bez PASSpixel-perfect i bez pomijania różniących
+się pikseli. Pozostaje wyjaśnić różnicę przy telefonie i poszerzyć referencje
+na ruch, walkę, audio oraz pozostałą zawartość. Nie oznacza ukończenia portu.
+
 ### PsyZ: 64-bitowe terminy hosta po długiej przerwie
 
 Naprawa w istniejących plikach własnego forka, commit `6e7f6f4`

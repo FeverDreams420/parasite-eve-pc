@@ -2,6 +2,72 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### J: odtworzony oryginalny joint-spray i rodzina M413/M416/M417/M437
+
+Poprzedni zweryfikowany kandydat zatrzymywał się po M414 w M417 przy54484:
+slot75/80193128, startup-2. Oryginalny moduł całej rodziny413/416/417/437
+jest identyczny (16904B,SHA256
+`815fc5c6d851020b248215245e5b8f52bd5e793a71613e2053acfce7bc053de1`).
+Read-only audit `/tmp/pe-m417-original-audit-v1-proof.json`:
+wszystkie3271 instrukcji istniejącej biblioteki aktorów oraz cała rodata
+z tabelami klas zgodne z USA M405 po jawnych relokacjach. Brakującą całą
+jednostkę slot135 (764 słowa,80192500..801930ef) odtworzono z oryginalnego
+MIPS: cząstka, kontroler i setter, wraz ze skryptem i parametrami.
+Całość w istniejącym src/overlays/room_lib/spark_attacks.c, deklaracje
+w istniejącym room_spark_attacks.h; loader podpina obie klasy i program50,
+resetuje8B parametrów przy każdym wejściu. Bez nowych plików produkcji,
+bez nowych warstw i bez zmiany zaprojektowanej rozgrywki.
+
+PASS `/tmp/pe-m417-unit-native-v1-proof.json`:5200 przypadków cząstki/
+kontrolera i448 settera. Oryginalne instrukcje USA MIPS oraz C normal/SAN
+mają identyczny cały rekord20B, dwa rekordy potomne40B, wynik, flagi
+aktora/gracza/action, liczby RNG/alloc, cały blok sprite18B i pełny ślad
+argumentów pomocników rysowania. Przypadki obejmują tryby -1..3,
+stany -1..3, graniczne liczniki0..65535, flagi i pełną pulę/udany przydział;
+setter dodatkowo granice signed32 i pełny zwracany wskaźnik natywny.
+Pomocnicy mają kontrolowane wyniki testowe, ładowania GTE pominięte:
+to oracle kodu jednostki, nie obrazu, geometrii ani dźwięku PS1.
+Pierwsza wersja porównania wykryła błędny indeks palety i kolor pyłu;
+oba poprawiono przed aktualnym kandydatem. Fragment testowy jest
+identyczny z całym blokiem produkcji; brak edycji RAM/RNG/save kanonicznej gry.
+
+Świeży kandydat m417-native-v3/PsyZ6e7f6f4,438 obiektów (219/profil).
+PASS `/tmp/pe-m417-native-v3-effects-proof.json`:14/14 CTest/profil,
+sygnatury M418/M436 zgodne i nowy test w istniejącym original_actor_animation.c
+(--m417-load): wszystkie cztery rzeczywiste moduły, fingerprint i skrypt,
+obie klasy, właściwy bank zadań50, dwa wejścia/reset parametrów, pełny
+wskaźnik inicjalizatora. Test zarejestrowany w istniejącym CMakeLists.txt.
+v1 poprzedzał poprawki dwóch kolorów, v2 nie miał jeszcze nowego testu;
+wyniki tych buildów nie zastępują weryfikacji aktualnego v3.
+
+PASS `/tmp/pe-m417-entry-J3-v3-proof/proof.json`: pełny coldJ→54784,
+oryginalny pad przez windę50, schody51, zwycięstwo M414/level48 i wejście
+M417. Normal/SAN/live cały JSON i1MiBVRAM identyczne,native0 czysto,
+J8192B niezmienione. Cały inventory/character bez zmian od wyniku M414,
+512vars tylko5:20→23 i18:4→5;547/789HP. To wejście nie dowodzi jeszcze
+walki w M417. Dalszy live `/tmp/pe-m417-native-J4-live`,kontroler86947,
+z tego samego autentycznego J.
+PASS `/tmp/pe-m417-win-J4-v3-proof/proof.json`: coldJ→57456,normal/SAN/
+live cały JSON i1MiBVRAM zgodne,native0 czysto,J8192B niezmienione.
+Dwa przeciwniki po410HP pokonane: +288EXP/+35PE,771112EXP,484/789HP,
+BP604. Cały inventory tylko magazynek15→11 (4 strzały,bez leków/pancerzy),
+cały character tylko EXP/HP/pulaPE;512vars tylko18:5→9 i78:156→13.
+Dalsze normal-only przejścia: M415/slot10 przy58676,M416/slot9 przy60056,
+M415/slot4 przy61492,M413/slot3 przy62872,bez dodatkowej walki i strat HP.
+Pokrywa to też rzeczywiste wejścia M413/M416; cała trasa do62872 jeszcze
+bez osobnego cold proof. Nawigacja opiera się na faktycznym ruchu padu;
+odczyt geometrii LLDB po zmianie sceny nie stanowił wiarygodnego planu.
+PASS70/70 `/tmp/pe-m417-native-v3-verification.json`,13 starych i nowy
+CTest14/14 w każdym profilu. Ponowny rehash438 obiektów, wszystkich
+zależności, SDK/SDL i wykonywalnych zgodny z aktualnymi źródłami.
+Game SHA256 `ccba3da1024a8f50fc6b35b35f64a01f06ebb09b34e46994cd19337cd0aca9af`,
+SAN `116c323d9e36f2ed844026c4d889715d8ff3ac1df829c28b7d9f6768b4505b8d`.
+Następny audyt: cała pozostała rodzina51–59; wstępnie M411 ma identyczny
+cały moduł z istniejącym M269, M412 wymaga osobnej weryfikacji kombinacji
+istniejących jednostek. Tych powiązań jeszcze nie dodano.
+User build niepodmieniony. SDK/SDL
+nieinstrumentowane,dowody /tmp nietrwałe,pełny port nadal otwarty.
+
 ### J: piętro51 i naprawa brakujących powiązań M414/M415
 
 Po potwierdzonym telefonieJ zimny Continue i oryginalny pad uruchamiają

@@ -656,6 +656,15 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomOrbitFlareEffects;
         if (orbit_library && slot == 115 && record[i].u.handlerAddress == 0x80193250u)
             native = &g_RoomOrbitFlareEffects;
+        /* Complete identical USA actor/joint-spray modules. */
+        if (map + 1 == 413 || map + 1 == 416 || map + 1 == 417 || map + 1 == 437) {
+            if (slot == 70 && record[i].u.handlerAddress == 0x801930f0u)
+                native = &g_RoomActorClassTable[0];
+            if (slot == 75 && record[i].u.handlerAddress == 0x80193128u)
+                native = &g_RoomActorClassTable[2];
+            if (slot == 135 && record[i].u.handlerAddress == 0x801931b8u)
+                native = &g_RoomJointSprayProgram;
+        }
         /* USA M414/M415 link the complete GroundEruption, OrbitFlare and
          * HomingProjectile units; all three retain their original banks. */
         if (map + 1 == 414 || map + 1 == 415) {
@@ -1094,6 +1103,13 @@ int Scene_LoadRoom(unsigned int roomId)
             g_RoomM005BeaconModel0 = g_RoomM005BeaconModel1 = NULL;
             g_RoomM005BeaconOffset = (GteShortVector){0};
             g_RoomM005BeaconCenter = (GteShortVector){0};
+        } else if (map + 1 == 413 || map + 1 == 416 || map + 1 == 417 || map + 1 == 437) {
+            if (slot == 70) g_PmCmdHandlerTable[70] = &g_RoomActorClassTable[0];
+            else if (slot == 75) g_PmCmdHandlerTable[75] = &g_RoomActorClassTable[2];
+            else if (slot == 135) {
+                g_FieldFxTaskPrograms[50] = &g_RoomJointSprayProgram;
+                memset(g_RoomJointSprayArgs, 0, sizeof(g_RoomJointSprayArgs));
+            }
         } else if (map + 1 == 256) {
             if(slot==75){
                 g_PmCmdHandlerTable[75]=&g_RoomActorClassTable[2];

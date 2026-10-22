@@ -2,6 +2,19 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Eve: ograniczony odwrót pozwala użyć PE zamiast Medicine
+
+W zatrzymanym N3b przy607221 (HP230, PE~323) oryginalny pad UpRight48
+przez104klatki i neutral8 oddalił Ayę od Eve; HP230 zachowane, PE~520.
+Oryginalne Heal3, pominięcie drugiej komendy Square: przy607845 HP510,
+queue0, Eve1028726 bez zmian. Revive3 i pozostałe przedmioty zachowane.
+`/tmp/pe-N3b-PE-retreat-Heal3-v1/proof.json`: tylko live, cold pending.
+Tymczasowy hostpilot pozwala teraz na maks192klatki dotychczasowego
+ruchu odwrotowego przy HP160–249 i PE<500; poniżej160 lub po limicie
+nadal zatrzymuje się do przeglądu. Bez zmian kodu/mechaniki gry.
+Nie twierdzimy, że strategia wygrała walkę. Nowe N5 z TripleCommand
+na inv-mask-v1 nadal odtwarza sprawdzony coldprefix do128729.
+
 ### Poprawiony kandydat: cold transfer M96R i64regresje PASS
 
 `/tmp/pe-N4-triple-cold-v2-proof.json`: inv-mask-v1 cold genuineN→128729

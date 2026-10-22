@@ -39,9 +39,12 @@ Powtórzenie przez sąsiedni M243 i powrót do M242 uruchomiło kolejne spotkani
 Kierunki M242 zweryfikowane małym wejściem pada: field/battle basis1024.
 Druga wygrana4561EXP/71PE również bez utraty HP. Przy28018 na żywo:
 poziom56, EXP807124, BP1172/pool0, HP704/805, całe wyposażenie i klucze
-zachowane. Trwa wspólne coldContinueK przez obie wygrane:
-`/tmp/pe-K8-museum-level56-v1-proof`, przygotowany -verify.py; nie zaliczać
-tego dalszego etapu jako PASS przed wykonaniem weryfikatora. SDK/SDL nadal
+zachowane. PASS wspólne coldContinueK przez obie wygrane:
+`/tmp/pe-K8-museum-level56-v1-proof/proof.json`: cały JSON/1MiBVRAM
+normal/SAN/zamrożony live zgodne, native0/czyste logi, source/privateK
+niezmienione. Cały inventory tylko magazynek7→9 i rezerwa942→983
+(17strzałów, reload19, łup60); cały character jawne delty poziomu56,
+HP704 bez zmian;512vars wyłącznie1/78. SDK/SDL nadal
 nieinstrumentowane, dowody w `/tmp`, brak nowego orakla PS1, pełny port
 nieukończony; M419 i całe61–77 pozostają otwarte.
 

@@ -2,6 +2,100 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### Menu pancerzy: usunięcie zabiegu byte-match i trening do nowego zapisu E
+
+W istniejącym `src/main/menu/status_panels.c`, gałąź Armor, zastąpiono
+wywołanie przez niezgodny wskaźnik `int (*)(MenuWidgetNode *, int)`
+zwykłym wywołaniem zadeklarowanej funkcji `void Menu_StepSkillList(...)`.
+Usunięty komentarz uzasadniał rzutowanie wyłącznie zachowaniem układu
+kodu maszynowego retail. Port nie wymaga byte-match; niezgodny typ
+wywołania nie powinien być utrzymywany. Bez nowych plików, funkcji,
+przenoszenia modułów ani zmian reguł gry.
+
+Kandydat `/tmp/pe-armor-call-v1-game`, SHA256
+`8978d4c03f7b7dc7d907947dbfaa9d03543406057f80fd77fec00abca1d1bbeb`;
+SAN `/tmp/pe-armor-call-v1-game-sanitized`, SHA256
+`94ab8d5050ec076f72cc6dfc74bd1fe89818ee212f49b07ac7784b6af3ced6af`.
+Świeże438 obiektów, manifest ponownie sprawdza wszystkie zależności,
+archiwa i pliki wykonywalne. Status_panels bez ostrzeżeń w obu profilach.
+PASS70/70 `/tmp/pe-armor-call-v1-verification.json`; PASS13/13 wybranych
+CTest w każdym profilu i zgodność sygnatur efektów M418/M436:
+`/tmp/pe-armor-call-v1-effects-proof.json`. SDK/SDL nieinstrumentowane.
+
+PASS `/tmp/pe-armor-call-v1-fatigue-proof/proof.json`: zimne normal/SAN
+przed44670 i po44952 oryginalnej zmianie SvProtector29→B Jacket1slot6.
+W każdym punkcie cały JSON identyczny między profilami; wszystkie pola
+istniejące w starej referencji oraz1MiBVRAM identyczne ze starym live.
+Nowe battle_rewards w obu punktach result_phasefalse/remainingNULL.
+Zachowane jawne porównania całego inventory/character/512vars oraz
+mechaniki: fatigue112063/27099→116503/27432, ATB9000→0; bieżące PE,
+maxPE, liveHP621, enemyHP275 i battleframe410 identyczne. Cztery exit0,
+bez diagnostyki, źródłowe/prywatne C8192B niezmienione. To potwierdza
+zachowanie oryginalnego menu i zmiany pancerza po usunięciu rzutowania.
+
+Kontynuowano żywą gałąź D na poprzednim reward-visibility, bez restartu,
+edycji RAM/RNG/zapisu. Następne45 cykli M242/M243 przyniosło dziewięć
+zwycięstw:6×4233+3×4561=39081EXP,439259→478340. Oryginalne menu
+odebrało330 nabojów; rezerwa331→566, clip2→1,96 pojedynczych strzałów,
+pięć przeładowań po19. Heal3 przy138432 podniosło HP321→601; łącznie
+HP495→573,202 obrażeń. Siedem Medicine3 i oba pancerze niezmienione.
+PASS `/tmp/pe-D4-museum-training-v2-proof/proof.json`: cold normal/SAN
+na reward-visibility do179174, cały JSON i1MiBVRAM identyczne z live,
+exit0 bez diagnostyki, D8192B niezmienione. Verifier jawnie sprawdza
+cały inventory/character/512vars oraz dziewięć list łupów.
+
+Kolejne30 cykli dało trzy zwycięstwa, do491039EXP/HP567. Przy powrocie
+do telefonu uruchomiła się jeszcze jedna walka M242: Heal3 przy235168
+HP438→718, zwycięstwo238816 do495272EXP. Powrót M229240132→M343241404
+→M340243784 bez kolejnych walk. Telefon: menu37 przy246714, oryginalne
+Down wybrało nieużywany slotE, Cross zapisało go przy246834; zamknięcie
+menu247318. Stary D zachowany. Tymczasowa kontrola powrotu raz odrzuciła
+prawidłowe M340 z powodu błędnej stałej oczekiwanego scene; odczyt
+potwierdził tokena8064048, poprawiono tylko kontrolę i kontynuowano ten
+sam proces. Nie było awarii ani restartu gry.
+
+Nowy oryginalny zapis: `/tmp/pe-ex-museum-trained-save-E1-v1-source/`
+`BASLUS-006620000000E`,8192B,SHA256
+`bb58e79eb4ab1be2546a28418cfc082aa5f428e62350536e6501831081c92795`.
+Level36,EXP495272,HP718/765,BP729,PEpool545,ATK149/DoubleAction/single,
+B Jacket1slot6/SvProtectorslot29,siedemMedicine3,reserve648,clip3.
+Próg37 nadal539270,38 nadal725158; trening nie osiągnął jeszcze37.
+
+PASS `/tmp/pe-ex-museum-trained-E1-continue-v1-proof/proof.json`:
+nowy armor-call, oryginalne Continue z wyłącznie E (brak D na prywatnej
+karcie), cap14424. Normal/SAN całe JSON i1MiBVRAM identyczne, native0,
+bez diagnostyki, E niezmienione. Cały inventory, cały character i512vars
+identyczne z telefonem247318; powrót M340 z718/765HP i495272EXP.
+PASS `/tmp/pe-ex-museum-trained-save-E1-v1-proof/proof.json`: pełne
+zimne odtworzenie D→13 walk→telefonE na nowym armor-call, normal/SAN
+cały JSON i1MiBVRAM identyczne ze starym live247318, native0 bez
+diagnostyki, D8192B niezmienione; nowy E8192B identyczny ze starym live
+w obu profilach. Od74052:10×4233+3×4561=56013EXP, dwieHeal3 (+560HP),
+337 obrażeń, żadnego użytego Medicine.450 odebranych nabojów,132 pojedyncze
+strzały/siedem przeładowań po19; reserve331→648/clip2→3. Cały inventory
+zmienia tylko clip/rezerwę i category_counts[0] odświeżone przez zapis
+223→648; sloty i inne wyposażenie identyczne. Character tylkoEXP/HP/pulaPE,
+512vars tylko1:242→998 i78:125→166. Verifier obejmuje13 list łupów i oba
+punkty leczenia. Seed/checkpoint/runner/verifier pod tym samym prefiksem.
+
+Poprzedni controller28567/native6445 zamknięty normalnym quit, exit0,
+D niezmienione. Aktualny controller66796/native38554, root
+`/tmp/pe-armor-call-v1-E1-live-v2`, nowy armor-call po ContinueE14424;
+cały JSON i1MiBVRAM zgodne ze zweryfikowanym cold Continue (live-reference.json).
+Gra czeka headless na wejście, nie prowadzono dalszego treningu. Pierwszy
+launcher bez PTY dostał EOF stdin po14424; native zakończył się exit0,
+wrapper zgłosił EOFError. Zachowano ten root jako ślad i uruchomiono
+nowy z PTY; nie był to błąd gry ani utrata zapisu. Tymczasowe helpery
+`/tmp/pe-armor-call-v1-E1-fight-driver.js` i
+`/tmp/pe-armor-call-v1-E1-farm-driver.js` wskazują nowy root/controller.
+Następny krok: dalszy trening odE, do37 brakuje43998EXP; bez końcowej
+Eve/carriera. Zapasowy pancerz nadal słabyDEF39, brakTools/SuperTools;
+nie uznawać tej pary za gotową do bezpiecznej zmiany przy bossie.
+
+Wcześniejsze sekcje opisują historyczne punkty, w tym74052. Najnowszy
+zapis E jest powyżej; boss50/Chrysler77 i pełny port nadal nieukończone.
+Brak oraclePS1/potwierdzenia pixel-perfect; dowody/tmp nietrwałe.
+
 ### D4: mieszany łup SEL z pełnym plecakiem i pięć automatycznych walk
 
 Na niezmienionym pe-reward-visibility-v1 od D14392 wrócono przez

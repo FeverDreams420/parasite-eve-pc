@@ -711,9 +711,7 @@ int Menu_StepItemSelectScreen(MenuWidgetNode *node, unsigned int buttons)
             g_InvItemUsableFlag = 0;
             Menu_CreateInventoryListView(child);
             Menu_CreateEquipItemSelectionView(child);
-            /* An int-returning call keeps cross-jumping from merging this
-             * case into case 2, which retail keeps separate. */
-            ((int (*)(MenuWidgetNode *, int))Menu_StepSkillList)(MenuWidget_FindByModeAndSelectedBase(2, 5), 0);
+            Menu_StepSkillList(MenuWidget_FindByModeAndSelectedBase(2, 5), 0);
             break;
         case 4:
             if (Battle_IsActiveWrapped()) {

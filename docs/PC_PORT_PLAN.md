@@ -2,6 +2,87 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### F: osiem kolejnych walk i pomiar pierwszego ataku bossa50
+
+Na niezmienionym animation-visibility (eff7959ca) kontynuowano oryginalny
+F14456,controller9601/native57114. M343→M229→M24219060→M24319840.
+Seria60 cykli M242/M243 zakończyła się138136/M243 ośmioma zwycięstwami:
+5×4233+3×4561=34848EXP,542163→577011. HP599→538,61 obrażeń,
+bez leczenia i bez użycia Medicine; nadal osiemMedicine3 i oba pancerze.
+Oryginalne menu odebrało240 nabojów:45/30/15/30/30/30/30/30;
+reserve819→964,clip4→16,83 pojedyncze strzały/pięć przeładowań po19.
+ATK164/DoubleAction/single zachowane. PulaPE0→188,BP48,level37.
+
+PASS `/tmp/pe-F1-museum-training-v1-proof/proof.json`: pełne zimne
+odtworzenie F→138136 normal/SAN/live, cały JSON i1MiBVRAM identyczne,
+oba native exit0 bez diagnostyki, F8192B źródłowe/prywatne niezmienione.
+Jawny verifier całego inventory/character/512vars i ośmiu list łupów:
+inventory tylko clip/rezerwa, character tylkoEXP/HP/pulaPE;512vars
+wyłącznie1:998→242 i78:126→212. Pozostałe sloty/rekordy identyczne.
+Checkpoint/seed/runner/verifier pod tym samym prefiksem. Postęp od F
+nie jest jeszcze zapisany w telefonie; w razie utraty procesu odtwarzać
+zweryfikowany seed138136, a nie samo starsze F.
+
+Równolegle, oddzielnie od F, badano starszą autentyczną gałąź B35/ATK147.
+Oryginalną trasę do M404 odtworzono na aktualnym animation-visibility do
+232973: Aya763/763, jeden główny wróg3:31/HP1004200,PEraw11665529,
+bez menu. Nie zmieniano statystyk, RAM/RNG ani karty. Nowa diagnostyka
+potwierdziła kamerę Up+X/Right−Z i odczyt animacji podczas ruchu pada.
+Cztery razy Right16 przeniosły Ayę z[-1016,30] do[-1016,−690] bez obrażeń.
+Read-only LLDB odczytał osiem oryginalnych wierzchołków podłogi; części
+całkowite x−1471..650,z−1278..1363. Wynik floor.json w pierwszym root,
+helper `/tmp/pe_boss_floor_reference_v1.py`; debugger odłączony.
+
+Pierwszy controller37077 zgłosił niedokończone wejście i zniknął z tool
+session przy233165. Sprawdzono exit.json: native0, brak diagnostyki gry,
+ostatni zarejestrowany stan nadal763HP. Przyczyna zakończenia kontrolera
+nie została ustalona; nie nazywać tego zawieszeniem lub awarią gry.
+Zachowano root `/tmp/pe-boss50-animation-probe-v1-live`. Nowy tymczasowy
+controller84130 użył plikowej commands.jsonl zamiast stdin terminala,
+przesyłając te same oryginalne advance/pad do gry. Powtórne odtworzenie
+B→233165 dało dokładnie ten sam cały JSON iVRAM (recovery-reference.json).
+Dłuższe odtwarzanie skontrolowano read-only LLDB: licznik233165 i blokada
+na odczycie polecenia, a nie pętla gry. Nie restartowano żywego procesu
+na podstawie samego czasu oczekiwania.
+
+Pierwsza próba kierunku w JS miała ujemną resztę modulo: walidator
+kolejki odrzucił polecenie przed wysłaniem do native. Naprawiono tylko
+tymczasowy sterownik przez normalizację modulo do0..4095. Próba obiegu
+waypointów[400,−1000],[400,1100],[−1200,1100],[−1200,−1000] zatrzymała się
+na pierwszym trafieniu233309. Główny wróg był wmode6/frame1 przy233261,
+mode6/frame9 przy233277,mode7/frame7 przy233293 i mode7/frame15 przy233309;
+między ostatnimi próbkami HP763→563 (200 obrażeń), Aya[318.55,472.95].
+To pomiar ataku i nieudana próba uniknięcia go, nie sukces uników ani
+zwycięstwo nad bossem. Bez strzałów/leczenia/użycia przedmiotów; całe
+inventory, character i512vars identyczne z232973. SavedHP pozostało763,
+choć liveHP563 — cache zapisu nie jest bieżącym HP walki. Magazynek8,
+kolejka0,PEraw29419565,HP głównego wroga nadal1004200; dwa live_enemies
+obejmują też aktora4:30. Nie interpretować go automatycznie jako drugiego
+niezależnego ataku: w tym punkcie współdzieli pozycję i animację głównego.
+
+PASS `/tmp/pe-boss50-animation-probe-v2-proof/proof.json`: pełne zimne
+B→233309, normal/SAN/live cały JSON i1MiBVRAM identyczne, oba native0
+bez diagnostyki, B8192B źródłowe/prywatne niezmienione. Checkpoint/seed-final/
+runner/verifier pod tym samym prefiksem. Kolejkę zamknięto jawnym quit,
+controller84130/native66500 exit0; nie pozostaje aktywna próba bossa.
+Źródłowe B/F i wszystkie ich gałęzie są oddzielne. Kod produkcyjny oraz
+PsyZ niezmienione; nie powtarzano70/70 dla niezmienionego kandydata.
+SDK/SDL nieinstrumentowane, brak oraclePS1, pełny port nieukończony.
+
+Aktualny canonical nadal9601/native57114,root
+`/tmp/pe-animation-visibility-v1-F1-live`. Rozpoczęta druga seria60 cykli,
+functions cell7092: ma już m.in. win157978/581572HP537 i
+win173464/586133HP641 (użyto Heal3), dalsze wyniki nie są jeszcze zamrożone
+ani odtworzone. Najpierw odpytać ten sam uchwyt. Zmiana functions.store
+nie zmieniła snapshotu helpera w trwającej komórce; sterownik działa do
+swojego limitu. Przywrócono normalny helper/wyłączono tymczasowy flag-stop
+w magazynie dla przyszłych wywołań. Po zakończeniu serii sprawdzić zwykłym
+ruchem ponowne przekraczanie zachodniej strefy M242 bez zmiany pokoju:
+oryginalny skrypt ma prostokąt x−1389..−1108,z−726..853, obecny obchód
+wchodzi tylko do jego zachodniej krawędzi. Ponownego wyzwalania w tym
+samym pokoju jeszcze nie sprawdzono; nie obiecywać szybszego XP przed testem.
+Boss50/Chrysler77 i pełny zakres portu nadal otwarte. Dowody/tmp nietrwałe.
+
 ### Muzeum: level37, ATK164 i oryginalny zapis F na aktualnym kandydacie
 
 Kontynuowano tę samą serię cell6996 na armor-call66796/native38554.

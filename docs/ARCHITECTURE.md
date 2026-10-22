@@ -14,16 +14,23 @@ fixtures depending on the abandoned implementation have been removed.
 Optional native diagnostics stop at an explicit VBlank limit, capture VRAM and
 state, and inject scheduled digital buttons into the original pad packet.
 This bounded stop proves neither natural scene completion nor campaign play.
-The original New Game path reaches M431/movie 2, M010 dialogue and name entry,
-then M002 and M003 (the opera lobby). Headless replays check the original
-player position and facing before and after twenty simulation frames of right
-input, the entrance transition into the next room, and M372/movie 3 after
-interaction at the opera doors. M004 dialogue 33 is covered by a bounded
-replay. Further dialogue input exposes unresolved GPU list corruption.
-This is not complete exploration. Frame-limit JSON
-exposes original actor positions, dialogue pages, menu state and movement lock. Continue opens its card
-screen after fixing a NULL dereference; saved-game loading is unverified. Real
-Disc 2, full gameplay and the remaining acceptance gates are still pending.
+The reports expose original actor positions and animations, dialogue pages,
+menus, movement locks, inventory, script variables, battle queues and PE/ATB.
+Enemy reports include their actual ATB charge and increment; the legacy enemy
+member named `curHP` is the charge, while `hpAlive` holds their HP. These are
+read-only observations, not alternate implementations of battle rules.
+
+Headless play now includes original phone saves and Continue, progression
+through both discs, and Chrysler Building exploration. A complete cold replay
+from an authentic save through the floor 70 Queen Bee victory has identical
+final state and VRAM in normal and sanitized builds after repairing an arm-glow
+buffer overread. The diagnostic playthrough has entered the floor 77 battle;
+Truebred Eve remains unbeaten. Input timing around Maya's healing is still
+under test. The candidate adding enemy ATB observations is being replayed
+independently before continuing that fight. Current candidate hashes, test
+scope and outstanding gates are recorded in [PC_PORT_PLAN.md](PC_PORT_PLAN.md).
+These individual results do not establish complete campaign coverage,
+PS1 pixel equivalence, complete audio or release readiness.
 
 The memory map and overlay addresses below describe the original game for
 asset decoding and porting research. They are not host addresses, build
@@ -35,10 +42,12 @@ PS1 binaries.
 Gameplay fidelity is the contract. PS1 APIs may be simplified or removed; room
 and scene code is linked statically with explicit state/reset, and scratchpad
 work uses ordinary host buffers and the host stack. We do not emulate a CD drive.
-The planned asset layer validates both CUE/BIN images once and exposes one
+The original archive loader validates both CUE/BIN images and exposes one
 logical asset set, resolving source-specific IDs/offsets without disc-swap UI.
-The CLI mounts images by their USA roles. Actual Disc 2 reads and transitions
-remain unverified because that image is not available in the current workspace.
+The CLI mounts images by their USA roles. Both supplied images are available;
+real Disc 2 room, texture and battle reads are exercised by the Chrysler tests
+and playthrough. Full dual-image coverage and failure cases remain release
+requirements rather than consequences of those individual tests passing.
 
 The maintained PsyZ source fork is
 [khasinski/parasite-eve-psyz](https://github.com/khasinski/parasite-eve-psyz),
@@ -57,8 +66,10 @@ AKAO music and samples, and the overlays: code blocks that the executable
 reads into fixed RAM windows on demand. Overlays are not relocated; each
 block is linked for one address.
 
-The native port will load data from the archive and register room/scene code
-as native modules rather than execute code loaded from the disc.
+The native port loads data from the archive and registers repaired original
+room/scene modules linked into the executable. It does not execute code from
+the disc. An unbound original descriptor is an explicit failure requiring the
+existing module to be repaired and integrated.
 
 ## Main executable memory map
 

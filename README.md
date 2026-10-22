@@ -12,10 +12,11 @@ compiler output, fixed code addresses and PS1 binary builds are no longer
 acceptance requirements. Changes are evaluated by behavior, portability,
 readability and native builds.
 
-This is an incomplete port. The ordinary-input route has reached EX Chrysler
-Building and returned to the museum to strengthen Aya; the floor 50 boss remains
-undefeated. The latest documented genuine phone checkpoint is I: level 45,
-759,389 EXP, 783/783 HP, M8000 attack 177, eleven Medicine 3 and two armors.
+This is an incomplete port. Ordinary-input play has defeated the Chrysler
+Building floor 70 boss and entered the floor 77 battle; Truebred Eve remains
+unbeaten. A complete cold replay through the floor 70 victory passes in normal
+and sanitized builds after repairing an arm-glow buffer overread. The newer
+candidate exposing enemy ATB is undergoing its own extended replay.
 See [the port plan](docs/PC_PORT_PLAN.md) for current checkpoints, reproducible
 inputs, verification results and remaining work.
 
@@ -80,7 +81,8 @@ For interactive automation, add `--control-at N` with a later `--frame-limit`.
 At that VBlank the headless process emits state and pauses for stdin commands:
 `advance VBLANK_COUNT BUTTON_MASK` or `quit`. Each advance emits another state
 and, when requested, VRAM capture. The control state also reports original
-combat targets and action queues. Keep stdin open while controlling the process;
+combat targets, action queues and enemy ATB charge/increment. Keep stdin open
+while controlling the process;
 EOF exits successfully. Scheduled pad events must not extend beyond the first
 control boundary.
 

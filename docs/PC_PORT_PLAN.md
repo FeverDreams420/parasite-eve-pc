@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### M96R: źródło znalezione w oryginalnym skrypcie skrzyń
+
+Niezależna praca podczas potwierdzonego replayu N3b: oryginalny M295
+z Disc2, taskblock69308 ustawia item74/id4A (M96R) dla chest selector143;
+72200 wykonuje oryginalne GiveItem. Lista dla local18=62 przy11936–12020
+zawiera selector143. Permutacja floorloot z1920–4348 i global81=115 daje
+local18=62 na64piętrze. Slot persistence jest global319, górne16bit dla143;
+aktualnie0. Jest to dowód z danych, nie fizycznie odebrana broń.
+
+M295 osiąga się przez drzwi M294 (floor code5), nie przez spacer do
+sąsiedniego slotu code6 na tabeli. M294 używa bezpośrednich scene tokens
+M295/434/435/436/437 zależnie od wariantu. Wczytano i zdekodowano jego
+oryginalny skrypt; trasa do samego M294 z floor64start5 ma11 przejść.
+BFS do mapowego code6 zwrócił null, co nie dowodzi niedostępności fizycznych
+drzwi. Nie zmieniono topologii ani RNG, nie dopisano portów bez sprawdzenia.
+
+Uruchomiona poboczna autentyczna gałąź N4 na tym samym enemy-atb-v1,
+od genuineN z dotychczasowym padem uciętym przed93761 (floor64entry),
+kontrolerPTY50354, root `/tmp/pe-M96R-N4-live`. Cel: zwykłe wejście do
+pokoju skrzyń i test odbioru M96R; nie zmienia głównego testu Eve/N3b.
+Jeszcze nie ma dowodu gotowego endpointu ani łupu. README i ARCHITECTURE
+zaktualizowano: usunięto stare twierdzenia o niepokonanym boss50, braku
+Disc2 i niezweryfikowanym Continue. Pełne wydanie nadal nieukończone.
+
 ### Eve77: opóźnione trafienie, dwie regeneracje i obserwacja ATB przeciwnika
 
 Pełny cold N do511973 na poprawionym kandydacie arm-ribbon-v1 PASS:

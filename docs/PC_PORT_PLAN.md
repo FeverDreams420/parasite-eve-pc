@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N5/M423 floor69 wygrana; mieszana tura item/PE/przeładowanie
+
+Przy273669 HP116,ammo0. Oryginalna kolejka M4/slot13 + Heal3 + gun
+przy274509 dała794HP,ammo18 i goat558→236: ostatnia akcja automatycznie
+przeładowała oraz oddała strzał. Użyto jednegoM4 w tej walce; Revive3
+nienaruszone. Kolejny trafiony atak obniżyłHP463; Heal3 + jeden strzał
+przy275061 dały741HP i goat236→−86. Trzy strzały przy275309
+pozostawiły ostatniego centaura38HP; pojedynczy strzał, dwaSquare
+(pominięte sloty) zakończyły walkę przy275437. Wyniki zamknięto276729,
+HP739,EXP1022203. Ammo3×30/Junk odebrane zwykłym ALL/END.
+
+Pierwszy hostowy fieldHeal3 nie zwiększyłHP i zatrzymał helper; nie
+zaliczono go jako leczenia. Ponowne otwarcie i jawne sprawdzeniePElist8,
+Heal3/cursor0,1 i dialog41 zadziałało: przy277937 HP869. Helper obecnie
+nawiguje z faktycznego kursora root/list/confirm zamiast ślepego Down.
+Etykieta potwierdzenia pokazywała Heal1 mimo wybranegoHeal3; leczenie
+z739→869 zaobserwowane, etykieta wymaga osobnego sprawdzenia źródła.
+Nie zmieniono produkcyjnej implementacji ani nie zakryto tej rozbieżności.
+
+Zamrożony endpoint278057,HP869,Revive3,menu zamknięte:
+`/tmp/pe-N5-floor69-centaurs-goat-win-v1/proof.json` live PASS.
+Pełny cold normal/SAN uruchomiony:
+`/tmp/pe-N5-floor69-centaurs-cold-v1.py`. Wynik jeszcze niepotwierdzony;
+całe69 oraz QueenBee/Eve dlaN5 nadal niezaliczone.
+
 ### N5: floor68 ukończone, cold do244341 PASS; trudna walka69 trwa
 
 `/tmp/pe-N5-floor68-cold-v1-proof.json`: genuineN→244341 normal/SAN

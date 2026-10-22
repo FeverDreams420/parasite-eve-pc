@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### Poziom90 osiągnięty, oryginalny zapis M i Continue PASS
+
+L7 live ukończyło trening przy333898: poziom90,EXP959215,HP655/860,
+BP1621,pool0,alokacja890. Oryginalne Heal3 poza walką podniosłoHP do860.
+Powrót M242→M229→M343→M340 i zwykły telefon utworzyły nowy slot12 M,
+menu zamknięte343110. Cały inventory względem ContinueL wyłącznie
+capacity37→44, osiem łupów M3 w slot30/37–43 i magazynek4→2; czteryM4,
+dwaRevive, sprzęt/bonusy/klucze i rezerwa999 zachowane. Nie zużyto leków
+ani Revive; leczenie przez odnawialne PE. Cały character jawne delty
+poziomu90/EXP959215/HP860/BP1621/alokacji890,512vars wyłącznie78=156.
+
+M8192B SHA256
+`0d5832055eaef3f4f2ecd932abb82ed36f6ecc207e073d2b5425374d312b727b`,
+`/tmp/pe-L7-trained-save-M1-v1-source/BASLUS-006620000000M`.
+PASS `/tmp/pe-M1-continue-v1-proof/proof.json`: osobne oryginalne Continue
+tylkoM przez slot12 do14680, pełny JSON/1MiBVRAM normal/SAN zgodne,
+native0/czysto, wszystkie8192B M bez zmian. Całe inventory/character/512vars
+identyczne ze stanem przy telefonie, poziom90 i dwaRevive potwierdzone.
+
+Pełny cold L→trening90→zapisM do343110 działa osobno normal/SAN:
+`/tmp/pe-L7-trained-save-M1-v1-proof.py`, verifier
+`/tmp/pe-L7-trained-save-M1-v1-verify.py`; jego wynik jeszcze wymaga
+sprawdzenia. Zamrożone JSON/VRAM/args/ledger:
+`/tmp/pe-L7-trained-save-M1-v1-checkpoint`. L7 pozostaje headless przy
+telefonie. SDK/SDL nieinstrumentowane, bez nowego oracle PS1; cały port,
+Three Commands i bossowie70/77 nadal nieukończone.
+
 ### Cel treningu90, PE jako podstawowe leczenie; L5 poziom62 PASS
 
 Aktualna dyspozycja: osiągnąć poziom90 przed kolejną próbą Chrysler/Eve;

@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N5/M424: trzy centaury pokonane, pełneHP i oba Revive zachowane
+
+Po Preraise dalszy ruch i leczeniePE nie wystarczyły od razu. Przy166625
+oryginalny Medicine4 w slot9 dał318→718, ammo15 niezmienione: wyłącznie
+item i dwa pominięte sloty. `/tmp/pe-N5-Medicine4-single-turn-v1`.
+Kolejna szarża obniżyła HP do249. Mieszana TripleCommand Heal3 + dwa
+pojedyncze strzały dała przy167273 HP529, ammo15→13,
+centaur/sub1 HP352→−276; `/tmp/pe-N5-mixed-PE-two-shots-v1`.
+Po następnym trafieniu do204 drugi Medicine4 (slot12) i dwa strzały
+przy167841 dałyHP604 i sub31HP352. Heal3 + strzały przy168409
+przywróciłyHP869, sub31HP38; ostatni strzał w sub0 był poza zasięgiem
+(wydany nabój, brak obrażeń). Kolejna tura dobiła31 i trafiła0 dwukrotnie;
+przy168633 ostatni miał352HP. Dwa strzały i pominięcie trzeciej komendy
+zakończyły walkę168777,HP869. Oryginalne wyniki i ammo3×30 odebrane;
+endpoint170069,EXP1001832,pool357,Revive2,HP869/869,menu zamknięte.
+
+`/tmp/pe-N5-floor66-centaurs-win-v1/proof.json`: live PASS. Wszystko
+przez oryginalny pad/menu; bez RAM/RNG/save edits. DwaM4 zużyte,
+Preraise zadziałało, nie ukryto HP0 ani chybionego strzału.
+Pełny cold genuineN normal/SAN uruchomiony przez
+`/tmp/pe-N5-centaurs-cold-v1.py`; wynik jeszcze niepotwierdzony.
+Nie oznacza ukończenia66, Eve ani pełnego portu.
+
 ### Cold N5→floor66 PASS, w tym TripleCommand i700BP
 
 `/tmp/pe-N5-floor66-cold-v1-proof.json`: normal/SAN oba exit0/czysto,

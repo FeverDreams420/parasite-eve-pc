@@ -2,6 +2,91 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### G: potwierdzone638241EXP i krótsze oczekiwanie sterownika
+
+Druga ograniczona seria60 cykli (cell7092) zakończona272554/M243:
+jedenaście zwycięstw,5×4233+6×4561=48531EXP,577011→625542,
+HP538→471. Heal3 przy170352 podniosło361→641,łącznie347 obrażeń,
+żadnego Medicine nie zużyto. PulaPE188→460,BP48,level37; oba pancerze,
+ATK164/DoubleAction/single i osiemMedicine3 zachowane. Odebrano285
+nabojów:30/15/30/30/30/15/30/15/30/30/30. Reserve964→999,clip16→1,
+110 pojedynczych strzałów/pięć przeładowań po19. Oryginalny limit999
+odrzucił155 nadmiarowych nabojów przy12 odbiorach; remaining nadal się
+zeruje. Dla każdego z12 live odbiorów sprawdzono cały inventory (tylko
+rezerwa), cały character i512vars (bez zmian); nie są to osobne cold
+capture każdego pośredniego ekranu.
+
+PASS `/tmp/pe-F1-museum-training-v2-proof/proof.json`: pełny zimny F→272554
+normal/SAN/live, cały JSON i1MiBVRAM identyczne, oba exit0 bez diagnostyki,
+źródłowe/prywatne F8192B niezmienione. Jawny verifier całego inventory/
+character/512vars: względem138136 tylko clip/rezerwa,EXP/HP/pulaPE i
+var78:212→224. Loot/heal/overflow-summary oraz seed/checkpoint/runner/
+verifier pod tym samym prefiksem. Seria nie osiągnęła jeszcze38.
+
+Test zachodniej strefy M242 nie potwierdził ponownego losowania w tym
+samym pobycie. M243→M242273206,Down12 dało273218/[-1365,−351],var78
+224→237. Ruch wzdłuż strefy do[-1365,369],cztery krótkie wyjścia dox−1500
+z powrotami do−1365 oraz powtórka z pauzami300 nie zmieniły237 i nie dały
+walki. Obejście przez[-1365,751.5] do[-465,751.5],wyjście/ponowne wejście w drugą
+strefę również bez walki i bez zmiany237. Nie rozszerzać tego wyniku na
+wszystkie możliwe warunki odradzania. Nie zmieniano skryptów ani losowań.
+Powrót M243274636,bez obrażeń; oryginalne field Heal3 przy274932 dało
+471→751HP; zamknięcie275028. OsiemMedicine3 zachowane.
+
+Zamiast zmieniać reguły spotkań skrócono wyłącznie tymczasowy sterownik.
+`/tmp/pe-animation-visibility-v1-F1-fast-farm-driver.js` zachowuje te same
+oryginalne kierunki/nav/akcje walki/odbiór. Przy przejściach zastępuje
+stałe wait300 pierwszym wait32 i odczytami co32 do właściwej sceny,
+move_lock0 i wyczyszczenia game_flags&0x800000. Pojawienie wrogów oddaje
+kontrolę istniejącej obsłudze walki; nieoczekiwane menu albo limit24 prób
+zatrzymuje sterownik.
+Ekrany wyników nadal mają dotychczasowe oczekiwania. W pierwszych czterech
+cyklach bez walki zmierzono po752 klatki, wobec zwykle1332 w starszym
+sterowniku; to nie jest kontrolowany benchmark identycznego losowania.
+Ósmy cykl zakończony295534: trzy zwycięstwa3×4233=12699EXP,625542→638241,
+751→714HP (37 obrażeń),bez dalszego leczenia/Medicine. Odebrano90 nabojów,
+52 odrzucone przy limicie999,dwa przeładowania po19,33 pojedyncze strzały,
+clip1→6. Nie zmieniono limitera, szybkości logiki, szans ani cooldownów gry.
+
+Powrót do telefonu bez walk: M229296818→M343→M340,telefon302476,
+menu37/slotF5 przy303400. Down wybrało nieużywany G6, Cross zapisało303520,
+zamknięcie304004. Nowy oryginalny zapis:
+`/tmp/pe-ex-museum-trained-save-G1-v1-source/BASLUS-006620000000G`,8192B,
+SHA256 `0c4af8aab2351e9049b22d6867e4f04b3daa7a9171970fc65201c997aab71be6`.
+Level37,EXP638241,HP714/767,BP48,PEpool538,capacity31,
+M8000slot5/ATK164/DoubleAction/single,B Jacket1slot6/SvProtectorslot29,
+osiemMedicine3,reserve999,clip6. Do progu38=725158 brakuje86917EXP.
+Zapasowy pancerz nadalDEF39,brakTools/SuperTools. F zachowany.
+
+PASS `/tmp/pe-ex-museum-trained-save-G1-v1-proof/proof.json`: cały zimny
+F→dwie serie60→test strefy→fieldHeal3→8 krótszych cykli→telefonG,
+normal/SAN/live cały JSON i1MiBVRAM identyczne, oba native0 bez diagnostyki,
+F8192B niezmienione, nowy G8192B identyczny w każdym przebiegu. Jawne całe
+inventory/character/512vars od272554: tylko clip1→6 i odświeżony przy
+zapisie category_counts[0]819→999;EXP/HP/pulaPE460→538;vars1:242→998,
+78:224→191. Pozostałe wyposażenie/statystyki identyczne. Heal/loot/
+overflow-summary i seed/checkpoint/runner/verifier pod tym samym prefiksem.
+Pośrednie punkty próby stref i krótszych przejść nie mają osobnych cold
+procesów; porównano pełny przebieg do304004. Bez zmian kodu gry/RAM/RNG
+albo ręcznej edycji zapisów. Ponownie sprawdzono438 obiektów, zależności,
+archiwa i binaria; kandydat animation-visibility niezmieniony, poprzednie
+70/70 i13/13 na profil pozostają dowodem tego samego buildu, nie rerunem.
+
+PASS `/tmp/pe-ex-museum-trained-G1-continue-v1-proof/proof.json`:
+oryginalne Continue tylko zG,brakF na prywatnej karcie,cap14488.
+Normal/SAN całe JSON i1MiBVRAM identyczne; cały inventory/character/
+512vars zgodne z telefonem304004, native0 bez diagnostyki, G niezmienione.
+Stary9601/native57114 zamknięty quit/exit0. Aktualny canonical39755/
+native18509,root `/tmp/pe-animation-visibility-v1-G1-live`, poContinueG14488;
+cały JSON iVRAM zgodne z cold Continue (live-reference.json), czeka
+headless na pad. Żaden farming ani proces weryfikacji nie jest teraz
+w toku. Helpery `/tmp/pe-animation-visibility-v1-G1-fight-driver.js` i
+`/tmp/pe-animation-visibility-v1-G1-fast-farm-driver.js` wskazują nowy root.
+Następny krok: trening odG do38/niższej dalszej krzywej, zachowując
+oryginalne zachowanie; boss50/Chrysler77 nadal niepokonane. SDK/SDL
+nieinstrumentowane,brak oraclePS1,potwierdzenia pixel-perfect i pełnego
+audytu portu; dowody/tmp nietrwałe. Wcześniejsze sekcje są historyczne.
+
 ### F: osiem kolejnych walk i pomiar pierwszego ataku bossa50
 
 Na niezmienionym animation-visibility (eff7959ca) kontynuowano oryginalny

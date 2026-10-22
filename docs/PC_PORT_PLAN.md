@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### Dalsze62: Game Over i poprawka sterownika testu
+
+Po checkpoint73653 przebyto kolejne pomieszczenia do81237; druga walka
+M422 na62 nie została wygrana. Live:86133 HP0 przy dwóch Revive,
+86485 automatyczny powrót408HP z jednym Revive;88205 HP0,
+88525 powrót408HP bez Revive;89005 HP0,89605 oryginalny Game Over
+`0xa9400048`,combat.mode=-1. To rzeczywista przegrana, odmiennie od
+wcześniejszych prób zatrzymanych przed automatycznym wskrzeszeniem.
+Checkpoint/ledger: `/tmp/pe-L1-floor62-gameover-v1-checkpoint`.
+PASS odtworzenia przegranej (nie ukończenia rozgrywki):
+`/tmp/pe-L1-floor62-gameover-v1-proof/proof.json`. Cały JSON i1MiBVRAM
+normal/SAN/zamrożony live zgodne, native0/czysto, source/privateL bez zmian.
+
+Sterownik przy pełnym ATB otwierał celowanie, gdy ostatni przeciwnik
+był minimalnie poza zasięgiem (1263 przy progu1245). Tymczasowy sterownik
+v2 wymaga celu w zasięgu przed otwarciem celowania; poza zasięgiem emituje
+zwykły ruch. Nie zmieniano kodu gry. Po tej poprawce trwająca już walka
+nadal zakończyła się przegraną, więc poprawka nie jest dowodem rozwiązania
+strategii. Powrót do checkpoint73653 odbywa się pełnym cold Continue L
+z tym samym ledgerem, bez odtwarzania RAM lub edycji save payload.
+Osobny cold L2 do73653 ponownie dał identyczny JSON/VRAM i native0;
+interaktywny następca L3 używa tego samego źródła i ledgeru.
+
 ### L→Chrysler62: trzy wygrane, poziom62, pełny replay PASS
 
 Kandydat `/tmp/pe-m424-bind-v1-game`, zwykłe Continue L i wyłącznie

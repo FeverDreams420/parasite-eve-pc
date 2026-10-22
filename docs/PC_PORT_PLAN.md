@@ -65,8 +65,11 @@ ALL do slot15/16. Całe52 ukończone, M297/floor53 przy129704:
 Względem schodów52:20 strzałów,jedno przeładowanie19,clip5→4,
 reserve964→945;3 zwycięstwa2+562+562=1126EXP/154PE. Cały inventory
 poza trzema medycynami i amunicją bez zmian;512vars tylko4/18/78.
-Checkpoint `/tmp/pe-J5-chrysler-floor53-v1-checkpoint`, pełny coldJ
-normal/SAN w toku (41302), nie jest jeszcze PASS. Nawigacja /tmp v4
+PASS `/tmp/pe-J5-chrysler-floor53-v1-proof/proof.json`: pełny coldJ
+przez całe51+52 do129704, normal/SAN/live cały JSON i1MiBVRAM zgodne,
+native0 czysto,J8192B niezmienione; cały inventory/character/512vars
+sprawdzone z jawnymi deltami. Checkpoint -floor53-v1-checkpoint.
+Nie jest to PS1 oracle obrazu ani dowód całego Chrysler. Nawigacja /tmp v4
 ma obserwowaną geometrię M412. Po zamrożeniu129704 fieldHeal3 daje
 130096/780HP,bez leków przedmiotowych. User build niepodmieniony;
 pełny port i Chrysler77 nadal otwarte, dowody /tmp nietrwałe, brak PS1 pixel oracle.

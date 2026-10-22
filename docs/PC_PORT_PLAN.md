@@ -2,6 +2,75 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### Genuine N: Chrysler61–63, wygrana M424 i wejście64
+
+Poprzedni odcinek jest postępem: autentyczny zapisN i niezależne Continue
+potwierdziły Tool/storage. Nowy live `/tmp/pe-m424-N1-live` uruchomiony
+wyłącznie zN przez oryginalne Continue14712; cały początkowy JSON identyczny
+z wcześniejszym dowodem ContinueN. Stary L7 zamknięty quit/exit0 przy556281.
+Nowy kontroler `/tmp/pe-m424-N1-live.py`, sesja44804; pad/nav/farm są
+wyłącznie hostowym pilotem wejść, bez wywołań funkcji gry lub zapisów RAM.
+
+M340→M343 i powrót (omyłkowo wybrane północne przejście), dalej M192,
+mapa, ChryslerM290. Oryginalny panel holu działa przyx2259,z−253,
+yaw3072: wymagane osobne neutralne klatki po zwróceniu; Left22/Up45
+wchodzi M293. Oryginalne59Up wybiera60. Przy32349 M292,seed29843,
+selector33. Aktualne tabele odczytane ze snapshotu, bez edycji layoutu.
+Floor60 zachowuje poprzedni układ; piętra61+ wygenerowały nowy.
+Planner v3 pomija nieprzechodnie code11/12/14 oraz fałszywe przejścia
+code1/action20 i code2/action22. Trasy wymagają potwierdzenia faktycznym
+przejściem; sam plan nie jest zaliczeniem piętra.
+
+Floor61: count18,start10, trasa10→4→3→9→8→7→6→5→0, bez walk/strat.
+Floor62: count30,start29, Heal3 przez zwykłe menu PE738→864, wygrana
+M421/cap59893 czterech przeciwników, EXP+1901,pool56,HP810/864.
+Trasa29→26→25→18→19→12→11→1, wejście63/cap69413,start7.
+PASS `/tmp/pe-N1-floor63-entry-v1-proof/proof.json`: pełny cold tylkoN,
+całe JSON/1MiBVRAM normal=SAN=frozenlive, oba native exit0/czysto, N bez
+zmian. Cały inventory tylko clip12→2 i rezerwa997→999, wszystkie50slotów
+bez zmian; DoubleAction, modyfikatory, oba pancerze/dwaRevive, storageKeys1–5
+oraz Key6 przy postaci zachowane. Cały character jawne delty EXP/HP/pool,
+512vars tylko1/4/5/6/18. Brak leków/Revive i zmian gry/RNG/payloadu.
+
+Na63 druga wygrana M421/cap75249, +2364EXP,level95,HP838/865,pool0;
+później pełna wygrana M424/cap89881 z trzema przeciwnikami, +2695EXP,
+HP769/865,pool101. To rzeczywisty test pełnego modułu M424; wcześniejsza
+słabsza gałąź L4 zakończyła to spotkanie porażką. Oryginalne PE używane do
+leczenia, obaRevive zachowane. Trasa63:7→3→2→6→10→15→14→13→12→8→0.
+Wejście64/cap93761,start5,count20: level95,EXP984495,BP510,HP769/865.
+Checkpoint `/tmp/pe-N1-floor64-entry-v1-checkpoint`; PASS pełny cold N
+do93761: `/tmp/pe-N1-floor64-entry-v1-proof/proof.json`. Całe JSON/1MiBVRAM
+normal=SAN=frozenlive, oba native0/czysto, N bez zmian. PoN62 wszystkie modifier/
+efekty zachowane; dwa Junk20 w wolnych18/44, clip2→0.
+
+Dalszy live64 wygrał M420 pięciu przeciwników/cap102705, +3306EXP,
+level96,HP720/866,BP709,pool0. M423 z trzema wrogami zaczęło się116473.
+Przy118153 HP0, obaRevive jeszcze obecne; automat zatrzymany. Następne
+czekanie180+600 było zbyt długie na interwencję: po pierwszym Revive
+Aya ponownie straciłaHP. Dalsze kroki16 uchwyciły119013 HP433 i drugi
+Revive zużyty. Nie był to GameOver ani brak obsługi Revive. Oryginalny
+ruch +X pozwolił odnowić PE; ręczne Heal3 przy119593 dało433→713HP.
+Kolejny atak549HP przy119737, za małoPE, pilot poprawnie zatrzymany.
+Oryginalne Items/Use Medicine4 slot12 + strzał przy120305 przywróciło866HP;
+M423 pokonane122353, +2167EXP,pool31. Brak nieudowodnionego zaliczenia
+porażki; walka faktycznie wygrana po zużyciu obuRevive i jednegoM4.
+Hostowy farm odtąd zapamiętuje zastaną liczbę Revive przy starcie i
+zatrzymuje się, gdy liczba się zmieni lub HP0; pozwala też kontynuować
+próbę po ręcznie sprawdzonym wskrzeszeniu zamiast wymuszać stałą liczbę2.
+
+Wejście65/cap124549,selector4,count23: level96,EXP989968,HP866/866,
+BP709,pool31,capacity46. M8000 nadal+170ATK/+14range/DoubleAction, oba
+pancerze i storageKey1–5/Key6 zachowane. Cały inventory względemN tylko:
+capacity45→46; slot12 M4 zużyty; Revive28/35 zużyte; Junk20 w18/44;
+M4 łup45; clip12→15 i rezerwa997→999. Wszystkie4096B equipment records
+poza clip426 bez zmian. AutentycznyN nie nadpisany. Checkpoint
+`/tmp/pe-N1-floor65-entry-v1-checkpoint`; pełny zimny normal/SAN w trakcie
+`/tmp/pe-N1-floor65-entry-v1-proof/` (session24091), verifier
+`/tmp/pe-N1-floor65-entry-v1-verify.py` przygotowany, jeszcze niePASS.
+Odcinek po93761 jeszcze live-only. M418/boss70,
+ThreeCommands, boss77 i cały port nadal nieukończone. Brak zmian
+produkcyjnego C/PsyZ; SDK/SDL nieinstrumentowane, brak nowego oraclePS1.
+
 ### Magazyn kluczy i transfer Tool do M8000; nowy zapis N
 
 Dalszy oryginalny pad L7 wrócił z62 przez61/60, windę i NYPD do Wayne’a.
@@ -27,12 +96,17 @@ Przy543281 oryginalne Tune Up / Add Parameter Values przeniosło G23
 bonus ATK169→170, range12→14, ATK razem57+170=227. Double Action
 pozostało. Wszystkie4096B rekordów zmieniły wyłącznie bajty
 320:1→0,334:1→0,336:2→0,430:169→170,432:12→14;
-cały pozostały inventory, character i512vars niezmienione względem
+Oryginalna procedura zwróciła także10 nabojów G23 do rezerwy:
+987→997, special_records offset10:219→229. Cały pozostały inventory,
+character i512vars niezmienione względem
 stanu bezpośrednio przed transferem. Dostępny dawca miał tylko+1ATK;
 nie jest to dowód wystarczającej siły na bossów70/77.
 Checkpointy `/tmp/pe-L7-tool-transfer170-{before,after}-v1`.
-Pełny cold L do543281 normal/SAN jest w weryfikacji:
-`/tmp/pe-L7-tool-transfer170-v1-proof/`.
+PASS pełny cold L do543281: `/tmp/pe-L7-tool-transfer170-v1-proof/proof.json`.
+Całe JSON/1MiBVRAM normal=SAN=frozenlive, oba native exit0/czysto, L bez
+zmian i wszystkie8192B utworzonego M identyczne. Pierwsza wersja weryfikatora
+pominęła zwrot amunicji dawcy; poprawiono oczekiwaną deltę po odczycie
+pełnego special_records, bez zmiany gry ani powtarzania ukończonych testów.
 
 Powrót do M340 i oryginalny telefon utworzyły osobny slot13 N,
 bez nadpisania L/M. Menu zamknięte556281. N8192B SHA256

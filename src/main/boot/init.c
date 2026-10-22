@@ -111,9 +111,11 @@ static void Boot_PollHost(void) {
     printf("],\"actors\":[");
     unsigned actor_index=0;
     for(FieldActor *actor=g_FieldActorListHead;actor;actor=actor->next){
-        printf("%s{\"type\":%u,\"sub\":%u,\"player\":%s,\"flags\":%u,\"position\":[%d,%d,%d],\"yaw\":%d}",
+        printf("%s{\"type\":%u,\"sub\":%u,\"player\":%s,\"flags\":%u,\"position\":[%d,%d,%d],\"yaw\":%d,\"animation\":{\"mode\":%u,\"frame_raw\":%d,\"previous_raw\":%d,\"step_raw\":%d,\"last_frame\":%u,\"stop_frame\":%u}}",
             actor_index++?",":"",actor->type_id,actor->sub_id,actor==g_PlayerEntity?"true":"false",actor->flags,
-            actor->pos_x,actor->pos_y,actor->pos_z,actor->rot_y);
+            actor->pos_x,actor->pos_y,actor->pos_z,actor->rot_y,
+            (unsigned)actor->mode,actor->anim.fixed,actor->anim_prev,actor->anim_step,
+            (unsigned)actor->action,(unsigned)actor->anim_frame_target);
     }
     printf("],\"menu\":");
     if(g_MenuWidgetCurrentNode){

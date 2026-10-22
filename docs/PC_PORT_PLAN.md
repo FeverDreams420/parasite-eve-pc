@@ -2,6 +2,79 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### Headless: oryginalna animacja każdego aktora i kontynuacja treningu E
+
+W istniejącym zrzucie `src/main/boot/init.c` dodano do każdego wpisu
+actors obiekt animation. Sześć pól to odczyty oryginalnego FieldActor:
+mode, frame_raw (anim.fixed), previous_raw (anim_prev), step_raw
+(anim_step), last_frame (action), stop_frame (anim_frame_target).
+Pozycja i krok pozostają signed16.16; last_frame jest ostatnią klatką,
+nie kolejnym identyfikatorem animacji. Stop_frame jest surowym polem
+klamry; jego użycie zależy od flag aktora, nie interpretować zawsze
+jako aktywnej granicy. Dotychczasowa pozycja/yaw i kolejność aktorów
+pozostają takie same. Brak dereferencji action_data, nowych funkcji,
+plików produkcyjnych, przenoszenia kodu albo zmian reguł gry.
+To obserwacja potrzebna do sterowania unikami przez oryginalny pad;
+nie dowodzi jeszcze rozpoznawania ataków ani skuteczności uników bossa.
+
+Kandydat `/tmp/pe-animation-visibility-v1-game`, SHA256
+`9216cf99cc7c26672b91e9906cbb25e879ddfd05ec1bcb982c571db64ebc1b16`;
+SAN `/tmp/pe-animation-visibility-v1-game-sanitized`, SHA256
+`175f61ac66227cf8e1e0d12643af6bc990fcdced589b9dae103226b290e1ef2f`.
+Świeże438 obiektów, manifest ponownie sprawdza zależności, archiwa
+oraz binaria; init bez ostrzeżeń. PASS70/70
+`/tmp/pe-animation-visibility-v1-verification.json`; PASS13/13 wybranych
+CTest w obu profilach i sygnatury efektów M418/M436 zgodne:
+`/tmp/pe-animation-visibility-v1-effects-proof.json`. SDK/SDL nadal
+nieinstrumentowane. Regresja porównuje wszystkie stare pola po usunięciu
+wyłącznie nowego animation; porównanie normal/SAN zachowuje pełne dane.
+
+PASS `/tmp/pe-animation-visibility-v1-proof/proof.json`: E Continue14424
+oraz rzeczywista zmiana pancerza w walce M22944670/44952, sześć cold
+normal/SAN exit0 bez diagnostyki. Cały nowy JSON identyczny między
+profilami, wszystkie stare pola i1MiBVRAM identyczne z armor-call.
+Prywatne i źródłowe karty niezmienione. Niezależny read-only LLDB na
+starszym armor-call, M22944952, odczytał wszystkie sześć pól wszystkich
+czterech aktorów — dokładnie zgodne z nowym JSON. Przykładowo wróg4:31
+mode2/frame3604480/previous3538944/step65536/last77/stop0, Aya mode4/
+frame1638400/previous1572864/step65536/last29/stop17. Helper
+`/tmp/pe_animation_reference_v1.py`, wynik
+`/tmp/pe-animation-reference-C4-v1/animation.json`; bez wywołań funkcji
+w grze lub zapisów pamięci, debugger odłączony, reference zamknięty exit0.
+
+Canonical66796/native38554 kontynuuje ten sam armor-call od oryginalnego
+E14424: M34316668→M22918488→M24219028→M24319808. Następne45 cykli
+M242/M243 dało pięć zwycięstw:4×4233+4561=21493EXP,495272→516765,
+HP718→700, bez leczenia i bez zużycia Medicine3. Oryginalne menu odebrało
+135 nabojów (30/15/30/30/30); reserve648→726,clip3→14,46 pojedynczych
+strzałów i trzy przeładowania po19. Cały inventory zmienia wyłącznie
+clip/rezerwę; siedem Medicine3, oba pancerze iATK149 zachowane. Character
+wyłącznieEXP/HP/pulaPE545→697;512vars wyłącznie1:998→242 i78:166→165.
+Punkt103226/M243,mode9,menuNULL,move_lock0. E w telefonie nadal starszy.
+
+PASS `/tmp/pe-E1-museum-training-v1-proof/proof.json`: pełne odtworzenie
+E→103226 na nowym animation-visibility normal/SAN. Cały nowy JSON i1MiBVRAM
+identyczne między profilami; wszystkie stare pola JSON identyczne z
+ciągłym armor-call live. LiveVRAM103226 nie zamrożono — nie ma dla niego
+porównania z obrazem starszego procesu. Jawny verifier obejmuje cały
+inventory/character/512vars i pięć list łupów. Oba native exit0 bez
+diagnostyki, E8192B źródłowe/prywatne niezmienione. Seed/checkpoint/
+runner/verifier pod tym samym prefiksem; checkpoint zawiera stare JSON,
+nie stare VRAM. W razie utraty procesu odtwarzać ten seed, nie samo E,
+żeby nie stracić zweryfikowanych21493EXP.
+
+Live na razie pozostaje na armor-call, root
+`/tmp/pe-armor-call-v1-E1-live-v2`; rozpoczęta następna ograniczona seria
+40 cykli, functions cell6996. Uzyskała już zwycięstwo110476,EXP520998,
+HP667/765, nadal siedemMedicine3; ten dalszy postęp nie jest jeszcze
+zamrożony/odtworzony ani zapisany w telefonie. Najpierw odpytać ten sam
+uchwyt, nie restartować na podstawie braku nowego wyjścia. Po zakończeniu
+serii utrwalić nowszy checkpoint i dopiero przenieść sterowanie na nowy
+kandydat z pełnym odtworzeniem aktualnego inputu. Próg37=539270,
+38=725158. Pierwsza seria nie osiągnęła37, boss50/Chrysler77 nadal otwarte.
+Dowody/tmp nietrwałe; brak oraclePS1/potwierdzenia pixel-perfect,
+pełny port nieukończony. Wcześniejsze sekcje są historyczne.
+
 ### Menu pancerzy: usunięcie zabiegu byte-match i trening do nowego zapisu E
 
 W istniejącym `src/main/menu/status_panels.c`, gałąź Armor, zastąpiono

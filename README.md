@@ -14,8 +14,8 @@ readability and native builds.
 
 This is an incomplete port. The ordinary-input route has reached EX Chrysler
 Building and returned to the museum to strengthen Aya; the floor 50 boss remains
-undefeated. The latest documented genuine phone checkpoint is G: level 37,
-638,241 EXP, 714/767 HP, M8000 attack 164, eight Medicine 3 and two armors.
+undefeated. The latest documented genuine phone checkpoint is H: level 38,
+729,102 EXP, 653/769 HP, M8000 attack 164, eight Medicine 3 and two armors.
 See [the port plan](docs/PC_PORT_PLAN.md) for current checkpoints, reproducible
 inputs, verification results and remaining work.
 

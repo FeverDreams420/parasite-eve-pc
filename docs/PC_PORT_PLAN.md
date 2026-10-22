@@ -2,6 +2,35 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### H: poziom38 i potwierdzony oryginalny zapis/Continue
+
+Świeża kontynuacja G2 po checkpoint173356 osiągnęła38 przy196330:
+trzy zwycięstwa po4233EXP,716403→729102. HP672→653,max767→769,
+BP48→1070,pulaPE936→0,alokacje360→370 we wszystkich siedmiu statystykach.
+Oryginalny ekran level-up obsłużono padem; przewidywana z danych granica
+725158 została przekroczona bez edycji EXP/RNG/RAM. OsiemMedicine3,
+M8000 ATK164/DoubleAction/single i oba pancerze zachowane.
+
+Powrót M242→M229→M343→M340 i oryginalny telefon: H (slot7), zapis
+203948, zamknięcie204432. Źródło8192B:
+`/tmp/pe-ex-museum-trained-save-H1-v1-source/BASLUS-006620000000H`, SHA256
+`6dd1899648f1f74cdcee24c83b90e54e1e418696877383ca8cd8e0c96302e39e`.
+PASS `/tmp/pe-ex-museum-trained-save-H1-v1-proof/proof.json`: pełny zimny
+G→204432 normal/SAN/live, cały JSON i1MiBVRAM identyczne; exit0 bez
+wykrytej diagnostyki, G niezmienione, H identyczne8192B we wszystkich
+trzech wykonaniach. Jawne porównanie względem173356: cały inventory
+zmienia tylko clip17→8; cały character ma wyłącznie wymienione delty;
+512vars zmienia tylko1:243→998 i78:156→76. To nie jest osobna weryfikacja
+każdego pośredniego ekranu względem PS1.
+
+PASS `/tmp/pe-ex-museum-trained-H1-continue-v1-proof/proof.json`: tylko
+karta H, bez dostępnego G; oryginalne Continue do14520/M340 normal/SAN,
+cały JSON i1MiBVRAM identyczne, exit0 bez diagnostyki, H niezmienione.
+Cały inventory,character i512vars identyczne z telefonem204432.
+Po wczytaniu653/769HP,729102EXP,1070BP,osiemMedicine3,dwa pancerze.
+Kandydat produkcyjny bez zmian; SDK/SDL nadal nieinstrumentowane.
+Boss50 i77 pozostają niepokonani, pełna kampania i zgodność PS1 nieudowodnione.
+
 ### G: potwierdzone716403EXP i zastój timera
 
 Bieżący proces G osiągnął173356VBlank,level37,716403EXP (+78162 od
@@ -18,6 +47,13 @@ walki. Checkpoint JSON/VRAM/input i log LLDB zachowano w
 `/tmp/pe-G1-training-checkpoint-v1-seed.json`. PASS `/tmp/pe-G1-training-checkpoint-v1-proof/proof.json`: zwykły i
 sanitizowany zimny replay mają cały JSON i1MiBVRAM identyczny ze sobą
 i checkpointem live, exit0 bez diagnostyki sanitizerów, karty G niezmienione. Nie zmieniano RAM, RNG, payloadu zapisu ani kodu gry dla obejścia.
+Świeży proces kontynuacji G2 odtworzył identyczny stan173356 i przeszedł
+173388. Stary proces po wysłaniu SIGTERM (obsłużonym przez SDL zamiast
+zakończenia) również zwrócił kontrolę173388; cały JSON identyczny z G2.
+Następnie zamknięto go oryginalnym quit,exit0. To długi zastój, nie dowód
+trwałego deadlocka; nie ustalono jeszcze przyczyny ani skuteczności poprawki.
+Dalszy trening używa G2 i pełnego zachowanego inputu, bez edycji stanu.
+
 
 Niezależna próba uruchomienia oryginalnej USA gry z kartą G w emulatorze
 nie wystartowała: brak metal_shaders.metallib, ponadto brak gamedb.yaml

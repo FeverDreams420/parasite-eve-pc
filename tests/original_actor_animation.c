@@ -17871,7 +17871,10 @@ int main(int argc, char **argv)
             player.render_object.hit_cylinder.radius=63;for(unsigned j=0;j<64;j++){for(unsigned k=0;k<3;k++)player_matrix[j].rotation[k][k]=4096;player_matrix[j].translation[0]=-800+(j%7)*8;player_matrix[j].translation[1]=-200-(int)j*4;player_matrix[j].translation[2]=3000+(j%5)*8;}
             RenderAnimationDataHeader player_animation={.frame_count=10};for(unsigned j=0;j<48;j++)g_GameState.bank_rows[0][j]=&player_animation;
             player_state.curHP=100;player_state.actionMode12=0;g_ActiveActor=&player_state;g_PlayerEntity=&player;g_FieldActorListHead=&actor;
-            for(unsigned j=0;j<64;j++){for(unsigned k=0;k<3;k++)matrices[j].rotation[k][k]=4096;matrices[j].translation[1]=-200;matrices[j].translation[2]=1024;}
+            /* Keep every ribbon joint beyond the 500-unit depth bias. At 1024
+             * the first joint was clipped before the final segment was read,
+             * hiding the arm-glow stack overread from this real-asset cycle. */
+            for(unsigned j=0;j<64;j++){for(unsigned k=0;k<3;k++)matrices[j].rotation[k][k]=4096;matrices[j].translation[1]=-200;matrices[j].translation[2]=3000;}
             g_PmTables=(PmTables){g_PmCmdHandlerArray,bank.slots,NULL};srand(variant+1);
             int handle=Scene_LoadRoomAssets(extra_slots?48:46+program,&actor);if(handle!=0)return 1;
             if(extra_slots)bank.slots[handle].effect.state.commands=program?orbit_script:centre_script;

@@ -2975,7 +2975,11 @@ int SceneE08_DrawArmGlow(void *raw0, void *raw1, void *raw2) {
     points[6].y = matrices[22].translation[1];
     points[6].z = matrices[22].translation[2];
     tpage = GetTPage(0, 0, 0x340, 0x100);
-    FieldFx_DrawTexturedRibbon(points, 7, 300, 0x40, 0x80, 0x9C, 0x10, tpage,
+    /* The ribbon count is segments, so these seven authored joints form six
+     * segments. Retail passed seven and read its following stack colour and
+     * uninitialized padding as an eighth joint. Keep the authored path within
+     * its array instead of depending on the PS1 stack layout. */
+    FieldFx_DrawTexturedRibbon(points, 6, 300, 0x40, 0x80, 0x9C, 0x10, tpage,
                   GetClut(0, 0x1D7), 0x80, &head, &tail, 1);
 
     return 0;

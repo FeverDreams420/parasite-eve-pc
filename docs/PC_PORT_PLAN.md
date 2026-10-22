@@ -2,6 +2,69 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### Eve77: pierwsza walka i rzeczywista blokada strzału przy Mayi
+
+Dalsza diagnostyka starego N2: zwykłe potwierdzenia dialogów83–111
+uruchomiły walkę przy539533, HP869, Eve3:31 i pomocnicy4:29/30.
+Nie oddano strzału. Ruch do540813: HP643, PE175556555, boss po oryginalnym
+setup1040000/1040000 (sentinel+40000). Obaj pomocnicy jeszcze ukryci.
+Oryginalna tura DoubleAction z Preraise i Heal3, bez strzału: do542037
+HP869 i Preraise aktywne, PE96319141, kolejka0, ammo0. To dowód live
+wykonania dwóch PE w jednej turze, nie wygrana ani cold nowego kandydata.
+
+Przed próbą pojedynczej akcji helper zauważył widocznego4:29, flags84033696,
+mode11. Bramka renderowania pomija flags0x40 i0x20000000 (frame_update.c);
+4:30 flags84034784 pozostawał ukryty. Próba odrzucona przed wejściem pada.
+Pilot hostowy farm ma teraz ten sam warunek dla M318 i pomija drugą akcję
+po zakolejkowaniu pierwszej (Square); kamera M318 ma basis2048. Rzeczywiste
+farm−1 zatrzymało się bez jakiegokolwiek inputu, pełny stan i cały inputlog
+identyczne z checkpointem: `/tmp/pe-N2-Eve77-Maya-block-v1-checkpoint/proof.json`.
+To PASS blokady w konkretnym żywym oknie, nie pełnej strategii ani obsługi
+kolejki przy zmianie widoczności w trakcie wykonywanego strzału. Wznowienie
+ognia i dalsze fazy77 pozostają niezweryfikowane. Live PID45081 nadal stary.
+
+### QueenBee: rzeczywisty błąd ASan i naprawa wstęgi w oryginalnym module
+
+Poprzedni odcinek dostarczył postępu: oryginalne galerie i wejście77 oraz
+audyt leczenia Mayi. Pełny cold boss70 starego kandydata zakończony:
+normal exit0, cały JSON/VRAM identyczny z live, SAN exit−6. Nie ma PASS:
+`/tmp/pe-N2-boss70-win-v1-proof/proof.json`. ASan wskazuje odczyt4B
+poza points[7] w SceneE08_DrawArmGlow → FieldFx_DrawTexturedRibbon.
+
+Oryginalne instrukcje M418 80194DD8–8019520C: siedem zapisanych jointów
+na stosie0x58..0x8F, następnie kolor na0x90 i niezainicjalizowany padding.
+Wywołanie801951E0 przekazuje count7 do800D3114. Renderer rysuje count
+odcinków i czyta count+1 jointów; ostatni czytał kolor/padding jako geometrię.
+W istniejącym e08.c zmieniono wyłącznie count7→6, zachowując wszystkie
+siedem autorskich jointów. Usunięty jest niepoprawny dodatkowy odcinek;
+nie jest to deklaracja identyczności obrazu z PS1, który wykonywał ten
+odczyt stosu. Zasady walki i skrypty pozostają bez zmian. Audyt:
+`/tmp/pe-e08-arm-ribbon-v1-fidelity-audit.json` i oryginalny asm w/tmp.
+
+W istniejącym teście cykli M418 kości mają teraz głębokość3000 zamiast1024,
+aby nie kończyć rysowania na pierwszym punkcie przed bias500. Nowy test
+z zachowanym starym obiektem e08 odtwarza dokładnie ASan overread/exit−6:
+`/tmp/pe-e08-arm-ribbon-v1-old-repro-proof.json`. Nowy cały build obejmuje
+438 świeżych obiektów, grę i fixture obu profili. Testy efektów i CTest19/19
+na profil PASS, wszystkie sygnatury normal/SAN równe, SAN czysto:
+`/tmp/pe-e08-arm-ribbon-v1-effects-proof.json`. Pełne70 regresji PASS, wszystkie terminalne exit0, istniejące
+replaye/VRAM i zapis telefonu zgodne; źródłowe karty bez zmian:
+`/tmp/pe-e08-arm-ribbon-v1-verification.json`. PsyZ/SDL pozostają nieinstrumentowane.
+
+Nowy pełny replay N→511973 uruchomiony na kandydacie
+`/tmp/pe-e08-arm-ribbon-v1-game` i sanitized, sesja73524, verifier
+`/tmp/pe-N2-boss70-ribbonfix-v1-verify.py`. Wynik jeszcze niepotwierdzony.
+N2 live PID45081 jest nadal starym programem; dalsza rozmowa77 ma tylko
+wartość diagnostyczną i nie dowodzi naprawionego kandydata. Przy537573
+oryginalny dialog104, HP869, brak walki. Odczyt LLDB tylko do odczytu
+wykazał normalne odliczanie opóźnienia przed dialog83; nie crash/zwiechę.
+
+Pomocnicze niezależne źródło QueenBee wymienia tylko Key7, zgodnie z
+oryginalnym skryptem i naszym rolled. M96R ma x3Commands, ale nie jest
+wymieniony jako łup tego bossa: https://gamefaqs.gamespot.com/ps/198265-parasite-eve/faqs/55672
+M96R/transfer nadal do zdobycia/sprawdzenia zwykłą rozgrywką, bez dopisywania
+broni do reguł nagród lub save. Pełny port/PS1 oracle nadal nieukończone.
+
 ### N2: oryginalne galerie71–76 i wejście77
 
 Live po511973: fieldHeal3 przy512517 rzeczywiście677→869HP. M418 ma

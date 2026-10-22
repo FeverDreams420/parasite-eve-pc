@@ -21,13 +21,41 @@ tylkoM przez slot12 do14680, pełny JSON/1MiBVRAM normal/SAN zgodne,
 native0/czysto, wszystkie8192B M bez zmian. Całe inventory/character/512vars
 identyczne ze stanem przy telefonie, poziom90 i dwaRevive potwierdzone.
 
-Pełny cold L→trening90→zapisM do343110 działa osobno normal/SAN:
-`/tmp/pe-L7-trained-save-M1-v1-proof.py`, verifier
-`/tmp/pe-L7-trained-save-M1-v1-verify.py`; jego wynik jeszcze wymaga
-sprawdzenia. Zamrożone JSON/VRAM/args/ledger:
-`/tmp/pe-L7-trained-save-M1-v1-checkpoint`. L7 pozostaje headless przy
-telefonie. SDK/SDL nieinstrumentowane, bez nowego oracle PS1; cały port,
+PASS pełny cold L→trening90→zapisM do343110:
+`/tmp/pe-L7-trained-save-M1-v1-proof/proof.json`. Cały JSON/1MiBVRAM
+normal/SAN/zamrożony live zgodne, native0/czysto, stareL bez zmian,
+wszystkie8192B M identyczne z oryginalnym telefonem. Całe inventory,
+character i512vars mają wyłącznie jawne delty opisane powyżej.
+Zamrożone JSON/VRAM/args/ledger: `/tmp/pe-L7-trained-save-M1-v1-checkpoint`.
+SDK/SDL nieinstrumentowane, bez nowego oracle PS1; cały port,
 Three Commands i bossowie70/77 nadal nieukończone.
+
+### L7 po treningu: ATK169, trzy wygrane i ponowne wejście62
+
+Live oryginalne menu BP wydało1600: bonusATK M8000 153→169, BP1621→21.
+Cały inventory wyłącznie byte430, cały character tylkoBP,512vars bez zmian:
+`/tmp/pe-L7-upgrade169-v1-checkpoint`. Następnie zwykła droga muzeum→mapa
+→Chrysler→winda60. Nowy seed21073 i aktualne tabele odczytane ponownie;
+start61 to12 (wcześniejszy układ miał16), planner używa faktycznego startu.
+
+Trzy wygrane live na61: M419 przy370299 (+2502EXP/77PE,HP653), kolejne
+M419 przy376067 (+2502EXP/84PE,poziom91,HP745), M420 przy387447
+(+3306EXP/92PE,HP738). Między pierwszymi walkami oryginalne Heal3 do860HP;
+podczas dalszych walk sterownik również preferuje Heal3. ObaRevive,
+czteryM4 i13M3 zachowane; żadne leki nie zostały zużyte. Cała dalsza
+trasa61 przebyta; wejście62 przy405147,selector12, poziom91/EXP967525,
+HP738/861,BP182/pool92. Checkpoint JSON/VRAM/args/ledger:
+`/tmp/pe-L7-chrysler62-entry-v1-checkpoint`. Ta dalsza gałąź po343110
+ma na razie obserwację live, nie nowy pełny cold normal/SAN dowód.
+
+Sterownik w `/tmp/pe-museum-autofarm-v1.py` uwzględnia także oryginalne
+oślepienie (stateFlags&0x30==0x10): zakres200 zamiast weapon.range.
+Rzadkie pozostałe łupy nie mogą być pomijane przez END: automatycznie
+wolno zostawić tylko jawny zestaw zużywalnych id2/3/8/9/20; broń,
+Tools, klucze i inne nieznane przedmioty zatrzymują sterownik do przeglądu.
+Ekwipunek jest pełny; przed dalszym zbieraniem należy zwolnić miejsca
+przez oryginalne menu, zachowując oba pancerze i rzadkie przedmioty.
+Kod gry nie był zmieniany w tej gałęzi, L7 nadal headless na62.
 
 ### Cel treningu90, PE jako podstawowe leczenie; L5 poziom62 PASS
 

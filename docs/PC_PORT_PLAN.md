@@ -2,6 +2,38 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### K→L: poziom60, ATK210 i nowy oryginalny zapis
+
+PASS `/tmp/pe-K8-museum-level60-v1-proof/proof.json`: pełny coldContinueK,
+sześć wygranych M242 i zwykłe powroty przez M243 do61610. Cały JSON i1MiBVRAM
+normal/SAN/zamrożony live zgodne,native0/czysto, source/privateK nietknięte.
+26054EXP/296PE, poziom60, EXP824384, HP704/813, BP1371/pool0. Bez utraty HP,
+zużycia leków/Revive lub zmian sprzętu/kluczy. Cały inventory wyłącznie
+pojemność36→37, M3slot36, magazynek7→4,rezerwa942→999 (41strzałów,
+2reloady19, łup180 i oryginalny overflow85). Character jawne delty awansu,
+HP704 bez zmian;512vars tylko1/78. Ścieżka do drzwi M243 wymaga przejścia
+przez punkt(-800,-350), zamiast ukośnego przecinania geometrii po walce.
+
+Na żywo oryginalne menu BP:1300BP na M8000, bonusATK140→153, ATK197→210,
+BP1371→71; reszta inventory i512vars bez zmian. Oryginalny Use Medicine3
+slot30:704→813HP, jeden lek zużyty. Powrót M242→M229→M343→M340 i telefon:
+nowy slot11, zapis L8192B, SHA256
+`bbe513b52dc66225e470da2ecc055cc49da716c7618deb058dd813a6eb198ba6`,
+`/tmp/pe-K8-trained-save-L1-v1-source/BASLUS-006620000000L`.
+Menu zamknięte71764. Trwa pełny coldK→L normal/SAN
+`/tmp/pe-K8-trained-save-L1-v1-proof`, przygotowany -verify.py porównuje
+cały stan/VRAM, wszystkie8192B L i zachowanie K. Nie zaliczać go przed
+rzeczywistym wykonaniem weryfikatora.
+
+PASS osobne oryginalne Continue tylkoL przez slot11:
+`/tmp/pe-L1-continue-v1-proof/proof.json`,14648. Pełny JSON/VRAM normal/SAN
+zgodne, cały inventory/character/512vars identyczny z telefonemL, privateL
+niezmieniony, oba native0/czyste logi. Oba Revive i klucze1–6 zachowane.
+Kandydat nadal m424-bind-v1, bez nowych zmian kodu gry; SDK/SDL
+nieinstrumentowane, dowody w `/tmp`, brak nowego orakla PS1 i ukończenia
+pełnego portu. Dalsza próba M419 ma uwzględniać oryginalne automatyczne
+Revive/Preraise i zachowanie PE przed starciem; M419 nadal niezaliczony.
+
 ### K: muzeum57 potwierdzone; poprawione rozpoznawanie Revive w sterowniku
 
 PASS `/tmp/pe-K8-museum-level57-v1-proof/proof.json`: fullcoldContinueK,

@@ -45,8 +45,12 @@ zamknięcie376070. Autentyczny nowy J8192B ma SHA256
 Cały character bez zmian od wyniku bossa; inventory tylko cache ammo
 category_counts999→938,512vars tylko1/4/5/6 powrotu na mapę świata.
 Pełny cold I→telefonJ normal/SAN uruchomiony (sesja47977), osobny
-Continue samegoJ uruchomiony (36479); te dwa dowody oczekują weryfikacji,
-nie są jeszcze PASS. Dowody /tmp są nietrwałe,
+Continue samegoJ zakończony PASS:
+`/tmp/pe-ex-chrysler-boss50-J1-continue-v1-proof/proof.json`.
+Normal/SAN cały JSON i1MiB VRAM zgodne, native0 czysto,J8192B niezmienione;
+cały inventory/character/512vars identyczne z telefonemJ.
+Pełny cold I→telefonJ wciąż oczekuje końca i weryfikacji (47977),
+nie jest jeszcze PASS. Sterowniki /tmp/pe-I1-control-helpers-v2.json. Dowody /tmp są nietrwałe,
 SDK/SDL nieinstrumentowane; brak oracle PS1 tej walki. Pełna kampania,
 Chrysler77 i cały zakres portu pozostają otwarte. Poniższe wpisy I opisują
 wcześniejsze checkpointy, nie aktualny stan zwycięskiej postaci.

@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Cold N5→floor66 PASS, w tym TripleCommand i700BP
+
+`/tmp/pe-N5-floor66-cold-v1-proof.json`: normal/SAN oba exit0/czysto,
+całyJSON/1MiBVRAM identyczne z frozenlive159089. SourceN i karty
+niezmienione. Obejmuje odbiór M96R, oba transfery,700BP,+178ATK,
+trzy zwycięstwa65 i przejście do66. Nie obejmuje nowej walki M424
+po162777 ani pełnego portu/PS1oracle.
+
+### N5/floor66: HP0 i oryginalne Preraise; korekta hostowego PE skip
+
+Przy162777 w slot6/M424 trzy enemy type4/31,1,0 po980HP.
+Pilot zakolejkował Preraise, następnie trzy ataki; szarże obniżyły
+HP869→682→195→0 przy163625. Guard zatrzymał automat, zachowano
+`/tmp/pe-N5-floor66-HP0-before-v1`.312neutralnych klatek uruchomiło
+oryginalne Preraise: przy163937 HP434,Revive2 nienaruszone, efekt zużyty.
+`/tmp/pe-N5-floor66-Preraise-v1/proof.json` jest dowodem live-only.
+Nie jest to przegrana z restorem RAM ani ukończona walka.
+
+Ruch Up do164065 odsunął Ayę i pozwolił uzyskać ATB9000/PE~801.
+Oryginalne Heal3 było zakolejkowane, ale pojedyncze Square w starym
+hosthelperze pomijało tylko jedną z dwóch wolnych komend TripleCommand.
+Przy164577 queue1/remaining1 wciąż czekała. Drugie Square wykonało PE;
+przy164825 HP527,queue0 (leczenie+280 i kolejne trafienie−187).
+Hostpilot oznacza teraz całą turę PE i pomija pozostałe sloty zamiast
+niechcący dopisywać ataki. Bez zmiany produkcyjnego kodu/mechaniki.
+Pełny cold do159089 nadal działa; ten nowy odcinek wymaga osobnego dowodu.
+
 ### N5: całe piętro65 ukończone live, cold normal/SAN uruchomiony
 
 Trzecia walka M419 wygrana153441,HP722,EXP999072,pool313,Revive2

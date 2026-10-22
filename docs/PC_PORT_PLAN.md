@@ -2,6 +2,64 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### J: piętro51 i naprawa brakujących powiązań M414/M415
+
+Po potwierdzonym telefonieJ zimny Continue i oryginalny pad uruchamiają
+windę50, pokonaną salę bossa i schody51 przy37452. PASS
+`/tmp/pe-J2-chrysler-floor51-v1-proof/proof.json`: normal/SAN/live cały
+JSON i1MiBVRAM zgodne,native0 czysto,J8192B niezmienione. Cały inventory
+oraz character zgodne z ContinueJ;512vars tylko1/4/5/6 trasy.
+Stary liveI zamknięty quit/native0 po telefonieJ.
+
+Dalszy pad dotarł przy38304 do M414/slot14,floor51 i zatrzymał stary
+kernel-clock build: `native descriptor missing for M414 slot115
+(PS1 8019207c)`,startup-2. Nie był to błąd sterowania ani powód do
+zmiany mechaniki. Read-only analiza oryginalnego USA potwierdziła
+wszystkie trzy istniejące całe jednostki: GroundEruption1327 instrukcji,
+OrbitFlare785,HomingProjectile891, razem3003, plus deskryptory PM37,
+programy115/166, skrypty, layout i seedy. Przesunięcia kodu/danych są
+jawnie ograniczone w `/tmp/pe-m414-unit-audit-v1.py`,PASS -proof.json.
+Cały payload M415 jest identyczny z M414 (12716B),PASS
+`/tmp/pe-m414-m415-whole-module-v1-proof.json`.
+
+W istniejącym src/main/scene/room_load.c dodano trzy oryginalne
+powiązania i reset istniejących danych dla obu lokacji. Nie dodano plików
+produkcji ani nie przenoszono funkcji. Świeży kandydat m414-bind-v2:
+438 obiektów (219/profil),manifest `/tmp/pe-m414-bind-v2-build-manifest.json`;
+PsyZ6e7f6f4, SDK/SDL nadal nieinstrumentowane.
+PASS `/tmp/pe-m414-entry-J2-v2-proof/proof.json`: cold autentycznyJ→38604,
+normal/SAN/live cały JSON i1MiBVRAM identyczne,native0 czysto,J8192B
+niezmienione. M414 działa z trzema przeciwnikami715HP; Aya669/787HP,
+cały inventory/character/512vars zgodne z wejściem51. To potwierdza
+wejście i początek walki, nie jej zwycięstwo ani runtime M415.
+Na żywo M414 pokonany: wynik1092EXP/56PE,level48,770824EXP,
+547/789HP,BP604,stats470. Cały inventory tylko magazynek8→15,
+zapas938→964 po ALL45 amunicji (12 strzałów,jedno przeładowanie19),
+bez zużycia leków przedmiotowych. Względem wejścia512vars tylko18:0→4.
+Checkpoint `/tmp/pe-m414-win-J3-v2-checkpoint`/51772, PASS
+`/tmp/pe-m414-win-J3-v2-proof/proof.json`: pełny coldJ normal/SAN/live,
+cały JSON i1MiBVRAM zgodne, oba native0 czysto,J8192B niezmienione.
+Verifier sprawdził cały inventory/character/512vars, bez innych zmian. Sterownik poprawiono tylko
+na nowy root/session; mechanika oryginalna.
+13/13 CTest w każdym profilu i sygnatury efektów M418/M436 PASS:
+`/tmp/pe-m414-bind-v2-effects-proof.json`. Szersze70/70 regresji PASS (oba profile,exit0):
+`/tmp/pe-m414-bind-v2-verification.json`. Rehash438 obiektów, wszystkich
+zależności, bibliotek i wykonywalnych zgodny z aktualnymi źródłami.
+Game SHA256 `df8d40e4f8ca06c35a9ad9aa468cdaa2396460b717e11e3ba69ac974b1682552`,
+SAN `e599d7ac1f365467b5e1b9d807bf703bc3a13cb089626f05bd22c1c17ab2f72d`. Wcześniejszy v1 obejmował tylkoM414;
+aktualne źródła i kandydat to v2 (M414/M415). User build/parasite-eve-pc
+nie został podmieniony. Dalszy live `/tmp/pe-m414-bind-J3-live`,kontroler95734,
+z tego samego J i rzeczywistego padu. Po zwycięstwie nav z błędną osią0
+dwa razy wracał do schodów51 bez odrodzenia walki. Field basis2048 i
+punkty (1000,-600)→(2700,-600) poprawnie wykonują port23/slot14→15,
+przy54484 M417. Dalej stwierdzony kolejny brak: M417 slot75/80193128,
+startup-2. Live zakończony przez oryginalny fail-fast, nie jest gotową
+trasą do52. Ślad/input `/tmp/pe-m414-bind-J3-live`, checkpoint zwycięstwa
+zachowany; następny krok to cała oryginalna rodzina M413/M416/M417.
+Nie zmieniano gameplayu, kamery ani kolizji dla obejścia tej przerwy.
+Pełny port pozostaje otwarty;
+dowody /tmp nietrwałe, brak oracle PS1 obrazu nowej walki.
+
 ### I: potwierdzone zwycięstwo nad bossem50, dojście do51
 
 Bez zmian kodu produkcyjnego, nadal kernel-clock-v1/PsyZ6e7f6f4.
@@ -44,13 +102,15 @@ zamknięcie376070. Autentyczny nowy J8192B ma SHA256
 źródło `/tmp/pe-ex-chrysler-boss50-save-J1-v1-source`.
 Cały character bez zmian od wyniku bossa; inventory tylko cache ammo
 category_counts999→938,512vars tylko1/4/5/6 powrotu na mapę świata.
-Pełny cold I→telefonJ normal/SAN uruchomiony (sesja47977), osobny
+Pełny cold I→telefonJ normal/SAN zakończony, osobny
 Continue samegoJ zakończony PASS:
 `/tmp/pe-ex-chrysler-boss50-J1-continue-v1-proof/proof.json`.
 Normal/SAN cały JSON i1MiB VRAM zgodne, native0 czysto,J8192B niezmienione;
 cały inventory/character/512vars identyczne z telefonemJ.
-Pełny cold I→telefonJ wciąż oczekuje końca i weryfikacji (47977),
-nie jest jeszcze PASS. Sterowniki /tmp/pe-I1-control-helpers-v2.json. Dowody /tmp są nietrwałe,
+PASS `/tmp/pe-ex-chrysler-boss50-save-J1-v1-proof/proof.json`:
+pełny cold I→376070, normal/SAN/live cały JSON i1MiBVRAM zgodne,
+nowy J8192B identyczny we wszystkich trzech przebiegach, oba native0
+czysto, źródłowy/prywatne I8192B niezmienione. Sterowniki /tmp/pe-I1-control-helpers-v2.json. Dowody /tmp są nietrwałe,
 SDK/SDL nieinstrumentowane; brak oracle PS1 tej walki. Pełna kampania,
 Chrysler77 i cały zakres portu pozostają otwarte. Poniższe wpisy I opisują
 wcześniejsze checkpointy, nie aktualny stan zwycięskiej postaci.

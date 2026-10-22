@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### J: boss60 potwierdzony; autentyczny zapis K z telefonu
+
+PASS `/tmp/pe-J5-chrysler-floor60-v1-proof/proof.json`: cały coldJ do
+schodów60 przy340164. PASS `/tmp/pe-J5-boss60-win-v1-proof/proof.json`:
+cały coldJ do zwycięstwa nad bossem60 i odebrania klucza6 przy401368.
+Normal/SAN/live: identyczny cały JSON i1MiBVRAM, native0, czyste logi,
+prywatne J niezmienione. Pełny inventory, character i512zmiennych
+sprawdzone z jawnymi deltami; oba pancerze i klucze1–6 zachowane.
+To dowód natywnego przebiegu, nie nowy orakl bossa/obrazu/audio z PS1.
+
+Na żywo: przejście na61, powrót przez M411 do windy60, zjazd na1,
+mapa świata, muzeum M340 i oryginalny telefon. Nowy slot10, zapis K:
+8192B, SHA256 `bd405f970c9d10c6bce0b74146f64a372af3af127400e19743466b046e387cc7`,
+`/tmp/pe-J5-boss60-save-K1-v1-source/BASLUS-006620000000K`.
+Menu zamknięte przy428519. Character bez zmian od zwycięstwa60:
+poziom54, EXP798330, HP704/801, BP1075, M8000ATK197. Ekwipunek
+zmieniony wyłącznie oryginalną synchronizacją category_counts938→942
+podczas zapisu. Trwa pełny coldJ→K normal/SAN:
+`/tmp/pe-J5-boss60-save-K1-v1-proof`, przygotowany -verify.py sprawdza
+również identyczność wszystkich8192B K z nową kopią źródłową.
+Nie zaliczać zapisu jako potwierdzonego parą przed wykonaniem weryfikatora.
+PASS osobne Continue tylkoK przez oryginalny slot10:
+`/tmp/pe-K1-continue-v1-proof/proof.json`, cap14616. Pełny JSON i VRAM
+normal/SAN zgodne; cały inventory, character i512vars identyczne z
+telefonem K, private K niezmienione, oba native0 i czyste logi.
+SDK/SDL nieinstrumentowane; dowody w `/tmp`; cały port nadal nieukończony.
+
 ### J: całe51–58 potwierdzone; boss60 wygrany na żywo, replay trwa
 
 PASS `/tmp/pe-J5-chrysler-floor57-v1-proof/proof.json` (257216),

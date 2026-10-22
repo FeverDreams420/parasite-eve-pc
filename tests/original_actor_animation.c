@@ -4597,6 +4597,25 @@ static int original_inventory_storage_swaps(void)
         if(Inv_TransferItem(13,0,14,0) || g_InvActiveListItems[0]!=0x180 ||
            g_AyaInventoryItems[0]!=(occupied?257:0))return 0;
     }
+    /* Full storage crosses bit31 in three words; native masks must keep
+     * those high bits without a signed shift, including locked records. */
+    {
+        s16 storage[100];
+        for(unsigned i=0;i<100;++i)storage[i]=256;
+        memset(&g_PlayerInventoryState,0,sizeof(g_PlayerInventoryState));
+        g_InventoryRuntime.tracked[0]=-1;g_InventoryRuntime.tracked[2]=-1;
+        g_InventoryRuntime.equipment[0].kind=1;
+        g_InvItemPtr=storage;g_InvSlotLimit=100;
+        g_InvSelectionBits=g_InvStorageSelectionBits;g_InvSelectionBitWords=4;
+        const u8 lock_flags[]={1,0x20,0x40,0x80};
+        for(unsigned f=0;f<4;++f){
+            g_InventoryRuntime.equipment[0].flags=lock_flags[f];
+            Inv_SortSlotsByPriority();
+            for(unsigned w=0;w<4;++w)
+                if(g_InvStorageSelectionBits[w]!=(f?0:w==3?15u:UINT32_MAX))return 0;
+        }
+    }
+    puts("Original full storage selection: bits31/63/95 retained and high-flag locks excluded");
     puts("Pending reward equipment round trips: first, M203 and last native records, empty/occupied destinations, metadata unchanged and invalid references rejected");
     g_InvActiveListCount=saved_pending_count;memcpy(g_InvActiveListItems,saved_pending,sizeof(saved_pending));
     g_PlayerInventoryState=saved_player;g_InventoryItemWorkspace=saved_workspace;g_InvItemPtr=saved_items;g_InvActiveItemList=saved_active;g_InvActiveListOverride=saved_override;

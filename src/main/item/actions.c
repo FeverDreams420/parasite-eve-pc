@@ -466,7 +466,7 @@ void Inv_SortSlotsByPriority(void) {
         if (i != g_InventoryRuntime.tracked[0] && i != g_InventoryRuntime.tracked[2] && Inv_IsSlotSelectable(i)) {
             if (i >= 0 && i < g_InvSlotLimit) item = Inv_LookupItemRecordScaled(g_InvItemPtr[i]);
             else item = 0;
-            g_InvSelectionBits[i >> 5] |= (item ? !(item->flags & 0xE0) : 0) << (i & 31);
+            g_InvSelectionBits[i >> 5] |= (u32)(item ? !(item->flags & 0xE0) : 0) << (i & 31);
         }
     }
 }

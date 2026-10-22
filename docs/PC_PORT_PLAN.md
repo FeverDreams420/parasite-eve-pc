@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Nowy błąd UBSan w oryginalnej selekcji ekwipunku
+
+Pełny cold N→128729 odbioru M96R i transferów: normal PASS, cały JSON
+oraz1MiBVRAM identyczne z frozenlive; SAN exit−6. Nie zaliczać całej pary.
+`/tmp/pe-N4-triple-cold-v1-proof.json`: UBSan actions.c:469, signed1<<31
+w Inv_SortSlotsByPriority. Oryginalne sloty31/63/95 wymagają unsigned
+32bit maski; naprawa w istniejącym module to rzutowanie przed shift,
+bez zmiany filtrów, kolejności lub mechaniki. Istniejący fixture rozszerzony
+o100slotowy magazyn i bity31/63/95, także blokady flag0x20/40/80.
+Świeży inv-mask-v1:438obiektów (219/profil), game i fixture zbudowane;
+manifest i wszystkie zależności/biblioteki/exe ponownie zhashowane.
+19/19CTest w każdym profilu PASS,11wariantów efektów/loadów ma zgodne
+sygnatury normal/SAN, bez sanitizererrors. Pełny cold N→128729 i64
+regresje fixture nadal uruchomione. Stary runner70 zatrzymał się przed
+grami: historyczne /tmp sourcecardsA/B usunięte. Sześciu testów replay
+head2/phone/medicine tego kandydata nie zaliczono; wymagają odtworzenia
+źródłowych autentycznych zapisów i ponownej weryfikacji. Brak danych
+nie jest PASS. Stary failed cold pozostaje zachowany. Bezpośredni pełny core fixture
+SAN exit0/czysto; nowy przypadek100slotów i bitów31/63/95 faktycznie
+wykonany: `/tmp/pe-inv-mask-v1-core-direct-proof.json`.
+
 ### M96R odebrane; oryginalny transfer Triple Command do M8000
 
 Autentyczna poboczna gałąź N4 weszła przez M294 do M437 na64piętrze.

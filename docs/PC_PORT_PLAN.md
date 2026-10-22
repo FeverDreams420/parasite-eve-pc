@@ -2,7 +2,7 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
-### N2: floor68 PASS, wejście do bossa70 i ATK178
+### N2: floor68 PASS, boss70 wygrany live i ATK178
 
 Poprzedni odcinek audytu efektów pancerzy dostarczył dowodu: oryginalne
 stats.c/combat.c obsługują Auto Medicine i Auto Cure; attack.c redukcję
@@ -35,11 +35,27 @@ To wejście do walki, nie wygrana. Dalszy odcinek po403913 jeszcze live-only;
 boss70/ThreeCommands/boss77, PS1 oracle i pełny port nadal nieukończone.
 Nie zmieniano produkcyjnego C/PsyZ ani RAM/RNG/save payloadu.
 
+Aktualizacja: rzeczywista wygrana bossa70 przy511973, sceneA8081448,
+mode9/live_enemies0, EXP1047645 (+20256 za walkę), HP677/869, BP12,
+trzyRevive zachowane, czteryMedicine4 (dwa awaryjnie zużyte). Oryginalny
+łup Key7/id62 trafił do wolnego slot10, Key6 nadal16. Bez ThreeCommands
+w tym łupie. Preraise ocaliło raz bez zużyciaRevive. Cały replay od genuineN
+uruchomiony normal/SAN: `/tmp/pe-N2-boss70-win-v1-proof.py`, kontroler
+procesu52600. Wynik cold jeszcze niepotwierdzony; verifier przygotowany,
+checkpoint `/tmp/pe-N2-boss70-win-v1-checkpoint`. To nadal live-only do
+zakończenia obu procesów i sprawdzenia pełnego JSON/VRAM.
+
 Boss70 dalszy live: typ5/sub31 HP1012000→1003342, pomocnicy type3/4
 przywoływani oryginalnymi skryptami. Przy500589 HP0, automat zatrzymał się;
 kroki16 do500925 uchwyciły HP434/869 i nadal trzyRevive. Ochrona Preraise
 zadziałała bez zużycia przedmiotu (stan0x800 zniknął), PE37507946.
 `/tmp/pe-N2-boss70-revive-review-v1-checkpoint`, tylko live; boss nadal żywy.
+Do504125 boss HP1002406, Aya174HP i stan0x1000; pilot ponownie
+zatrzymał się przy brakuPE naMedic. Oryginalne menu Items/Use Medicine4
+slot10 daje174→574HP przy505253, pozostało pięćM4 i trzyRevive,
+PE52236687. Omyłkowo odwiedzone Weapon/Armor nie zmieniły wyposażenia;
+próba Escape odrzucona oryginalnym komunikatem Can't escape. Nie zaliczono
+leczeniaPE ani wygranej w tych krokach. Nadal tylko live po403913.
 
 ### N1: poziom99 i rzeczywisty GameOver68; N2 zachowuje obaRevive
 

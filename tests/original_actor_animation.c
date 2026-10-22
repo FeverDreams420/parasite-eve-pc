@@ -18008,6 +18008,43 @@ int main(int argc, char **argv)
         CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
         puts("Original M418 loader: real Disc2 assets, all four PM classes/scripts, native method ABI and reset passed twice");return 0;
     }
+    if(argc==2 && !strcmp(argv[1],"--m422-load")){
+        const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+        PeDisc disc={0};PeDiscFile exe,archive;const unsigned rooms[]={421,422,423};
+        const uint64_t hashes[]={UINT64_C(0x1559a982b8ab47ed),UINT64_C(0x9599ca34b6e3b84d),UINT64_C(0xfb51213a1d82d780)};
+        if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return 1;
+        ResetGraph(0);CdRom_BindImage(&disc,NULL);if(Asset_OpenPeImage()!=0)return 1;
+        Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+        if(!pe_disc_find(&disc,"SLUS_006.62",&exe) || !pe_disc_find(&disc,"PE.IMG",&archive))return 1;
+        for(unsigned room=0;room<3;++room){
+            SceneRoomSectorRange range;u8 module[11256];
+            if(!pe_disc_read(&disc,&exe,0x800ull+0x80093378u-0x80010000u+(rooms[room]-1)*8,&range,8) ||
+               !pe_disc_read(&disc,&archive,(u64)(range.start+range.scratchSectors+range.textureSectors)*2048+8,module,sizeof(module)))return 1;
+            uint64_t hash=UINT64_C(14695981039346656037);
+            for(unsigned i=0;i<sizeof(module);++i)hash=(hash^module[i])*UINT64_C(1099511628211);
+            if(hash!=hashes[room] ||
+               memcmp(module+(0x80191a70-0x8018eff0),g_RoomScript__paired,sizeof(g_RoomScript__paired)) ||
+               memcmp(module+(0x80191ad8-0x8018eff0),g_RoomPairedGlowColorTable__paired,24) ||
+               memcmp(module+(0x80191af0-0x8018eff0),g_RoomOrbitFlareEffects.script,60) ||
+               memcmp(module+(0x80191b64-0x8018eff0),g_RoomDroppedFlareProgram.script,36))return 1;
+            char name[16];snprintf(name,sizeof(name),"m%04ui",rooms[room]);
+            for(unsigned pass=0;pass<2;++pass){
+                memset(g_RoomScriptArgs,0xa5,sizeof(g_RoomScriptArgs));
+                memset(g_RoomDroppedFlareArgs,0xa5,sizeof(g_RoomDroppedFlareArgs));
+                memset(&g_RoomPairedGlowSprite,0xa5,sizeof(g_RoomPairedGlowSprite));g_RoomPairedGlowPacket__paired=(void *)(uintptr_t)1;
+                g_PmCmdHandlerTable[35]=NULL;g_FieldFxTaskPrograms[30]=g_FieldFxTaskPrograms[37]=NULL;
+                if(Scene_LoadRoom(Text_ParseBase32Id((signed char *)name)) ||
+                   g_PmCmdHandlerTable[35]!=&g_RoomPairedGlowHandlers ||
+                   g_FieldFxTaskPrograms[30]!=&g_RoomOrbitFlareEffects ||
+                   g_FieldFxTaskPrograms[37]!=&g_RoomDroppedFlareProgram || g_RoomPairedGlowPacket__paired)return 1;
+#define M422_ZERO(value) do {for(size_t z=0;z<sizeof(value);++z)if(((u8 *)&(value))[z])return 1;}while(0)
+                M422_ZERO(g_RoomScriptArgs);M422_ZERO(g_RoomDroppedFlareArgs);M422_ZERO(g_RoomPairedGlowSprite);
+#undef M422_ZERO
+            }
+        }
+        CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);
+        puts("Original M421/M422/M423: complete fingerprints, all scripts and colors, three descriptor banks and repeated reset passed");return 0;
+    }
     if(argc==2 && !strcmp(argv[1],"--m412-load")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};PeDiscFile exe,archive;SceneRoomSectorRange range;u8 module[26436];

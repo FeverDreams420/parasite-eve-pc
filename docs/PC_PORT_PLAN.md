@@ -2,6 +2,44 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### K: M421–M423 naprawione na miejscu; odtworzenie M422 trwa
+
+PASS `/tmp/pe-J5-boss60-save-K1-v1-proof/proof.json`: cały coldJ przez
+bossa60, powrót z61 i oryginalny telefon K przy428519. Cały JSON i1MiBVRAM
+normal/SAN/live zgodne, native0/czyste logi, stare J niezmienione i wszystkie
+8192B nowego K identyczne. Character bez zmian od zwycięstwa60; cały
+inventory tylko oryginalny save sync category_counts938→942;512vars tylko
+1/4/5/6. To zamyka wcześniej oczekujący dowód utworzenia K.
+
+Dalszy przebieg J5 po ponownym wejściu na61 zakończył się faktycznym
+brakiem `M422 slot115 PS1 80191b2c` po451580. Stary proces zakończony;
+nie zastępujemy błędu stubem ani pominięciem pokoju. Read-only audit
+`/tmp/pe-m421-m423-audit-v1-proof.json`: komplet2668 instrukcji M421–M423
+(1062paired glow,797orbit flare,809dropped flare), rodata, skrypty,
+deskryptory, seedy i skalary zgodne z istniejącymi pełnymi jednostkami po
+jawnych ograniczonych relokacjach. Różnice trzech modułów wyłącznie w
+resetowanym słowie argumentów. Istniejący room_load.c mapuje teraz
+PM35/task115/task122 i resetuje wszystkie ich dane. Bez przenoszenia
+funkcji i bez nowych plików produkcyjnych.
+
+W istniejącym tests/original_actor_animation.c --m422-load sprawdza pełne
+fingerprinty11256B trzech prawdziwych modułów, wszystkie skrypty/kolory,
+trzy banki deskryptorów i dwukrotny reset z zatruwaniem. Test dodany do
+istniejącego CMake. Kandydat `/tmp/pe-m421-m423-bind-v1`: świeże438obiektów,
+PASS17/17 CTest na profil i zgodne sygnatury efektów normal/SAN:
+-effects-proof.json. PASS -final-rehash-proof.json: wszystkie obiekty,
+zależności, biblioteki i exeki sprawdzone ponownie. PASS ContinueK:
+`/tmp/pe-m421-m423-K1-continue-v1-proof/proof.json`; cały JSON/VRAM także
+identyczny z poprzednim kandydatem, całe inventory/character/512vars
+zgodne z telefonem K, private K niezmienione.
+
+Trwają70regresji -regressions.py (bez końcowego PASS na tym etapie)
+i dokładny coldJ do452000 `/tmp/pe-m421-m423-entry-v1-proof`; wejście do
+M422 w pełnej grze wymaga jeszcze odczytu terminalnych wyników i walidacji.
+Nowy headless live `/tmp/pe-m421-m423-K1-live`, od oryginalnego ContinueK,
+kontroler41879, sourceK niezmieniony. SDK/SDL nieinstrumentowane;
+dowody w `/tmp`, brak nowego orakla PS1 i brak ukończenia całego portu.
+
 ### J: boss60 potwierdzony; autentyczny zapis K z telefonu
 
 PASS `/tmp/pe-J5-chrysler-floor60-v1-proof/proof.json`: cały coldJ do

@@ -579,7 +579,8 @@ if(BUILD_TESTING)
     set_tests_properties(original-m418-chrysler-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "game-assets;room")
     add_test(NAME original-m411-chrysler-load COMMAND test-original-actor-animation --m411-load)
     add_test(NAME original-m412-chrysler-load COMMAND test-original-actor-animation --m412-load)
-    set_tests_properties(original-m411-chrysler-load original-m412-chrysler-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60
+    add_test(NAME original-m422-chrysler-load COMMAND test-original-actor-animation --m422-load)
+    set_tests_properties(original-m411-chrysler-load original-m412-chrysler-load original-m422-chrysler-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60
         LABELS "game-assets;room" ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy")
     add_test(NAME original-m417-chrysler-load COMMAND test-original-actor-animation --m417-load)
     set_tests_properties(original-m417-chrysler-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60

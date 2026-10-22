@@ -2,6 +2,48 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### J: całe piętra54–55 potwierdzone, na żywo schody57
+
+PASS `/tmp/pe-J5-chrysler-floor55-v1-proof/proof.json`: pełny coldJ do
+schodów55 przy200408. PASS `/tmp/pe-J5-chrysler-floor56-v1-proof/proof.json`:
+pełny coldJ przez całe51–55 do schodów56 przy221004. W obu przypadkach
+cały JSON i1MiBVRAM normal/SAN/live zgodne, native0 i czyste logi,
+prywatne zapisy J niezmienione. Weryfikatory sprawdzają cały inventory,
+character oraz512zmiennych względem poprzedniego zamrożonego etapu.
+Piętro55: dwie wygrane2147EXP/113PE, HP565/791, EXP778128,
+BP116/pool169. Rezerwa amunicji zachowuje oryginalny limit999.
+
+Na żywo zakończono również całe56, schody57 przy257216: cztery wygrane
+2686EXP/201PE, poziom50, HP706/793, EXP780814, BP347/pool139.
+Zdobyto Revive (raw18) i dwa Medicine3, pełny ekwipunek35; wszystkie
+klucze i oba pancerze zachowane. Ten dalszy etap NIE ma jeszcze PASS:
+trwa osobny cold replay normal/SAN `/tmp/pe-J5-chrysler-floor57-v1-proof`.
+Zamrożony stan `/tmp/pe-J5-chrysler-floor57-v1-checkpoint`, weryfikator
+`/tmp/pe-J5-chrysler-floor57-v1-verify.py` przygotowany do wykonania po
+zakończeniu obu procesów. Nadal brak Three Commands, bossowie60/70/77
+niezweryfikowani. Bez nowych zmian w kodzie gry w tym etapie.
+SDK/SDL nieinstrumentowane, dowody tymczasowe, brak nowego orakla PS1.
+
+### J: piętro54, poziom49 i oryginalne ulepszenie BP
+
+PASS `/tmp/pe-J5-chrysler-floor54-v1-proof/proof.json`: pełny cold start
+z autentycznego J przez całe piętra51–53 do schodów54 (159312 VBlank).
+PASS `/tmp/pe-J5-floor54-bp-v1-proof/proof.json`: ten sam start do175156,
+pierwsza wygrana na54, poziom49 i wydanie1000BP przez oryginalne menu.
+M8000 ma teraz ATK189 (bonus132), BP116, EXP774889, HP527/791.
+Oba dowody porównują cały JSON i1MiBVRAM normal/SAN/live, pełny inventory,
+character i512zmiennych z jawnymi deltami; native0, czyste logi,
+źródłowy i prywatne zapisy J niezmienione. Bez edycji RAM/RNG/save payload.
+SDK/SDL pozostają nieinstrumentowane; nie jest to dowód zgodności pikseli
+z PS1 ani ukończenia całej gry. Dowody znajdują się w tymczasowym `/tmp`.
+
+Dalsza trasa: Chrysler przed finałem kampanii. Zachować broń z efektem
+Three Commands (`MOD_ENTER_3_COMMANDS`,0x14) i użyć oryginalnych Tools,
+jeśli taki efekt oraz narzędzia zostaną zdobyte. Nie mylić z wielokrotnym
+strzałem. Zdobycie efektu nie jest jeszcze potwierdzone. Jeśli zestaw będzie
+za słaby na Truebred Eve na77, wrócić na trening do muzeum; zachować dwa
+pancerze i przenosić użyteczne bonusy przez oryginalne menu.
+
 ### J: M411/M412 podłączone, całe piętro51 odtworzone do52
 
 Bez nowych plików produkcji i bez przenoszenia funkcji. Pozostałe dwa

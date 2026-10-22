@@ -2,6 +2,38 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### K: pierwsza wygrana M420 potwierdzona; M419 pozostaje otwarte
+
+PASS `/tmp/pe-K4-m420-win-v1-proof/proof.json`: pełny coldContinueK przez
+windę60 i piętro61 do wygranej M420 oraz obsługi łupów przy50784.
+Cały JSON i1MiBVRAM normal/SAN/zamrożony live zgodne, native0/czyste
+logi, źródłowy i privateK niezmienione. 3306EXP/36PE, poziom54,
+EXP801636, HP717/801, BP1075/pool36. Cały inventory względem telefonuK:
+wyłącznie trzy M3→M4 sloty30–32, magazynek7→8 i rezerwa942→923
+(18strzałów, jeden reload19). Bez zużycia leków, leczenie oryginalnym PE.
+Cały character wyłącznie EXP/HP/pool;512vars tylko1/4/5/6/18.
+Wygraną umożliwiło dobijanie słabego celu w obrębie priorytetu typu3
+w testowym sterowniku. Żadnych zmian parametrów ani kodu gry.
+
+K5 ponownie odtworzył pełny JSON/VRAM wygranej50784 identycznie z K4.
+Dalsza trasa: M420slot3→M422slot4→M419slot7 i pięcioaktorowe starcie.
+K4 stał podczas ładowania ATB i zginął; zapis przebiegu
+`/tmp/pe-K4-m419-defeat-v1-checkpoint`. K5 poprawił ruch między akcjami
+oraz rzucił Haste przez oryginalne menu (flaga0x100 faktycznie ustawiona),
+ale również zginął. Obecny Entity_ResolveDropTable zmniejsza składnik
+obrony przy0x100; brak nowego porównania tego przebiegu z PS1, więc nie
+wnioskować o wierności z samych porażek ani zmieniać mechaniki na intuicję.
+Oba procesy zamknięte quit/native0, sourceK nietknięty.
+
+K6 odtworzył zwykłe ContinueK do stanu przed M419 przy55920. Ruch
+w krokach32VBlank po pierwszym ataku nie zapobiegł porażce: HP717→497
+→277→57→0, pozycja bez zmian podczas serii trafień. K6 zamknięty
+quit/native0. Następna próba `/tmp/pe-m419-m420-K7-live.py` do55920
+ma zacząć od ruchu przed pierwszym atakiem, żeby sprawdzić unik początkowej
+salwy; jej skuteczność pozostaje niepotwierdzona. Nie zaliczać M419 ani całego piętra61 jako
+ukończonych. Kandydat gry nadal m419-m420-bind-v1 bez nowych zmian kodu;
+SDK/SDL nieinstrumentowane, dowody w `/tmp`, brak nowego orakla PS1.
+
 ### K: M419/M420 naprawione w całości, oba błędy61 odtworzone
 
 Kandydat m421-m423-bind-v1 zakończył70/70regresji PASS i pełny coldJ

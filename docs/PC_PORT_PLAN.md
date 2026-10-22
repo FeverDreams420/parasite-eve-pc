@@ -2,6 +2,51 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### Magazyn kluczy i transfer Tool do M8000; nowy zapis N
+
+Dalszy oryginalny pad L7 wrócił z62 przez61/60, windę i NYPD do Wayne’a.
+M048 jest dostępne przy story632 przez M046→M043→M051; wcześniejszego
+wniosku o zamkniętym warsztacie z innej drogi nie należy stosować tutaj.
+Store item / Move odłożyło Key1–5. Storage[0:5]=[57,60,58,59,56],
+Key6/raw61 pozostaje w slot16. Cały inventory przy467343 identyczny
+z405147 poza pięcioma przeniesieniami; character bez zmian.
+`/tmp/pe-L7-store-keys1to5-v1-checkpoint`. Początkowo błędnie wybrany
+TheatreKey został zwykłym odwrotnym Move przywrócony do pierwotnego slot7;
+końcowe porównanie obejmuje wszystkie sloty, nie tylko klucze Chryslera.
+Listy magazynu zachowują dziury w bieżącej sesji menu.
+
+Nie było Tool/SuperTool w plecaku ani magazynie. Oryginalna skrzynia M199
+(global88/0x80000000 nieustawione) dała Tool22. Trzy dodatkowe walki
+M197/M198/M199 wygrane normalnymi wejściami, HP738 zachowane, bez Revive.
+Poziom91→94, EXP977535, HP738/864, BP375, capacity45. Pierwszy automat
+M199 utknął na starej liście celów: po limicie zatrzymał się, zwykły ruch
+odświeżył cele; następny pilot wygrał. Nie zmieniano stanu gry ani RNG.
+
+Przy543281 oryginalne Tune Up / Add Parameter Values przeniosło G23
+(slot18/raw266) do M8000 (slot5/raw269). Tool w44 i G23 zużyte;
+bonus ATK169→170, range12→14, ATK razem57+170=227. Double Action
+pozostało. Wszystkie4096B rekordów zmieniły wyłącznie bajty
+320:1→0,334:1→0,336:2→0,430:169→170,432:12→14;
+cały pozostały inventory, character i512vars niezmienione względem
+stanu bezpośrednio przed transferem. Dostępny dawca miał tylko+1ATK;
+nie jest to dowód wystarczającej siły na bossów70/77.
+Checkpointy `/tmp/pe-L7-tool-transfer170-{before,after}-v1`.
+Pełny cold L do543281 normal/SAN jest w weryfikacji:
+`/tmp/pe-L7-tool-transfer170-v1-proof/`.
+
+Powrót do M340 i oryginalny telefon utworzyły osobny slot13 N,
+bez nadpisania L/M. Menu zamknięte556281. N8192B SHA256
+`590cf948e62088c0b7df78e2838efe9dec066a805e796788182a1cc0bde73966`,
+`/tmp/pe-L7-upgraded-save-N1-v1-source/BASLUS-006620000000N`.
+Oba pancerze i dwaRevive zachowane; niższe klucze nadal w magazynie.
+PASS `/tmp/pe-N1-continue-v1-proof/proof.json`: oryginalne Continue tylkoN
+przez slot13 do14712, całe JSON/1MiBVRAM normal/SAN zgodne, native0/czysto,
+N8192B bez zmian. Cały inventory/character/512vars identyczne z telefonemN,
+w tym bonusy broni i magazyn kluczy. Pełny cold prefix tworzący N po543281
+pozostaje live-only; to osobny zakres od sprawdzonego Continue. SDK/SDL nieinstrumentowane,
+brak nowego oraclePS1; pełny port i bossowie70/77 nadal nieukończeni.
+Brak zmian produkcyjnego C/PsyZ w tej operacji; użytkownikowe bu00 nietknięte.
+
 ### Poziom90 osiągnięty, oryginalny zapis M i Continue PASS
 
 L7 live ukończyło trening przy333898: poziom90,EXP959215,HP655/860,

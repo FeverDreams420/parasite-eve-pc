@@ -20,10 +20,13 @@ slot30:704→813HP, jeden lek zużyty. Powrót M242→M229→M343→M340 i telef
 nowy slot11, zapis L8192B, SHA256
 `bbe513b52dc66225e470da2ecc055cc49da716c7618deb058dd813a6eb198ba6`,
 `/tmp/pe-K8-trained-save-L1-v1-source/BASLUS-006620000000L`.
-Menu zamknięte71764. Trwa pełny coldK→L normal/SAN
-`/tmp/pe-K8-trained-save-L1-v1-proof`, przygotowany -verify.py porównuje
-cały stan/VRAM, wszystkie8192B L i zachowanie K. Nie zaliczać go przed
-rzeczywistym wykonaniem weryfikatora.
+Menu zamknięte71764. PASS pełny coldK→L normal/SAN:
+`/tmp/pe-K8-trained-save-L1-v1-proof/proof.json`. Cały JSON/1MiBVRAM
+normal/SAN/zamrożony live zgodne, wszystkie8192B L identyczne z nową
+kopią źródłową, stare K niezmienione, oba native0/czyste logi. Względem
+checkpointu poziomu60 cały inventory tylko zużyty M3slot30, bonusATK
+140→153 i save sync category_counts942→999; character tylko HP704→813
+i BP1371→71;512vars tylko1/78.
 
 PASS osobne oryginalne Continue tylkoL przez slot11:
 `/tmp/pe-L1-continue-v1-proof/proof.json`,14648. Pełny JSON/VRAM normal/SAN

@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### G: potwierdzone716403EXP i zastój timera
+
+Bieżący proces G osiągnął173356VBlank,level37,716403EXP (+78162 od
+zapisu G),672/767HP,pulaPE936,BP48. OsiemMedicine3 i dwa pancerze
+zachowane. To obserwowany stan live; nowego zapisu telefonicznego jeszcze
+nie wykonano. Nie oznacza pokonania bossa50 ani ukończenia portu.
+
+Kolejne advance32 (do173388) nie zwróciło stanu. Odczytowy LLDB pokazał
+Akao_EnqueueStagedCommand→VSync(1)→Psyz_KernelPoll, kolejkę16 i lock0;
+RCnt2 aktywny,irq_mask65. Proces nie zakończył się. Przyczyna wymaga
+potwierdzenia; nie przypisywać jeszcze zastoju zegarowi audio ani logice
+walki. Checkpoint JSON/VRAM/input i log LLDB zachowano w
+`/tmp/pe-G1-training-checkpoint-v1-live`. Seed zimnego odtworzenia:
+`/tmp/pe-G1-training-checkpoint-v1-seed.json`. PASS `/tmp/pe-G1-training-checkpoint-v1-proof/proof.json`: zwykły i
+sanitizowany zimny replay mają cały JSON i1MiBVRAM identyczny ze sobą
+i checkpointem live, exit0 bez diagnostyki sanitizerów, karty G niezmienione. Nie zmieniano RAM, RNG, payloadu zapisu ani kodu gry dla obejścia.
+
+Niezależna próba uruchomienia oryginalnej USA gry z kartą G w emulatorze
+nie wystartowała: brak metal_shaders.metallib, ponadto brak gamedb.yaml
+w zachowanym zestawie resources. Próby i karta hosta znajdują się w
+`/tmp/pe-reference-museum-G-v1`. To nie jest nowy dowód zgodności z PS1.
+README skrócono do aktualnych zasad portu, checkpointu G i jawnych granic
+weryfikacji; historyczne wyniki pozostają poniżej.
+
 ### G: potwierdzone638241EXP i krótsze oczekiwanie sterownika
 
 Druga ograniczona seria60 cykli (cell7092) zakończona272554/M243:

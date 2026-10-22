@@ -12,232 +12,35 @@ compiler output, fixed code addresses and PS1 binary builds are no longer
 acceptance requirements. Changes are evaluated by behavior, portability,
 readability and native builds.
 
-A further ordinary cold Continue from the Day 3 pharmacy Save M reaches the
-Soho gunshop, completes its opening scene and collects its Tool. Normal and
-sanitized replays match the controlled session in full state and VRAM, preserving
-the source save and all equipment records. Other gunshop interactions and the
-remaining campaign still need verification.
-The continued replay drives to the museum, runs the M239 conversations and
-movies 12/13, and returns to field control outside at story stage 376. Full
-state and VRAM agree between the controlled session and normal/sanitized
-replays; three additional checkpoint pairs cover arrival and both movies.
+This is an incomplete port. The ordinary-input route has reached EX Chrysler
+Building and returned to the museum to strengthen Aya; the floor 50 boss remains
+undefeated. The latest documented genuine phone checkpoint is G: level 37,
+638,241 EXP, 714/767 HP, M8000 attack 164, eight Medicine 3 and two armors.
+See [the port plan](docs/PC_PORT_PLAN.md) for current checkpoints, reproducible
+inputs, verification results and remaining work.
 
-Fast menu input now waits for space in the original 16-message AKAO queue,
-preventing an overflow that corrupted the sample-table pointer. A permanent
-regression covers full and paired-command boundaries with the real timer;
-normal/sanitized empty-card and Continue replays pass.
+Controlled headless runs use the original pad, menus, battles and save flow.
+Normal and sanitized replays compare full reported state, VRAM and newly written
+save bytes, while checking that the source memory-card copy remains unchanged.
+These checks establish the recorded cases; they do not establish a completed
+campaign, full PS1 pixel fidelity or complete audio playback. Temporary replay
+artifacts and an uninstrumented PsyZ/SDL build are explicit limitations of the
+current evidence.
 
-Ordinary input from that route also returns to NYPD, recovers Locker Key 2 after
-a full-inventory refusal, wins the M100 encounter and creates phone Save N.
-The full replay and cold Continue N pass normal/sanitized checks with matching
-state, VRAM and save payloads. The source save remains unchanged.
+The game runs the original code in `src/main/` and `src/overlays/`. Repair whole
+modules in their existing files for host pointers, memory, PsyZ and disc images:
+no new production files, no extracting selected functions, and no parallel
+feature-by-feature engine. The abandoned `pc/` implementation and its dependent
+tests have been removed; do not recreate or relocate them. Native targets compile
+and link the original modules directly. Required host changes belong in those
+modules and our PsyZ fork.
 
-Cold Continue N also covers the M099 Ammo +15 reward, another M100 victory,
-Cathy's conversation, the M107 fight with Heal 2 and reloading, an M16A1 upgrade,
-and the M108 weapon gift at story stage 400. Normal/sanitized full replays and
-four checkpoint pairs agree on full state and VRAM; N remains unchanged.
-
-The continued ordinary route completes the M115 Ben/Sheeva scene, wins another
-M100 encounter and creates phone Save O at stage 400. Full replay and cold
-Continue O pass in both profiles, preserving N and matching all save bytes.
-
-A fresh independent check also loads this Save O in the original USA game.
-Scene, player position and facing, HP, capacity, all 50 inventory slots and all
-4096 equipment bytes agree with native Continue. This verifies the loaded
-checkpoint; complete gameplay, pixel and audio fidelity remain unproven.
-
-Ordinary Continue O now also covers another M100 victory, the M116 Ammo +6
-reward and manual reload, the M121 story scene, a three-target M115 victory,
-and a genuine phone Save in M112 with HP 133/189. This private save uses slot A
-(called A2 in the test notes to distinguish it from the early theater save).
-Full replays, five checkpoint pairs and cold Continue pass normal/sanitized
-checks with matching full state, VRAM and save payloads. A later attempt at
-the repeated M115 encounter ends in Game Over after consuming Revive; both
-revival and the final failure reproduce in both profiles. A2 remains unchanged
-and remains the latest genuine phone save. A subsequent ordinary replay now
-wins M121, uses the real Revive, and reaches the M117 doctor, who restores full
-HP. Full normal/sanitized replays and six checkpoint pairs pass, including a
-read-only confirmation of the actual Barrier flag. The earlier test notes
-incorrectly called spell 8 Barrier; it is Slow, while Barrier is spell 5. This
-route has no new independent PS1 comparison.
-
-A further ordinary branch wins the optional M118 encounter, collects its SG550,
-uses Heal 1 and Medicine 1, and reaches M122. Six normal/sanitized checkpoint
-pairs agree in full state and VRAM; all inventory and equipment changes are
-accounted for. Two attempts at M122 from this depleted branch end in Game Over,
-including a retry with the test driver's previously unreachable dodge route
-enabled. Neither attempt counts as a victory; the full-HP M117 replay remains
-available. A subsequent direct route from M117 now wins M122: Energy Shot
-first defeats the 78-HP target, then M16 volleys finish the other opponent.
-The full-inventory reward screen exchanges a Tool for Medicine 2; real items
-and Heal 1 restore full HP before M124/M044 and the M123 boss introduction.
-Full normal/sanitized replays and six checkpoint pairs agree on state and VRAM,
-with A2 unchanged. M123 remains unwon; its introduction is the current replay
-endpoint, with HP 189/189. Further ordinary M123 input now has repeatable
-evidence for gun damage, Heal 2 and the boss's blocked Escape. A read-only HP
-watch distinguishes the half-HP effect from a later 72-HP hit and 10-HP contact
-losses; the watched run ends with the same state and VRAM as the unobserved
-replay. The boss remains unwon. The next preparation route branches from the
-verified full-HP M122 checkpoint toward M120 and the original BP menu.
-That branch now wins M120, collects two Medicine 3 and Full Cure through the
-original full-inventory exchange, and spends 500 of 562 BP on Active Time.
-Normal/sanitized full replays and six checkpoint pairs agree in state and VRAM;
-read-only observations confirm BP 62 and stat allocation 140→190 before and
-after combat. A2 remains unchanged. The prepared replay ends in M120 with HP
-120/189; the BP change has not yet been persisted in a new phone save.
-
-The executable runs the original game entrypoint. Recorded ordinary input
-covers New Game, the first Melissa fight, exploration, subsequent bosses and
-story progression through Day 3 to the NYPD. An earlier branch's genuine phone-created checkpoint N in M112 also loads in the original USA game: player position, HP, all inventory
-slots and equipment records agree. Ordinary input from N wins M120 and M122,
-collects and uses healing items, and reaches the M123 boss. M123 has not been
-won, and the remaining campaign and EX content are incomplete. Earlier runs
-with explicit diagnostic HP changes are separate evidence, not proof of an
-ordinary campaign completion.
-
-The current PsyZ polygon attribute fix has 144 independent software PS1 GPU
-reference cases. A recorded M115 scene now agrees with the reference across
-all 16-bit VRAM bytes, with identical gameplay state before and after the fix
-and matching normal/sanitized runs. This establishes that scene and pose;
-complete visual fidelity and hi-res coverage remain unverified. A fresh ordinary
-New Game route with the original boot clocks running reaches both theater keys,
-including another corridor victory, level-up and a genuine phone Save. Normal
-and sanitized runs agree with the live session in full state and VRAM. A further
-ordinary replay includes the optional parrot victory and reward, finishes the
-second Melissa encounter and returns to field control after dialogue 133, with
-the same full-state and VRAM agreement. Its regression test also requires the
-original parrot defeat flag. The original USA game also loads that Save with matching HP, position, all inventory
-slots and equipment records. Recorded ordinary input also wins the M027/M028
-sewer battles and traverses M031. The bootstrap replay suite passes in both
-builds with the original clocks running, and a further ordinary replay wins M032.
-A complete New Game replay now also opens its gate, passes the M033 Eve scene,
-and reaches the M034 two-target tutorial. A further ordinary replay collects the M031/M334 chests,
-uses the original equipment upgrade menu, wins M032 and creates phone Save B.
-Normal/sanitized runs agree on full state, VRAM and both save payloads; a cold
-Continue B also returns to field control with matching state and VRAM.
-Ordinary input from B now defeats both alligator phases, collects the reward
-and reaches Daniel's M036 scene. Normal/sanitized runs match the controlled
-session in full state and VRAM, with the source save unchanged. The same route
-continues through the Day 2 transition and creates genuine Save C. Its cold
-Continue works in both native builds and the original USA game, with matching
-HP, position, all inventory slots and equipment records. Ordinary input from C
-also covers the station's opening conversations, side rooms, armory rewards,
-tuning tutorial and a real bonus transfer. Consuming the equipped donor exposed
-an empty-slot crash in the original inventory module; the in-place fix now passes
-the same replay in both builds and a permanent fallback-weapon regression.
-The continued route equips M16A1 and Kv Vest, collects both locker rewards,
-finishes Ben and Daniel's scene and the press conference, then creates phone
-Save D. Full replay and cold Continue D pass both builds with matching state,
-VRAM, inventory and equipment. From D, ordinary input travels to the museum
-and creates phone Save E. Cold Continue E and the full Klamp conversation
-through the return to M192 also pass both builds with matching state and VRAM;
-inventory, equipment and source saves remain unchanged.
-Ordinary input from E also returns to NYPD, completes the second briefing,
-receives another Mod Permit and creates phone Save F. Full replay and cold
-Continue F pass normal and sanitized builds with matching state and VRAM;
-the genuine save payloads agree and the source E remains unchanged.
-From F, ordinary input plays the departure movie and park introduction,
-collects both M059 chest items, wins the first two-enemy park battle and uses
-the reward medicine. Sanitizers exposed premature field-address formation
-through a defeated target's released core in the original battle module.
-The in-place fix defers status access until an ailment bit requires it; the
-full route now agrees in state and VRAM across both builds and the live run.
-The continued ordinary route collects both M060 Medicine 1 chests, wins the
-two-enemy M061 fight, receives both Junk rewards, enters M063/M064 and creates
-phone Save G. Full replay and cold Continue G pass normal and sanitized builds
-with matching complete state, VRAM, inventory and equipment; save payloads
-agree and the source F remains unchanged.
-Ordinary input from G also obtains Zoo Key, SP Vest1 and M203, handles the
-full-inventory refusal and item discard menu, equips the vest, wins M063 and
-M358 encounters, collects M358 Ammo +15 and crosses the unlocked M062 gate.
-Normal and sanitized replays agree with the live run in complete reported
-state and VRAM; G remains unchanged.
-The next ordinary segment wins M062, collects all three chests, uses Defense
-+1 on the equipped SP Vest1 and returns to create phone Save H. Full replay
-and cold Continue H pass both builds with matching reported state, VRAM,
-inventory, equipment and save payloads. The three chest flags are checked.
-From H, ordinary input wins new M063/M358 encounter variants and M067, opens
-the second Zoo Key gate, completes the amphitheater Eve scene and follows her
-through M070 back to M072 at story stage 248. Full replay and four checkpoints
-pass both builds with matching reported state and VRAM; H remains unchanged.
-The route now continues through M068/M074 to M075, exchanges a Junk for
-Revive at a full inventory, collects both ammunition chests, wins the bear
-encounter and creates phone Save I. Full replay and cold Continue I pass both
-builds with matching reported state, VRAM, equipment and save payloads.
-Ordinary input from I now traverses M076/M077, collects Ammo +15, exchanges
-Junk for Sv. Vest1, wins the two-enemy M080 bridge fight and reaches M078.
-Full reported state and VRAM agree across the live session and both builds;
-I remains unchanged. The swapped Junk stays in the chest.
-The continued ordinary route wins M078, collects and uses its Defense +1 on
-SP Vest1, collects M079 Tool, wins all four M081 enemies and the M082 bridge
-encounter, then reaches M083. Reward medicine and two field Heal1 casts use
-the original menus. Both builds match the live session in complete reported
-state and VRAM; source I and the unused Revive remain preserved.
-Ordinary input from I also wins M083, collects both M084 chests, uses
-Cr Evade +1 on SP Vest1, traverses northern M085, wins M087 and creates
-phone Save J there. Full replay and cold Continue J pass both builds with
-matching reported state, VRAM, inventory, equipment and save payloads.
-The M085 encounter did not trigger on this route and is not covered by it.
-From J, ordinary input also defeats all four M086 worms with the existing
-M16 and real Heal1/Heal2, collects ammunition and Defense +1, returns to
-M087 and creates phone Save K. Full replay, two checkpoint pairs and cold
-Continue K pass both builds with matching reported state, VRAM and save
-payloads. Tools, M203, Mod Permits and Revive remain preserved; the rejected
-Tune Up attempts do not change equipment.
-From K, ordinary input defeats Eve in M089 using the existing M16, real
-PE healing and automatic Revive, then plays the subsequent scenes and
-movies, creates genuine Day 3 Save L and reaches M092's opening dialogue.
-Full replay, three checkpoint pairs and cold Continue L pass both builds
-with matching reported state, VRAM and save payloads. An earlier Game Over
-replay remains separately verified; victory does consume Revive.
-Ordinary input from L collects M092 Ammo +30, talks to Maeda and Daniel,
-visits the pharmacy and obtains Medicine2, Revive, Medicine3, Cure-M,
-Defense +2 and PE +1. Original item menus apply the armor upgrades and
-handle the full-inventory exchange. Genuine phone Save M, its cold Continue,
-the complete replay and three checkpoint pairs agree across both builds
-in reported state, VRAM, inventory, equipment and save payloads.
-These are coverage results, not a completed-campaign result.
-All 23 resident effect programs (85–107) are registered and pass full PM
-lifecycle tests, including sanitized runs. Particle updates also agree with
-1,344 original USA CPU/ROM cases. Actual use of every spell and effect in
-the campaign remains unverified.
-See [the port plan](docs/PC_PORT_PLAN.md) for current evidence and limitations.
-Artwork, video and audio come from user-supplied CUE/BIN images. Full gameplay,
-visual fidelity and end-to-end audio remain unfinished; isolated audio tests
-do not prove complete playback.
-
-Native targets compile original modules in place, without an additional game
-engine or FFmpeg. Tests exercise original room/assets, audio, camera, actor,
-input and rendering paths. The abandoned implementation and its dependent
-fixtures were removed; earlier coverage claims that used those fixtures are
-historical and do not describe the current suite. Full scene integration,
-unsupported room descriptors and remaining hardware/address assumptions need
-work.
-
-The port must run the original game code in `src/main/` and `src/overlays/`.
-Modify those sources in place for host pointers, memory, PsyZ and disc-image
-access. Do not recreate gameplay feature by feature in `pc/` or introduce a
-parallel engine. Repair whole original modules in their existing files: no new
-files and no extracting selected functions. The abandoned `pc/` directory and its dependent tests have been removed.
-Do not recreate or relocate that parallel implementation. Required host changes
-belong in the existing original modules and PsyZ. `parasite-eve-original` now compiles the first original
-modules directly and links them into the executable. Full integration is pending.
-
-The original `fx_common/camera.c` now compiles whole and has native node pools,
-camera/frustum math, path sampling and image-backed resource loading. Tests
-compare these paths with USA code and real day/night banks. The three original
-model drawers also match USA command payloads and ordering chains for all 170
-day/night models in 2040 cases. The fourth drawer, including FT3/FT4 subdivision
-and texture-distance selection, matches another 252 USA cases. Original fades,
-markers and night shade now use native packets and shared motion state, with
-headless tests of both buffers. Original camera motion/endpoints and all 79
-adjacent path pairs also have native state and USA reference tests. The complete
-original scene initializer now creates all 187 nodes from real image resources;
-900 USA reference cases cover its ten variants and scene entry choices. Its
-original controller matches 21,624 USA states, and the complete original frame
-loop executes 2,664 headless frames with real textures, SDL input, playback and
-demo exits. Original-program startup now reaches the title screen headlessly;
-campaign integration remains unfinished.
+Tests also cover original rendering, camera, actor/input, audio-queue and
+resource paths, with selected USA CPU/ROM reference cases. Historical coverage
+counts and earlier unported-stage notes belong to the dated evidence in the
+port plan, rather than describing the current playable boundary. Artwork, video
+and audio are loaded from user-supplied CUE/BIN images; there is no additional
+game engine or FFmpeg dependency.
 
 ## Build and run
 
@@ -256,19 +59,36 @@ cmake --build build --parallel
 
 Pass `--disc2 "/path/to/Disc 2.cue"` to keep both sources open. Images
 are assigned by their authored USA disc markers; original disc-mode selection
-chooses the matching mounted volume without a tray or swap prompt. Only Disc 1
-has been tested with real data; Disc 2 and the complete campaign remain unverified.
+chooses the matching mounted volume without a tray or swap prompt. Both USA
+images are exercised by real-data tests, including Disc 2 rooms; complete
+campaign and image-set/error coverage still require the audit in the port plan.
 CUE support covers one BINARY MODE2/2352 track, relative quoted FILE paths and
 INDEX 01 offsets. Duplicate identities and missing startup Disc 1 fail explicitly.
 
 Automated runs use `--headless --frame-limit N`; this is a forced diagnostic
 boundary, not a completed-game result. `--dump-vram PATH` writes all 1024×512
-16-bit VRAM words at that boundary and stdout records the game flags, scene,
-movie state and active display rectangle/format as JSON. Decode the selected
-rectangle as RGB555 or packed RGB24 according to `display.rgb24`.
+16-bit VRAM words at that boundary. JSON on stdout includes scene/game flags,
+actors and raw 16.16 animation positions, menus, inventory, character and combat resources,
+original reward lists, movie state and the active display rectangle/format.
+Decode the selected rectangle as RGB555 or packed RGB24 according to
+`display.rgb24`.
 Repeat `--pad-at VBLANK:BUTTON_MASK` for deterministic digital input, using
 pressed PS1 button bits (for example `10000:8` holds START; `10010:0` releases it).
 Input enters the original pad packet before the original mapping/repeat logic.
+
+For interactive automation, add `--control-at N` with a later `--frame-limit`.
+At that VBlank the headless process emits state and pauses for stdin commands:
+`advance VBLANK_COUNT BUTTON_MASK` or `quit`. Each advance emits another state
+and, when requested, VRAM capture. The control state also reports original
+combat targets and action queues. Keep stdin open while controlling the process;
+EOF exits successfully. Scheduled pad events must not extend beyond the first
+control boundary.
+
+Set `PSYZ_AUDIO_CLOCK=video` for deterministic headless replay: PsyZ opens no
+audio device and advances its mixer with video VBlanks, so pausing input also
+pauses the emulated audio clock. This is the clock mode used by the recent
+controlled replays; it does not prove audio fidelity by itself.
+
 Interactive keyboard events feed the original pad packets; Enter, keypad Enter
 and Escape map to START, including movie skipping. The SDL GPU and OpenGL
 backends present movie RGB24 as three packed VRAM bytes per pixel. Full campaign

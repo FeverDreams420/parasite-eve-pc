@@ -2,6 +2,84 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### Muzeum: level37, ATK164 i oryginalny zapis F na aktualnym kandydacie
+
+Kontynuowano tę samą serię cell6996 na armor-call66796/native38554.
+Po pierwszych pięciu zwycięstwach doszło sześć kolejnych:110476/520998,
+132210/525231,145136/529464,156498/533697,162508/537930 oraz ostatnie
+przed169806 do542163EXP. Przy169806 oryginalne menu21 (awans) zatrzymało
+sterownik jego zachowawczym warunkiem „unexpected result menu”. Native
+nie uległ awarii; seria o limicie40 nie została wznowiona od początku.
+W tym punkcie EXP już542163, level nadal36,HP599/765,BP729,pulaPE0.
+Dwa oryginalne Cross z300 klatkami dały170422/menu12: level37,
+maxHP767 (+2),siedem stat_allocation350→360,BP1548. Zachowana pulaPE
+od E545 plus274 nagród dała819BP; nie jest to stała premia za poziom.
+
+Nowa capacity31 dała jeden wolny slot. Oryginalne ALL odebrało Ammo15
+oraz jeden Medicine3 do nowego slotu30; drugi nadmiarowy Medicine3
+pozostał. Endpoint170978 pole M242,HP599/767,osiemMedicine3. Istniejące
+sloty0..29 i oba pancerze zachowane. Oryginalne menu BP: Triangle,
+Up/Cross do48,Down3/Cross do29,Cross do9. Read-only LLDB potwierdził
+SpendStat0,working1548,ItemCopy.itemId72/M8000,bonus[0]=92. Po15 Down,
+Cross i wyjściu Circle172290: BP48,bonusATK92→107,ATK149→164.
+Range/capacity/pozostałe bonusy i tail DoubleAction/single bez zmian.
+LLDB odłączony, żadnych zapisów pamięci/wywołań funkcji w debuggerze.
+
+Powrót bez walk: M229173606→M343→M340177258,telefon179264. Menu37
+180188 pamiętało slotE4; Down wybrało nowy F5, Cross zapisało180308,
+zamknięcie180792. Źródłowy i prywatny E niezmienione. Nowy oryginalny F:
+`/tmp/pe-ex-museum-trained-save-F1-v1-source/BASLUS-006620000000F`,
+8192B,SHA256
+`4f508629cd0e1baab0038b30ea757a35fabeebaf97d312956bb2c829ee852f8d`.
+Level37,EXP542163,HP599/767,BP48,PEpool0,capacity31,
+M8000slot5/ATK164/DoubleAction/single,B Jacket1slot6/SvProtectorslot29,
+osiemMedicine3,reserve819,clip4. Próg38=725158,brakuje182995EXP.
+Zapasowy pancerz nadalDEF39; nie został wzmocniony, brakTools/SuperTools.
+
+PASS `/tmp/pe-ex-museum-trained-save-F1-v1-proof/proof.json`: na aktualnym
+animation-visibility pełne zimne E→11 walk→level37→BP→telefonF,
+normal/SAN pełny nowy JSON i1MiBVRAM identyczne między profilami;
+wszystkie stare pola JSON iVRAM identyczne z ciągłym armor-call180792.
+Oba native exit0 bez diagnostyki, E8192B źródłowe/prywatne niezmienione,
+nowy F8192B identyczny z live w obu profilach. Jawny verifier całego
+inventory/character/512vars i11 list łupów:10×4233+4561=46891EXP,
+495272→542163; HP718→599,119 obrażeń,bez leczenia/zużycia Medicine.
+285 odebranych nabojów (30/15/30/30/30/15/30/30/30/30/15),113 pojedynczych
+strzałów/sześć przeładowań po19; reserve648→819/clip3→4. Dodatkowe
+inventory delty tylkocapacity30→31,slot30→8,bonusATK92→107 i odświeżony
+przez zapis category_counts[0]648→819. Wszystkie512vars poza78:166→126
+identyczne. Pośrednie live checkpointy169806/170978/172290 sprawdzono
+jawnymi warunkami, ale nie odtwarzano ich osobnymi nowymi procesami.
+Seed/checkpoint/runner/verifier pod tym samym prefiksem.
+
+PASS `/tmp/pe-ex-museum-trained-F1-continue-v1-proof/proof.json`: nowy
+animation-visibility, oryginalne Continue z wyłącznie F, bez E na
+prywatnej karcie, cap14456. Cały JSON i1MiBVRAM identyczne normal/SAN,
+cały inventory/character/512vars identyczne z telefonem180792. Oba
+exit0 bez diagnostyki, F8192B niezmienione. Ponownie sprawdzono manifest:
+438 obiektów i wszystkie zależności/archiwa/binaria zgodne z poprzednim
+buildem; nie zmieniano źródeł od eff7959ca ani nie powtarzano bez potrzeby
+już zaliczonych70/70 oraz13/13 na profil. SDK/SDL nieinstrumentowane.
+
+Stary controller66796/native38554 zamknięty quit/exit0. Aktualny
+controller9601/native57114, root
+`/tmp/pe-animation-visibility-v1-F1-live`, nowy animation-visibility po
+ContinueF14456. Cały JSON iVRAM zgodne ze zweryfikowanym cold Continue
+(live-reference.json); headless czeka na pad. Żadna seria farmingowa nie
+jest teraz w toku, cell6996 zakończony na ekranie awansu. Helpery
+`/tmp/pe-animation-visibility-v1-F1-fight-driver.js` i
+`/tmp/pe-animation-visibility-v1-F1-farm-driver.js` wskazują nowy proces.
+Do tymczasowego farm-driver dodano obsługę menu21 przez najwyżej cztery
+Cross z odczytem stanu i warunkiem wzrostu poziomu/powrotu menu12.
+Sam protokół dwóch Cross przetestowano powyżej; nowa automatyczna gałąź
+nie została jeszcze uruchomiona — sprawdzić przy następnym awansie.
+
+Bez zmian kodu produkcyjnego, RAM/RNG lub edycji zapisów w tej serii.
+Wcześniejsze sekcje są historyczne; aktualny bazowy zapis to F. Dalszy
+trening/przygotowanie uników oraz boss50/Chrysler77 pozostają otwarte.
+Brak oraclePS1/potwierdzenia pixel-perfect, dowody/tmp nietrwałe;
+pełny port nadal nieukończony.
+
 ### Headless: oryginalna animacja każdego aktora i kontynuacja treningu E
 
 W istniejącym zrzucie `src/main/boot/init.c` dodano do każdego wpisu

@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N5: wyjście z treasure i rzeczywista kolejka trzech komend
+
+Oryginalny pad wyprowadził N5 z M437 przez wejście w dolnej części pokoju:
+trasa [−400,0]→[0,0]→[0,−1300]→[0,−1900], basis2048. Wcześniejsze
+próby ku górnym skrzyniom zatrzymały się na kolizji; nie zmieniano geometrii.
+Przy133525 M294/slot16. Plan16→17→9/code1 dał M296 przy135741.
+Up420 i następnie runUp do zmiany sceny dały M297/floor65 przy137201,
+HP869, bez zużycia zasobów. Wyjście runUp dało slot2/M422 przy137813.
+
+Pierwsza walka M422: rzeczywista queue3 przy138697, remaining0, ammo13.
+Zwycięstwo142385, HP721,EXP993020, Revive2 zachowane.
+`/tmp/pe-N5-TripleCommand-first-win-v1/proof.json`: live-only,
+queued-state i win-state zapisane osobno. Oryginalne fieldHeal3→HP869.
+Następna walka M421 wygrana148777,HP869,EXP996570,pool235.
+Przy150465 kolejna walka M419 w slot3, automat uruchomiony.
+Ścieżka65 według oryginalnej tabeli:2→1→3→8→7→0/code1.
+Cold nowego odcinka po128729 nadal do wykonania; brak dowodu końca
+piętra, QueenBee lub Eve dla tej gałęzi z TripleCommand.
+
 ### inv-mask-v1: brakujące sześć replayów PASS; N5 z ATK235/TripleCommand
 
 `/tmp/pe-inv-mask-v1-six-replay-proof.json`:6/6 terminalnych replayów

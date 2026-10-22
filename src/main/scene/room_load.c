@@ -668,6 +668,15 @@ int Scene_LoadRoom(unsigned int roomId)
             if (slot == 166 && record[i].u.handlerAddress == 0x80195690u)
                 native = &g_RoomHomingProgram;
         }
+        /* Identical USA M419/M420 motion/actor/dropped-flare modules. */
+        if (map + 1 == 419 || map + 1 == 420) {
+            if (slot == 75 && record[i].u.handlerAddress == 0x80194d30u)
+                native = &g_RoomActorClassTable[2];
+            if (slot == 12 && record[i].u.handlerAddress == 0x80194c5cu)
+                native = &g_RoomMotionHandlers;
+            if (slot == 122 && record[i].u.handlerAddress == 0x80194dc4u)
+                native = &g_RoomDroppedFlareProgram;
+        }
         /* Complete USA M421-M423 paired-glow/orbit/dropped-flare modules.
          * Their only payload difference is a reset runtime argument word. */
         if (map + 1 >= 421 && map + 1 <= 423) {
@@ -1006,7 +1015,7 @@ int Scene_LoadRoom(unsigned int roomId)
     }
 
     /* Loading this original overlay also cleared its particle work data. */
-    if (map + 1 == 75 || map + 1 == 80 || map + 1 == 82) {
+    if (map + 1 == 75 || map + 1 == 80 || map + 1 == 82 || map + 1 == 419 || map + 1 == 420) {
         memset(&g_RoomMotionGlyph, 0, sizeof(g_RoomMotionGlyph));
         memset(g_RoomMotionGlyphs, 0, sizeof(g_RoomMotionGlyphs));
         memset(g_RoomMotionTrailA__motion, 0, sizeof(g_RoomMotionTrailA__motion));
@@ -1223,7 +1232,7 @@ int Scene_LoadRoom(unsigned int roomId)
             g_FieldFxTaskPrograms[102]=&g_RoomTimedSpawnProgram;
             memset(RoomLib_TimedRenderTable,0,8);
             for(unsigned offset=12;offset<32;offset+=8)memset(RoomLib_TimedRenderTable+offset,0,4);
-        } else if ((map+1==126 || map+1==129 || map+1==137 || map+1==139 || map+1==140 || map+1==141 || map+1==147 || map+1==149 || map+1==152 || map+1==324 || map+1==326 || map+1==327 || map+1==328 || (map+1>=421 && map+1<=423)) && slot==122) {
+        } else if ((map+1==126 || map+1==129 || map+1==137 || map+1==139 || map+1==140 || map+1==141 || map+1==147 || map+1==149 || map+1==152 || map+1==324 || map+1==326 || map+1==327 || map+1==328 || (map+1>=421 && map+1<=423) || map+1==419 || map+1==420) && slot==122) {
             g_FieldFxTaskPrograms[37]=&g_RoomDroppedFlareProgram;
             memset(g_RoomDroppedFlareArgs,0,sizeof(g_RoomDroppedFlareArgs));
         } else if ((map + 1 == 107 || map + 1 == 111 || map + 1 == 114 || map + 1 == 118 || map + 1 == 122 || (map + 1 >= 421 && map + 1 <= 423)) && slot == 35) {
@@ -1343,9 +1352,9 @@ int Scene_LoadRoom(unsigned int roomId)
         } else if ((map + 1 == 63 || map + 1 == 83 || map + 1 == 358 ||
                     map + 1 == 384 || map + 1 == 387) && slot == 74) {
             g_PmCmdHandlerTable[slot] = &g_RoomWindowClassHandlers;
-        } else if ((map + 1 == 75 || map + 1 == 80 || map + 1 == 82) && slot == 12) {
+        } else if ((map + 1 == 75 || map + 1 == 80 || map + 1 == 82 || map + 1 == 419 || map + 1 == 420) && slot == 12) {
             g_PmCmdHandlerTable[slot] = &g_RoomMotionHandlers;
-        } else if ((map + 1 == 75 || map + 1 == 80 || map + 1 == 82) && slot == 75) {
+        } else if ((map + 1 == 75 || map + 1 == 80 || map + 1 == 82 || map + 1 == 419 || map + 1 == 420) && slot == 75) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[2];
         } else if (actor_library && slot == 70) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[0];

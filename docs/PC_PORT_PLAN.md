@@ -2,6 +2,49 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### K: M419/M420 naprawione w całości, oba błędy61 odtworzone
+
+Kandydat m421-m423-bind-v1 zakończył70/70regresji PASS i pełny coldJ
+przez bossa60, telefonK i powrót na61 do wcześniej blokującego M422:
+`/tmp/pe-m421-m423-entry-v1-proof/proof.json`,452000. Cały JSON/1MiBVRAM
+normal/SAN zgodne, całe inventory/character jak przy telefonieK,512vars
+wyłącznie1/4/5/6, native0/czyste logi, J niezmienione i wygenerowany K
+identyczny bajtowo. Nie ma porównania z dawnym live po jego awarii.
+
+Przebieg od ContinueK załadował naprawiony M421, a następny M420 ujawnił
+brak PM75 (PS1 80194d30). Pełny read-only audit oryginalnych identycznych
+M419/M420:25524B, SHA25620de51a20b39a1f231b77ec8273565d9c7c5dbec93f4fa12595748281bb096ce,
+`/tmp/pe-m419-m420-audit-v1-proof.json`. Wszystkie5752instrukcje:
+4943motion/actor z M075 i809dropped flare z M126, wszystkie rodata/tabele,
+skrypty, deskryptory i zerowe dane robocze sprawdzone po jawnych relokacjach.
+Istniejący room_load.c mapuje PM12/PM75/task122 i rozszerza istniejące
+resety motion/flare. Istniejący original_actor_animation.c --m420-load
+sprawdza fingerprinty obu modułów, skrypty, wszystkie trzy banki i powtórne
+ładowanie po zatruciu danych. Bez nowych plików produkcyjnych/przenosin.
+
+Świeży kandydat `/tmp/pe-m419-m420-bind-v1`:438obiektów, PASS70/70regresji
+-verification.json, PASS18/18CTest na profil i zgodne sygnatury normal/SAN
+-effects-proof.json. Pierwszy zbiorczy wynik CTest był niepełny; zachowany
+-checks.log, pełne ponowienie zakończone18/18 w -checks-retry-v1.log.
+-final-rehash-proof.json potwierdza obiekty/zależności/biblioteki/exeki.
+PASS `/tmp/pe-m419-m420-entry-v1-proof/proof.json`: coldContinueK→M42037000,
+cały JSON/1MiBVRAM normal/SAN/live zgodne, cały inventory/character równy
+telefonowiK,512vars tylko1/4/5/6; native0/czysto, privateK niezmieniony.
+
+Dalsza walka w M420 (pięć aktorów) przyniosła dwie porażki sterownika.
+Pierwsza: PASS `/tmp/pe-K2-m420-defeat-v1-proof/proof.json`,40840,
+pełny JSON/VRAM normal/SAN/zamrożony live zgodne, native0/privateK
+niezmieniony. To dowód przejścia do śmierci gracza, NIE całego GameOver.
+Druga próba: K3 odtworzył cały stan przed starciem38844 identycznie z K2;
+zmiana priorytetu w testowym sterowniku raniła typ3, ale rozdzielała ogień
+między cele. K3 również zginął i został zamknięty quit/native0. Należy
+dobijać osłabiony cel w obrębie priorytetu i rozważyć wcześniejsze PE;
+brak podstaw, by na samych porażkach zmieniać statystyki lub kod gry.
+Zapis źródłowy K nadal bez zmian; następne zwykłe Continue do38844
+przygotowane w `/tmp/pe-m419-m420-K4-live.py`. Zwycięstwo M420 i całe61–77
+nadal niepotwierdzone. SDK/SDL nieinstrumentowane, dowody w `/tmp`, brak
+nowego orakla PS1; pełny port nadal nieukończony.
+
 ### K: M421–M423 naprawione na miejscu; odtworzenie M422 trwa
 
 PASS `/tmp/pe-J5-boss60-save-K1-v1-proof/proof.json`: cały coldJ przez

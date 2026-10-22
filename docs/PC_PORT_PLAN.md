@@ -1,6 +1,63 @@
 # Plan implementacji pełnego portu Parasite Eve na PC
 
-## Aktualny potwierdzony stan — 22 października 2026
+## Aktualny potwierdzony stan — 23 października 2026
+
+### M96R odebrane; oryginalny transfer Triple Command do M8000
+
+Autentyczna poboczna gałąź N4 weszła przez M294 do M437 na64piętrze.
+Oryginalne skrzynie dały B Armor/raw261 (slot8 zamiastJunk), M96R/raw263
+(slot18 zamiastJunk), SuperTool23 (slot44 zamiastJunk) i Tool22
+(slot9 zamiastMedicine2). M96R ma mody33/0x21 (RoF2) i116/0x74
+(Enter3Commands); nie zmieniano tabel łupów, skryptów, RAM ani RNG.
+Dwie zwykłe walki po drodze podniosły poziom do99, BP782, HP869/869.
+
+Oryginalne Tune Up przy128213 przeniosło bonus+1ATK M96R SuperToolem:
+M8000 bonus170→171, rekordy4096B zmieniły tylko238:1→0 oraz430:170→171.
+SuperTool w44 zużyty, M96R zachowany. Przy128729 zwykły Tool przeniósł
+wyłącznie Enter3Commands: M8000 modifier438:115→116 (Double→Triple),
+M96R active224:1→0 i modifier246:116→0. Slot9/Tool22 i18/M96R263
+wyzerowane. Oryginalna procedura zwróciła20 nabojów do rezerwy
+(special_records offset10:193→213). RoF2 nie trafił do M8000;
+pozostaje pojedynczy strzał, ATK57+171=228, range58+14=72.
+Character i wszystkie512scriptvars identyczne przed/po transferach.
+`/tmp/pe-N4-M96R-triple-after-v1/proof.json`: PASS obserwowanego stanu
+live; pełny cold normal/SAN uruchomiony, jego wynik jeszcze niepotwierdzony.
+Nie oznacza to ukończenia portu ani zgodności obrazu z PS1.
+
+Zakończono również niezależny immutable normal replay N→554221.
+`/tmp/pe-enemy-atb-N3b-proof-v1.json` ponownie PASS z terminalnych
+normal/SAN: cały JSON i1MiBVRAM równe zamrożonemu endpointowi,
+oba exit0/czysto, autentyczny sourceN niezmieniony. Weryfikator używa
+teraz terminalnego katalogu normal, zamiast zmiennego katalogu live.
+
+### Eve77: oryginalna zmiana pancerza odnawia regenerację PE
+
+Live N3b potwierdziło B Jacket1→Sv Protector→B Jacket1 jako dwa
+oryginalne ruchy w walce. Przy570549 HP756 zachowane, cały inventory
+identyczny przed/po, recovery step86736/divisor45285→268697/60000.
+`/tmp/pe-N3b-armor-restored-v1/proof.json`. Druga taka para po Heal3
+przy602109 zachowała HP869 i cały inventory; divisor45096→59967,
+step84027→268345 (po24klatkach od zatwierdzenia już ponownie maleją).
+`/tmp/pe-N3b-armor-reset2-after-v1/proof.json`. Nie zmieniano mechaniki,
+RAM ani RNG; to obserwacje live, cold replay po554221 nadal do zrobienia.
+
+Pilot strzela tylko wczesnym oknem enemyATB≤1000, bez widocznej Maya,
+bez Eve.mode4 i bez sztywności. Dwa trafienia DoubleCommand w557085/557117
+przy enemyATB2944/4992 dały po234, Maya niewidoczna; kolejny pełny cykl
+nie uleczył Eve. Serie do600205 obniżyły HP Eve do1028960 bez kolejnego
+zaobserwowanego leczenia bossa. Zbyt małe PE i HP197 zatrzymały pilota.
+Ręczne Medicine4 uleczyło197→597, lecz trzecie zbędne Cross niechcący
+zakolejkowało także strzał (ammo12→11, Eve1028960→1028726).
+Maya pozostała wtedy niewidoczna, bez leczenia. Poprawna dalsza obsługa
+przedmiotu: po dwóch Cross sprawdzić queue1 i Square pominąć drugą akcję;
+nie powtarzać dodatkowego Cross. Następne oryginalne Heal3 dało HP869.
+Revive3 niezużyte, Medicine4 pozostały3. Eve nadal żyje, brak dowodu
+wygranej lub kolejnych faz. N4 z TripleCommand jest osobną gałęzią;
+N3b w tej walce nadal używa DoubleCommand, nie podmieniono ekwipunku.
+Kolejna próba po drugim resecie zatrzymana przez guard przy607221:
+HP230/869, PE21194635 (~323), Eve1028726 bez zmian, brak trafień
+wykorzystujących okno. Revive3 zachowane. N3b pozostaje zatrzymane do
+przeglądu leczenia/ruchu; nie jest to wygrana ani dowód poprawnej strategii.
 
 ### M96R: źródło znalezione w oryginalnym skrypcie skrzyń
 

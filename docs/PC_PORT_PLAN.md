@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### L4: poprawiony odczyt dystansu automatu, M420 wygrane i wejście63
+
+PASS `/tmp/pe-L4-m420-win-v1-proof/proof.json`: pełny cold Continue L
+do82917, cały JSON/1MiBVRAM normal/SAN/zamrożony live zgodne,
+native0/czysto, source/privateL bez zmian. M420 na62: +3306EXP/92PE,
+HP503/817, poziom62/EXP837533, oba Revive zachowane. Względem73653
+cały inventory wyłącznie zużyty M4slot13 i M3slot31, magazynek5→13,
+rezerwa961→942; cały character tylko EXP/HP/pool92,512vars tylko5/18.
+Przed walką oryginalny Medicine3, w walce dwa Medicine4 i Liberation.
+Bez zmian kodu gry, RAM, RNG lub payload save'a.
+
+Diagnoza sterownika: g_BattleTargetList[].dist jest budowane przez
+Battle_BuildTargetList, nie stanowi bieżącego dystansu podczas ruchu.
+W L3 automat widział1451 przy pozycjach oddalonych około100 i nie otwierał
+celowania. V2 opisany poniżej nie rozwiązuje tego problemu; nowy sterownik
+poza menu liczy dystans z aktualnych aim_position i pozycji Ayi, a w menu
+używa oryginalnego dystansu gry. Pomiar rzeczywistego Up8 w M420:
+(0,0,-570)→(0,0,-480), potwierdza wcześniejszą bazę2048. Hipoteza
+odwróconych kierunków na podstawie końcowej macierzy kamery odrzucona:
+renderer resetuje stan widoku; taki odczyt nie dowodzi bazy użytej do ruchu.
+Pomocniki: `/tmp/pe-L4-control-helpers-v1.json`.
+
+Następnie cała pozostała trasa62 przebyta bez walki/utratyHP. Live wejście63
+przy108169,selector3, HP503 i dwa Revive:
+`/tmp/pe-L4-floor63-entry-v1-checkpoint`. Pełny cold normal/SAN replay
+tego dalszego odcinka uruchomiony; wynik jeszcze wymaga sprawdzenia.
+Nie uzyskano Three Commands, bossowie70/77 i pełny port nadal otwarte.
+
 ### Dalsze62: Game Over i poprawka sterownika testu
 
 Po checkpoint73653 przebyto kolejne pomieszczenia do81237; druga walka

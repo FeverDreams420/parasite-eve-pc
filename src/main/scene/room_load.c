@@ -656,6 +656,18 @@ int Scene_LoadRoom(unsigned int roomId)
             native = &g_RoomOrbitFlareEffects;
         if (orbit_library && slot == 115 && record[i].u.handlerAddress == 0x80193250u)
             native = &g_RoomOrbitFlareEffects;
+        /* USA M412 combines the complete actor, GroundEruption,
+         * OrbitFlare and HomingProjectile units, preserving their banks. */
+        if (map + 1 == 412) {
+            if (slot == 37 && record[i].u.handlerAddress == 0x801954d0u)
+                native = &g_RoomGroundEruptionHandlers;
+            if (slot == 75 && record[i].u.handlerAddress == 0x8019556cu)
+                native = &g_RoomActorClassTable[2];
+            if (slot == 115 && record[i].u.handlerAddress == 0x80195618u)
+                native = &g_RoomOrbitFlareEffects;
+            if (slot == 166 && record[i].u.handlerAddress == 0x80195690u)
+                native = &g_RoomHomingProgram;
+        }
         /* Complete identical USA actor/joint-spray modules. */
         if (map + 1 == 413 || map + 1 == 416 || map + 1 == 417 || map + 1 == 437) {
             if (slot == 70 && record[i].u.handlerAddress == 0x801930f0u)
@@ -776,7 +788,7 @@ int Scene_LoadRoom(unsigned int roomId)
             if (slot == 75 && record[i].u.handlerAddress == 0x80192c70u) native = &g_RoomActorClassTable[2];
             if (slot == 116 && record[i].u.handlerAddress == 0x80192d04u) native = &g_RoomSoundBurstProgram;
         }
-        if (map + 1 == 269) {
+        if (map + 1 == 269 || map + 1 == 411) {
             if (slot == 77 && record[i].u.handlerAddress == 0x801921c8u) native = &g_RoomGrabHandlers;
             if (slot == 137 && record[i].u.handlerAddress == 0x80192228u) native = &g_RoomGroundSweepProgram;
             if (slot == 138 && record[i].u.handlerAddress == 0x801922a8u) native = &g_RoomOrbitTrailProgram;
@@ -1190,7 +1202,7 @@ int Scene_LoadRoom(unsigned int roomId)
             g_RoomBeamSparkAsset = NULL;
             memset(RoomLib_SlotTable, 0, 8 * sizeof(*RoomLib_SlotTable));
             memset(&g_RoomSparkCapture, 0, sizeof(g_RoomSparkCapture));
-        } else if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || orbit_library || map + 1 == 30 || map + 1 == 113 || map + 1 == 263 || map + 1 == 265 || map + 1 == 333 || map + 1 == 414 || map + 1 == 415) && slot == 115) {
+        } else if ((map + 1 == 12 || map + 1 == 13 || map + 1 == 27 || orbit_library || map + 1 == 30 || map + 1 == 113 || map + 1 == 263 || map + 1 == 265 || map + 1 == 333 || map + 1 == 414 || map + 1 == 415 || map + 1 == 412) && slot == 115) {
             g_FieldFxTaskPrograms[slot - 85] = &g_RoomOrbitFlareEffects;
             memset(g_RoomScriptArgs, 0, sizeof(g_RoomScriptArgs));
         } else if(shared_actor && slot==75){
@@ -1211,10 +1223,10 @@ int Scene_LoadRoom(unsigned int roomId)
         } else if ((map + 1 == 104 || map + 1 == 113 || map + 1 == 115 || map + 1 == 116 || map + 1 == 120 || map + 1 == 122 || map + 1 == 159 || map + 1 == 263 || map + 1 == 265 || map + 1 == 333 || chrysler_line) && slot == 136) {
             g_FieldFxTaskPrograms[51]=&g_RoomLineBurstProgram;
             memset(RoomLib_SlotTable,0,8*sizeof(RoomSlotRec));
-        } else if((map+1==141 || map+1==146 || map+1==153 || map+1==154 || map+1==328 || map+1==414 || map+1==415) && slot==166) {
+        } else if((map+1==141 || map+1==146 || map+1==153 || map+1==154 || map+1==328 || map+1==414 || map+1==415 || map+1==412) && slot==166) {
             g_FieldFxTaskPrograms[81]=&g_RoomHomingProgram;
             memset(&g_RoomHomingLaunch,0,sizeof(g_RoomHomingLaunch));
-        } else if((map+1==141 || map+1==146 || map+1==153 || map+1==154 || map+1==328 || map+1==414 || map+1==415) && slot==37) {
+        } else if((map+1==141 || map+1==146 || map+1==153 || map+1==154 || map+1==328 || map+1==414 || map+1==415 || map+1==412) && slot==37) {
             g_PmCmdHandlerTable[37]=&g_RoomGroundEruptionHandlers;
             memset(&g_RoomEruptionGlowPacket,0,sizeof(g_RoomEruptionGlowPacket));
             memset(&g_RoomEruptionDebrisPacket,0,sizeof(g_RoomEruptionDebrisPacket));
@@ -1281,13 +1293,13 @@ int Scene_LoadRoom(unsigned int roomId)
             else if (slot == 184) g_FieldFxTaskPrograms[99] = &g_RoomM273HandTrailEffects;
             else if (slot == 185) g_FieldFxTaskPrograms[100] = &g_RoomM273SweepEffects;
             else if (slot == 186) g_FieldFxTaskPrograms[101] = &g_RoomM273SwayEffects;
-        } else if (map + 1 == 269 && slot == 137) {
+        } else if ((map + 1 == 269 || map + 1 == 411) && slot == 137) {
             g_FieldFxTaskPrograms[52] = &g_RoomGroundSweepProgram;
-        } else if (map + 1 == 269 && slot == 138) {
+        } else if ((map + 1 == 269 || map + 1 == 411) && slot == 138) {
             g_FieldFxTaskPrograms[53] = &g_RoomOrbitTrailProgram;
-        } else if (map + 1 == 269 && slot == 139) {
+        } else if ((map + 1 == 269 || map + 1 == 411) && slot == 139) {
             g_FieldFxTaskPrograms[54] = &g_RoomRisingSprayProgram;
-        } else if (map + 1 == 269 && slot == 77) {
+        } else if ((map + 1 == 269 || map + 1 == 411) && slot == 77) {
             g_PmCmdHandlerTable[slot] = &g_RoomGrabHandlers;
             g_RoomGrabSweepSide = 0; g_RoomGrabSlot = 0;
             memset(&g_RoomGrabOrbitCentre,0,sizeof(g_RoomGrabOrbitCentre));
@@ -1328,7 +1340,7 @@ int Scene_LoadRoom(unsigned int roomId)
         } else if (actor_library && slot == 70) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[0];
         } else if ((actor_library || map + 1 == 358 || map + 1 == 384 ||
-                    map + 1 == 387 || map + 1 == 174 || map + 1 == 383) && slot == 75) {
+                    map + 1 == 387 || map + 1 == 174 || map + 1 == 383 || map + 1 == 412) && slot == 75) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[2];
         } else if (actor_library && slot == 73) {
             g_PmCmdHandlerTable[slot] = &g_RoomActorClassTable[4];

@@ -2,6 +2,64 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### J: M411/M412 podłączone, całe piętro51 odtworzone do52
+
+Bez nowych plików produkcji i bez przenoszenia funkcji. Pozostałe dwa
+moduły tej rodziny Chrysler naprawiono w istniejącym room_load.c.
+PASS `/tmp/pe-m411-m412-audit-v1-proof.json`: cały M411 identyczny z
+istniejącym M269 (13140B,PM77/programy137–139); w M412 potwierdzone
+wszystkie6274 instrukcje czterech istniejących jednostek: GroundEruption1327,
+actor3271,OrbitFlare785,HomingProjectile891, plus rodata, pełne tabele klas,
+skrypty, seedy i setter. Relokacje jawnie ograniczone, brak zastępczej logiki.
+Loader mapuje wszystkie deskryptory i resetuje istniejące dane obu modułów.
+
+Test --m269-load w istniejącym original_actor_animation.c rozszerzono
+na --m411-load (prawdziwe assety, skrypty i track, reset, PM lifecycle z
+canary i pełnym wskaźnikiem completion). Przy okazji przygotowanie tego
+testu zeruje bank PM77 i oddzielne programy52–54, zamiast indeksować
+programy137–139 przez wskaźnik tablicy PM. Dodano w tym samym pliku
+--m412-load: fingerprint26436B, trzy oryginalne skrypty, cztery deskryptory,
+dwa ładowania z zatruwaniem i sprawdzeniem resetu wszystkich pakietów/args.
+Oba testy zarejestrowane w istniejącym CMakeLists.txt.
+
+Świeży kandydat m411-m412-bind-v1/PsyZ6e7f6f4:438 obiektów/219 na profil,
+`/tmp/pe-m411-m412-bind-v1-build-manifest.json`. PASS70/70 regresji
+`/tmp/pe-m411-m412-bind-v1-verification.json`,PASS16/16 CTest na profil
+oraz identyczne normal/SAN sygnatury efektów M418/M436/M417/M411/M412:
+`/tmp/pe-m411-m412-bind-v1-effects-proof.json`. Końcowy rehash obiektów,
+wszystkich zależności, archiwów i wykonywalnych PASS -final-rehash-proof.json.
+SDK/SDL nadal nieinstrumentowane. Poprzedni liveJ4 zamknięty quit/native0
+po zgodnym całym JSON/VRAM przy62872; nowy live
+`/tmp/pe-m411-m412-J5-live`,kontroler30436,ten sam autentyczny J.
+
+PASS `/tmp/pe-J4-m413-entry-v2-proof/proof.json`: coldJ→M41362872,
+nowy normal/SAN identyczny cały JSON i1MiBVRAM ze starym przebiegiem.
+PASS `/tmp/pe-J5-m412-entry-v1-proof/proof.json`: coldJ→M41274828,
+normal/SAN/live cały JSON/1MiBVRAM zgodne,native0 czysto,J8192B niezmienione.
+Po drodze M413: trzy wrogie aktory pokonane,288EXP/35PE,HP484→168,
+potem dwa oryginalne fieldHeal3→728HP,bez leków przedmiotowych.
+Cały inventory tylko magazynek11→5; cały character i512vars mają wyłącznie
+jawne sprawdzone delty. Następnie na żywo M412→M41676696 bez walki;
+cała dalsza droga51 przez selektory17/22/23/24/27/28/29/21 do schodów52.
+
+PASS `/tmp/pe-J5-chrysler-floor52-v1-proof/proof.json`: pełny coldJ→89008,
+całe piętro51 i schody M297/floor52; normal/SAN/live cały JSON i1MiBVRAM
+identyczne,native0 czysto,J8192B niezmienione. Trzy zwycięstwa na51 dały
+1092+288+288=1668EXP; level47→48,771400EXP,728/789HP,BP604,pulaPE70,
+stats470. Cały inventory tylko clip8→5 i reserve938→964:22 strzały,
+jedno przeładowanie19,ALL45 amunicji; oba pancerze, klucze i leki bez zmian.
+Cały character sprawdzony,512vars tylko1/4/5/6/18/78 względem ContinueJ.
+Plan52 `/tmp/pe-J5-floor52-route-v1.json`,tymczasowa nawigacja -native-nav-v3.py.
+
+Na52 na żywo M415/slot14→M416/slot13, zwycięstwo nad dwoma aktorami3
+po670HP/DEF200: oryginalny wynik2EXP/130PE. Nie zmieniano nagród.
+Endpoint97012:528/789HP,771402EXP,pulaPE200,BP604;8 strzałów,
+jedno przeładowanie19,clip5→16,reserve964→945. Medicine4 z łupu
+trafiła ALL do wolnego slot12 (teraz dwa M4),trzy M3 zachowane.
+Checkpoint `/tmp/pe-J5-floor52-firstwin-v1-checkpoint` i pełny coldJ
+normal/SAN w toku (39177), jeszcze nie PASS. User build niepodmieniony;
+pełny port i Chrysler77 nadal otwarte, dowody /tmp nietrwałe, brak PS1 pixel oracle.
+
 ### J: odtworzony oryginalny joint-spray i rodzina M413/M416/M417/M437
 
 Poprzedni zweryfikowany kandydat zatrzymywał się po M414 w M417 przy54484:

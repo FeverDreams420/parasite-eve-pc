@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### L5: muzeum, pierwsza wygrana i poziom61
+
+PASS `/tmp/pe-L5-museum-firstwin-v1-proof/proof.json`: cały cold Continue L
+do37922, pełny JSON/1MiBVRAM normal/SAN/live zgodne, native0/czysto,
+source/privateL bez zmian. Pierwsza M242:4561EXP,0PE, poziom61,
+EXP828945,HP621/815,BP71/pool0. Oba Revive zachowane, bez użycia leków.
+Cały inventory wyłącznie M3slot30 i magazynek4→17; rezerwa999 bez zmian.
+Cały character tylko jawne delty poziomu/EXP/HP/max/alokacji600;
+512vars tylko1/78. SDK/SDL nieinstrumentowane, bez nowego oracle PS1.
+
+Pierwszy sterownik z poprawionym dystansem miał dodatkowy błąd: przy
+pustej początkowej liście celów nie otwierał celowania. Bezczynność
+spowodowała192HP straty; poprawka dopuszcza otwarcie przy pustej liście,
+po czym walka zakończyła się bez dalszej stratyHP. To zmiana pomocniczego
+sterownika, bez edycji kodu gry. BP nie wzrosło w tej walce; nie zakładać
+stałego przychodu BP z każdej walki muzeum.
+
+Pętla treningowa musi startować przy wejściu z M243. Samo odtworzenie
+krótkiego cyklu ruchu od wejścia telefonowego nie opuszczało M242 i nie
+dawało nowych spotkań; najpierw oryginalne przejście przez drugie drzwi
+trasą `/tmp/pe-K8-museum-exit243-v2-nav.json`, potem powrót M243→M242.
+Live L5 pozostaje headless w muzeum, dalszy trening nieukończony.
+
 ### L4: poprawiony odczyt dystansu automatu, M420 wygrane i wejście63
 
 PASS `/tmp/pe-L4-m420-win-v1-proof/proof.json`: pełny cold Continue L

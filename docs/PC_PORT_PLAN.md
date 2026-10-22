@@ -56,8 +56,19 @@ po670HP/DEF200: oryginalny wynik2EXP/130PE. Nie zmieniano nagród.
 Endpoint97012:528/789HP,771402EXP,pulaPE200,BP604;8 strzałów,
 jedno przeładowanie19,clip5→16,reserve964→945. Medicine4 z łupu
 trafiła ALL do wolnego slot12 (teraz dwa M4),trzy M3 zachowane.
-Checkpoint `/tmp/pe-J5-floor52-firstwin-v1-checkpoint` i pełny coldJ
-normal/SAN w toku (39177), jeszcze nie PASS. User build niepodmieniony;
+PASS `/tmp/pe-J5-floor52-firstwin-v1-proof/proof.json`: pełny coldJ
+normal/SAN/live do97012,cały JSON i1MiBVRAM zgodne,native0 czysto,J8192B
+niezmienione. Verifier sprawdził cały inventory/character/512vars.
+Dalej na żywo dwa zwycięstwa w M412 po562EXP (PE0 i24), łup dwa M3
+ALL do slot15/16. Całe52 ukończone, M297/floor53 przy129704:
+772526EXP,level48,500/789HP,BP604,pulaPE224,pięć M3 i dwa M4.
+Względem schodów52:20 strzałów,jedno przeładowanie19,clip5→4,
+reserve964→945;3 zwycięstwa2+562+562=1126EXP/154PE. Cały inventory
+poza trzema medycynami i amunicją bez zmian;512vars tylko4/18/78.
+Checkpoint `/tmp/pe-J5-chrysler-floor53-v1-checkpoint`, pełny coldJ
+normal/SAN w toku (41302), nie jest jeszcze PASS. Nawigacja /tmp v4
+ma obserwowaną geometrię M412. Po zamrożeniu129704 fieldHeal3 daje
+130096/780HP,bez leków przedmiotowych. User build niepodmieniony;
 pełny port i Chrysler77 nadal otwarte, dowody /tmp nietrwałe, brak PS1 pixel oracle.
 
 ### J: odtworzony oryginalny joint-spray i rodzina M413/M416/M417/M437

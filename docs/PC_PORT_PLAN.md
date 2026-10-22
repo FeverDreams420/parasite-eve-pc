@@ -2,6 +2,56 @@
 
 ## Aktualny potwierdzony stan — 22 października 2026
 
+### PsyZ: 64-bitowe terminy hosta po długiej przerwie
+
+Naprawa w istniejących plikach własnego forka, commit `6e7f6f4`
+(wysłany do khasinski/parasite-eve-psyz/main). Zegar Psyz_OsNowUs,
+last_us/next_us, cache poll_deadline_us i porównania terminów są64-bitowe;
+parametry liczników PS1, częstotliwości, okresy, reszty ułamkowe i polityka
+MAX_CATCHUP_US pozostają bez zmian. Cache terminu jest atomowy także
+na MSVC (Interlocked64). Oczekiwanie hosta ograniczane do INT32_MAX us.
+SDL używa pełnego SDL_GetTicksNS/1000; adapter PSP używa SystemTimeWide.
+PSP i MSVC nie zbudowano tutaj; wynik dotyczy macOS arm64.
+
+Odtworzony błąd starego kodu: początek1000us, tick po4167us, skok40min,
+ponowny okres4167us — callback pozostawał przy1, exit1:
+`/tmp/pe-kernel-long-idle-v1`. Po naprawie licznik przechodzi1→2.
+To potwierdza błąd porównania signed32 po długiej przerwie, lecz nie dowodzi,
+że wyjaśnia wszystkie okoliczności wcześniejszego live zastoju G.
+
+Trwały test w istniejącym psyz/tests/test_events.c i target CMake
+psyz_clock_tests:20 kombinacji początków przy granicach2^31/2^32 i24h
+oraz przerw40min/72min/6h/30dni. Sprawdza zwykły okres, pominięcie
+lawiny zaległych ticków i dalszą dostawę callbacka po restarcie terminu.
+Normal oraz ASan/UBSan/function:20/20, bez diagnostyki. CMake/CTest1/1:
+`/tmp/pe-kernel-clock-cmake-test.log`. Można odtworzyć:
+`cmake -S third_party/psyz/psyz/tests -B /tmp/psyz-clock-test`, następnie
+`cmake --build /tmp/psyz-clock-test --target psyz_clock_tests` i
+`ctest --test-dir /tmp/psyz-clock-test -R '^psyz_clock_tests$' --output-on-failure`.
+Normalna gałąź test_events z rzeczywistym wątkiem przerwań: oba profile
+76PASS/0FAIL/1SKIP (slot2 obecny, więc test pustego slotu nie jest dowodem).
+Logi `/tmp/pe-kernel-real-events-v3-{normal,san}.log`. Pierwsze dwie próby
+samodzielnego harnessu nie inicjalizowały zegara prezentacji przed VSync;
+zachowano logi, zakończono te procesy, v3 inicjalizuje backend przed suite.
+Nie są to awarie nowego kandydata gry ani potwierdzenie brakującego testu karty.
+
+Świeży kandydat `/tmp/pe-kernel-clock-v1-game`, SHA256
+`43ade401bf793d3827ab0419e794fba6272bceda2a7698a9932e94fba582b5cb`;
+SAN `f64a2e910106d1acca5180fbd64156fd5f4e2fa4ab466b579b6f6cbbf05b2a42`.
+438 świeżych obiektów oryginalnej gry/fixture; zmienione SDK zbudowane przez
+CMake, prywatne archiwa `/tmp/pe-kernel-long-idle-v2-sdk`. Manifesty źródeł,
+zależności, obiektów, bibliotek i wykonywalnych: `/tmp/pe-kernel-clock-v1-*`.
+SDK/SDL nadal nieinstrumentowane. PASS70/70:
+`/tmp/pe-kernel-clock-v1-verification.json`, dodatkowo13/13 CTest w każdym
+profilu i sygnatury efektów M418/M436 identyczne normal/SAN:
+`/tmp/pe-kernel-clock-v1-effects-proof.json`.
+
+PASS `/tmp/pe-kernel-clock-H1-continue-v1-proof/proof.json`: Continue
+z samego H, cały JSON i1MiBVRAM normal/SAN identyczne ze sobą i poprzednim
+kandydatem; cały inventory,character i512vars identyczne z telefonemH,
+exit0 bez diagnostyki, H8192B niezmienione. Nowe źródła gry nie powstały,
+oryginalne moduły gry bez zmian. Nie jest to pełny audyt kampanii/audio/PS1.
+
 ### H: poziom38 i potwierdzony oryginalny zapis/Continue
 
 Świeża kontynuacja G2 po checkpoint173356 osiągnęła38 przy196330:

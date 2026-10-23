@@ -27,7 +27,10 @@ Host odtąd nie rzucaPE przyEve.mode7/11; leczy wMaya/summon lubATB≤2500,
 w groźnych animacjach strafe, nie proste cofanie. Preraise ma próg1500
 (koszt1000+500naHeal3). Pierwsza próba do149433 nie zadała obrażeńEve,
 HP1,PE77278040,Preraise aktywne,Revive4. Nie zaliczono jej jako bezpiecznej
-strategii; kolejne pojedyncze okno uruchomione do oceny odzyskaniaHP.
+strategii. Kolejne okno zatrzymane150001/HP0; ponownePreraise przy
+150329 przywróciło434HP bez zużyciaRevive4. Zapisano
+`/tmp/pe-N6-Eve-second-Preraise-v1`; bieżąca faza wymaga poprawy inputu,
+nie uznano tego za ukończenie walki.
 Wszystko po65985 nadal live-only; brak ukończenia77/portu/oraclePS1.
 
 ### N6: pełne trzy trafieniaEve przedMayą, dystans pilota poprawiony

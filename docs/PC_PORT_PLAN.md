@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N6: cold O→157785 PASS; dalsze dziewięć strzałów poPowerCharge
+
+`/tmp/pe-N6-Eve-postcharge-cold-v1-proof.json`: normal/SAN exit0,
+bez błędów sanitizerów; pełnyJSON/1MiBVRAM identyczny z zamrożonym live,
+źródłowaO i prywatne karty niezmienione. Ten dowód obejmuje całą trasę
+O→157785, wymiany pancerzy, odrodzeniaPreraise, jedenRevive i M4/Haste.
+Zastępuje pending dla tego odcinka, nie dla późniejszych działań.
+
+Dalsza próba166761HP0 bezPreraise→167089HP434 zużyła drugiRevive:
+pozostały2. Pilot wcześniej wydawał PE naHeal3, zanim uzyskał zapas1500
+wymagany tylko przez jego własny guard. Tymczasowy helper zmieniono:
+Preraise priorytetowo od faktycznego kosztu1000; przy aktywnymPreraise
+niski zapasPE nie wymusza ponawiania niedostępnegoHeal3 przed strzałem.
+Bez zmian produkcyjnegoC/PsyZ, statystyk, RAM/RNG lub save.
+
+`/tmp/pe-N6-Eve-postcharge-priority-v1/proof.json`:167089→171417,
+9strzałów po234, Eve1014494→1012388, wszystkieMayahidden, bez wzrostuHP
+Eve, Revive2 zachowane; endpointHP561/Preraise. To dowód live stanu,
+bez twierdzenia o zgodnościVRAM tego pośredniego checkpointu.
+Następny atak172833HP0 zPreraise→173161HP434, Revive2 nadal zachowane.
+Pełny zamrożony endpoint173161: `/tmp/pe-N6-Eve-postcharge-priority-full-v1`.
+Powtórka `/tmp/pe-N6-Eve-priority-cold-v1.py` przygotowana dla tego punktu;
+bez wynikuPASS nie zaliczamy późniejszego odcinka jako cold.
+Eve ma12388HP ponad znacznik fazy; zwycięstwo, PS1oracle i pełny port
+pozostają nieudowodnione.
+
 ### N6: kontratak po Power Charge — sześć trafień, cold w toku
 
 Dalsze jedno okno157785→163681 dało cztery234trafienia:

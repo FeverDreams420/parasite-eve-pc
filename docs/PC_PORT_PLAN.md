@@ -2,6 +2,21 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### e8ff03f56: nowe pełne buildy; d22826cb0 SAN93 zaliczone
+
+Poprzedni zamrożony kandydat SPU d22826cb0 zakończył SAN93 exit0 w1479,75 s.
+`/tmp/pe-spu-sync-v1/root-san-matrix-proof.json` weryfikuje wszystkie93 przypadki,
+brak pominięć i diagnostyk oraz niezmienione21 programów i źródła z git.
+Nie przypisujemy tego wyniku późniejszej naprawie bramki motion.
+Poprzedni coverage93 nadal działa w sesji82058.
+
+Rozpoczęto nowe pełne buildy normal/SAN/coverage e8ff03f56 w osobnych
+`/tmp/pe-motion-gate-v1-{normal,san,coverage}`. O2/C11, SAN C/ObjC address,
+undefined,function, coverage atomowe liczniki; nie modyfikują poprzednich
+kandydatów ani użytkowej kopii. Sesje6651/74063/52919 i parametry zapisane
+w `/tmp/pe-motion-gate-v1-progress.json`, wymagają sprawdzenia rzeczywistego
+stanu przed dalszą pracą. Buildy i pełne testy tej wersji jeszcze niezaliczone.
+
 ### Naprawiona bramka oryginalnego modułu motion — test red/green
 
 CMake obiektu motion podłącza istniejący class_register_tables_gated.c zamiast

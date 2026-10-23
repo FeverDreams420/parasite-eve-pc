@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### a904055bc: normal/SAN95 zaliczone; odtworzona porażka i kolejna próba
+
+Pełne normal95/95(732,84s) i SAN95/95(1545,24s) exit0 zweryfikowane:
+wszystkie nazwy/ID, brak SKIP/diagnostyk, niezmienione21 programów i źródła.
+Dowody /tmp/pe-room-catalog-v1-{normal,san}-matrix-proof.json. Coverage95
+nadal aktywne; starsze coverage94 i93 również zakończone i zweryfikowane,
+ale nie przypisywane nowemu kandydatowi. Cały audyt pozostaje otwarty.
+
+Próba2 dotarła od New Game do spokojnego M032 przy253326 i49BP.
+Bieżąca oryginalna ścieżka skryptu ustawia maskę menu0x7F: root udostępnia
+Item/PE/Weapon/Armor/System/Arrange; BP action bit0x100 nieaktywny. Read-only
+LLDB target variable potwierdził maskę bez wywołań funkcji/zapisów. BP nie wydano.
+Dalsza walka z lepszej pozycji zadała ogonowi70 obrażeń; przy263508 Aya0HP,
+mode3, ogonowi brakowało10. Po1000 idle VBlanks rzeczywisty proces wrócił
+na boot/title a9400048 z company intro. GameOver ekranu nie próbkowano.
+Death-flow-proof.json w pe-campaign-replay-v2 zachowuje ten wąski zakres.
+Autentyczny SaveA8192B jest identyczny w próbach1/2. Obie próby zakończono
+quit exit0 po zapisaniu obserwacji; exit0 nie jest dowodem zwycięstwa.
+
+Próba3 /tmp/pe-campaign-replay-v3 działa od New Game z pustymi kartami,
+prefiksem i zapisanymi poleceniami próby2 do262676, przed krytycznymi salwami.
+Cel: wcześniejsze Heal1 przez menu, zachowując ograniczenie BP. Sesja37796,
+PID973; wymagane sprawdzenie faktycznego stanu po dotarciu, nie zakładać41HP.
+Brak edycji HP, statystyk, RAM lub save'ów. Wszystkie próbki/polecenia osobno.
+
 ### Nowe New Game: dalszy test PE i osobna próba przygotowania
 
 Próba1 /tmp/pe-campaign-replay-v1, sesja79874 nadal żywa, zatrzymana265291.

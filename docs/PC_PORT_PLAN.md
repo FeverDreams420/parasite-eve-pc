@@ -36224,3 +36224,22 @@ checkpoint zachowany, HP72/72, BP74, stage192; nadal to samo wnętrze,
 rozmowa z Klampem nieuruchomiona. Próby przy ladzie nie otworzyły
 notatnika, więc interakcja nie jest potwierdzona. commands.jsonl zachowuje
 wszystkie wejścia; dalsza trasa pozostaje do rozpoznania.
+
+
+### Muzeum: cold normal/SAN PASS i podpisanie notatnika
+
+Oba cold replaye do414031 zakończyły się0; pełny JSON/VRAM/PPM zgodne
+z checkpointem, całe PCM normal/SAN identyczne SHA256
+296bb603ae8477ed4ca6b33b9e6f0078769c9ca2f6e98edbe8fb580088b999c7.
+Logi bez raportów błędów. Dowód `cold-museum-pair-proof.json` w
+`/tmp/pe-campaign-replay-v3`. Nie jest to oracle PS1.
+
+Oryginalny hol to M195/a80292c8. Skrypt określa obszar notatnika
+X−202..−37/Z−712..−622; podejście od przodu i zwrócenie do lady
+uruchomiło dialog45 przy422673, następnie46. Po podpisaniu zwykły
+ruch do obszaru X1026..1409/Z−282..−182 przeprowadził do M230/a8043048
+przy424317, dialog Daniela53. Przy427053 dialog54 zamknięty, HP72/72,
+BP74; rozmowa z Klampem jeszcze nieuruchomiona. Checkpoint427053 i
+`museum-notebook-transition-proof.json` zachowane. Wcześniejsze próby
+obejścia bramki bez podpisu nie były błędem portu; oryginalny warunek
+pozostał bez zmian. Ten dalszy odcinek nie ma jeszcze cold SAN.

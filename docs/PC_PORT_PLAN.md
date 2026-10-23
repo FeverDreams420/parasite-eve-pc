@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### CMake-v2: oba90/90 zakończone, użytkowy build zaktualizowany
+
+`/tmp/pe-cmake-native-v2-combined-proof.json`: PASS90/90 normal oraz90/90
+ASan/UBSan/function na tym samym źródle7675a2b90/PsyZ6e08856, macOS arm64 O2/C11.
+Oba CTest exit0, bez pominięć, brak raportów sanitizerów w kompletnych LastTest.
+Per-profile proofy sprawdzają wszystkie90 ID/nazw z rejestrem, wszystkie21
+wykorzystanych plików wykonywalnych i niezmienione hashe buildu/źródeł. To domyka
+pierwsze87/90 po opisanych niżej naprawach; stare FAIL pozostają zamrożone.
+Wszystkie uruchomione macierze i replaye zakończone, brak oczekiwania na stare
+sesje. EX i GPU/PCM proofy dotyczą dokładnie tych samych obecnych binariów.
+
+Zainstalowano atomowo dokładną normal kopię do `build/parasite-eve-pc`, SHA256
+5e60438b6006890509d76afa58fd9f7a4ad02be4075b5c0d4a16f939426be4bc.
+To kopia przetestowanego targetu CMake O2, nie nowa kompilacja innymi flagami.
+`/tmp/pe-cmake-native-v2-user-install/install-proof.json` zachowuje źródło,
+hashe i kopię wcześniejszego pliku w/tmp. Sprawdzono zależności dynamiczne:
+Psyz/SDL statyczne, tylko biblioteki/frameworki systemowe macOS.
+
+`/tmp/pe-cmake-native-v2-user-smoke/proof.json`:3/3 smoke do1000VBlank po
+skopiowaniu, użytkowy software i ukryty Metal2× oraz ta sama kopia kanoniczna.
+Oba USA CUE podane, prywatne puste karty, stan/VRAM/PCM identyczne, natywny
+RGB24 PPM320×240 w tym punkcie. Bez widocznego okna; bu00 repo nie zmieniano.
+Normalny tytuł okna Parasite Eve wynika z właściwego targetu/definicji CMake.
+
+README poprawiono: nieaktualne twierdzenia o niepokonanej Eve i nieinstrumentowanym
+SDK zastąpiono obecnymi, ograniczonymi dowodami. Przykład konfiguracji wybiera
+RelWithDebInfo/O2. Naprawiono też błędną instrukcję submodule update z nieznaną
+top-level ścieżką nested SDL (potwierdzony błąd pathspec): osobno własny PsyZ,
+następnie `git -C third_party/psyz ... external/SDL`, zgodnie z .gitmodules.
+
+Nie jest to ukończenie całego portu: pełny katalog/pokrycie funkcji i zawartości,
+całe NewGame→zakończenia/EX na jednym kandydacie, wszystkie warianty, niezależne
+oracles audio/obrazu, pełne I/O/device/fuzz/soak i audyt paczek/platform pozostają
+w pełnym zakresie celu. Zielona obecna macierz90 i odcinekEX tego nie zastępują.
+
 ### Obecny CMake O2: normal90/90, hi-res/audio i pełny odcinek EX
 
 `/tmp/pe-cmake-native-v2-normal-proof.json`: wszystkie90 zarejestrowanych CTest

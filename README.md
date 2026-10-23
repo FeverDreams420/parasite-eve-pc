@@ -12,21 +12,22 @@ compiler output, fixed code addresses and PS1 binary builds are no longer
 acceptance requirements. Changes are evaluated by behavior, portability,
 readability and native builds.
 
-This is an incomplete port. Ordinary-input play has defeated the Chrysler
-Building floor 70 boss and entered the floor 77 battle; Truebred Eve remains
-unbeaten. A complete cold replay through the floor 70 victory passes in normal
-and sanitized builds after repairing an arm-glow buffer overread. The newer
-candidate exposing enemy ATB is undergoing its own extended replay.
-See [the port plan](docs/PC_PORT_PLAN.md) for current checkpoints, reproducible
-inputs, verification results and remaining work.
+This is an incomplete port. Ordinary-input play has defeated Truebred Eve,
+completed the authored EX ending and returned to the title. Cold replays from
+a genuine late-EX save compare full reported state, native VRAM, the rendered
+title and playback PCM between optimized normal and sanitized builds. The
+current macOS CMake candidate passes all 90 registered tests in both builds
+with the required USA assets. Full New Game-to-campaign-to-EX coverage on one
+candidate, all content and platform/release validation remain open.
+See [the port plan](docs/PC_PORT_PLAN.md) for checkpoints, reproducible inputs,
+verification results and remaining work.
 
 Controlled headless runs use the original pad, menus, battles and save flow.
-Normal and sanitized replays compare full reported state, VRAM and newly written
-save bytes, while checking that the source memory-card copy remains unchanged.
-These checks establish the recorded cases; they do not establish a completed
-campaign, full PS1 pixel fidelity or complete audio playback. Temporary replay
-artifacts and an uninstrumented PsyZ/SDL build are explicit limitations of the
-current evidence.
+Replays compare state, images, audio and newly written save bytes while
+checking that the source memory-card copy remains unchanged. Sanitized builds
+instrument the game and PsyZ/SDL C and Objective-C sources. These results cover
+the recorded cases; complete audio/content coverage and independent PS1 image
+and audio fidelity still require verification.
 
 The game runs the original code in `src/main/` and `src/overlays/`. Repair whole
 modules in their existing files for host pointers, memory, PsyZ and disc images:
@@ -52,8 +53,9 @@ No historical PS1 compiler, Sony SDK or extracted game executable is needed.
 ```sh
 git clone https://github.com/khasinski/parasite-eve-pc
 cd parasite-eve-pc
-git submodule update --init third_party/psyz third_party/psyz/external/SDL
-cmake -S . -B build -DBUILD_TESTING=OFF
+git submodule update --init third_party/psyz
+git -C third_party/psyz submodule update --init external/SDL
+cmake -S . -B build -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build build --parallel
 ./build/parasite-eve-pc --disc "/path/to/Parasite Eve (Disc 1).bin"
 ```

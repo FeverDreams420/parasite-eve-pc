@@ -2,6 +2,21 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### seeker_spark: zgodność pakietów renderowania 1536/profil
+
+`/tmp/pe-seeker-original-v1/render-comparison-proof.json`: normal/SAN/coverage
+po1536 porównań oryginalnego callbacku z zachowaną implementacją natywną.
+Stany0/1/2, timery0..15, alt palette0/1, age0..7, obie draw slots.
+Każdy przypadek wygenerował pakiety; pełne65536-bajtowe areny i4096 wpisów OT,
+parametry sprite'ów, wynik oraz stan cząstki po rysowaniu są identyczne.
+Zachowano również modyfikacje cząstki wykonywane przez helper rysowania —
+nie zakłada się jej niezmienności. Brak diagnostyk SAN. To równoważność
+natywnych pakietów w tej domenie, nie niezależny raster oracle PS1.
+
+Nadal wymagane lot/kontakt/spawn stanu0 i oryginalny CPU oracle przed odbiorem;
+kontroler nadal wskazuje dotychczasowy callback, więc nie ogłaszamy integracji.
+Skrypt render-build.py/harness i logi w /tmp/pe-seeker-original-v1.
+
 ### seeker_spark: naprawa istniejącego pliku i porównanie stanów1/2
 
 Oryginalny seeker_spark.c dostosowano w miejscu: deklaracja geom_state,

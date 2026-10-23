@@ -2,6 +2,37 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Bieżący punkt: oryginalny zapis E i dalsza kampania Day2
+
+Zamrożony kandydat produkcji a904055bc/PsyZ33153a4b: pełne95/95 CTest
+normal, SAN i coverage zakończone i zweryfikowane. Dowody
+`/tmp/pe-room-catalog-v1-{normal,san,coverage}-matrix-proof.json`.
+Poniższe starsze wpisy o działających procesach opisują historię, nie aktualny
+stan. Nie zastępują końcowych dowodów ani nie oznaczają ukończenia portu.
+
+Live próby3: sesja37796/PID973, checkpoint668602, M064, potwierdzenie
+File saved40. Prywatne A/B/C/D/E; E Level8/EXP119/HP101/BP4, M16A1
+bonusATK2 po oryginalnym wydaniu100BP. A/B/C/D zachowane. ContinueE
+normal/SAN do15000: character/inventory/scene/stage zgodne z autentycznym
+zapisem, pełnyJSON/VRAM/PPM między profilami identyczny, native0, czyste
+logi, E niezmienione. `/tmp/pe-campaign-replay-v3/continue-park-E-pair-proof.json`.
+Samo leczenie/ulepszenie nie dowodzi ukończenia M065: kolejne walki i dalsza
+kampania pozostają otwarte. Wszystko przez oryginalny pad/menu, bez RAM/RNG.
+
+Cold do632438 obejmuje oryginalne porażki/Continue, próby Escape i ponowne
+zwycięstwo M358; oba profile PASS całegoJSON/VRAM/PPM, całePCM identyczne.
+Późniejszy trening i zapisE nie mają jeszcze pełnego replay od NewGame.
+BP od autentycznegoD i ContinueD/E mają osobne, węższe dowody.
+
+Audyt zakresu kompilacji:441 plikówC wsrc,210 obecnych w zamrożonych
+compile_commands,231 poza nimi (225 Psy-Q i6 pozostałych). Lista z hashami
+`/tmp/pe-source-compilation-scope-v1.json`. To spis źródeł, nie katalog
+wszystkich funkcji ani dowód ich działania; zastąpienie SDK/wyłączenie
+jednostek nadal wymaga rozliczenia. Brak markeraTODO nie oznacza kompletności.
+Pełny port i audyt funkcji/zawartości/PS1/audio/platform pozostają otwarte.
+
+## Historyczny dziennik dowodów
+
 ### a904055bc: normal/SAN95 zaliczone; odtworzona porażka i kolejna próba
 
 Pełne normal95/95(732,84s) i SAN95/95(1545,24s) exit0 zweryfikowane:

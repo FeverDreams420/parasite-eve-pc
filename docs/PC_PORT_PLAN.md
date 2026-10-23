@@ -2,6 +2,22 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Nowe New Game: dalszy test PE i osobna próba przygotowania
+
+Próba1 /tmp/pe-campaign-replay-v1, sesja79874 nadal żywa, zatrzymana265291.
+Ogon otrzymał dalsze20 obrażeń. Aya spadła do13, potem9HP; menu potwierdziło
+brak lekarstw i tylko jeden pancerz. Próba Heal1 z54PE została odmówiona;
+po odnowieniu do60PE oryginalny cast wykonał9→39HP. Wszystko przez pad/menu,
+bez RAM/save/HP diagnostic. Nie ma zwycięstwa i nie zaliczamy tej próby jako
+pełnej kampanii. Pełne polecenia/checkpoint265291 zachowane.
+
+Próba2 /tmp/pe-campaign-replay-v2, sesja58031/PID15925: osobny nowy proces
+od New Game z pustymi kartami i tym samym utrwalonym prefiksem pada,
+zakończonym253326 przed ostatnim podejściem do areny. Celem jest wydanie
+zdobytych BP w oryginalnym menu przed walką; nie dopisano BP ani wyposażenia.
+Proces dopiero wykonuje prefiks, punkt wymaga sprawdzenia po dotarciu.
+Próba1 zachowana bez restartu; jej aktualny stan i input pozostają osobno.
+
 ### Nowe ciągłe New Game: wejście do aligatora i zwykła walka
 
 /tmp/pe-campaign-replay-v1: aktualna pełna normal binarka a904055bc,

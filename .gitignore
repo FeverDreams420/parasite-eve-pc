@@ -62,3 +62,6 @@ to-integrate.md
 unnamed-function-name-proposals.md
 find_clones*.py
 test_regex*.py
+
+# Local port implementation plan
+/docs/PC_PORT_PLAN.md

@@ -34,5 +34,4 @@ cmake --build build --parallel
 ./build/parasite-eve-pc
 ```
 
-For development details and testing, see the [port plan](docs/PC_PORT_PLAN.md)
-and [code organization](docs/CODE_ORGANIZATION.md).
+For development details, see [code organization](docs/CODE_ORGANIZATION.md).

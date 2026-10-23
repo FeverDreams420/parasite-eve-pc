@@ -36744,3 +36744,30 @@ pełnyJSON/VRAM/PPM międzyprofilami zgodny, E niezmienione, logiczyste:
 /tmp/pe-campaign-replay-v3/continue-E-after-bios-cleanup-proof.json.
 To nie jest świeży pełny build/test95 ani dowód całego SDK. Obecnie395
 plikówC wsrc,210 kompilowanych,185 poza buildem; audytpozostałych otwarty.
+
+### Pozostałe nieaktywne kopie SDK wycofane, świeża walidacja uruchomiona
+
+Po audycie compile_commands i480 plików zależności normal/SAN usunięto
+pozostałe183 nieaktywne plikiC zsrc/main/psyq. Żaden nie był kompilowany
+ani dołączany do aktywnych jednostek. Zachowano11 używanych jednostek SDK,
+w tym oryginalne macierze/GTE, inicjalizację dźwięku i używane mostyCD/SPU.
+Nie zmieniono ich implementacji. Usunięto też nieużywane draw/error.c
+(stary printf z nieskończoną pętlą), jego martwe deklaracje oraz
+actor_window_class_table.c: skład istniejących6+1 klas, którego wiązania
+sprawdzono poprzednio. Usunięto nieużywane makra BIOS MIPS zpsyq_bios.h.
+Brak nowych plikówprodukcyjnych i brak przenoszenia funkcji gry.
+
+Obecnie wszystkie210 pozostałych plikówC wsrc są wejściami builda.
+Lista185 usuniętych plików zhashami /tmp/pe-retired-inactive-source-v1.json.
+To rozliczenie nieaktywnych źródeł, nie dowód kompletności zachowania SDK;
+nie zastępuje katalogu wszystkich funkcji i rozgrywki. Prywatne nagłówki
+starego SDK i pozostałe artefakty dekompilacji nadal wymagają audytu.
+
+Świeży normal build /tmp/pe-bios-cleanup-config-v1 zakończony0. Pełne95
+CTest działają: session5276, log /tmp/pe-clean-source-normal-tests.log.
+Świeży SAN configure/build/tests pipeline session94283, katalog
+/tmp/pe-clean-source-san-v1; konfiguracja0, dalsze wyniki nieznane,
+postęp /tmp/pe-clean-source-san-progress.json. Snapshot src/include/tests
++CMake /tmp/pe-clean-source-v1-snapshot.json. Nie przypisywać dotychczasowych
+95PASS nowym binariom przed zakończeniem i sprawdzeniem wyników.
+User build i bu00 nietknięte; liveE pozostaje przy668602.

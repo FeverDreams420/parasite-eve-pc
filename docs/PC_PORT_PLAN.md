@@ -35949,3 +35949,15 @@ checkpoint284476 zachowuje pełny stan i VRAM/PPM, commands.jsonl wejścia.
 To obserwacja rzeczywistego przebiegu obecnej próby; odcinek po aligatorze
 wymaga jeszcze niezależnego cold replay i SAN. Proces37796 pozostaje
 żywy i zatrzymany na sterowaniu stdin. Pełna kampania nadal nieukończona.
+
+
+### Day 2: autentyczny zapis i komisariat
+
+W tej samej próbie zapisano Day2 przez oryginalne menu na drugim pustym
+slocie prywatnej bu00. Komunikat File saved i lista pokazują Level6,
+HP72/72, Day2, No2; wcześniejszy zapis No1 pozostawiono. Oba pliki
+8192B zachowano z hashami w checkpoint290456. Po wyjściu z menu
+gra przeszła do a8004148, biura na komisariacie z Danielem i Bakerem
+(dialogue page9). Dowód `/tmp/pe-campaign-replay-v3/day2-save-office-proof.json`.
+Zapis jest autentycznym wynikiem menu; poprawność Continue tego konkretnego
+pliku i niezależny replay normal/SAN pozostają do wykonania.

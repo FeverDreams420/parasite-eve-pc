@@ -1,4 +1,4 @@
-# Parasite Eve PC
+# Parasite Eve — 0.1-alpha
 
 A native C11 PC port of the North American PlayStation release of Parasite Eve
 (`SLUS-006.62`), using [our PsyZ source fork](https://github.com/khasinski/parasite-eve-psyz) for the
@@ -45,6 +45,31 @@ port plan, rather than describing the current playable boundary. Artwork, video
 and audio are loaded from user-supplied CUE/BIN images; there is no additional
 game engine or FFmpeg dependency.
 
+## Download and first launch
+
+Version **0.1-alpha** is an early playable release. Download packages from
+[GitHub Releases](https://github.com/khasinski/parasite-eve-pc/releases).
+Game images, proprietary game data and personal saves are not included.
+You need your own North American CUE/BIN images (`SLUS-006.62` and Disc 2).
+Keep each CUE alongside the BIN file it references.
+
+Launch Parasite Eve and select one or both CUE files. Either disc can start the
+application. Selecting both enables automatic switching throughout the game;
+if one is missing, the game asks for the named disc when it is needed. You can
+also add it under **Escape → Images**. Disc paths and settings are remembered.
+The macOS app stores its memory-card files in
+`~/Library/Application Support/Parasite Eve/memory-cards/bu00/` (slot 1) and
+`bu10/` (slot 2). `PE_CONFIG_HOME` moves both settings and bundled-app cards.
+Command-line and headless runs retain `bu00/` and `bu10/` in their working
+directory. Back up these directories before editing saves.
+**Enter** is START and can skip movies. **Escape** opens graphics, controls,
+audio and image settings; the Controls page shows and edits the bindings.
+
+This alpha still requires broader release and platform validation. Build-only
+results do not establish Windows runtime support; Linux container tests do not
+establish compatibility with every desktop/audio driver. See the release notes
+for the actual package architectures and validation of this version.
+
 ## Build and run
 
 Use a C11 compiler, CMake 3.21 or newer and Git. PsyZ and SDL are source
@@ -60,6 +85,17 @@ cmake -S . -B build -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build build --parallel
 ./build/parasite-eve-pc --disc "/path/to/Parasite Eve (Disc 1).bin"
 ```
+
+To build the macOS app bundle (Apple Silicon with the current toolchain):
+
+```sh
+cmake -S . -B build-app -DCMAKE_BUILD_TYPE=RelWithDebInfo -DPE_MACOS_BUNDLE=ON -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0
+cmake --build build-app --parallel
+open "build-app/Parasite Eve.app"
+```
+
+A local bundle is unsigned; the downloadable macOS release is signed separately.
+The deployment target is a build requirement, not proof of testing on macOS 15.
 
 Run `./build/parasite-eve-pc` without image arguments to open the native file
 picker. Select **both USA CUE files together** (Command-click on macOS,

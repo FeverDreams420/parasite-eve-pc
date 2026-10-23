@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.21..3.31)
-project(parasite-eve-pc LANGUAGES C)
+# Explicit deployment target avoids inheriting the build host's macOS version.
+if(CMAKE_HOST_APPLE AND NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET
+   AND (NOT DEFINED CMAKE_SYSTEM_NAME OR CMAKE_SYSTEM_NAME STREQUAL "Darwin"))
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "Minimum supported macOS version")
+endif()
+project(parasite-eve-pc VERSION 0.1.0 LANGUAGES C)
+option(PE_MACOS_BUNDLE "Package the macOS application bundle" OFF)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
@@ -52,6 +58,15 @@ add_executable(parasite-eve-pc src/main/boot/main.c)
 target_include_directories(parasite-eve-pc PRIVATE include)
 target_link_libraries(parasite-eve-pc PRIVATE psyz)
 target_compile_definitions(parasite-eve-pc PRIVATE __psyz)
+if(APPLE AND PE_MACOS_BUNDLE)
+    set_target_properties(parasite-eve-pc PROPERTIES
+        MACOSX_BUNDLE TRUE
+        MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/packaging/macos/Info.plist"
+        OUTPUT_NAME "Parasite Eve")
+    target_sources(parasite-eve-pc PRIVATE packaging/macos/ParasiteEve.icns)
+    set_source_files_properties(packaging/macos/ParasiteEve.icns PROPERTIES
+        MACOSX_PACKAGE_LOCATION Resources)
+endif()
 psyz_title(parasite-eve-pc "Parasite Eve")
 psyz_web_configure_target(parasite-eve-pc)
 psyz_ios_configure_target(parasite-eve-pc

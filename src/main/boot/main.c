@@ -7,6 +7,7 @@
 #include <SDL3/SDL.h>
 #include <psyz/audio.h>
 #include <psyz/video.h>
+#include <psyz/system.h>
 #include "pe1/boot.h"
 #include "pe1/boot_disc_check.h"
 #include "pe1/boot_display.h"
@@ -136,6 +137,25 @@ static int Host_SaveOptions(void) {
     if(failed || !SDL_RenamePath(temporary,host_options.user_file)){SDL_RemovePath(temporary);return 0;}
     return 1;
 }
+/* Bundled desktop launches have no useful writable working directory.
+ * Keep PS1 card files alongside the per-user preferences, without changing
+ * relative image paths or the working directory used by headless replays. */
+static int Host_CardPath(char *dst,const char *src,int capacity) {
+    if(strlen(src)<5 || src[0]!='b' || src[1]!='u' || src[4]!=':' ||
+       src[2]<'0' || src[2]>'1' || src[3]<'0' || src[3]>'3')return -1;
+    const char *slash=strrchr(host_options.user_file,'/');
+    if(!slash)return -1;
+    if(capacity<=0)return 0;
+    int n=snprintf(dst,(size_t)capacity,"%.*s/memory-cards/%.4s",
+        (int)(slash-host_options.user_file),host_options.user_file,src);
+    if(n<0 || n>=capacity || !SDL_CreateDirectory(dst)) {dst[0]=0;return 0;}
+    const char *name=src+5;
+    if(*name=='*')name="";
+    int added=snprintf(dst+n,(size_t)(capacity-n),"/%s",name);
+    if(added<0 || added>=capacity-n)dst[0]=0;
+    return 0;
+}
+
 static void Host_InitOptions(int enabled) {
     host_options.enabled=enabled;host_options.scale=1;host_options.volume=100;
     Boot_InitHostBindings();
@@ -172,6 +192,10 @@ static void Host_InitOptions(int enabled) {
 #endif
     }
     if(*host_options.user_file)Host_LoadOptions(host_options.user_file);
+#ifdef __APPLE__
+    if(base && strstr(base,".app/Contents/") && *host_options.user_file)
+        Psyz_AdjustPathCB(Host_CardPath);
+#endif
 }
 static void Host_ApplyOptions(SDL_Window *window) {
     Psyz_VideoSetInternalResolution(host_options.scale);

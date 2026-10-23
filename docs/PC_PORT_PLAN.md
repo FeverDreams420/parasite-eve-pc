@@ -2,6 +2,46 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### M318: timeout nietrafionego błysku zatrzymywał dziesięć slotówPM
+
+LLDBv4 odtworzył rzeczywistyabort: `failure-proof.json` w
+`/tmp/pe-N6-Eve-effect97-debug-v4` ma passed:false/failure_reproduced:true.
+Wszystkie11slotów zajęte:10×cmd174/state2 (najstarszy34732ticks),
+1×cmd173/state5. StarySAN odtworzył−6 i ten sam błądPreraise97,
+bez błędówASan/UBSan: `/tmp/pe-N6-Eve-effect97-san-v1/result.json`.
+ŹródłowaO i prywatne karty niezmienione. LLDBv3 celowo zatrzymanoSIGSTOP
+wcześniej dla odczytu bazowego; to nie odtworzenieabortu ani PASS gry.
+
+Izolowany test pominiętego trafienia (`/tmp/pe-m318-miss-probe-v1-*`)
+na starych źródłach w obu profilach dał512klatek, state2, seen4, brak
+cząstek/rysowania. Dotychczasowe32cykle zawsze wymuszały trafienieAyi,
+więc nie obejmowały tego wariantu. PlayerGate na timeout ustawia
+variable0=1 (zakończono), variable1=0 (braktrafienia), lecz oryginalny
+FlashScript czekał na variable1. MIPS800D430C..4334 potwierdza, że
+opcode4 rzeczywiście czeka na niezerową wskazaną zmienną.
+
+Naprawa w istniejącym `room_m318_chrysler/m318.c`: operand oczekiwania
+FlashScript[10]1→0. To celowa poprawka oryginalnego wizualnego skryptu,
+nie byte-match: po pudle callbacks odczytują variable1=0 i kończą bez
+rysowania błysku; po trafieniu oba znaczniki1 zachowują dotychczasowy cykl.
+Nie zwiększono bankuPM, nie pominiętoPreraise ani nie zmieniono HP/PE,
+obrażeń, AI lub inputów. Test danych kontroluje każdy inny oryginalny word
+oraz jawnie ten jeden wyjątek; nie twierdzimy o identyczności zPS1.
+
+Świeży kandydat `/tmp/pe-m318-flash-timeout-v1`:438obiektów/2profile,
+gra i fixture. Target6/6 PASS (m318-data/load/pełnecykle ×normal/SAN),
+36cykli obejmuje4timeouty, każdy kończy przy64klatkach ze slotemfree,
+bezpakietów/cząstek. Poprzednie32podsumowania cykli (klatki, cząstki,
+rysowanie, trafienie i akcja) identyczne ze starym kandydatem.
+`-target-proof.json`, `-cycle-comparison.json`, `-build-manifest.json`.
+Pełne64regresjefixture trwają w sesji19356.
+
+Pełna sekwencjaO→182713 przekraczająca abort: nativeN7/30148,
+root `/tmp/pe-m318-flash-N7-live`; niezależnySAN/16043,
+root `/tmp/pe-m318-flash-N7-san-v1`. Oba procesy zweryfikowane aktywne;
+wyniki i porównanieJSON/VRAM pending. Nie zaliczamy jeszcze usunięcia
+abortu w pełnym gameplayu, wygranejEve ani pełnegoportu.
+
 ### N6: cold O→173161 PASS; diagnostyka późniejszego abortu nadal trwa
 
 `/tmp/pe-N6-Eve-priority-cold-v1-proof.json`: normal/SAN exit0/czysto,

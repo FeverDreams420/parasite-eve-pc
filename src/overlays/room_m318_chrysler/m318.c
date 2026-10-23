@@ -2311,7 +2311,10 @@ u16 g_RoomM318EmberBurstScript[12]={1,6,86,4,8,0,2,0,0,0,0,0};
 FieldFxTaskProgram g_RoomM318EmberBurstEffects={{{RoomM318_EmberBurst,NULL,NULL,NULL,NULL,NULL,NULL,NULL},{16,0,0,0,0,0,0,0}},RoomM318_SetEmberBurstParams,g_RoomM318EmberBurstScript};
 u16 g_RoomM318RisingColumnScript[12]={1,6,87,4,8,0,2,0,0,0,0,0};
 FieldFxTaskProgram g_RoomM318RisingColumnEffects={{{RoomM318_RisingColumn,NULL,NULL,NULL,NULL,NULL,NULL,NULL},{12,0,0,0,0,0,0,0}},RoomM318_SetRisingColumnParams,g_RoomM318RisingColumnScript};
-u16 g_RoomM318FlashScript[22]={1,6,89,1,1,0,2,2,0,4,1,1,2,0,0,2,1,0,0,0,0,0};
+/* PlayerGate publishes completion in variable 0 and hit/no-hit in variable 1.
+ * Waiting for a hit leaves every dodged flash owning a PM slot forever.
+ * The visual callbacks already suppress the flash when variable 1 is zero. */
+u16 g_RoomM318FlashScript[22]={1,6,89,1,1,0,2,2,0,4,0,1,2,0,0,2,1,0,0,0,0,0};
 FieldFxTaskProgram g_RoomM318FlashEffects={{{RoomM318_FlashBurst,RoomM318_CrossFlash,RoomM318_PlayerGate,NULL,NULL,NULL,NULL,NULL},{8,16,0,0,0,0,0,0}},RoomLib_SetArg1,g_RoomM318FlashScript};
 u16 g_RoomM318TwinRibbonScript[10]={1,6,90,2,0,0,0,0,0,0};
 FieldFxTaskProgram g_RoomM318TwinRibbonEffects={{{RoomM318_TwinRibbon,NULL,NULL,NULL,NULL,NULL,NULL,NULL},{392,0,0,0,0,0,0,0}},RoomM318_SetScriptArg2,g_RoomM318TwinRibbonScript};

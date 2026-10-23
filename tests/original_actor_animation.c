@@ -2237,6 +2237,8 @@ static int authored_fan_sweep_cycles(void)
         struct {PmPrimarySlot slots[11];u8 guard[16];} bank={0};memset(bank.guard,0xa5,16);
         g_PmTables=(PmTables){g_PmCmdHandlerArray,bank.slots,NULL};srand(1);
         if(Scene_LoadRoomAssets(commands[variant],&player)!=0)return 0;
+        if((commands[variant]==94 && bank.slots[0].task.tasks.table->sizes[0]<sizeof(FieldFanSweep)) ||
+           (commands[variant]==95 && bank.slots[0].task.tasks.table->sizes[2]<sizeof(FieldFanSweep)))return 0;
         /* Retail hit/status/death call sites create these without send. */
         if(commands[variant]!=88 && commands[variant]!=89 && commands[variant]!=91 && Pm_SendCmd(0,0,0,0,0,0))return 0;
         unsigned draws=0,particles=0;

@@ -37067,3 +37067,34 @@ Oczekiwany FNV PCM Tutorialu poprawiono na 00b168c6a806a32d. Ponowiony test
 z głównego builda przeszedł: `/tmp/pe-main-tutorial-new-audio-golden.log`.
 To ukierunkowane potwierdzenie zmiany wzorca, nie pełny zielony wynik nowej
 macierzy ani niezależny oracle PS1.
+
+
+### Alpha packaging follow-up — 24 October 2026
+
+Main includes optional PE_MACOS_BUNDLE, icon generated with imagegen from the
+Rage Racer badge style, Info.plist and bundled dependency notices. Version is
+0.1-alpha (numeric bundle version 0.1.0). Explicit deployment target 15.0 avoids
+the local compiler's default minimum 27.0. The target-15 binary ran on fenrir
+macOS 26.3: settings fixture and real Disc 1 headless frame 1000 passed; this is
+not macOS 15 runtime evidence. Bundled interactive launches map PS1 card paths
+to memory-cards below the user preferences directory; CLI/headless retain the
+working-directory cards. Actual file write/reopen/read passed through the SDK
+path callback, normal and ASan/UBSan/function. Evidence:
+`/tmp/pe-bundle-card-path-test2.log`, `/tmp/pe-bundle-card-path-san/test.log`.
+An independently copied app passed a headless Disc 1 smoke at frame 1000 in
+`/tmp/pe-package-smoke-v1/game.log`. The signing attempt on fenrir failed with
+errSecInteractionNotAllowed from the private key; no signed release is claimed.
+
+Linux platform-v4 completed 90/96, with six failures retained in
+`/tmp/pe-desktop-linux-v4b/junit.xml`. A repeat under Xvfb and SDL audio dummy
+passes the AKAO queue and both M418 GPU cases; three failures remain in the
+repeat's JUnit. GDB found native FieldFanSweep allocations still fixed at eight
+PS1 bytes in task programs 94 and 95: writing the 64-bit pool pointer overwrites
+the next callback-list header. Both original table entries now use the complete
+native struct size. A regression checks those table capacities, and the complete
+actor/input fixture passes on Linux ARM64 after relinking whole original modules:
+`/tmp/pe-linux-fan-fix/proof.json`. Three focused macOS tests pass:
+`/tmp/pe-release-bundle-v1-fan-tests2.log`. These are focused results, not a fresh
+full matrix. Linux Tutorial state, final VRAM and rendered frame match macOS;
+293 sample values differ by at most two int16 units, exclusively in movie audio.
+The cross-compiler XA resampler investigation remains open; no golden was relaxed.

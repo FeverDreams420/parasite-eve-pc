@@ -1869,11 +1869,11 @@ u8 g_HelicalTrailColorTrack[]={0,0,0,0,0,0,0,0,200,160,16,4,0,0,0,0,100,64,70,4,
 u8 g_DampedSparkColorTrack[]={0,0,0,0,0,0,0,0,200,160,160,6,0,0,0,0,120,110,60,6,0,0,0,0,0,160,0,6,0,0,0,0,0,0,0,0,0,0,0,0};
 u16 g_FieldFxTaskScriptCmd94[]={1,6,9,2,0,0,4,3,0,2,2,0,4,2,0,0,0,0};
 FieldFxTaskProgram g_FieldFxTaskProgramCmd94={
-    {{FieldFx_FanSweep,FieldFx_FanSweepGlow,FieldFx_ArcingSparkEmitter},{8,12,16}},NULL,g_FieldFxTaskScriptCmd94};
+    {{FieldFx_FanSweep,FieldFx_FanSweepGlow,FieldFx_ArcingSparkEmitter},{sizeof(FieldFanSweep),12,16}},NULL,g_FieldFxTaskScriptCmd94};
 u16 g_FieldFxTaskScriptCmd95[]={1,6,10,2,2,0,4,10,0,2,0,0,4,5,0,2,1,0,4,2,0,0,0,0};
 /* The orbit emitters retain a native trail-pool pointer in their payload. */
 FieldFxTaskProgram g_FieldFxTaskProgramCmd95={
-    {{FieldFx_OrbitingSpriteEmitter,FieldFx_FanSweepGlow,FieldFx_FanSweep},{sizeof(RenderOrbitingEmitter),12,8}},NULL,g_FieldFxTaskScriptCmd95};
+    {{FieldFx_OrbitingSpriteEmitter,FieldFx_FanSweepGlow,FieldFx_FanSweep},{sizeof(RenderOrbitingEmitter),12,sizeof(FieldFanSweep)}},NULL,g_FieldFxTaskScriptCmd95};
 u16 g_FieldFxTaskScriptCmd96[]={1,6,11,2,1,0,4,4,0,2,2,0,2,0,0,4,5,0,0,0,0,0};
 FieldFxTaskProgram g_FieldFxTaskProgramCmd96={
     {{FieldFx_OrbitingSpriteBurst,FieldFx_VerticalEffectEmitter,FieldFx_FanSweepGlow},{sizeof(RenderOrbitingEmitter),4,12}},NULL,g_FieldFxTaskScriptCmd96};

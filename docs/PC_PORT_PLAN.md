@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### CMake-v2: pełna powtórka po trzech naprawach
+
+Po zakończeniu obu pierwotnych CTest (87/90 każdy) zachowano ich oryginalne
+binaria, biblioteki i LastTest w `/tmp/pe-cmake-native-v1-frozen/`. Następnie
+istniejące katalogi buildów przebudowano dla źródeł7675a2b90: M350 offsetof,
+granica listy callbacków oraz wait producenta AKAO/inicjalizacja FX fixture.
+Oba kompletne buildy exit0, konfiguracja O2/C11 i instrumentacja bez zmian.
+`/tmp/pe-cmake-native-v2-build-proof.json` zawiera nowe hashe binariów, źródeł,
+konfiguracji i poleceń kompilacji; SDK/SDL byte-identical z zamrożonymi v1.
+
+Uruchomiono ponownie wszystkie90 zarejestrowanych CTest w obu profilach,
+z wymaganymi assetami obu płyt, headless i prywatnymi katalogami testów.
+Testy nadal działają: sesje70891(normal) i47052(SAN). Logi
+`/tmp/pe-cmake-native-v2-{normal,san}-ctest.log`, metadane
+`/tmp/pe-cmake-native-v2-progress.json`. Nie mylić nazw katalogów build
+(v1, ponownie użyte po zamrożeniu) z logami pierwszego kandydata. Przy
+kontynuacji sprawdzić te same uchwyty/procesy; nie restartować po timeout
+obserwacji. W momencie wpisu normal przeszedł już stare błędy core iM350,
+SAN wykonywał field-control. To nie jest jeszcze90/90 ani audyt całego portu.
+Użytkowy build/ nie był teraz aktualizowany tymi trzema naprawami.
+
 ### AKAO producer wait i rzeczywista inicjalizacja fixture FX
 
 Timeout fx-frames z pierwszych CMake macierzy potwierdzono osobnym procesem

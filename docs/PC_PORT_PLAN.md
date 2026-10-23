@@ -36563,3 +36563,19 @@ PID38505/session45515 do632438 zNew Game i pustych prywatnych kart.
 Obejmują zapisC, porażki/Continue, próbyEscape i ponowne zwycięstwo,
 porównują całykońcowyJSON/VRAM/PPM oraz zapisująPCM. Wyniki nieznane;
 nie uznawać uruchomienia zaPASS. M065/Cure-P pozostają do wykonania.
+
+### M065: Cure-P wykonane i odporność potwierdzona, walka przegrana
+
+Nagrody M358 odebrane633388, poziom8/max101/BP95. Heal1 51→81,
+Medicine1 81→101. M065 przy637032, spotkanie637292. Oryginalne
+Item/Use Cure-P ze slotu10: zużycie638152, po animacji638582
+state_flags287309827 &AYA_POISON_MASK3 ==3 (AYA_POISON_IMMUNE), HP81→58.
+Heal1 wykonane ponownie, ale kolejne trafienia i nieefektywne uniki
+zakończyły walkę640076 HP0; jeden przeciwnik20HP, drugi60HP. Odporność
+nie oznacza odporności na obrażenia; Cure-P nie wystarczyło do zwycięstwa.
+M065-CureP-observation.json i checkpoint640076-death w /tmp/pe-campaign-replay-v3.
+To obserwacja item/status, nie PASS walki ani niezależnego replay.
+
+Cold-M358-recovery normal/session58243 iSAN/session45515 nadal działają
+przy ostatnim odczycie uchwytów; wyniki do632438 jeszcze nieznane.
+Ten zakres kończy się przed odbiorem nagród/Cure-P. Brak zmian produkcji.

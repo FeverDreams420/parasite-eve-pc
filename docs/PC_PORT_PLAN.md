@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N5: floor69 ukończone, wejście70 zHP869 iRevive4
+
+Druga walka69, M424/slot14/trzycentaury: przy284109HP699; pilot zatrzymał
+się286309HP400/PE~311,centaur1HP38. Oryginalna tura M4slot15 + dobijający
+strzał + strzał w0 przy286909 dałaHP630,1pokonany,0HP666. Heal3 +2gun
+przy287421→869HP,0HP38. Następna tura dobiła0 i trafiła31 raz (drugi
+strzał bez obrażeń); przy287749HP506,31HP666. KolejneHeal3 zakolejkowane,
+ale cel1426 poza range1272; pominięto dwa sloty i wykonano tylkoPE,
+przy288205HP786,ammo3 zachowane. Po podejściu cel825 w zasięgu,
+trzy strzały zakończyły walkę288477,HP786,ammo0.
+
+LootRevive18 +ammo3×30 odebrany ALL do pustego slot15 po zużytymM4;
+Revive3→4. FieldHeal3 z jawną kontrolą kursorów przy290313→869HP.
+Endpoint290433 `/tmp/pe-N5-floor69-second-centaurs-win-v1` live PASS.
+Pozostała trasa14→13/M292→12/M307→16/M304→17/M420→18/M420→19/M424→11/M296
+bez dalszych walk, schody do302201/M297/floor70. HP869,Revive4,
+ATK235/TripleCommand,82BP. Zamrożone `/tmp/pe-N5-floor70-entry-v1`.
+Całe69 zużyło dwaM4, żadenRevive, z jednymPreraiseHP0 w pierwszej walce.
+Cold po278057 nadal pending; QueenBee jeszcze nierozpoczęta wN5.
+Pełnego portu i zgodnościPS1 nie zaliczono.
+
 ### N5/M423 floor69 wygrana; mieszana tura item/PE/przeładowanie
 
 Przy273669 HP116,ammo0. Oryginalna kolejka M4/slot13 + Heal3 + gun
@@ -135,7 +156,7 @@ Pełny cold do159089 nadal działa; ten nowy odcinek wymaga osobnego dowodu.
 ### N5: całe piętro65 ukończone live, cold normal/SAN uruchomiony
 
 Trzecia walka M419 wygrana153441,HP722,EXP999072,pool313,Revive2
-zachowane. Oryginalne fieldHeal3→869. Reszta planu3→8/M314→7/M423→0/M296
+zachowane. Oryginalne fieldHeal3→869. Reszta planu3→8/M306→7/M423→0/M296
 wykonana przy158253 bez kolejnych walk; runUp do zmiany sceny i300neutral
 dały159089/M297/floor66,HP869,level99,M8000ATK235/TripleCommand.
 Zamrożono pełny JSON,VRAM i pad: `/tmp/pe-N5-floor66-entry-v1`.

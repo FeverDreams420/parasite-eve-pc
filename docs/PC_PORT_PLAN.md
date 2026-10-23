@@ -35992,3 +35992,21 @@ biuro ma już136; właściwy punkt odniesienia to zapis128. Zapis pozostał
 bajtowo niezmieniony; exit0 po EOF na punkcie sterowania. Dowód
 `/tmp/pe-campaign-replay-v3/continue-day2/proof.json`. Potwierdza odczyt,
 jeszcze nie dojście z Continue do biura ani zgodność audio/PS1.
+
+
+### Cold New Game do Day2/komisariatu: normal i SAN PASS
+
+Oba niezależne procesy zakończyły się0 przy291736. Pełny JSON, VRAM
+i PPM są identyczne z zachowanym bieżącym przejściem. Całe audio normal
+i SAN jest identyczne:858566788B PCM, SHA256
+ad1b56ea05ea80cd1879d8ecaa8985181df40efb84880f639885cf06586bff2d.
+Oba wygenerowane zapisy A/B są bajtowo identyczne między profilami
+i z zapisami bieżącej próby. Logi bez raportów sanitizerów, assertion,
+unbound opcode i missing descriptor. Dowód zbiorczy:
+`/tmp/pe-campaign-replay-v3/cold-pair-proof.json`. Nie jest to porównanie
+z PS1 ani ukończenie całej kampanii. Procesy15194/24346 terminalne.
+
+Bieżące przejście po checkpoint291736 weszło do gabinetu Bakera
+a80040c8; przy295850 pozostaje pod oryginalną kontrolą gracza, HP72/72,
+BP74. Te późniejsze wejścia są zachowane w commands.jsonl, ale jeszcze
+nie objęte powyższym cold replay. Session37796 nadal żywa.

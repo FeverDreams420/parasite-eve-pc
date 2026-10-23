@@ -15844,7 +15844,9 @@ static int original_native_tutorial(const char *executable)
     if(!log)valid=0;
     else{int error=output && fwrite(output,1,bytes,log)!=bytes;if(fclose(log))error=1;if(error)valid=0;}
     if(output && (strstr(output,"runtime error:") || strstr(output,"ERROR: AddressSanitizer") || strstr(output,"Unbound original")))valid=0;
-    const uint64_t expected[]={UINT64_C(0xd5b236a1a9e02c16),UINT64_C(0x937c09a8e0d595c3),UINT64_C(0x1f8dd1ac409a906b)};
+    /* FMV XA is now audible. The old golden omitted movie audio; all nonmovie
+     * PCM and 131 recorded JSON events remain byte-identical to that replay. */
+    const uint64_t expected[]={UINT64_C(0xd5b236a1a9e02c16),UINT64_C(0x937c09a8e0d595c3),UINT64_C(0x00b168c6a806a32d)};
     for(unsigned i=0;i<3;++i){
         FILE *file=fopen(path[i],"rb");if(!file){valid=0;continue;}
         uint64_t hash=UINT64_C(14695981039346656037);unsigned char buffer[65536];size_t count;

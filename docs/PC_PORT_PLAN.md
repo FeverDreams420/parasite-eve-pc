@@ -37035,3 +37035,35 @@ Nowa pełna macierz normal/SAN/coverage jest zakolejkowana po poprzedniku,
 potem ukryte Metal GPU i replay Continue O → Truebred Eve → EX/credits/title.
 Jej wyniki nie są jeszcze potwierdzone. Procesy mają niski priorytet; nie
 uruchamiamy sterowania pulpitem ani widocznych okien.
+
+## Domknięcie poprzednika i aktualizacja wzorca Tutorialu — 24 października 2026
+
+Kandydat 6baf155cf zakończył wszystkie trzy macierze: normal 96/96, SAN 96/96,
+coverage 96/96, bez SKIP. Wszystkie programy/obiekty zostały ponownie zahashowane,
+a źródła zgadzały się z zamrożonym manifestem. Również zimny replay Continue O
+→ Truebred Eve → autorskie EX/credits/title przeszedł normal/SAN: pełne JSON i
+VRAM zgodne z wcześniejszym przebiegiem, 244727451 ramek PCM identycznych między
+profilami, SHA256 c387b45c52822183dc003117acc8a2610079d3e04e4b7dbe2d048015da3455c0.
+Dowody: `/tmp/pe-desktop-acceptance-v2/*-proof.json` oraz
+`/tmp/pe-desktop-acceptance-v2-EX-ending-proof.json`.
+
+Po zakończeniu tej bramki włączono desktop-disc-management do main (f20e71a2a)
+i ustawiono SDK ad352eb. Poprawki płyt, XA i wspólnej pauzy są więc w głównym
+repozytorium. Nie uruchomiono widocznej aplikacji ani usługi sterowania pulpitem.
+
+Pełny normal nowego kandydata 30a87ef6e dał 95 PASS i jeden FAIL (Tutorial),
+bez SKIP. Ten nieudany wynik zachowano pod `/tmp/pe-desktop-acceptance-v3/`;
+SAN/coverage/GPU/EX tej macierzy nie ruszyły po błędzie zależności.
+Produkcja nie zmieniła stanu Tutorialu: wszystkie 131 zdarzeń JSON, końcowy
+VRAM i PPM są identyczne z poprzednikiem. Stary wzorzec PCM pomijał audio FMV.
+Diagnostyczny wrapper zapisu PCM zapisał maskę flagi filmu bez zmiany stanu ani
+liczby miksowanych próbek; jego PCM jest identyczny z nieinstrumentowanym 30a.
+Spośród 27597594 ramek stereo, 20243923 poza filmami są bajtowo identyczne ze
+starym wzorcem. Wszystkie różnice przypadają na flagę FMV. Dowód:
+`/tmp/pe-tutorial-trace/proof.json`. Nowy SHA256 PCM:
+097c616c2a8b8624a11ab30e1ba4c86e25d69a2ef2b79b72c1357dff7436aebd.
+
+Oczekiwany FNV PCM Tutorialu poprawiono na 00b168c6a806a32d. Ponowiony test
+z głównego builda przeszedł: `/tmp/pe-main-tutorial-new-audio-golden.log`.
+To ukierunkowane potwierdzenie zmiany wzorca, nie pełny zielony wynik nowej
+macierzy ani niezależny oracle PS1.

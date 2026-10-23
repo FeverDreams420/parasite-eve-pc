@@ -2,6 +2,48 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N5: QueenBee pokonana zTripleCommand, bezM4/Revive; Key7 odebrany
+
+Oryginalny farm−1 pokonał QueenBee: przy325033 mode2/live0,HP660,
+EXP1045091 (+20128),pool1584. W całym obserwowanym starciu minHP234,
+bezHP0. M4 aniRevive niezużyte,Revive4 zachowane. BossHP1012000→koniec
+przez natywne ataki iPE; brak zmian C/PsyZ/RAM/RNG. Wypada tylkoKey7/id62.
+Pełny plecak: pierwsza próba zamiany nie zaznaczyła lewego przedmiotu,
+więc Cross w prawymJunk nie przeniósł klucza. Read-onlyLLDB potwierdziło
+normalny rewardmode g_MenuSelectionLocked1,selectedItem−1; bez zapisów
+lub wywołań funkcji targetu. Left→Cross naKey7 dokończyło oryginalny swap:
+slot12/Junk20→Key7/62, pozostały na liście wyłącznieJunk odrzucony END.
+To brakujące wejście hosta, nie potwierdzony błąd produkcyjnej gry.
+
+Endpoint325669 `/tmp/pe-N5-QueenBee-win-v1/proof.json` live PASS,
+M4counts przed/po równe,Revive4,HP660. Oryginalne fieldHeal3 przy326213
+podniosłoHP do869; menu zamknięte326333.
+Zamrożone `/tmp/pe-N5-QueenBee-postheal-v1`.
+Pełny cold genuineN normal/SAN uruchomiony:
+`/tmp/pe-N5-QueenBee-cold-v1.py`, kontrolerPTY7795. Wynik pending,
+nie zaliczono go przed sprawdzeniem całegoJSON/VRAM i kart.
+Po278057 wcześniejszy odcinek nadal live-only do zakończenia tego dowodu.
+Chrysler77, pełny port iPS1oracle pozostają nieukończone.
+
+### N5: cold pierwszej walki69 PASS; QueenBee rozpoczęta zTripleCommand
+
+`/tmp/pe-N5-floor69-centaurs-cold-v1-proof.json`: genuineN→278057
+normal/SAN oba exit0/czysto, całyJSON/1MiBVRAM równy frozenlive,
+sourceN/karty niezmienione. Obejmuje pełne68 i pierwszą walkę69
+(M423/dwa centaury+goat),Preraise i mieszane tury item/PE/reload.
+Późniejsza druga walka69 i reszta podejścia nadal live-only.
+
+Z302201/M297/floor70 zwykły runUp do302813/M307/slot33.
+Trasa33→34/M306→26/M335→27/M304→15/M418 bez walk/zużycia zasobów,
+QueenBee room309013,HP869,Revive4. Zamrożone
+`/tmp/pe-N5-QueenBee-before-v1`. Początkowy chód Up160 nie przekroczył
+progu wyzwolenia; potem neutral640 nie uruchomił walki. Zwykły runUp
+80klatek dał309893/M418/mode7/live1, boss type5/sub31HP1012000,
+HP869/869. `/tmp/pe-N5-QueenBee-trigger-v1`.
+Oryginalny hostpilot farm−1 uruchomiony; to wejście do starcia, nie wygrana.
+Nowa gałąź maATK235/TripleCommand/pojedynczy strzał, żadnych zmian RAM/RNG.
+Pełnego portu, końcaChryslera ani PS1oracle nie zaliczono.
+
 ### N5: floor69 ukończone, wejście70 zHP869 iRevive4
 
 Druga walka69, M424/slot14/trzycentaury: przy284109HP699; pilot zatrzymał

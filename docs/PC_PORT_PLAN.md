@@ -2,6 +2,37 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N8: końcowa faza w runtime; EnergyShot817, Eve6189HP
+
+Live188489:HP869/Preraise, Eve1010282, cztery234strzały odhandoff,
+wszystkieMaya hidden, bez leczeniaEve. Zamrożone
+`/tmp/pe-N8-Eve-final-entry-v1/proof.json`; pełny coldO→188489
+normal/SAN działa w sesji23286 (`/tmp/pe-N8-Eve-final-entry-cold-v1.py`).
+Nie zastępuje dowodu późniejszego fragmentu.
+
+Obserwacja samym ruchem potwierdziła sekwencję6/7→2→8/9→2→10/11:
+189105HP530,189297HP104,189377HP0 zPreraise. Próba uników nie wystarczyła.
+Oryginalne328klatek→189705HP434,Revive0. Dopiero po tej obserwacji
+odblokowano hostguard25%. Dalsze6okien→200225: Eve1010282→1007474,
+12×234, trzy odrodzeniaPreraise łącznie z obserwacją, Revive0, HP434.
+`/tmp/pe-N8-Eve-final-7474-v1/proof.json`: brak leczeniaEve/strzałów
+przy widocznejMayi. To nadal live, nie coldPASS.
+
+Po kolejnych dwóch234trafieniachEve1007006. PróbaEnergyShot w pilocie
+zatrzymała się przy202601: wyjście z listyPE wymaga dodatkowego wskazania
+wroga (item_state2), którego helper samoleczenia nie uwzględniał.
+To brakujące wejście hosta, nie potwierdzony bug produkcyjnego menu.
+OryginalnyCross naEve i pominięcie resztykomend dały202929:
+EnergyShot817obrażeń,1nabój, PE52823173→0, HP1/Preraise zachowane.
+Maya ukryta przez cały zarejestrowany odcinek; Revive0.
+`/tmp/pe-N8-Eve-EnergyShot-v1/proof.json`, pełny zamrożonyJSON/VRAM/input.
+
+Helper poprawiono o potwierdzenie wroga przyEnergyShot; dalszy automat
+ma tę próbę wyłączoną i wraca do zwykłych pojedynczych strzałów zTripleCommand
+oraz PE. Bez zmian produkcyjnegoC/PsyZ/RAM/RNG/save.
+Eve ma6189HP; kolejna ograniczona seria trwa w67466. Zwycięstwo, niezależny
+cold dla późniejszych działań, PS1oracle i całyport pozostają niezaliczone.
+
 ### N8: rzeczywisty handoff PASS; FullRecover przez oryginalne menu
 
 `/tmp/pe-m318-flash-N8-live/handoff-proof.json`: O→182713,

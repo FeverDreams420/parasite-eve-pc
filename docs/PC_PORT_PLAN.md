@@ -36454,3 +36454,22 @@ nie niezależny PASS. Uruchomione cold-M358 normal PID52080/session86138
 oraz SAN PID52171/session59866 od pustych prywatnych kart/New Game,
 do567258. Wyniki jeszcze nieznane; nie restartować bez sprawdzenia procesu.
 Bez zmian kodu gry, RAM, RNG lub payloadów zapisów.
+
+### M358: pierwsza walka wygrana, poziom8
+
+Live571122: oryginalne spotkanie dwóch6 (35HP) i4:0 (57HP)
+wygrane przyHP19/92. Dwa Heal1 podczas walki (drugie51→81), podejście
+Right+Circle240 usunęło problem dystansu do ostatniego przeciwnika;
+po dwóch turach strzałów zwycięstwo. Nagrody22EXP, poziom7→8,
+maxHP92→101, BP83→101; odebrano dwa Junk i Ammo+6 przez Obtain All,
+END zamknięte Cross. Field Heal1 przywróciło19→49; kolejne próby nie
+zwiększyłyHP, pe_bonus_pool0. Aktualne573342: menuPE8 otwarte,
+HP49/101, EXP121. Checkpoint i M358-first-victory-proof.json w
+`/tmp/pe-campaign-replay-v3`; tylko obserwacja, niezależna powtórka tej
+walki nadal wymagana. Nie pomijać tej różnicy zakresu.
+
+Cold-M358 normal do567258 zakończony native0: całyJSON/VRAM/PPM
+zgodny z checkpointem wejścia, PCM SHA256
+922c1f6daa2289283e64e4a64e7c457647742e0716f84d373c041fb3e29055fc.
+SAN/session59866 nadal działa przy ostatnim odczycie, brak wyniku.
+Bez nowych zmian w kodzie produkcyjnym; pełny port pozostaje otwarty.

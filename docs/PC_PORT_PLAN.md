@@ -2,6 +2,56 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N11: HP Eve wyczerpane, oryginalny dialog zakończenia uruchomiony
+
+Przy281505 EveHP999935, czyli poniżej sentinel1000000; pilot zatrzymał
+nową ofensywę. Zamrożono pełnyJSON/VRAM oraz wejścia i bazowe argumenty
+w`/tmp/pe-N11-Eve-HP-exhausted-v1`. Po600neutralnych vblank przy282105
+live_enemies0, combatmode12 i dialog112. Obejrzany render pokazujeAyę
+w opuszczonej arenie i „Maya…”. Potwierdzanie oryginalnych dialogów
+przeszło już do120 bez błędu. Zakończenie/napisy/zapis nadal niezaliczone.
+
+Niezależny pełnycold od autentycznegoContinueO do281505 uruchomiony
+normal/SAN: `/tmp/pe-N11-Eve-HP-exhausted-cold-v1.py`, PTY44777.
+Oczekiwane są cały nowyJSON,1MiBVRAM, exit0/czysto i niezmienione karty,
+na tym samymscript-locals-v1. Wynik pending; live nie zastępuje tego dowodu.
+
+### N11: środek areny działa live; Eve pozostało637HP
+
+`/tmp/pe-script-locals-N11-live/handoff-proof.json`: pełny nowyJSON
+z56lokalnymi słowami każdegoaktora oraz VRAM normal/SAN zgodne przy211537,
+JSON również równy historycznemuN10. SAN exit0/czysto, normal pozostał
+żywy wPTY28559; źródłowaO i prywatne karty bez zmian.
+
+`/tmp/pe-N11-PowerCharge-survived-v1/proof.json`: wejścia211537–212841
+przenosząAyę do[-40,-1320], odstęp przy lądowaniu1175.898. HP spada do1,
+ale nie0; ponownie rzuconoPreraise, trzy pojedyncze strzały odejmują702HP.
+To dowód live, nie niezależny cold po211537.
+
+Pilot hostowy ogranicza liczbę oryginalnych komend zależnie od pozostałych
+klatek animacji18: max(0,min(3,(remaining−16)//16)). Square pomija pozostałe
+komendy. Sprawdzono również krótsze tury dwóch i jednego strzału.
+Nie zmienia to kodu gry, obrażeń ani TripleCommand.
+
+`/tmp/pe-N11-center-progress-271249-v1-proof.json`: przegląd wszystkich
+zachowanych checkpointów211537–271249 wykazuje22spadkiHP Eve i brak
+wzrostówHP; żaden z tych spadków nie przypada na widocznąMayę lubmode4.
+To obserwacje checkpointów, nie oracle każdego vblank. Jedenaście wejść
+wHP0 miałoPreraise; oryginalne odrodzenia pozwoliły kontynuować.
+Revive0 i ostatniaMedicine4 pozostają bez zmian; Eve1000637, czyli637HP
+ponad sentinel. Walka nadal trwa, zwycięstwo i zakończenie niezaliczone.
+
+### QueenBee: ponowny przegląd nagrody, bez dopisywania broni
+
+`/tmp/pe-QueenBee-reward-review-v1-proof.json` ponownie sprawdza surowe
+operandy zachowanego oryginalnegoM418: offset27544 local54=62,
+27560 local55=0,27876 pole92=local54,27892 pole93=local55.
+Zarejestrowane rolled poN5 to[62,0,0,0,0,0,0,0,0,0], zgodnie zKey7.
+Brak podstaw do zmiany reguł nagród na podstawie samej wskazówki o broni.
+To przegląd zachowanych danych i replayu, nie niezależny przebiegPS1.
+UżywanaM8000 już maTripleCommand przeniesioneToolem zM96R ze skrzyni64;
+nie przeniesiono jej wielostrzału. Nie zmieniono produkcyjnegoC/PsyZ.
+
 ### N10: pełny raport PASS; zły cel ruchu — granica zamiast środka
 
 `/tmp/pe-script-locals-N10-live/handoff-proof.json`: normal/SAN do210465,

@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N8 w odtwarzaniu: przygotowanie kontroli końcowej fazyEve
+
+Sesja67466/native27934 nadal wykonuje tę samą trasęO→182713;
+nie wysłano dodatkowych wejść przed porównaniem zSAN.
+`/tmp/pe-M318-final-phase-audit-v1.json` opisuje statyczny odczyt
+oryginalnego taskblocku, nie zaliczenie ostatniej fazy w runtime.
+Skrypt36324..36420 liczy całkowity procentHP po odjęciu znacznika1M.
+Próg≤25 przy aktualnym max40000 obejmujeHP≤10399 (nie tylko10000).
+W tej gałęzi local18=26 uruchamia child7680, czyli offset25696:
+local36=3; kolejne fragmenty sprawdzają1/2 i dopuszczają trzeci atak.
+
+Tymczasowy pilot zatrzyma się bez nowej kolejki po osiągnięciu tego
+całkowitego progu, do zbadania finalnego timing/Mayi. Nadal wymaga
+ukrytejMayi przed strzałem. Oryginalny C, statystyki i skryptAI bez zmian.
+Źródła battle/enemy_movement.c i phase.c potwierdzają zależność siły
+EnergyShot od bieżącegoPE oraz wyzerowaniePE po efekcie; ewentualne
+użycie tej techniki wymaga osobnej obserwacji runtime, nie jest jeszcze
+zaliczone przeciwEve. Priorytetem pozostaje ochronaPreraise i leczeniePE.
+
 ### N7: pełna powtórka za abortem PASS — Preraise97 działa
 
 `/tmp/pe-m318-flash-N7-live/cold-proof.json`: O→182713 normal/SAN,

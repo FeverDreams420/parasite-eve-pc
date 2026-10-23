@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### e3163d071: pełne buildy gotowe, coverage4/4; poprzedni SAN91/91 domknięty
+
+`/tmp/pe-tutorial-audio-fix-v1/full-san-matrix-proof.json`: poprzedni c10f06af6
+SAN zakończył91/91 po1353.95s, exit0, bez pominięć i raportów sanitizerów.
+Weryfikacja wszystkich91 ID/nazw, LastTest,21 niezmienionych programów i źródeł
+z zamrożonego commitu. Wraz z normal91 oraz EX/GPU domyka to zarejestrowany
+zakres tamtego kandydata, nie cały port ani nowszą zmianę aliasowania.
+
+Nowe e3163d071 normal/SAN/coverage zbudowane exit0,92 wpisy i21 programów,
+manifesty `/tmp/pe-shared-views-v1-*-build-proof.json`. Osobne testy coverage
+4/4 PASS: core, callback-storage, Tutorial i assets. Pełny Tutorial71.37s,
+całość85.36s. Dowód `coverage-focused-proof.json`, oddzielnie zachowane profile
+5 procesów i LastTest, przed następną macierzą. Asercje nie były zmieniane.
+
+Pełne92 normal, SAN i coverage uruchomione na tych samych niezmienionych
+programach, wyniki jeszcze oczekiwane. Bieżące uchwyty i kolejka w
+`/tmp/pe-shared-views-v1-progress.json`; sam ten plik nie dowodzi żywotności
+procesu. Każdy uchwyt trzeba sprawdzić. Nowe EX/GPU/CPU-oracle i pełny audyt
+tego kandydata nadal do wykonania. Użytkowego buildu jeszcze nie podmieniano.
+
 ### Wspólne widoki pamięci: kontrakt kompilacji gry, nowa regresja92
 
 Root CMake ustawia -fno-strict-aliasing dla oryginalnych modułów i fixture

@@ -16,9 +16,9 @@ This is an incomplete port. Ordinary-input play has defeated Truebred Eve,
 completed the authored EX ending and returned to the title. Cold replays from
 a genuine late-EX save compare full reported state, native VRAM, the rendered
 title and playback PCM between optimized normal and sanitized builds. The
-latest tested macOS CMake candidate passes all 91 registered tests in the
-normal build with the required USA assets; its full sanitizer matrix is still
-running. The next 92-case candidate adds the shared-memory aliasing compiler
+latest tested macOS CMake candidate passes all 91 registered tests in both
+normal and sanitizer builds with the required USA assets. The next 92-case
+candidate adds the shared-memory aliasing compiler
 contract and a focused callback-storage regression.
 Tutorial, the late-EX route and a hidden Metal 2× replay already pass in both
 builds. Full New Game-to-campaign-to-EX coverage on one

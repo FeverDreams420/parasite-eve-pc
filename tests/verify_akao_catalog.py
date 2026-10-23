@@ -28,7 +28,7 @@ def main():
 
     handlers = set()
     entries = 0
-    dispatch = (root / "src/main/akao/opcode_dispatch.c").read_text()
+    dispatch = (root / "src/main/akao/sequencer.c").read_text()
     for page in catalog["pages"]:
         extended = page["page"] == "extended"
         expected_opcodes = list(range(32)) if extended else list(range(0xA0, 256))

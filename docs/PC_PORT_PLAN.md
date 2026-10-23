@@ -2,6 +2,44 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Audio-enabled kandydat: walka, zapis telefonu i użytkowy build
+
+`/tmp/pe-audio-port-v4-additional-proof.json`: PASS4/4 świeżych replayów
+head2/phone na a609eeed3/PsyZ6e08856, normal/ASan/UBSan. Oryginalny input,
+bez edycji RAM/RNG/save. Head2 do67791, telefon do69475. Cały JSON (włącznie
+z56 locals każdego aktora) i1MiBVRAM identyczne normal/SAN i z zachowanymi
+referencjami sprzed zmiany audio. Telefon tworzy autentyczneB bajt w bajt
+równe referencji; źródłoweA/B i prywatneA pozostają niezmienione.
+
+PCM head2:49876372 klatki stereo, SHA256
+ df5934938552baf71f780e1f52bdd4b8674b2c0f7a4992592a3f0cdddeb61402;
+telefon:51115350 klatek, SHA256
+ 432602d76554c9efc26307cd0e1f323975f2c5a01b08f0c37ab26fc1e0947d29.
+Każde nagranie identyczne normal/SAN. To19minut emulowanego audio w każdym
+scenariuszu; nie jest niezależnym hardware oracle ani katalogiem wszystkich
+utworów/SFX. Proof zawiera hashe logów/PCM/VRAM/kart/argumentów i manifestu.
+Ponownie sprawdzono wszystkie zależności438 obiektów oraz hashe bibliotek
+oraz prywatnych binariów. Wraz z poprzednim medicine domyka brak dwóch
+replayów wskazany niżej dla tego kandydata; pełna kampania nadal niezweryfikowana.
+
+Istniejący `tests/verify_akao_catalog.py` naprawiony: odczytuje natywną tabelę
+z istniejącego sequencer.c, zamiast nieistniejącego opcode_dispatch.c.
+`/tmp/pe-audio-port-v4-akao-catalog-proof.json`:128 adresów/skipów i90 procedur
+sprawdzone z dostarczonym USA SLUS_006.62 oraz aktualnym źródłem. Katalog
+już wskazywał poprawny moduł; nie przenoszono funkcji. To audyt katalogu
+oraz źródłowej tabeli dispatch, nie dowód wykonania wszystkich opcode'ów.
+
+Przebudowano również rzeczywisty `build/parasite-eve-pc` przez istniejący
+CMake/target, C11 i poprawny PSYZ_TITLE="Parasite Eve" (bez SDK-test title).
+SHA2562956a0c7c2e644fc7857ae76b261e29308fab8a06b463d0e0a504a18bb335fc3.
+`/tmp/pe-audio-port-v4-user-smoke/proof.json`:3/3 przebiegi do1000VBlank,
+użytkowy software i ukryty Metal2× oraz prywatny software; oba USA CUE
+podane razem. Cały stan/VRAM/PCM identyczne; filmRGB24 daje natywne320×240
+PPM także przy2×. Wszystkie procesy exit0, prywatne karty puste, bez widocznego
+okna. To startup smoke nowego użytkowego binarium o innych flagach kompilacji,
+nie przeniesienie pełnych prywatnych replayów na ten plik ani audyt wydania.
+Repozytoryjnego bu00 nie modyfikowano.
+
 ### Audio: rzeczywisty backend, deterministyczny PCM i timer AKAO
 
 Naprawiono start w istniejącym boot/init.c: po oryginalnym SpuInit uruchamiany

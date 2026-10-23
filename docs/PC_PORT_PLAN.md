@@ -2,6 +2,17 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### d22826cb0: odświeżony katalog definicji funkcji
+
+`/tmp/pe-spu-sync-v1/catalog/function-evidence-catalog.json`: libclang parsuje
+219 wariantów kompilacji, zero jednostek z błędami, 2986 kluczy definicji.
+Źródła definicji (również include .inc, po normalizacji ścieżek) porównano
+bajtowo z git d22826cb0 i zapisano SHA256. Sześciu procedurom przypisano świeży
+full-cpu-oracle/proof.json; wyłącznie tested_domain_only. Pozostałe2980
+nie mają jeszcze w tym katalogu zatwierdzonego dowodu semantycznego — nie wynika
+z tego brak innych fixture, lecz konieczność ich przypisania i oceny zakresu.
+Niekompilowane źródła pozostają poza tym katalogiem; pełny audyt niezaliczony.
+
 ### d22826cb0: świeże dowody CPU AKAO i ukrytego Metal2×
 
 `/tmp/pe-spu-sync-v1/full-cpu-oracle/proof.json`: normal, SAN i coverage

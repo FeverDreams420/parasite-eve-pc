@@ -36022,3 +36022,14 @@ BP74, dialog17. Checkpoint299103 i dowód
 To dalszy odcinek bieżącej kampanii, jeszcze poza ostatnim cold replay
 do291736; zbrojownia Torresa i dalszy Day2 pozostają do przejścia
 na tym kandydacie. Nie zmieniano kodu ani warunków sceny.
+
+
+### Day2: przejście biuro → korytarz
+
+Bieżące zwykłe przejście weszło M042→M043/a80041c8 przy311420, HP72/72,
+BP74, bez aktywnego menu/dialogu. Rozmowa z Warnerem16 działa i zamyka
+się normalnie. Nawigacja wymagała obejścia kolizji biurek/postaci i
+ustawienia przed środkiem drzwi (ostatni ruch70 Left,40 Up, Cross).
+Całe wejście zachowane w commands.jsonl, checkpoint311420 oraz
+`/tmp/pe-campaign-replay-v3/station-hallway-proof.json`. Zbrojownia jeszcze
+nieosiągnięta w tej próbie; odcinek po291736 nie ma jeszcze cold SAN.

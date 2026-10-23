@@ -2,6 +2,20 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Otwarta rozbieżność: gated registration w pięciu modułach motion
+
+Odczyt oryginalnych room ranges z USA EXE/PE.IMG i skan instrukcji wykrył
+sekwencję variant(+0x0e) >=2 albo target.startFlag(+0xac) w M075/M080/M082
+(offset pokoju0x2e8) i M419/M420(0x32c). Zachowano kandydatów oraz disassembly
+w `/tmp/pe-spu-sync-v1/gated-pattern-candidates.json`; skaner scan-gated.py.
+Sekwencja wywołuje FieldFx_UpdateSlots/RunScript dopiero po otwarciu bramki.
+room_load mapuje te pięć pokojów na g_RoomMotionHandlers; obecny wpis execute
+w motion_particles.c wskazuje zwykłe RoomLib_RegisterPairedTables, podczas gdy
+oryginalny class_register_tables_gated.c nie jest linkowany. Jest to otwarta
+rozbieżność wymagająca dokładnego potwierdzenia wpisu tabeli, czerwonego testu
+wariantów bramki i naprawy istniejących modułów. Bieżące zielone testy nie
+obejmują jeszcze tego zachowania. Pełny odbiór kandydata pozostaje niezaliczony.
+
 ### d22826cb0: oryginalna tabela actor/window — 49/49 wpisów
 
 `/tmp/pe-spu-sync-v1/seven-rows/proof.json`: helper normal/SAN/coverage

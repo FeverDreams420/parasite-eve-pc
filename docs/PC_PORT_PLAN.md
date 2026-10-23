@@ -36603,3 +36603,31 @@ Nie traktować tej odporności jako trwałej ani jej wygaśnięcia jako błędu.
 Cold recovery normal zakończył0/PASS do632438, całyJSON/VRAM/PPM zgodny,
 PCM a27b08e5055f8c11b26f3d869ff4467ab37482ef5e65e309729f4806d64d585f.
 SAN/session45515 nadal żywy przy odczycie, wynik nieznany. M065 nieukończone.
+
+### Trening M063 i nowy oryginalny zapisD, Continue normal/SAN
+
+PoContinueC643720: M063 jeden3:31/57HP pokonany648424 bez utratyHP
+(92/92 przezcałąwalkę), EXP89→99. Powrót doM064 i ponowne wejście
+wylosowało dwóch3 po57HP; wygrana658490, EXP119/Level8, BP104.
+Heal1 podczasdrugiejwalki48→78. Po nagrodach przypadkowe przejście
+M061, powrót M063→M064; Medicine1 57→101. Nie twierdzimy, że planowane
+leczenie PE po nagrodach się udało. Cure-P nadal zachowane.
+
+Telefon utworzył czwarty slotD przy665660, HP101/101, BP104, EXP119,
+Level8; A/B/C bitowo niezmienione. D SHA256
+53fe7d6255f73c826779dd77fa2069a01478aa33b0c8eaefabda234953e07423.
+Checkpoint665660 i park-grind-save-D-proof.json w /tmp/pe-campaign-replay-v3.
+ContinueD normal/SAN zakończone0: całycharacter/inventory/scene/stage
+zgodne z autentycznym zapisem, pełnyJSON/VRAM/PPM międzyprofilami zgodny,
+D niezmienione, czyste logi. continue-park-D-pair-proof.json.
+Pierwszy testD wybrał pusty slot2 i pozostał na liście; po sprawdzeniu
+wyniku poprawiono harmonogram na trzyDown (slot3). Pierwsze katalogi
+continue-park-D-only-* nie są dowodem załadowaniaD; poprawne slot3-*.
+Niezależne odtworzenie samego treningu nadal wymagane; M065 otwarte.
+
+Cold-M358-recovery normal/SAN do632438 oba zakończone0, zgodne z
+checkpointem całymJSON/VRAM/PPM, pełnePCM identyczne SHA256
+a27b08e5055f8c11b26f3d869ff4467ab37482ef5e65e309729f4806d64d585f,
+logi czyste; cold-M358-recovery-pair-proof.json. Obejmuje porażki,
+Continue, nieudane/udaneEscape i ponowne zwycięstwoM358, nie późniejsze
+Cure-P ani nowy trening. Aktualnylive665660: potwierdzenieFile saved40.

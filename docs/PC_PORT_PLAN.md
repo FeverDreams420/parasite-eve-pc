@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Nowe ciągłe New Game: wejście do aligatora i zwykła walka
+
+/tmp/pe-campaign-replay-v1: aktualna pełna normal binarka a904055bc,
+puste prywatne karty, oba obrazy, video audio clock. Trwały fixture dostarczył
+2474 pad events od New Game do261381; capture-only proxy wyłącznie zapisał
+argv i celowo nie zaliczył asercji fixture, nie był testem gry. Następnie
+rzeczywista gra wykonała całą trasę i dotarła do dialogu8 przed aligatorem,
+poziom5,61/67HP, bez health diagnostic flags. Obraz i checkpoint zachowane.
+
+Dalsze sterowanie to wyłącznie advance/pad, pełny ślad commands.jsonl i game.log.
+Potwierdzono wejście do walki, oba cele, leczenie Heal1 przez oryginalne menu
+43→67HP oraz trafienia ogona po podejściu w zasięg. Przy263439 Aya38/67,
+walka trwa; nie uznawać tego za zwycięstwo ani ukończony replay. Proces/sesja
+79874 i93730 wymagają rewalidacji; progress.json zachowuje stan i następny krok.
+Starsze artefakty kampanii z samym proof/save bez input nie zastępują nowej trasy.
+Poprzedni b6cdcbf26 pełny SAN94/94 również zakończony i zweryfikowany,
+1728,47s, bez SKIP, niezmienione21 programów. Nie przypisany macierzom95.
+
 ### a904055bc: poprawne pełne buildy95, macierze uruchomione
 
 Wszystkie3 buildy95 zakończyły się exit0 i odświeżyły fixture po korekcie

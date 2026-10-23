@@ -893,7 +893,19 @@ static void Boot_PollConfiguredPad(void) {
 static bool Boot_WatchPadEvent(void *userdata, SDL_Event *event) {
     (void)userdata;Boot_HandlePadEvent(event);return true;
 }
+void Boot_InitHostBindings(void) {
+    static bool initialized;
+    if(initialized)return;
+    static const SDL_Scancode defaults[16]={
+        SDL_SCANCODE_1,SDL_SCANCODE_2,SDL_SCANCODE_Q,SDL_SCANCODE_E,
+        SDL_SCANCODE_C,SDL_SCANCODE_Z,SDL_SCANCODE_X,SDL_SCANCODE_V,
+        SDL_SCANCODE_TAB,SDL_SCANCODE_F1,SDL_SCANCODE_F2,SDL_SCANCODE_RETURN,
+        SDL_SCANCODE_UP,SDL_SCANCODE_RIGHT,SDL_SCANCODE_DOWN,SDL_SCANCODE_LEFT};
+    for(unsigned i=0;i<16;++i)Psyz_SetKeyboardBinding_SDL3(i,defaults[i]);
+    initialized=true;
+}
 void Boot_ResetPadInput(void) {
+    Boot_InitHostBindings();
     const char *headless=SDL_GetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_HEADLESS");
     native_pad_poll=!headless || !*headless;
     if(g_BootHostActive && native_pad_poll)PadInit(0);

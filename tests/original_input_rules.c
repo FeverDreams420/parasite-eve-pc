@@ -122,6 +122,8 @@ int main(void)
 
     }
     if(Psyz_SetKeyboardBinding_SDL3(11,SDL_SCANCODE_F))return 40;
+    Boot_ResetPadInput(); /* Reset must not undo an explicit rebind. */
+    if(Psyz_GetKeyboardBinding_SDL3(11)!=SDL_SCANCODE_F)return 45;
     SDL_Event remapped={.type=SDL_EVENT_KEY_DOWN};remapped.key.scancode=SDL_SCANCODE_RETURN;
     SDL_PushEvent(&remapped);if(!(g_PadPackets[0].buttons&8))return 41;
     remapped.type=SDL_EVENT_KEY_UP;SDL_PushEvent(&remapped);

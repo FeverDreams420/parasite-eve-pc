@@ -28,6 +28,8 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(PadPacket, leftX) == 6, pad_packet_left_x_offset)
 /* The packets of controller ports 1 and 2. */
 extern PadPacket g_PadPackets[2];
 union SDL_Event;
+/* Install game defaults once; subsequent pad resets preserve user bindings. */
+void Boot_InitHostBindings(void);
 void Boot_ResetPadInput(void);
 void Boot_HandlePadEvent(const union SDL_Event *event);
 void Boot_BuildRenderFlagTable(void);

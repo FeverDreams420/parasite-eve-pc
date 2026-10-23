@@ -16,6 +16,7 @@
 #include "pe1/game_timers.h"
 #include "pe1/psyq_gpu.h"
 #include "pe1/scene_dispatch.h"
+#include "pe1/pad_state.h"
 
 /* Desktop preferences belong to the original boot module. The modal loop
  * never ticks the game, PS1 timers, scripts, or audio. */
@@ -137,13 +138,9 @@ static int Host_SaveOptions(void) {
 }
 static void Host_InitOptions(int enabled) {
     host_options.enabled=enabled;host_options.scale=1;host_options.volume=100;
-    static const SDL_Scancode defaults[16]={
-        SDL_SCANCODE_1,SDL_SCANCODE_2,SDL_SCANCODE_Q,SDL_SCANCODE_E,
-        SDL_SCANCODE_C,SDL_SCANCODE_Z,SDL_SCANCODE_X,SDL_SCANCODE_V,
-        SDL_SCANCODE_TAB,SDL_SCANCODE_F1,SDL_SCANCODE_F2,SDL_SCANCODE_RETURN,
-        SDL_SCANCODE_UP,SDL_SCANCODE_RIGHT,SDL_SCANCODE_DOWN,SDL_SCANCODE_LEFT};
+    Boot_InitHostBindings();
     for(unsigned i=0;i<16;++i){
-        host_options.keys[i]=defaults[i];Psyz_SetKeyboardBinding_SDL3(i,defaults[i]);
+        host_options.keys[i]=Psyz_GetKeyboardBinding_SDL3(i);
         host_options.buttons[i]=Psyz_GetGamepadBinding_SDL3(i);
     }
     if(!enabled)return;

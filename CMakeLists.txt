@@ -420,7 +420,10 @@ if(BUILD_TESTING)
     target_include_directories(test-original-input-rules PRIVATE include)
     target_link_libraries(test-original-input-rules PRIVATE psyz)
     add_test(NAME original-game-input-rules COMMAND test-original-input-rules)
-    add_executable(test-host-settings tests/original_input_rules.c)
+    add_executable(test-host-settings tests/original_input_rules.c
+        $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion>
+        $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling>
+        $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
     target_compile_definitions(test-host-settings PRIVATE PE_HOST_SETTINGS_TEST=1 __psyz)
     target_include_directories(test-host-settings PRIVATE include)
     target_link_libraries(test-host-settings PRIVATE psyz)

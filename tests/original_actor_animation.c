@@ -1,3 +1,4 @@
+#include "pe1/room_homing_flash.h"
 #include "../src/overlays/scene_e08_chrysler/scene_e08_modules.h"
 #include "pe1/scene_e20_hover_orb.h"
 #include "pe1/scene_e20_flare_draw.h"
@@ -17371,8 +17372,44 @@ static int original_sewer_twelve_assets(void)
 #undef TWELVE_REQUIRE
 }
 
+static int original_all_room_loads(void)
+{
+    PeDisc disc={0},disc2={0};
+    const char *first=getenv("PE_TEST_DISC"),*second=getenv("PE_TEST_DISC2");
+    if(!first || !second)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+    if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,first))return 1;
+    if(!pe_disc_open(&disc2,second)){pe_disc_close(&disc);return 1;}
+    ResetGraph(0);CdRom_BindImage(&disc,&disc2);
+    int result=1;
+    if(Asset_OpenPeImage()!=0)goto done;
+    Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
+    unsigned loaded=0,empty=0;
+    for(unsigned map=1;map<=SCENE_ROOM_COUNT;++map){
+        if(!g_RoomSectorTable[map-1].roomSectors){++empty;continue;}
+        int homing=map==162 || map==163 || map==398 || map==400 ||
+                   map==403 || map==434 || map==435;
+        if(homing)memset(g_RoomScriptArgs,0xa5,sizeof(g_RoomScriptArgs));
+        char name[16];snprintf(name,sizeof(name),"m%04ui",map);
+        int status=Scene_LoadRoom(Text_ParseBase32Id((signed char *)name));
+        if(status){fprintf(stderr,"Room catalog M%03u load status%d\n",map,status);goto done;}
+        if(homing && (g_PmCmdHandlerTable[70]!=&g_RoomActorClassTable[0] ||
+           g_PmCmdHandlerTable[75]!=&g_RoomActorClassTable[2] ||
+           g_FieldFxTaskPrograms[38]!=&g_RoomHomingFlashProgram))goto done;
+        if(homing)for(unsigned i=0;i<sizeof(g_RoomScriptArgs);++i)
+            if(((unsigned char *)g_RoomScriptArgs)[i])goto done;
+        ++loaded;
+    }
+    if(loaded!=414 || empty!=36){fprintf(stderr,"Room catalog counts %u/%u\n",loaded,empty);goto done;}
+    puts("Original room catalog: all 450 entries, 414 nonempty loads, 36 empty records, including all seven HomingFlash bindings and resets passed");
+    result=0;
+done:
+    fx_image_io=0;CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);pe_disc_close(&disc2);
+    return result;
+}
+
 int main(int argc, char **argv)
 {
+    if(argc==2 && !strcmp(argv[1],"--all-room-loads"))return original_all_room_loads();
     if(argc==2 && !strcmp(argv[1],"--anim-event-completion")){
         RenderAnimationDataHeader animation={0};animation.frame_count=8;
         void *old_animation=g_GameState.bank_rows[0][2];

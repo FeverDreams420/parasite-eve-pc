@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Naprawione brakujące wiązania M434/M435, pełny katalog loadera
+
+Nowy test wszystkich450 slotów wykrył rzeczywisty brak na b6cdcbf26:
+412 loaded,2 failed(M434/M435 slot75 PS1 descriptor80193174),36 empty.
+To uzupełnia wcześniejsze selektywne testy loaderów; nie były dowodem wszystkich
+map. Logi normal/SAN w /tmp/pe-seeker-original-v1/all-rooms.
+
+Oryginalne bytes8..0x42b0 całego modułu aktorów/HomingFlash/script_args/tabel
+są identyczne dla M162/M163/M398/M400/M403/M434/M435, SHA256
+9c03a9646047c6a3e688f4cb331d5927bd5a71dda99a100e42aba167a515dd6b.
+Dowód homing-module-equivalence.json. W istniejącym room_load.c dopisano
+M434/M435 do homing_flash_library, korzystając z tych samych oryginalnych
+klas i tasku, bez nowych modułów czy zastępczej implementacji.
+
+Istniejący fixture ma --all-room-loads i CTest original-all-room-loads:
+450 rekordów,414 poprawnych niepustych ładowań,36 pustych; wszystkie7 homing
+klas/tasków i reset argumentów sprawdzone. Nowy fixture+stary loader poprawnie
+FAIL na M434; poprawiony cały room_load+fixture normal/SAN/coverage3/3 PASS414.
+Celowane linki zachowane w fixed-proof.json, permanent-red-proof.json.
+Test obejmuje oryginalny loader i dane obu CUE, nie pełne inicjowanie aktorów,
+wykonywanie callbacków ani kampanię. Rejestr teraz95; świeże pełne buildy i
+macierze95 pozostają wymagane. Zamrożone94 i kopia użytkowa nieprzebudowane.
+
 ### Draw_ReportError: oryginalne ciało i brak bezpośrednich odwołań
 
 `/tmp/pe-seeker-original-v1/error-original-audit.json`: historyczny main.yaml

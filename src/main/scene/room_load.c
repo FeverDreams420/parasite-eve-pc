@@ -487,7 +487,8 @@ int Scene_LoadRoom(unsigned int roomId)
         map + 1 == 173 || map + 1 == 178 || map + 1 == 295 ||
         map + 1 == 299 || map + 1 == 309 || map + 1 == 310;
     homing_flash_library = map + 1 == 162 || map + 1 == 163 ||
-        map + 1 == 398 || map + 1 == 400 || map + 1 == 403;
+        map + 1 == 398 || map + 1 == 400 || map + 1 == 403 ||
+        map + 1 == 434 || map + 1 == 435;
     /* Eight identical USA spark modules; two add the original SoundBurst unit. */
     const int spark_combined = map + 1 == 231 || map + 1 == 234;
     const int spark_library = spark_combined || map + 1 == 203 || map + 1 == 221 ||

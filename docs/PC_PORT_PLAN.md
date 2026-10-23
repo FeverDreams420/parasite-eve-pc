@@ -37098,3 +37098,19 @@ actor/input fixture passes on Linux ARM64 after relinking whole original modules
 full matrix. Linux Tutorial state, final VRAM and rendered frame match macOS;
 293 sample values differ by at most two int16 units, exclusively in movie audio.
 The cross-compiler XA resampler investigation remains open; no golden was relaxed.
+
+
+### Cross-compiler XA rounding correction — 24 October 2026
+
+Explicit fmaf at all three Hermite Horner stages removes the Linux/GCC versus
+macOS/Clang difference without changing the Tutorial golden. All 27,597,594
+stereo frames, final VRAM and PPM now match byte-for-byte across those builds:
+`/tmp/pe-linux-xa-fma/proof.json`. A new existing-SDK libcd fixture decodes 32
+sectors of deterministic varying ADPCM data and checks every output byte through
+a fixed hash. Old Linux library fails with a2e451cc865eb54f; explicit FMA and
+macOS give c1a616c2d17dd80a across all 75,264 stereo frames. Red output retained:
+`/tmp/pe-linux-xa-sdk-tests/red/normal/output.log`. CD/SPU selection passes 69/69,
+zero SKIP, on macOS normal and ASan/UBSan/function and Linux normal:
+`/tmp/pe-xa-fma-sdk-green/proof.json`, `/tmp/pe-xa-fma-sdk-san/proof.json`,
+`/tmp/pe-linux-xa-sdk-tests/results/proof.json`. These focused results resolve
+that discrepancy but do not replace a fresh full matrix for the combined release.

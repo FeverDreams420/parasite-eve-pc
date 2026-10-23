@@ -11,8 +11,8 @@ Nie zmienia to znalezionego błędu M434/M435, lecz zawęża dawny dowód. Popra
 fixture: g_CdImageVolumes[0/1] i BindImage(volume,NULL), a następnie osobne
 Asset_OpenPeImage/Boot_InitGameState i450 wpisów dla każdego obrazu.
 Prywatny normal dual audit: Disc1 i Disc2 po414 loaded/36 empty/0 failed.
-Nowy trwały test obu obrazów normal przeszedł; SAN/coverage w sesji79702,
-wymagają sprawdzenia wyniku. Rejestr nadal95. Wcześniejsze pełne buildy95
+Nowy trwały test obu obrazów przeszedł normal/SAN/coverage3/3;
+two-volume-proof.json sprawdza oba wyniki w każdym logu i brak diagnostyk. Rejestr nadal95. Wcześniejsze pełne buildy95
 powstały przed korektą fixture i wymagają przebudowy przed zamrożeniem.
 
 `/tmp/pe-room-catalog-v1-fuzz/proof.json`: normal/SAN/coverage po milionie

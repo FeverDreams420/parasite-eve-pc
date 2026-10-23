@@ -36535,3 +36535,15 @@ Oryginalne Continue ponownie przy614818 odtworzyło cały character,
 inventory, scenę i stage zapisuC; retry3-recovery-proof.json w /tmp.
 Brak nowej implementacji lub dowodu zwycięstwa; nie uznawać planowanego
 Cure-P za wykonany test. Proceslive czeka wM064 z92/92.
+
+### M358: oryginalna ucieczka i pełneHP
+
+Live M063 wygrane619732, Heal1 do82/92. W M358 spotkanie przy623676:
+Triangle otwiera root, Up wybiera Escape from Battle. Dwie próby nieudane
+(pozostają przeciwnicy); trzecia625224 zakończyła walkę: combat10,
+zeroenemies, HP41, bez nagród/zwycięstwa. Oryginalny Battle_RollEscapeChance
+z turn.c zwiększa szansę po porażce; nie modyfikowano RNG ani flag.
+Heal1 przy626124 dało41→71, Medicine1 przez Item/Use przy626874
+71→92/92. Cure-P zachowane, menuItem1 otwarte. Checkpoint626874 i
+M358-escape-observation.json w /tmp/pe-campaign-replay-v3; to obserwacja
+nowej gałęzi ucieczki, niezależny replay wymagany. M065 nadal niepokonane.

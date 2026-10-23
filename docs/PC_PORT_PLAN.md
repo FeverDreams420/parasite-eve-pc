@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### TimeoutM318: dodatkowe6replayów PASS — łącznie70/70
+
+`/tmp/pe-m318-flash-timeout-v1-six-replay-proof.json`: head2/phone/medicine
+×normal/SAN exit0/czysto, pełnyJSON/VRAM oraz zawartość kart równe
+poprzedniemu kandydatowi; źródłoweA/B niezmienione. Wraz z64fixture daje
+70/70przypadków na świeżym timeoutM318. Nie zaliczamy z tego pełnej gry.
+
+N7/30148 i niezależnySAN/16043 nadal pracują od autentycznejO do182713.
+Porównanie za dawnymabortem przygotowane w
+`/tmp/pe-m318-flash-N7-handoff-v1.py`; wymaga pełnej zgodnościJSON/VRAM,
+czystegoSANexit0, żywego native w pauzie kontrolnej, niezmiennych kart,
+zgodnych hashy binariów i dodatniegoHP. Nie uruchamia kolejnych wejść.
+Brak wyniku tego weryfikatora pozostaje pending, niePASS.
+
+Plan w sekcjach1.2/2/3/PR03 uzgodniono z aktualnym interfejsem oryginalnego
+main/init oraz zakazem nowychwarstw i plików. To korekta dokumentacji,
+nie ukończenie wymaganego katalogu funkcji/zawartości/platform.
+
 ### Kandydat timeoutM318:64/64regresjefixture PASS, źródła świeże
 
 `/tmp/pe-m318-flash-timeout-v1-fixture-regression-proof.json`: wszystkie

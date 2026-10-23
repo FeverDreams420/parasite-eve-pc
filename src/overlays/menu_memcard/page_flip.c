@@ -8,8 +8,6 @@
 #include "menu_memcard_screen.h"
 #include "page_flip_externs.h"
 
-typedef PsxSignedRect Rect;
-
 void ResetGraph(int);
 
 void MenuCard_FlipScreenPages(void) {
@@ -17,7 +15,7 @@ void MenuCard_FlipScreenPages(void) {
     int page;
     int y;
     MemcardScreenBuffer *screen;
-    Rect main_rect;
+    RECT main_rect;
 
     for (i = 0; i < 2; i++) {
         page = g_MemcardScreenPage == 0;

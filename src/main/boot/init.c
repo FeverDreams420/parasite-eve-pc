@@ -64,8 +64,7 @@ u8 *g_StrFileDirBuffer = g_BootLoadedSceneArea + 8;
 static _Alignas(16) u8 g_BootDisplayWorkArea[BOOT_DISPLAY_WORK_SIZE];
 u8 *g_CdLoadAreaBase = g_BootDisplayWorkArea;
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* Shared native state; external variables have one storage definition. */
 
 /* Boot-time system initialization: Boot_InitSystem, the subsystem and global
  * reset it is followed by, the start-up display reset, the vsync callback and

@@ -40,7 +40,8 @@ int RoomEffect_HomingSpark(int mode, void *data, intptr_t argument) {
         switch (spark->state) {
         case 0:
             FieldFx_GetActorPosition((char *)D_8009D254, 0, (s16 *)&target);
-            FieldFx_CalculateLookAngles(spark, &target, &angles);
+            GteShortVector origin = {spark->x, spark->y, spark->z, spark->reserved06};
+            FieldFx_CalculateLookAngles(&origin, &target, &angles);
             angles.x = 0;
             FieldFx_EaseAngles((unsigned short *)&angles, &spark->hx, params->speed);
             FieldFx_AnglesToVector((GteShortVector *)&spark->hx, params->distance, &target);

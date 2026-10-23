@@ -1305,7 +1305,7 @@ static int original_startup_fade(void)
             if(tile->tag.length!=3 || tile->command!=0x62 || tile->r!=255 ||
                tile->g!=255 || tile->b!=255 || tile->x || tile->y ||
                tile->width!=320 || tile->height!=224) valid=0;
-            D_800B0E38.ordering[i]=(char *)ordering[i];
+            D_800B0E38.ordering[i]=ordering[i];
         }
         g_ActiveDrawSlot=slot;
         g_ScreenTint.fadeMode=stop?6:2; g_ScreenTint.blendMode=blend;
@@ -1349,7 +1349,7 @@ static int native_screen_tint_packets(void)
     int saved_slot=g_ActiveDrawSlot, saved_offset=g_DrawPacketOffset;
     u8 rgb[3]={200,100,50};
     for(unsigned slot=0;slot<2;++slot) {
-        D_800B0E38.ordering[slot]=(char *)ordering;
+        D_800B0E38.ordering[slot]=ordering;
         D_800B0E38.packets[slot]=(char *)&buffer;
         g_ActiveDrawSlot=slot;
         for(unsigned depth=0;depth<4096;++depth) {
@@ -8435,7 +8435,7 @@ static int original_motion_states(void)
         FieldGlowSprite old_glyph=g_RoomMotionGlyph,old_glyphs[4];RoomMotionParticle old_a[10],old_b[10];
         memcpy(old_glyphs,g_RoomMotionGlyphs,sizeof(old_glyphs));memcpy(old_a,g_RoomMotionTrailA__motion,sizeof(old_a));memcpy(old_b,g_RoomMotionTrailB,sizeof(old_b));
         u32 empty_archive[32]={0};empty_archive[1]=8;
-        void *archive=g_GameState.loaded_scene_archive;g_GameState.loaded_scene_archive=empty_archive;
+        void *archive=g_GameState.loaded_scene_archive;g_GameState.loaded_scene_archive=(struct SceneAssetBlob *)empty_archive;
         for(unsigned pattern=0;pattern<4;++pattern){
             RoomMotionInitState state;RoomMotionInitOwner owner={0};FieldActor actor={0};RenderMatrix matrices[14];
             memset(&state,0xa5,sizeof(state));owner.link=&actor;actor.render_object.matrices=matrices;
@@ -8448,7 +8448,7 @@ static int original_motion_states(void)
             MOTION_HASH(g_RoomMotionTrailA__motion,sizeof(old_a));MOTION_HASH(g_RoomMotionTrailB,sizeof(old_b));MOTION_HASH(g_RoomMotionGlyphs,sizeof(old_glyphs));++cases;
         }
 init_done:
-        g_GameState.loaded_scene_archive=archive;g_RoomMotionGlyph=old_glyph;memcpy(g_RoomMotionGlyphs,old_glyphs,sizeof(old_glyphs));
+        g_GameState.loaded_scene_archive=(struct SceneAssetBlob *)archive;g_RoomMotionGlyph=old_glyph;memcpy(g_RoomMotionGlyphs,old_glyphs,sizeof(old_glyphs));
         memcpy(g_RoomMotionTrailA__motion,old_a,sizeof(old_a));memcpy(g_RoomMotionTrailB,old_b,sizeof(old_b));
     }
     MOTION_CHECK(0xb34061a49b104785,"init and native actor matrices");
@@ -8518,7 +8518,7 @@ static int original_motion_program(void)
     char *old_data=g_FieldFxScriptData;int *old_commands=g_FieldFxCommandTable;
     unsigned old_rng=Psyz_RandState();s16 old_floor=g_RoomFloorY->y;int ok=0;
     GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
-    g_GeomScroll.words.viewMatrix=&view;g_GameState.loaded_scene_archive=archive;g_RoomFloorY->y=0;
+    g_GeomScroll.words.viewMatrix=&view;g_GameState.loaded_scene_archive=(struct SceneAssetBlob *)archive;g_RoomFloorY->y=0;
     Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,120);
     for(unsigned draw_slot=0;draw_slot<2;++draw_slot){
         FieldFxObject object={0};FieldActor actor={0};FieldActorState actor_state={0};RenderMatrix matrices[14]={0};u8 action_state[4]={2};
@@ -8664,7 +8664,7 @@ static int original_three_particle_program(void)
     ((SceneAssetDirectory *)(archive+8))->keyEntries=(1u<<22)|64;
     ((AssetU32KeyRecord *)(archive+64))->packedOffset=80;((AssetU32KeyRecord *)(archive+64))->key=0x73decd80;
     ((TimPackedImage *)(archive+80))->key.bytes.type=10;((TimPackedImage *)(archive+80))->geometry=(832u<<10)|(256u<<21);
-    g_GameState.loaded_scene_archive=archive;
+    g_GameState.loaded_scene_archive=(struct SceneAssetBlob *)archive;
     PolygonVertex polygon[4]={{.x=-2000,.z=-2000},{.x=2000,.z=-2000},{.x=2000,.z=2000},{.x=-2000,.z=2000}};
     g_FloorPolygonVertices=polygon;g_FloorPolygonVertexCount=4;
     view.t[0]=view.t[1]=view.t[2]=0;
@@ -10289,7 +10289,7 @@ static int original_color_quad_packets(void)
         RenderNativeTag ordering={0xFFFFFF,0};memset(arena,0xA5,sizeof(arena));
         g_DrawPacketArenaBase=g_DrawPacketCursor=arena;g_DrawOrderingTableEntry=(u32 *)&ordering;
         g_GameStateFlags=flag*2;Draw_AllocColorQuad(fill*28,56);
-        ClearImage(&area,0,0,0);DrawOTag((u_int *)&ordering);DrawSync(0);
+        ClearImage(&area,0,0,0);DrawOTag(&ordering);DrawSync(0);
         StoreImage(&area,pixels);DrawSync(0);
         int offset=flag?0:7;
         for(int y=0;y<240;++y)for(int x=0;x<320;++x) {
@@ -10581,7 +10581,7 @@ static int original_fx_display(void)
     memset(g_FxCommonFrames,0xa5,sizeof(g_FxCommonFrames));
     g_OtBufferTable[0]=(u8 *)ordering[0].entries;g_RenderOtBufferBaseAlt[0]=(u8 *)ordering[1].entries;
     g_RenderScratchBufferBase[0]=(u8 *)packets.regions;
-    RenderNativeTag terminal;ClearOTagR((u_int *)&terminal,1);
+    RenderNativeTag terminal;ClearOTagR(&terminal,1);
     FxCommon_InitDisplay();int valid=arena_fits && g_FxCommonActiveBuffer==&g_FxCommonFrames[0].buffer;
     for(unsigned i=0;i<2;++i){
         FxCommonFrame *frame=&g_FxCommonFrames[i];
@@ -10941,7 +10941,7 @@ static int original_fx_shader_pixels(void)
         g_FxCommonActiveBuffer=&g_FxCommonFrames[slot].buffer;g_ActiveDrawSlot=slot;FxCommon_ClearActiveOrdering();
         g_FxCommonFrames[slot].drawEnv.dtd=0;PutDrawEnv(&g_FxCommonFrames[slot].drawEnv);PutDispEnv(&g_FxCommonFrames[slot].dispEnv);
         FxCommon_DrawFullScreenFade(intensities[value]);if(g_FxCommonActiveBuffer->error){valid=0;break;}
-        DrawOTag((u_int *)&g_FxCommonActiveBuffer->allocation[4095]);DrawSync(0);StoreImage(&whole,pixels);DrawSync(0);
+        DrawOTag(&g_FxCommonActiveBuffer->allocation[4095]);DrawSync(0);StoreImage(&whole,pixels);DrawSync(0);
         int channel=20-(int)(intensities[value]>>3);if(channel<0)channel=0;u16 expected=(u16)(channel|(channel<<5)|(channel<<10));
         for(unsigned y=0;y<512 && valid;++y)for(unsigned x=0;x<1024;++x){u16 wanted=x<320 && y>=slot*240 && y<(slot+1)*240?expected:0x1357;
             if(pixels[y*1024+x]!=wanted){fprintf(stderr,"FX fade pixels slot=%u intensity=%u x=%u y=%u got=%04x expected=%04x\n",slot,intensities[value],x,y,pixels[y*1024+x],wanted);valid=0;break;}}
@@ -10956,7 +10956,7 @@ static int original_fx_uncompressed_order(void)
     static RenderNativeTag ordering[2][4096];static FxCommonDrawModePacket packets[4096];
     const unsigned counts[]={0,1,2,10,127,4096};uint64_t hash=UINT64_C(14695981039346656037);unsigned cases=0;
     for(unsigned slot=0;slot<2;++slot)for(unsigned pattern=0;pattern<128;++pattern){
-        unsigned count=counts[pattern%6];ClearOTagR((u_int *)ordering[slot],4096);
+        unsigned count=counts[pattern%6];ClearOTagR(ordering[slot],4096);
         uintptr_t terminal=ordering[slot][0].address;
         for(unsigned j=0;j<count;++j){unsigned depth=pattern%4==0?0:pattern%4==1?4095:pattern%4==2?j%4096:(j*1103515245u+pattern*12345u)%4096;
             packets[j].tag=(RenderNativeTag){ordering[slot][depth].address,1};packets[j].command=j;
@@ -11319,7 +11319,7 @@ static int original_fx_camera_motion(PeDisc *disc)
     for(unsigned index=79;index<=255;index+=176){g_FxCommonCameraPathIndex=index;g_FxCommonCameraPathRemaining=2;
         uint64_t before=fx_camera_motion_hash(UINT64_C(14695981039346656037),1);
         if(FxCommon_StepCameraPath()!=-1 || fx_camera_motion_hash(UINT64_C(14695981039346656037),1)!=before)valid=0;++errors;}
-    u8 *table=Draw_GetTimTableEntry(g_FxCommonTimTable,2);
+    u8 *table=(u8 *)Draw_GetTimTableEntry(g_FxCommonTimTable,2);
     for(unsigned index=0;index<2;++index){u32 offset;memcpy(&offset,table+index*4,4);s16 count;memcpy(&count,table+offset+6,2);
         s16 bad_count=2;memcpy(table+offset+6,&bad_count,2);
         g_FxCommonCameraPathIndex=0;g_FxCommonCameraPathStep=255;g_FxCommonCameraPathRemaining=2;g_FxCommonPathWrapped=0;
@@ -14857,7 +14857,7 @@ static int original_received_item_opcode(PeDisc *disc,PeDiscFile *exe)
         InventoryItemWorkspace workspace=g_InventoryItemWorkspace;
         BattleCmdEntry commands[4];memcpy(commands,g_BattleCmdStack,sizeof(commands));
         BattleCmdEntry *command_top=g_BattleCmdStackTop;
-        FieldActor *player=g_PlayerEntity,entity={0};Combatant core={0};entity.state=&core;
+        FieldActor *player=g_PlayerEntity,entity={0};Combatant core={0};entity.state=(FieldActorState *)&core;
         s16 *item_ptr=g_InvItemPtr,*override=g_InvActiveListOverride;
         int limit=g_InvSlotLimit,packed=g_InvPackedListCount,bonus=g_InvBonusSlotCount;
         int battle=g_MenuBattleEquipMode,result=g_MenuCommandResult,pending=g_MenuInputPausePending;
@@ -17210,7 +17210,7 @@ static int original_hospital_spark_cycles(void)
     PolygonVertex floor[]={{0,-10000,0,-10000},{0,10000,0,-10000},{0,10000,0,10000},{0,-10000,0,10000}};
     GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}};
     g_PmTables=(PmTables){old_pm.handlers,bank,NULL};g_PlayerEntity=&player;g_GeomScroll.words.viewMatrix=&view;
-    g_GameState.loaded_scene_archive=g_GameState.loaded_scene_assets;g_FieldEffectAssetTable=g_GameState.loaded_scene_assets;
+    g_GameState.loaded_scene_archive=(struct SceneAssetBlob *)g_GameState.loaded_scene_assets;g_FieldEffectAssetTable=(u8 *)g_GameState.loaded_scene_assets;
     g_FloorPolygonVertices=floor;g_FloorPolygonVertexCount=4;g_RoomFloorY->y=0;g_GameStateFlags=0x80;
     if(!Asset_FindTable08ByU32Key(g_GameState.loaded_scene_archive,0xc5485704))return 0;
     Psyz_GteCtrlWrite(26,256);Psyz_GteCtrlWrite(27,1);Psyz_GteCtrlWrite(28,0);Psyz_GteCtrlWrite(29,1365);Psyz_GteCtrlWrite(30,1024);gte_SetGeomOffset(160,120);FieldFx_InitTexturePageTable();
@@ -17344,7 +17344,7 @@ static int original_sewer_twelve_assets(void)
     ((AssetU32KeyRecord *)(assets+64))->key=0x73decd80;
     ((TimPackedImage *)(assets+80))->key.bytes.type=11;
     ((TimPackedImage *)(assets+80))->geometry=(832u<<10)|(256u<<21);
-    g_GameState.loaded_scene_archive=assets;
+    g_GameState.loaded_scene_archive=(struct SceneAssetBlob *)assets;
     GteMatrix view={.m={{4096,0,0},{0,4096,0},{0,0,4096}}}; s32 projection=320;
     g_GeomScroll.words.viewMatrix=&view; g_GeomScroll.words.projectionDistance=&projection; g_RoomFloorY->y=0;
     PolygonVertex polygon[4]={{.x=-2000,.z=-2000},{.x=2000,.z=-2000},{.x=2000,.z=2000},{.x=-2000,.z=2000}};
@@ -17443,6 +17443,35 @@ done:
     fx_image_io=0;CdRom_BindImage(NULL,NULL);g_CdImageVolumes[0]=g_CdImageVolumes[1]=NULL;
     pe_disc_close(&disc);pe_disc_close(&disc2);
     return result;
+}
+
+static int original_native_shared_storage(void) {
+    int saved_counter=g_RenderCounter[0];
+    const int inputs[]={0,INT_MAX,-1};
+    const int outputs[]={1,INT_MIN,0};
+    for(unsigned i=0;i<3;i++){
+        g_RenderCounter[0]=inputs[i];Render_IncrementCounter();
+        if(g_RenderCounter[0]!=outputs[i])return 0;
+    }
+    g_RenderCounter[0]=saved_counter;
+    if(g_FieldPlacementUpAxis.x || g_FieldPlacementUpAxis.y!=-4096 ||
+       g_FieldPlacementUpAxis.z || g_FieldPlacementUpAxis.pad)return 0;
+    void *saved_pages[2]={g_GameState.startup_resource_tables[0],g_GameState.startup_resource_tables[1]};
+    void *saved_third=g_GameState.field_resource_slots[2];
+    int tokens[3]={0};
+    g_GameState.startup_resource_tables[0]=&tokens[0];g_GameState.startup_resource_tables[1]=&tokens[1];
+    g_GameState.field_resource_slots[2]=&tokens[2];
+    int valid=FieldFx_GetEffectResource(0)==&tokens[0] && FieldFx_GetEffectResource(1)==&tokens[1] &&
+              FieldFx_GetEffectResource(2)==&tokens[2] && g_GameState.bank_reset_958[0]==&tokens[2] &&
+              !FieldFx_GetEffectResource(-1) && !FieldFx_GetEffectResource(3);
+    g_GameState.startup_resource_tables[0]=saved_pages[0];g_GameState.startup_resource_tables[1]=saved_pages[1];
+    g_GameState.field_resource_slots[2]=saved_third;
+    CdlLOC previous=*DsLastPos(NULL),expected={0},actual={0};
+    DsIntToPos(24789,&expected);CdControlB(2,(u8 *)&expected,NULL);
+    if(DsLastPos(&actual)!=&actual || DsPosToInt(&actual)!=24789 || DsPosToInt(DsLastPos(NULL))!=24789)valid=0;
+    CdControlB(2,(u8 *)&previous,NULL);
+    if(valid)puts("Native shared storage: resident counter wraps, USA up axis, third pointer alias and image cursor passed");
+    return valid;
 }
 
 int main(int argc, char **argv)
@@ -18219,7 +18248,7 @@ int main(int argc, char **argv)
             unsigned frame=0,seen=0,drawn=0,pixel_frames=0;
             for(;frame<900;frame++){
                 if(!extra_slots && program==2 && frame==10 && Pm_SendCmd(handle,0,1,variant,0,0))return 1;
-                ClearOTagR((u_int *)ordering,4096);uintptr_t terminal=ordering[0].address;
+                ClearOTagR(ordering,4096);uintptr_t terminal=ordering[0].address;
                 memset(packets.guard,0xa5,32);g_ActiveDrawSlot=frame&1;g_DrawPacketOffset=0;
                 D_800B0E38.ordering[g_ActiveDrawSlot]=ordering;D_800B0E38.packets[g_ActiveDrawSlot]=(char *)packets.data;
                 if(Pm_Start(handle)||Pm_Exec(handle))return 1;
@@ -18228,7 +18257,7 @@ int main(int argc, char **argv)
                 while(link && link!=0xffffff){if(link==terminal){RenderGpuTag *end=(void *)link;if(end->address!=0xffffff||end->length!=4)return 1;break;}int is_ot=link>=(uintptr_t)ordering&&link+sizeof(RenderGpuTag)<=(uintptr_t)ordering+sizeof(ordering)&&(link-(uintptr_t)ordering)%sizeof(RenderGpuTag)==0;
                     int is_packet=link>=(uintptr_t)packets.data&&link+sizeof(RenderGpuTag)<=(uintptr_t)packets.data+g_DrawPacketOffset&&link%_Alignof(RenderGpuTag)==0;
                     if((!is_ot&&!is_packet)||++links>4097u+(unsigned)g_DrawPacketOffset/sizeof(RenderGpuTag))return 1;link=((RenderGpuTag *)link)->address;}
-                ClearImage(&area,0,0,0);DrawOTag((u_int *)&ordering[4095]);DrawSync(0);
+                ClearImage(&area,0,0,0);DrawOTag(&ordering[4095]);DrawSync(0);
                 if(frame==12||frame==24||frame==36||frame==48||frame==60||frame==80||frame==120||frame==240||frame==500||frame==800){
                     StoreImage(&area,pixels);DrawSync(0);unsigned visible=0;uint64_t hash=UINT64_C(14695981039346656037);
                     for(unsigned j=0;j<320*224;j++){visible+=(pixels[j]&0x7fff)!=0;hash=(hash^(pixels[j]&255))*UINT64_C(1099511628211);hash=(hash^(pixels[j]>>8))*UINT64_C(1099511628211);}pixel_frames+=visible!=0;
@@ -18785,6 +18814,7 @@ int main(int argc, char **argv)
     if(!original_digit_packets() || !original_color_quad_packets())return 132;
     if(!original_m123_counters())return 158;
     if(!original_subsystem_start())return 129;
+    if(!original_native_shared_storage())return 202;
     const u32 lzcs[]={0,1,0x7fffffff,0x80000000,0xffffffff};
     const u32 lzcr[]={32,31,1,1,32};
     for(unsigned i=0;i<5;++i) {

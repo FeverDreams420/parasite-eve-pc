@@ -14,23 +14,22 @@
 
 /* Contiguous widget construction, pool initialization, list drawing and layout. */
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
-unsigned char *g_DrawPacketCursor;
-unsigned char *g_DrawPacketArenaBase;
-unsigned int g_DrawPrimColor;
-unsigned int g_DrawColorShaded;
-unsigned int *g_DrawOrderingTableEntry;
+/* Shared native state; external variables have one storage definition. */
+extern unsigned char *g_DrawPacketCursor;
+extern unsigned char *g_DrawPacketArenaBase;
+extern unsigned int g_DrawPrimColor;
+extern unsigned int g_DrawColorShaded;
+extern unsigned int *g_DrawOrderingTableEntry;
 int g_DrawTextPosX;
 int g_MenuListRowHeight;
-int g_DrawBufferIndex;
-int g_TextRenderMode;
-int g_DrawGlyphAdvance;
-int g_DrawTextBoxWidth;
-int g_DrawTextDimmed;
+extern int g_DrawBufferIndex;
+extern int g_TextRenderMode;
+extern int g_DrawGlyphAdvance;
+extern int g_DrawTextBoxWidth;
+extern int g_DrawTextDimmed;
 int g_MenuInputActive;
 int g_TextCursorStackBottom[28];
-int *g_TextCursorStackPtr;
+extern int *g_TextCursorStackPtr;
 MenuWidgetNode g_MenuWidgetNodePool[24];
 
 void MenuWidget_InitPoolUnk(void) {
@@ -507,8 +506,8 @@ void MenuWidget_InitPool(void) {
 
 void Draw_PushPrimToList(MenuWidgetNode *node);
 
-int g_TextCursorX;
-int g_TextCursorY;
+extern int g_TextCursorX;
+extern int g_TextCursorY;
 
 void MenuWidget_UpdateAndDraw(void) {
     MenuWidgetNode *node;
@@ -1607,8 +1606,10 @@ void MenuWidget_DestroyPopupNode(MenuWidgetNode *node) {
     MenuWidget_DestroyNodeRecursive(node);
 }
 
-int g_DrawColorSelect, g_DrawSpriteX, g_DrawSpriteY;
-int *g_TextCursorStack;
+extern int g_DrawColorSelect;
+extern int g_DrawSpriteX;
+extern int g_DrawSpriteY;
+extern int *g_TextCursorStack;
 
 static inline void Offset(int x, int y) {
     g_DrawSpriteX += x;

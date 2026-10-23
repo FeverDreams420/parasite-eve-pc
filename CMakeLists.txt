@@ -33,7 +33,11 @@ target_compile_definitions(psyz PRIVATE __psyz)
 # Preserve those accesses instead of assuming different struct tags cannot alias.
 # Set this after configuring PsyZ: its SDK/SDL targets retain their own options.
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-    add_compile_options("$<$<COMPILE_LANGUAGE:C>:-fno-strict-aliasing>")
+    add_compile_options("$<$<COMPILE_LANGUAGE:C>:-fno-strict-aliasing>"
+        "$<$<COMPILE_LANGUAGE:C>:-ffunction-sections>"
+        "$<$<COMPILE_LANGUAGE:C>:-fdata-sections>")
+elseif(MSVC)
+    add_compile_options("$<$<COMPILE_LANGUAGE:C>:/Gy>" "$<$<COMPILE_LANGUAGE:C>:/Gw>")
 endif()
 
 # Whole original modules may contain entry points not yet called by each test.
@@ -42,6 +46,8 @@ if(APPLE)
     add_link_options(-Wl,-dead_strip)
 elseif(NOT MSVC)
     add_link_options(-Wl,--gc-sections)
+else()
+    add_link_options(/OPT:REF)
 endif()
 
 # Original scene/archive module owns file-image I/O and completion flags.
@@ -493,6 +499,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-expression tests/original_expression.c
+        $<TARGET_OBJECTS:parasite-eve-original-camera>
         $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08>)
     target_include_directories(test-original-expression PRIVATE include)
     target_link_libraries(test-original-expression PRIVATE psyz)
@@ -813,6 +820,7 @@ endif()
 
 if(BUILD_TESTING)
     add_executable(test-original-stat-assets tests/original_stat_assets.c $<TARGET_OBJECTS:parasite-eve-original-disc>
+        $<TARGET_OBJECTS:parasite-eve-original-shadow>
         $<TARGET_OBJECTS:parasite-eve-original-camera> $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
         $<TARGET_OBJECTS:parasite-eve-original> $<TARGET_OBJECTS:parasite-eve-original-motion> $<TARGET_OBJECTS:parasite-eve-original-paired> $<TARGET_OBJECTS:parasite-eve-original-falling> $<TARGET_OBJECTS:parasite-eve-original-e19> $<TARGET_OBJECTS:parasite-eve-original-e08> $<TARGET_OBJECTS:parasite-eve-original-pad>
         $<TARGET_OBJECTS:parasite-eve-original-actor-animation> $<TARGET_OBJECTS:parasite-eve-original-akao>)
@@ -842,4 +850,43 @@ if(BUILD_TESTING)
                 "PSYZ_HEADLESS=1" "SDL_AUDIODRIVER=dummy")
         endif()
     endforeach()
+    if(MINGW AND CMAKE_C_COMPILER_ID STREQUAL "GNU")
+        # BFD keeps unused COFF functions alive through unwind records. Keep
+        # the original fixture graph and its observer variants, compiling whole
+        # original modules again for tests. Production objects retain unwind.
+        function(pe_coff_fixture_module original_module output_module)
+            set(fixture_module "${original_module}-coff-fixture")
+            if(NOT TARGET ${fixture_module})
+                get_target_property(fixture_files ${original_module} SOURCES)
+                add_library(${fixture_module} OBJECT ${fixture_files})
+                foreach(fixture_property INCLUDE_DIRECTORIES COMPILE_DEFINITIONS COMPILE_OPTIONS LINK_LIBRARIES)
+                    get_target_property(fixture_value ${original_module} ${fixture_property})
+                    if(fixture_value)
+                        set_property(TARGET ${fixture_module} PROPERTY ${fixture_property} "${fixture_value}")
+                    endif()
+                endforeach()
+                target_compile_options(${fixture_module} PRIVATE
+                    -fno-asynchronous-unwind-tables -fno-unwind-tables)
+            endif()
+            set(${output_module} ${fixture_module} PARENT_SCOPE)
+        endfunction()
+        get_property(native_test_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+        foreach(native_test IN LISTS native_test_targets)
+            if(native_test MATCHES "^test-")
+                get_target_property(native_test_sources ${native_test} SOURCES)
+                set(native_fixture_sources)
+                foreach(native_source IN LISTS native_test_sources)
+                    if(native_source MATCHES "^\\$<TARGET_OBJECTS:([^>]+)>$")
+                        pe_coff_fixture_module(${CMAKE_MATCH_1} native_fixture_module)
+                        list(APPEND native_fixture_sources "$<TARGET_OBJECTS:${native_fixture_module}>")
+                    else()
+                        list(APPEND native_fixture_sources ${native_source})
+                    endif()
+                endforeach()
+                set_property(TARGET ${native_test} PROPERTY SOURCES ${native_fixture_sources})
+                target_compile_options(${native_test} PRIVATE
+                    -fno-asynchronous-unwind-tables -fno-unwind-tables)
+            endif()
+        endforeach()
+    endif()
 endif()

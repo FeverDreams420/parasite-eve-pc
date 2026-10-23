@@ -112,7 +112,7 @@ int Battle_RollEscapeChance(void) {
     return result;
 }
 
-s8 g_BattleTargetIndex;
+extern s8 g_BattleTargetIndex;
 
 #define PLAY_TABLE_SOUND(command) \
     { if (g_AkaoBgmHandle[0]) Akao_SendTableCommand(g_AkaoBgmHandle[0], command, 0, 0x80, 0x7F); }
@@ -158,10 +158,10 @@ void Battle_CycleTarget(s8 mode) {
     Battle_StepPlayerTurn(g_BattleTargetList, g_BattleTargetIndex, mode);
 }
 
-u8 g_BattleHitPending;
-u8 g_BattleRemainingActions;
-u8 g_BattleActionAnimModes[4];
-u8 g_BattleActionQueueCount;
+extern u8 g_BattleHitPending;
+extern u8 g_BattleRemainingActions;
+extern u8 g_BattleActionAnimModes[4];
+extern u8 g_BattleActionQueueCount;
 
 void Battle_SetupEntityTarget(BattleEntity *actor) {
     BattleEntity *target;
@@ -217,8 +217,12 @@ void Battle_SetupEntityTarget(BattleEntity *actor) {
     }
 }
 
-s8 g_BattleActiveTurnSlot, g_BattleItemMenuState, g_BattleTargetIndex;
-u8 g_BattleRemainingActions, g_BattleSlotCancelPending, g_BattleActionQueueCount;
+extern s8 g_BattleActiveTurnSlot;
+extern s8 g_BattleItemMenuState;
+extern s8 g_BattleTargetIndex;
+extern u8 g_BattleRemainingActions;
+extern u8 g_BattleSlotCancelPending;
+extern u8 g_BattleActionQueueCount;
 
 static inline void FinishAction(void) {
     u8 i;
@@ -315,11 +319,13 @@ int Battle_HandleItemMenu(void) {
     return active;
 }
 
-u8 g_BattleActionQueueCount, g_BattleRemainingActions;
-u8 g_BattleSlotCancelPending, g_AyaActionStep;
-s8 g_BattleTargetCycleMode;
+extern u8 g_BattleActionQueueCount;
+extern u8 g_BattleRemainingActions;
+extern u8 g_BattleSlotCancelPending;
+extern u8 g_AyaActionStep;
+extern s8 g_BattleTargetCycleMode;
 u16 g_BattlePendingCommand;
-s8 g_BattleTargetIndex;
+extern s8 g_BattleTargetIndex;
 
 static inline void StoreSlot(BattleInitSlot *slot, BattleEntity *actor, s16 kind, s16 actionGeneration) {
     slot->actor = actor;
@@ -468,9 +474,10 @@ int Battle_StepEnemyTurn(s8 mode) {
     return mode;
 }
 
-/* COMMON supplies small-data metadata to MASPSX. */
-u8 g_BattleActionQueueCount, g_BattleSlotCancelPending;
-u8 g_BattleRemainingActions;
+/* Shared native state; external variables have one storage definition. */
+extern u8 g_BattleActionQueueCount;
+extern u8 g_BattleSlotCancelPending;
+extern u8 g_BattleRemainingActions;
 
 /* Step the turn index back to the first slot of the action that ends at
  * initial. The test before the loop is the loop test, so GCC merges the
@@ -667,8 +674,7 @@ void Battle_StepPlayerTurn(BattleTarget *targets, int index, int mode)
     }
 }
 
-/* MASPSX_FORCE_G0 keeps the battle globals absolute; the COMMON fade step
- * g_BattleFadeStep supplies the small-data metadata of the one $gp-relative byte. */
+/* Shared native state; external variables have one storage definition. */
 s8 g_BattleFadeStep;
 
 inline static void Mark(BattleEntity *entity)

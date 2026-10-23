@@ -9,16 +9,15 @@
 #include "pe1/render_prim.h"
 #include "pe1/text.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* Shared native state; external variables have one storage definition. */
 int g_DrawGlyphAdvance;
 int g_TextRenderMode;
-unsigned char *g_DrawPacketCursor;
-unsigned char *g_DrawPacketArenaBase;
-int g_DrawTextDimmed;
-unsigned int g_DrawPrimColor;
-unsigned int g_DrawColorShaded;
-unsigned int *g_DrawOrderingTableEntry;
+extern unsigned char *g_DrawPacketCursor;
+extern unsigned char *g_DrawPacketArenaBase;
+extern int g_DrawTextDimmed;
+extern unsigned int g_DrawPrimColor;
+extern unsigned int g_DrawColorShaded;
+extern unsigned int *g_DrawOrderingTableEntry;
 int g_TextCursorX;
 int g_TextCursorY;
 int *g_TextCursorStackPtr;
@@ -30,8 +29,8 @@ int g_DrawDigitFontBaseTexU;
 int g_DrawDigitFontBaseTexV;
 int g_DrawDigitFontTpageClut;
 int g_DrawTextBoxWidth;
-int *g_TextCursorStackPtr;
-int g_TextRenderMode;
+extern int *g_TextCursorStackPtr;
+extern int g_TextRenderMode;
 
 int Draw_SetBaseY(int arg0, unsigned int arg1);
 
@@ -43,8 +42,8 @@ int Draw_GetBaseY(void) {
     return g_DrawBaseY;
 }
 
-int g_TextCursorX;
-int g_TextCursorY;
+extern int g_TextCursorX;
+extern int g_TextCursorY;
 
 void Draw_SetCursor(int arg0, int arg1) {
     g_TextCursorX = arg0;
@@ -145,8 +144,8 @@ static inline void PopCursor(void)
     }
 }
 
-unsigned int g_DrawPrimColor;
-unsigned int g_DrawColorShaded;
+extern unsigned int g_DrawPrimColor;
+extern unsigned int g_DrawColorShaded;
 
 void Draw_SetColor(int value) {
     g_DrawPrimColor = value;
@@ -231,7 +230,7 @@ void Draw_AllocPrimRect(void) {
     Draw_LinkDrawArea(g_DrawOrderingTableEntry, packet);
 }
 
-int g_DrawTextDimmed;
+extern int g_DrawTextDimmed;
 
 void Draw_SetTextDimmed(int value) {
     g_DrawTextDimmed = value;
@@ -359,7 +358,7 @@ void Draw_EmitGlyph(s32 arg0, s32 arg1) {
     }
 }
 
-int g_DrawGlyphAdvance;
+extern int g_DrawGlyphAdvance;
 
 void Draw_SetGlyphAdvance(int arg0) {
     g_DrawGlyphAdvance = arg0;

@@ -20,8 +20,7 @@
 
 u32 g_FrameRngCounter;
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* Shared native state; external variables have one storage definition. */
 extern int g_SceneDispatchToken;
 int g_SceneDispatchCur;
 u32 g_GlobalFrameCounter[1];
@@ -105,7 +104,7 @@ int Boot_RunFrame(void)
 
             if (!(g_GameStateFlags & 1)) {
             if (!(state->flags & 0x200)) {
-                ClearOTagR((u32 *)state->shared_buffers.ordering_tables[g_ActiveDrawSlot],
+                ClearOTagR((RenderNativeTag *)state->shared_buffers.ordering_tables[g_ActiveDrawSlot],
                            0x1000);
             }
             g_FrameRngCounter = g_FrameRngCounter + 1;

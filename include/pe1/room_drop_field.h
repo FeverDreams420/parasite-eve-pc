@@ -101,9 +101,14 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(RoomDropFieldSprite, phase) == 0x14,
 
 /* Stack frame of the two rotated sprite draws. */
 typedef struct RoomDropFieldSpinFrame {
-    GteVector sp10;
-    s32 pad20;
-    s32 sp24[3];
+    union {
+        GteMatrix matrix;
+        struct {
+            GteVector sp10;
+            s32 pad20;
+            s32 sp24[3];
+        };
+    };
     GteVector sp30;
     GteVector sp40;
 } RoomDropFieldSpinFrame;

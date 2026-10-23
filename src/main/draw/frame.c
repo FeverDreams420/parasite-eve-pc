@@ -59,7 +59,7 @@ draw_buffer:
         RenderNativeTag *orderingTable;
 
         drawSlot = g_ActiveDrawSlot;
-        orderingTable = g_GameState.shared_buffers.ordering_tables[drawSlot];
+        orderingTable = (RenderNativeTag *)g_GameState.shared_buffers.ordering_tables[drawSlot];
         DrawOTagEnv(orderingTable + 4095, &g_RenderDrawEnvArray[drawSlot]);
     }
 

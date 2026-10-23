@@ -28,21 +28,20 @@
 #include "pe1/stat_modifiers.h"
 #include "pe1/text.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
-int g_BonusPointDisplayValue;
-int g_BonusPointBarAnimStep;
-int g_BonusPointBarAnimProgress;
-int g_InvItemUsableFlag;
-MenuWidgetNode *g_MenuActiveWidget;
-int g_MenuBattleStatusOverlayActive;
-int g_MenuEquipMode;
-int g_MenuItemUseMode;
-int g_MenuItemRenameMode;
-int g_MenuItemDiscardMode;
-int g_InvSelectedItemIndex;
-int g_MenuSelectionLocked;
-int g_MenuLayoutLocked;
+/* Shared native state; external variables have one storage definition. */
+extern int g_BonusPointDisplayValue;
+extern int g_BonusPointBarAnimStep;
+extern int g_BonusPointBarAnimProgress;
+extern int g_InvItemUsableFlag;
+extern MenuWidgetNode *g_MenuActiveWidget;
+extern int g_MenuBattleStatusOverlayActive;
+extern int g_MenuEquipMode;
+extern int g_MenuItemUseMode;
+extern int g_MenuItemRenameMode;
+extern int g_MenuItemDiscardMode;
+extern int g_InvSelectedItemIndex;
+extern int g_MenuSelectionLocked;
+extern int g_MenuLayoutLocked;
 int g_MenuSaveBgFadeIndex;
 
 /* Save-screen background fade: gamma curve, per-frame darkening of the
@@ -284,7 +283,7 @@ void Menu_HandleInput(int arg0) {
     }
 }
 
-int g_MenuItemSelectFlag;
+extern int g_MenuItemSelectFlag;
 
 void Menu_SetItemContext(int arg0) {
     g_MenuItemSelectFlag = arg0;

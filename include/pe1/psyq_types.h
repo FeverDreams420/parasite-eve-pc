@@ -5,7 +5,12 @@ typedef signed char s_char;
 typedef unsigned char u_char;
 typedef unsigned short u_short;
 typedef unsigned int u_int;
+/* PsyZ uses a host-pointer-width word; Windows x64 keeps long at 32 bits. */
+#if defined(_WIN64) && !defined(_WINSOCK2API_) && !defined(_WINSOCKAPI_)
+typedef unsigned long long u_long;
+#elif !defined(_WIN64)
 typedef unsigned long u_long;
+#endif
 
 /* DMA address registers, ordering-table links and packet tags carry a buffer
  * address as a plain word (the low 24 bits are the physical address). */

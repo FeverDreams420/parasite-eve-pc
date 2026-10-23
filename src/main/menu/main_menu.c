@@ -24,13 +24,13 @@
 
 MenuBonusStatWorkspace g_MenuBonusStatWorkspace;
 int g_MenuPendingTotalExp;
-int g_MenuSelectionLocked;
-int g_AyaFullInvHold;
-int g_InvSelectedItemIndex;
-int g_InvSwapTargetIndex;
-int g_MenuActionSubmenuOpen;
+extern int g_MenuSelectionLocked;
+extern int g_AyaFullInvHold;
+extern int g_InvSelectedItemIndex;
+extern int g_InvSwapTargetIndex;
+extern int g_MenuActionSubmenuOpen;
 int g_MenuBlendColorBackup;
-int g_MenuEquipSwapSource;
+extern int g_MenuEquipSwapSource;
 
 int Menu_MainMenuInputHandler(MenuWidgetNode *arg0, u32 arg1);
 void Menu_OpenCursorModeMenu(MenuWidgetNode *parent);
@@ -356,14 +356,18 @@ void Menu_CreateLevelUpResultPanel(void);
 void Menu_DrawBonusPointAnimFrame(MenuWidgetNode *unused);
 s32 Menu_StepParasiteScreen(MenuWidgetNode *node, unsigned int flags);
 
-int g_BonusPointBarAnimProgress, g_BonusPointBarAnimStep;
-int g_BonusPointDisplayValue, g_MenuBonusPointDisplayTarget;
-int g_MenuBonusPointBarAnimActive;
+extern int g_BonusPointBarAnimProgress;
+extern int g_BonusPointBarAnimStep;
+extern int g_BonusPointDisplayValue;
+int g_MenuBonusPointDisplayTarget;
+extern int g_MenuBonusPointBarAnimActive;
 int g_MenuExpAllocTarget;
 int g_MenuExpReviewLevel;
 int g_MenuHpMaxAnimTimer;
-int g_MenuHpMaxDisplayTarget, g_MenuHpMaxDisplayValue;
-int g_MenuLevelDisplayTarget, g_MenuLevelDisplayValue;
+int g_MenuHpMaxDisplayTarget;
+int g_MenuHpMaxDisplayValue;
+int g_MenuLevelDisplayTarget;
+int g_MenuLevelDisplayValue;
 int g_MenuLevelUpAnimTimer;
 /* The stat loop sign-extends the allocation levels (lh in retail). */
 

@@ -334,7 +334,7 @@ int Aya_UnlockParasiteSpellById(int key)
     return found;
 }
 
-int g_InvPackedListCount;
+extern int g_InvPackedListCount;
 
 unsigned int *g_InvSelectionBits;
 

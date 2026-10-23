@@ -14,14 +14,14 @@
 #include "pe1/menu_widget.h"
 #include "pe1/text.h"
 
-int g_InvAmmoSpendActiveList;
+extern int g_InvAmmoSpendActiveList;
 int g_InvItemUsableFlag;
-int g_InvSelectedItemIndex;
-int g_InvSwapSourceList;
-int g_InvSwapTargetIndex;
-int g_MenuEquipMode;
+extern int g_InvSelectedItemIndex;
+extern int g_InvSwapSourceList;
+extern int g_InvSwapTargetIndex;
+extern int g_MenuEquipMode;
 int g_MenuItemUseMode;
-int g_MenuSelectionLocked;
+extern int g_MenuSelectionLocked;
 int g_MenuLayoutLocked;
 
 #define NULL ((void *)0)

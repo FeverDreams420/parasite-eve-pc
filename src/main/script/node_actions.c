@@ -16,7 +16,7 @@ PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNodeTarget18, actor) == 0,
                   script_node_target18_actor_offset);
 
 
-/* COMMON supplies small-data metadata to MASPSX. */
+/* Shared native state; external variables have one storage definition. */
 
 
 

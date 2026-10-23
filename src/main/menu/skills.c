@@ -18,22 +18,21 @@
 #include "pe1/save_tail_state.h"
 #include "pe1/text.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
-int g_MenuItemPrimListHandles[2];
-int g_InvSelectedItemIndex;
-int g_InvSwapTargetIndex;
-int g_MenuActionSubmenuOpen;
-int g_MenuActionTextBase;
-int g_MenuActiveItemList;
-MenuConfirmCallback g_MenuConfirmCallback;
-int g_MenuEquipMode;
-int g_MenuEquipSwapSource;
-int g_MenuSelectionLocked;
-int g_MenuLayoutLocked;
+/* Shared native state; external variables have one storage definition. */
+extern int g_MenuItemPrimListHandles[2];
+extern int g_InvSelectedItemIndex;
+extern int g_InvSwapTargetIndex;
+extern int g_MenuActionSubmenuOpen;
+extern int g_MenuActionTextBase;
+extern int g_MenuActiveItemList;
+extern MenuConfirmCallback g_MenuConfirmCallback;
+extern int g_MenuEquipMode;
+extern int g_MenuEquipSwapSource;
+extern int g_MenuSelectionLocked;
+extern int g_MenuLayoutLocked;
 int g_MenuSelectedSpell;
 
-int g_MenuInputPausePending;
+extern int g_MenuInputPausePending;
 u8 g_MenuItemLabelBuffer[128];
 
 void Menu_DeferredExec(void) {
@@ -439,8 +438,8 @@ int Menu_EquipSelectInput(MenuWidgetNode *node, unsigned int flags);
 void Menu_DrawEquipInfoOptionList(MenuWidgetNode *node);
 void Menu_DrawWeaponModSlots(s32 index);
 
-int g_MenuInventoryViewMode;
-int g_InvItemUsableFlag;
+extern int g_MenuInventoryViewMode;
+extern int g_InvItemUsableFlag;
 
 void Menu_OpenInventoryOrSwapView(s32 showList) {
     s32 mode;

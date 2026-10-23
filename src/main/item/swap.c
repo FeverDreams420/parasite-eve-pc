@@ -11,15 +11,14 @@
 #include "pe1/save.h"
 #include "pe1/text.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* Shared native state; external variables have one storage definition. */
 s32 g_InvActiveListSlotCount;
 s16 *g_InvActiveItemList;
 s32 g_InvTransferItemCount;
 
-int g_InvActiveListCount;
+extern int g_InvActiveListCount;
 
-int g_InvActiveListCount;
+extern int g_InvActiveListCount;
 short g_InvActiveListItems[10];
 
 int Menu_GetBattleCount(void) {

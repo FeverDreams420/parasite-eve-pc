@@ -7,12 +7,12 @@
 #include "pe1/menu_widget.h"
 #include "pe1/text.h"
 
-int g_MenuActionTextBase;
-int g_MenuActiveItemList;
-int g_MenuActiveItemSlot;
-MenuConfirmCallback g_MenuConfirmCallback;
-int g_MenuEquipMode;
-int g_MenuItemPrimListHandles[2];
+extern int g_MenuActionTextBase;
+extern int g_MenuActiveItemList;
+extern int g_MenuActiveItemSlot;
+extern MenuConfirmCallback g_MenuConfirmCallback;
+extern int g_MenuEquipMode;
+extern int g_MenuItemPrimListHandles[2];
 
 void Draw_SetTextDimmed(int arg0);
 void Draw_FlushPrimList(int arg0);

@@ -41,8 +41,7 @@
 #include "pe1/script_state.h"
 #include "pe1/script_queue.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* Shared native state; external variables have one storage definition. */
 
 /* Adjacent field-actor query and distance routines share one compiled unit. */
 

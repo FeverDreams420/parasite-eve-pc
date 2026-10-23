@@ -28,7 +28,8 @@ struct BattleEntity;
  * asset table the task spawner searches. */
 /* Original address 0x800B0E14 is game state +0x13C. */
 #define g_FieldEffectSoundHeader (g_GameState.scene_object_tables[2])
-extern void *g_FieldEffectResource2;
+/* USA 0x800B1630 is game state +0x958, the third pointer slot. */
+#define g_FieldEffectResource2 (g_GameState.field_resource_slots[2])
 #define g_FieldEffectAssetTable (g_GameState.startup_resource_blob)
 void *FieldFx_GetEffectResource(int index);
 

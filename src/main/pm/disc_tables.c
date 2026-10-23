@@ -93,14 +93,14 @@ int Draw_InitDisplay(int mode) {
     ptr += 2 * RENDER_ANIM_BUFFER_BYTES;
     g_GameState.scene_process_slots = (struct PmSlotBanks *)ptr;
     g_SceneLoadScratchBuffer[0] = g_SceneLoadScratchArea;
-    g_LoadedSceneAssetBlock[0] = tmp - 8;
+    g_LoadedSceneAssetBlock[0] = (struct SceneAssetBlob *)(tmp - 8);
     g_GameState.str_file_directory = tmp;
 
     Draw_InitBuffers();
     CdRom_SetSeekPos(2);
 
     do {
-        ClearOTagR(slots[g_ActiveDrawSlot], 0x1000);
+        ClearOTagR((RenderNativeTag *)slots[g_ActiveDrawSlot], 0x1000);
         Render_SetCDDCSlot();
         Draw_RenderFrame();
     } while ((g_ScreenTint.fadeMode & 3) != one);

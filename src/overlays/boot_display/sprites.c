@@ -57,7 +57,7 @@ void BootDisplay_SelectFrameBuffers(void) {
     g_BootDisplayPrimitiveCursor=base+g_ActiveDrawSlot*bytes;
     g_BootDisplayPrimitiveEnd=g_BootDisplayPrimitiveCursor+bytes;
     g_BootDisplayOrderingTable=(RenderNativeTag *)(base+2*bytes)+g_ActiveDrawSlot*16;
-    ClearOTagR((u_int *)g_BootDisplayOrderingTable,16);
+    ClearOTagR(g_BootDisplayOrderingTable,16);
 }
 
 void BootDisplay_DisplayNoOp(void) {

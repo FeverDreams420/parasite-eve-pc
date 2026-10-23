@@ -22,15 +22,15 @@ BattleEnemySlot g_BattleEnemySlots[7];
 BattleInitSlot g_BattleActionQueue[45];
 BattleTarget g_BattleTargetList[BATTLE_TARGET_CAPACITY + 1];
 u16 g_BattleHitActionPending;
-u8 g_BattleActionAnimModes[4];
+extern u8 g_BattleActionAnimModes[4];
 s8 g_BattleTargetCycleMode;
 u8 g_BattleSlotCancelPending;
-u8 g_BattleRemainingActions;
-int g_BattleAttackPmSlot;
+extern u8 g_BattleRemainingActions;
+extern int g_BattleAttackPmSlot;
 s32 g_BattleAilmentPmSlot;
-s32 g_BattleEffectPmSlot;
-u8 g_BattleHitPending;
-unsigned char g_BattleActionQueueCount;
+extern s32 g_BattleEffectPmSlot;
+extern u8 g_BattleHitPending;
+extern unsigned char g_BattleActionQueueCount;
 s8 g_BattleTargetIndex;
 
 void Battle_BeginPlayerAction(void) {
@@ -139,9 +139,9 @@ void Battle_InitEntityColors(void) {
     g_BattlePeGauges[1][1].b3 = 1;
 }
 
-unsigned char g_BattleActionQueueCount;
-unsigned char g_BattleActionIndex;
-unsigned char g_BattleRemainingActions;
+extern unsigned char g_BattleActionQueueCount;
+extern unsigned char g_BattleActionIndex;
+extern unsigned char g_BattleRemainingActions;
 signed char g_BattleActiveTurnSlot;
 signed char g_BattleItemMenuState;
 
@@ -204,7 +204,7 @@ void Battle_Init(void)
     g_BattleSlotCancelPending = 0;
 }
 
-unsigned char g_BattleActionQueueCount;
+extern unsigned char g_BattleActionQueueCount;
 
 signed char Pad_GetMenuPressedBitOrDisabled(void) {
     if (g_ActiveActor->stateFlags & 0x10000) {
@@ -233,7 +233,7 @@ int Pad_IsMenuConfirmAvailable(void) {
     return 0;
 }
 
-int g_BattleAttackPmSlot;
+extern int g_BattleAttackPmSlot;
 
 void Battle_DispatchEntityEffect(void) {
     int action_id;
@@ -540,8 +540,8 @@ void Battle_SyncEnemyAttributes(void) {
     memcpy(&attributes->effectFlags, &effect_value, sizeof(effect_value));
 }
 
-u8 g_BattleActionIndex;
-u8 g_BattleActionQueueCount;
+extern u8 g_BattleActionIndex;
+extern u8 g_BattleActionQueueCount;
 
 void Battle_FlushScriptSounds(void) {
     unsigned int index;

@@ -80,8 +80,7 @@
 #include "pe1/room_spark_attacks.h"
 #include "pe1/scene_transition.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* Shared native state; external variables have one storage definition. */
 u8 D_8009CDC8;
 
 _Alignas(4) u8 g_StartupResourceBlob[0x10A50];
@@ -370,15 +369,7 @@ void Akao_LoadVoiceBankAlt(void)
     state->bank_value_fa = 0x800;
 }
 
-/*
- * Scene_LoadRoom (0x8006B4F8, 2160 bytes).
- * Streams the three room ranges of PE.IMG, uploads the TIM lists of the
- * first two while the next read runs, then relocates the room directory
- * tables into g_GameState and queues the stream/sample bank reads.
- *
- * maspsx -G1: retail reads the 4-byte g_PmCmdHandlerTable pointer
- * absolutely while the 1-byte room letter D_8009CDC8 is gp-relative.
- */
+/* Shared native state; external variables have one storage definition. */
 
 int Scene_LoadRoom(unsigned int roomId)
 {
@@ -1011,7 +1002,7 @@ int Scene_LoadRoom(unsigned int roomId)
 
     shortRecord = SceneAsset_ResolveOffset(room, directory->taskSlots & 0x3FFFFF);
     for (i = 0; i < directory->taskSlots >> 22; i++) {
-        state->bank_reset_950[shortRecord[i].source.bytes.slot] =
+        state->field_resource_slots[shortRecord[i].source.bytes.slot] =
             SCENE_ROOM_PAYLOAD(room, &shortRecord[i]);
     }
 
@@ -1890,7 +1881,7 @@ retry:
         state->scene_init_subphase = 3;
         break;
     case 3:
-        view = state->scene_load_scratch;
+        view = (SceneAssetView *)state->scene_load_scratch;
         directory = SCENE_ASSET_AT(view, view->header.directoryOffset);
         firstTim = SCENE_ASSET_AT(view, directory->timEntries & 0x3fffff);
         i = 0;

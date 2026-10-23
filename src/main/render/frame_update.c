@@ -12,8 +12,7 @@
 #include "pe1/render_object.h"
 #include "pe1/render_prim.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* Shared native state; external variables have one storage definition. */
 /* Eight matrix words followed by the projection distance (USA +0x20). */
 u32 g_EntityRenderScratch[9];
 PE1_STATIC_ASSERT(sizeof(g_EntityRenderScratch) == sizeof(GteMatrix) + sizeof(u32), frame_camera_workspace_size);

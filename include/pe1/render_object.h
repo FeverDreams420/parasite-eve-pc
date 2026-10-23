@@ -635,10 +635,8 @@ int Render_TickObject(RenderObjectEntity *object);
 int Render_ColorEntity(RenderObjectEntity *object);
 /* Texture-page bit deltas, indexed by the current and the requested page. */
 extern s16 g_RenderTexturePageDeltas[4][4];
-/* Text-resident word bumped by Render_IncrementCounter. Unsized: the word
- * lives in .text, so it is not small data and -G8 code keeps its address
- * in a register, as retail does. */
-extern int g_RenderCounter[];
+/* Native writable storage for the original resident counter word. */
+extern int g_RenderCounter[1];
 void Render_IncrementCounter(void);
 void Render_SetObjectTexturePage(RenderObjectEntity *object, int page);
 void Render_SetEntityBlendMode(RenderObjectEntity *object, int mode);

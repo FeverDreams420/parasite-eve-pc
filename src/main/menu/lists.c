@@ -19,14 +19,14 @@
 #include "pe1/menu_widget.h"
 #include "pe1/text.h"
 
-int g_BonusPointBarAnimStep;
-int g_BonusPointBarAnimProgress;
+extern int g_BonusPointBarAnimStep;
+extern int g_BonusPointBarAnimProgress;
 int g_MemCardProgressPrimList;
 void (*g_MenuDeferredCallback)(void);
-ItemDataRecord *g_MenuSelectedItemData;
-int g_MenuSelectionLocked;
+extern ItemDataRecord *g_MenuSelectedItemData;
+extern int g_MenuSelectionLocked;
 
-MenuWidgetNode *g_MenuActiveWidget;
+extern MenuWidgetNode *g_MenuActiveWidget;
 
 void Menu_DrawSaveSlotList(MenuWidgetNode *arg0) {
     g_MenuActiveWidget = (MenuWidgetNode *)arg0;
@@ -39,9 +39,9 @@ void Menu_DrawSaveSlotList(MenuWidgetNode *arg0) {
  * plus the icon, save-slot, sound-effect and equip-detail lists and the
  * equip sort-toggle and info-option rows. */
 
-MenuWidgetNode *g_MenuActiveWidget;
-ItemDataRecord *g_MenuActionItemData;
-int g_InvItemUsableFlag;
+extern MenuWidgetNode *g_MenuActiveWidget;
+extern ItemDataRecord *g_MenuActionItemData;
+extern int g_InvItemUsableFlag;
 
 void Menu_DrawItemIcon(int index);
 void Menu_DrawSaveSlot1Item(int index);
@@ -187,8 +187,8 @@ void Menu_DrawEquipInfoOptionRow(int arg0) {
     }
 }
 
-int g_MenuEquipMode;
-int g_MenuItemRenameMode;
+extern int g_MenuEquipMode;
+extern int g_MenuItemRenameMode;
 
 int Inv_GetPackedListItem(int arg0);
 void Menu_CloseContextHelpPanel(void);
@@ -297,8 +297,8 @@ void Menu_HandleMemCardWriteOrError(MenuWidgetNode *arg0, int arg1) {
 /* Row drawers for the equip-slot, inventory, armor, battle-command and
  * skill lists. */
 
-MenuWidgetNode *g_MenuActiveWidget;
-int g_MenuEquipMode;
+extern MenuWidgetNode *g_MenuActiveWidget;
+extern int g_MenuEquipMode;
 
 void Menu_DrawEquipSlotListItem(int arg0) {
     if (arg0 != MenuWidget_GridCellIndex(g_MenuActiveWidget)) {
@@ -334,7 +334,7 @@ void Menu_DrawSkillItem(int arg0) {
     MenuWidget_DrawCenteredTableText(arg0 + 0x5D);
 }
 
-MenuWidgetNode *g_MenuActiveWidget;
+extern MenuWidgetNode *g_MenuActiveWidget;
 
 void Draw_SetTextDimmed(int value);
 
@@ -388,10 +388,10 @@ void Menu_DrawSelectableEquipSlotRow(int slot) {
     }
 }
 
-int g_MenuItemActionContext;
-int g_MenuActiveItemSlot;
-int g_MenuItemActionDisabled;
-int g_MenuEquipMode;
+extern int g_MenuItemActionContext;
+extern int g_MenuActiveItemSlot;
+extern int g_MenuItemActionDisabled;
+extern int g_MenuEquipMode;
 
 void Menu_ContextPick(int arg0)
 {
@@ -431,10 +431,10 @@ void Menu_ContextPick(int arg0)
  * cells, table text rows, stat and ability bars, item icons, save slots and
  * the selected item's sound-effect cursor. */
 
-int g_MenuActionTextBase;
-int g_InvItemUsableFlag;
-int g_MenuLayoutLocked;
-MenuWidgetNode *g_MenuActiveWidget;
+extern int g_MenuActionTextBase;
+extern int g_InvItemUsableFlag;
+extern int g_MenuLayoutLocked;
+extern MenuWidgetNode *g_MenuActiveWidget;
 unsigned char *g_MenuItemIconGlyphTable;
 void Draw_PrintNumberWidth2(int arg0);
 void Draw_PrintNumberWidth2Unk(int);

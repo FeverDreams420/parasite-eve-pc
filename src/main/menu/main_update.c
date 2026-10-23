@@ -25,7 +25,7 @@ void Entity_ResolveDropTable(void *);
 s16 Entity_ApplyHitAndSetAnim(void *);                 /* static */
 void Entity_UpdateTimers(void);
 /* Separate declarations preserve the original GCC quantities for each tail. */
-/* COMMON supplies small-data metadata to MASPSX. */
+/* Shared native state; external variables have one storage definition. */
 unsigned char g_AyaStatusEffectTimer;
 
 

@@ -24,22 +24,22 @@
 /* Shared state of the original menu panels and save dialogs. */
 int g_SaveSelectedSlotState;
 int D_8009CFA4;
-int g_InvItemUsableFlag;
-int g_InvSelectedItemIndex;
-ItemDataRecord *g_MenuActionItemData;
-int g_MenuActionTextBase;
-int g_MenuActiveItemList;
-MenuConfirmCallback g_MenuConfirmCallback;
-void (*g_MenuDeferredCallback)(void);
+extern int g_InvItemUsableFlag;
+extern int g_InvSelectedItemIndex;
+extern ItemDataRecord *g_MenuActionItemData;
+extern int g_MenuActionTextBase;
+extern int g_MenuActiveItemList;
+extern MenuConfirmCallback g_MenuConfirmCallback;
+extern void (*g_MenuDeferredCallback)(void);
 u8 g_MenuTwoLineDialogText[2][64];
-int g_MenuEquipMode;
-unsigned char *g_MenuItemIconGlyphTable;
-int g_MenuItemPrimListHandles[2];
-int g_MenuSelectionLocked;
-int g_MenuLayoutLocked;
+extern int g_MenuEquipMode;
+extern unsigned char *g_MenuItemIconGlyphTable;
+extern int g_MenuItemPrimListHandles[2];
+extern int g_MenuSelectionLocked;
+extern int g_MenuLayoutLocked;
 ItemDataRecord *g_MenuRenameTargetRecord;
-int g_SaveSelectedSlot;
-int g_SaveSlotCellIndex;
+extern int g_SaveSelectedSlot;
+extern int g_SaveSlotCellIndex;
 
 /* Parasite-spell info and context help panels, notification and two-line
  * dialogs, the deferred confirm callback they run, and the memory-card port
@@ -50,8 +50,8 @@ int g_SaveSlotCellIndex;
 
 s32 Menu_MemCardPortSelectHandler(MenuWidgetNode *node, unsigned int flags);
 
-int g_McDialogMode;
-int g_MenuMemCardConfirmPending;
+extern int g_McDialogMode;
+extern int g_MenuMemCardConfirmPending;
 /* Parasite spell named by the info panel. */
 int g_MenuSpellInfoId;
 
@@ -726,7 +726,7 @@ s32 Menu_StepSaveSelect(MenuWidgetNode *arg0, unsigned int arg1) {
 /* Memory-card progress widget: creation, teardown, block-meter draw and the
  * write-confirmation prompt it raises when the card operation finishes. */
 
-int g_MemCardProgressPrimList;
+extern int g_MemCardProgressPrimList;
 
 void MemCard_DrawProgress(MenuWidgetNode *unused);
 int Menu_MemCardProgressInputHandler(MenuWidgetNode *node, unsigned int flags);

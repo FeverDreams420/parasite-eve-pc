@@ -29,8 +29,7 @@
 #include "pe1/textbox.h"
 #include "pe1/vector_types.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* Shared native state; external variables have one storage definition. */
 u8 g_ScriptCameraBytes[3];
 
 int Script_DispatchScriptCmd(int **args)
@@ -265,8 +264,7 @@ PE1_STATIC_ASSERT(sizeof(((ScriptNode *)0)->current) == sizeof(intptr_t), interp
 PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNode, current) == 0, interpreter_script_offset);
 PE1_STATIC_ASSERT(PE1_OFFSETOF(ScriptNode, active) == PE1_OFFSETOF(ScriptNode, trigger_value) + sizeof(int), interpreter_wait_offset);
 
-/* Tentative COMMON declarations preserve small-data metadata for stock
- * maspsx. Storage remains at the existing data/linker addresses. */
+/* Shared native state; external variables have one storage definition. */
 
 
 

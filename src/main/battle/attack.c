@@ -259,9 +259,10 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
     return result;
 }
 
-/* COMMON supplies small-data metadata to stock MASPSX. Existing retail
- * data/linker symbols provide storage; these do not allocate new globals. */
-u8 g_BattleHitTimer, g_BattleActionIndex, g_BattleHitPending;
+/* Shared native state; external variables have one storage definition. */
+u8 g_BattleHitTimer;
+extern u8 g_BattleActionIndex;
+extern u8 g_BattleHitPending;
 s8 g_EvasionReaction;
 
 /* Apply the evasion outcome Battle_CheckEvasion left in g_EvasionOutcome and

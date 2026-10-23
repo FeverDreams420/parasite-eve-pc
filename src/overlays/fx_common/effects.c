@@ -214,13 +214,13 @@ int FxCommon_RunFrameLoop(void)
         ResetGraph(1);
         PutDrawEnv(&((FxCommonFrame *)g_FxCommonActiveBuffer)->drawEnv);
         PutDispEnv(&((FxCommonFrame *)g_FxCommonActiveBuffer)->dispEnv);
-        DrawOTag((u_int *)&g_FxCommonActiveBuffer->allocation[0xFFF]);
+        DrawOTag(&g_FxCommonActiveBuffer->allocation[0xFFF]);
         next = &g_FxCommonFrames[0].buffer;
         if (g_FxCommonActiveBuffer == next)
             next = &g_FxCommonFrames[1].buffer;
         g_FxCommonActiveBuffer = next;
         g_ActiveDrawSlot ^= 1;
-        ClearOTagR((u_int *)next->allocation, 0x1000);
+        ClearOTagR(next->allocation, 0x1000);
         FxCommon_SelectBufferAllocation(g_FxCommonActiveBuffer);
     }
     if (g_FxCommonResetRequested == 0)

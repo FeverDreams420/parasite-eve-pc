@@ -6,14 +6,14 @@
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_prim.h"
 
-unsigned char *g_DrawPacketCursor;
-unsigned char *g_DrawPacketArenaBase;
-int g_DrawTextDimmed;
-unsigned int g_DrawPrimColor;
-unsigned int g_DrawColorShaded;
-unsigned int *g_DrawOrderingTableEntry;
-int g_TextCursorX;
-int g_TextCursorY;
+extern unsigned char *g_DrawPacketCursor;
+extern unsigned char *g_DrawPacketArenaBase;
+extern int g_DrawTextDimmed;
+extern unsigned int g_DrawPrimColor;
+extern unsigned int g_DrawColorShaded;
+extern unsigned int *g_DrawOrderingTableEntry;
+extern int g_TextCursorX;
+extern int g_TextCursorY;
 u16 *g_DrawVertexWritePtr;
 
 u32 g_DrawBlendColorPair[2];

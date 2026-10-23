@@ -80,10 +80,11 @@ PE1_GPU_STATIC_ASSERT(sizeof(DISPENV) == 0x14, dispenv_size);
 #undef PE1_GPU_OFFSETOF
 #undef PE1_GPU_STATIC_ASSERT
 
-/* Ordering tables: ClearOTagR links a reverse table and returns it,
- * DrawOTag queues one and returns the queue result. */
-u_int *ClearOTagR(u_int *ot, int count);
-int DrawOTag(u_int *ot);
+/* Ordering tables: ClearOTagR links a reverse table and returns it.
+ * Native DrawOTag consumes host-width tags and has no return value. */
+struct RenderNativeTag;
+struct RenderNativeTag *ClearOTagR(struct RenderNativeTag *ot, int count);
+void DrawOTag(struct RenderNativeTag *ot);
 DRAWENV *GetDrawEnv(DRAWENV *env);
 DRAWENV *PutDrawEnv(DRAWENV *env);
 int DrawPrim(void *primitive);

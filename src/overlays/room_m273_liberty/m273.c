@@ -2597,7 +2597,7 @@ int RoomM273_SwayGroundRingEmitter(int mode, void *task_data, intptr_t argument)
     switch (mode) {
     case 0:
         g_RoomM273SweepState.model = Asset_FindTable08ByU32Key(g_LoadedSceneAssetBlock[0], 0xC5541704);
-        FieldFx_ModelScrollUv(g_RoomM273SweepState.model, 0, 0);
+        FieldFx_ModelScrollUv((union FieldTexturedModel *)g_RoomM273SweepState.model, 0, 0);
         return FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM273PoolContext)->pool, 8, 4,
                              RoomM273_SwayGroundRingCallback);
     case 1: {

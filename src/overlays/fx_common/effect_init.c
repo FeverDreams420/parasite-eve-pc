@@ -86,7 +86,7 @@ int FxCommon_InitScene(void)
     GteShortVector shortMotion;
     s32 variantBase;
     s32 textureIndexOrHasPoints;
-    u8 *resourceTableData;
+    TimRelativeTable *resourceTableData;
     s32 typeFixed;
     s32 subtypeFixed;
     s32 groupVariant;
@@ -176,7 +176,7 @@ int FxCommon_InitScene(void)
         Render_SetupFogLayer(Draw_GetTimTableEntry(g_FxCommonTimTable, 1));
     }
     resourceTableData = g_FxCommonTimTable;
-    resourceTable = Draw_GetTimTableEntry(resourceTableData, 2);
+    resourceTable = (FxCommonOffsetTable *)Draw_GetTimTableEntry(resourceTableData, 2);
     pointIndex = 0;
     initialSlots = g_FxCommonRuntime.pairedNodes;
     secondInitialSlot = initialSlots + 10;

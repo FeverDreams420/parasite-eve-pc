@@ -14,8 +14,7 @@
 #include "pe1/psyq_bios.h"
 #include "pe1/psyq_gpu.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* Shared native state; external variables have one storage definition. */
 int g_CdFadeStartTime;
 int g_CdFadeFramesLeft;
 int g_CdRangeIndex;

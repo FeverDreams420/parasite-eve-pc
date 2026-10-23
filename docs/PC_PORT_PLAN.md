@@ -35935,3 +35935,17 @@ hashe VRAM/PPM i dziennika poleceń; checkpoint269174 oraz pełny game.log
 pozwalają odtworzyć wejścia. To obserwowane zwycięstwo w bieżącej próbie,
 jeszcze bez niezależnego ponownego replay normal/SAN i bez ukończenia
 reszty kampanii. Proces pozostaje na ekranie nagród, kontrolowany stdin.
+
+
+### Bieżące przejście New Game: zakończenie Day 1 i wejście Day 2
+
+Ten sam proces kandydata a904055bc odebrał nagrody aligatora, awansował
+na poziom6 (MaxHP72, BP74), zakończył scenę reporterów przed Carnegie
+Hall, rozmowę z Danielem w radiowozie oraz narrację na panoramie miasta.
+Przy284476 scena a80650c8 wyświetla Day2/FUSION, HP72/72 odnowione
+przez oryginalny skrypt. Brak ingerencji w RAM/save/statystyki; wyłącznie
+wejścia pada. Dowód `/tmp/pe-campaign-replay-v3/day2-entry-proof.json`,
+checkpoint284476 zachowuje pełny stan i VRAM/PPM, commands.jsonl wejścia.
+To obserwacja rzeczywistego przebiegu obecnej próby; odcinek po aligatorze
+wymaga jeszcze niezależnego cold replay i SAN. Proces37796 pozostaje
+żywy i zatrzymany na sterowaniu stdin. Pełna kampania nadal nieukończona.

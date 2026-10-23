@@ -36151,3 +36151,19 @@ M16A1 i Kv Vest1 pozostają założone. Checkpoint371725 i dowód
 `/tmp/pe-campaign-replay-v3/ben-daniel-scene-proof.json`.
 To aktualne przejście od New Game, jeszcze bez cold SAN odcinka po358826;
 konferencja u Bakera i dalszy dzień2 nadal wymagają przejścia.
+
+
+### Day2: konferencja i powrót do M042 ukończone w bieżącej próbie
+
+Po etapie164 zwykły powrót M043→M042→M041 i podejście do biurka
+Bakera uruchomiły dialogi77/79. Samo wejście do gabinetu oddawało ruch
+i nie wystarczało do rozpoczęcia rozmowy. Scena przeszła do M047
+(dialog96), wróciła do M041 (111), a następnie do M042. Przy391549
+stage184, HP72/72, BP74, brak menu/dialogu, M16A1 i Kv Vest1 założone.
+Checkpoint391549 i `/tmp/pe-campaign-replay-v3/conference-return-proof.json`.
+
+Uruchomiono niezależne cold normal/SAN od pustych kart do391549,
+obejmujące również magazyn, zmianę pancerza i Bena/Daniela. Skrypt
+`/tmp/pe-campaign-replay-v3/cold-conference.py`: normal session92791/PID67632,
+SAN session8204/PID67712. Wyniki jeszcze nieznane; bieżąca session37796
+pozostaje na391549. Nie jest to ukończenie całego Day2 ani portu.

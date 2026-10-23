@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Naprawiona bramka oryginalnego modułu motion — test red/green
+
+CMake obiektu motion podłącza istniejący class_register_tables_gated.c zamiast
+zwykłego class_register_tables.c. Oryginalna tabela g_RoomMotionHandlers używa
+teraz Gated; jej warunek i algorytm pozostają w istniejącym pliku. Ujednolicono
+sygnaturę PmSlotHeader i typowane argumenty FieldFx. Bez nowych plików produkcyjnych.
+
+Istniejący original_motion_program sprawdza niezmienność całego obiektu przy
+variant0/1 i fladze0, potem pełny authored lifecycle otwarty przez variant2
+lub target+AC. Stary pełny moduł z nowym testem: exit123, closed gate variant0.
+Poprawione całe moduły i fixture: normal/SAN/coverage 3/3. Artefakty i skrypty
+`/tmp/pe-spu-sync-v1/motion-gate/`, motion-red.py, motion-fixed.py.
+CLI fixture --motion-program pozwala uruchomić tę samą regresję osobno;
+pełny core fixture nadal ją zawiera. Dowód focused-proof.json dotyczy celowanych
+linków z pełnymi modułami, nie nowego pełnego builda CMake. Następny odbiór
+wymaga świeżych buildów i regresji z tą poprawką; binarki użytkowej nie zmieniono.
+
 ### Potwierdzona bramka slot12 i zakończone EX normal/SAN
 
 `/tmp/pe-spu-sync-v1/gated-table-proof.json` potwierdza rzeczywiste rekordy

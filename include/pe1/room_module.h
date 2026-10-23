@@ -56,7 +56,7 @@ void RoomLib_ClassNop6(void);
  * (status 3). */
 int RoomLib_RegisterDrawListActive(PmSlotHeader *slot);
 int RoomLib_RegisterPairedTablesActive(PmSlotHeader *slot);
-int RoomLib_RegisterPairedTablesGated(void *o);
+int RoomLib_RegisterPairedTablesGated(PmSlotHeader *o);
 
 /* Arguments the scene script hands the room's effects (the script's
  * RoomLib_SetArgs3 call); three words in each room's data. */

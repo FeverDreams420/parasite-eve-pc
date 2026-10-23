@@ -65,7 +65,7 @@ add_library(parasite-eve-original-motion OBJECT
     src/overlays/room_lib/motion_particles_3.c
     src/overlays/room_lib/class_plant_script.c
     src/overlays/room_lib/class_register_draw_list.c
-    src/overlays/room_lib/class_register_tables.c
+    src/overlays/room_lib/class_register_tables_gated.c
     src/overlays/room_lib/class_nop6.c)
 target_include_directories(parasite-eve-original-motion PRIVATE include)
 target_link_libraries(parasite-eve-original-motion PRIVATE psyz)

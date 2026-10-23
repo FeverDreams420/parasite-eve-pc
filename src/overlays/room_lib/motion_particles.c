@@ -481,7 +481,7 @@ int g_RoomScript[] = {
 };
 
 PmCommand g_RoomMotionHandlers = {RoomLib_ClassNop0,RoomLib_PlantScript,
-    RoomLib_Spawn6,RoomLib_RegisterDrawList,RoomLib_RegisterPairedTables,
+    RoomLib_Spawn6,RoomLib_RegisterDrawList,RoomLib_RegisterPairedTablesGated,
     RoomLib_CloseTarget,RoomLib_ClassNop6};
 FieldGlowSprite g_RoomMotionGlyph, g_RoomMotionGlyphs[4];
 RoomMotionParticle g_RoomMotionTrailA[10], g_RoomMotionTrailB[10];

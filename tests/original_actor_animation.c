@@ -8498,6 +8498,22 @@ static int original_motion_program(void)
         intptr_t wide=sizeof(intptr_t)>4?(intptr_t)UINT64_C(0x1234567887654321):0x7654321;
         g_RoomMotionHandlers.send((PmSlotHeader *)&object,0,8,wide,0,0);
         if(object.state.commands!=g_RoomScript__motion || object.state.vars[8]!=wide)goto done;
+        /* USA slot 12 waits while variant < 2 and target +0xAC is zero. */
+        FieldFxObject *before_gate=malloc(sizeof(object));
+        if(!before_gate)goto done;
+        memcpy(before_gate,&object,sizeof(object));
+        for(unsigned variant=0;variant<2;++variant){
+            actor.mode=variant;
+            g_RoomMotionHandlers.execute((PmSlotHeader *)&object);
+            if(memcmp(before_gate,&object,sizeof(object))){
+                free(before_gate);
+                fprintf(stderr,"Motion registration ran through closed gate variant%u\n",variant);
+                goto done;
+            }
+        }
+        free(before_gate);
+        if(draw_slot==0)actor.mode=2;
+        else actor_state.reserveda8[4]=1;
         unsigned seen=0,drawn=0,frames=0;
         for(;frames<320;++frames){
             memset(&arena,0xa5,sizeof(arena));for(unsigned i=0;i<4096;++i)ordering[i]=(RenderGpuTag){.address=0xffffff};g_DrawPacketOffset=0;
@@ -18623,6 +18639,7 @@ int main(int argc, char **argv)
         PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;
         int result=original_fx_scene_init(&disc);pe_disc_close(&disc);return result?0:149;
     }
+    if(argc==2 && !strcmp(argv[1],"--motion-program"))return original_motion_program()?0:123;
     if(argc==2 && !strcmp(argv[1],"--fx-motion")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;

@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N6: rzeczywisty abort przy efekciePreraise97 — niezaliczony test
+
+Dalsza gałąź zginęła176577 przed kolejnymPowerCharge. OstatniRevive
+przywróciłHP434; oryginalneMedicine4/slot44 podniosłoHP do834 przy178057,
+pozostałyRevive0 iMedicine4x1. Przy180697 trzy234trafienia dały
+Eve1012388→1011686, HP834/Preraise. Ograniczona seria nie skończyła się.
+
+Proces39485 zakończył się SIGABRT/-6 po wejściuCross182193→182201:
+`Cannot start original PE effect 97 (command=399, status=-3)`.
+Ostatni stan182193: AyaHP1, Eve1011686/mode18, kolejka2.
+`/tmp/pe-N6-Eve-effect97-crash-v1/failure.json` ma passed:false;
+zamrożono wejścia, ostatniJSON i błąd kontrolera. Nie kopiujemy zmiennego
+VRAM jako dowodu ostatniego stanu. To produkcyjny abort, nie zwykła
+porażka w walce ani zaliczone przejścieChryslera77.
+
+`phase.c` próbuje efekt97 dlaPreraise (399−0x183=12).
+`Scene_LoadRoomAssets` w istniejącym pm/process.c zwraca−3, gdyFindSlot
+nie znajduje wolnego slotu. Przyczyna zajętości/zwalniania jest jeszcze
+nieustalona; nie powiększamy arbitralnie tablic ani nie pomijamy efektu.
+Uruchomiona pełna powtórkaO z wejściami awarii podLLDB:
+`/tmp/pe-N6-Eve-effect97-debug-v1.py`, sesja86387. Breakpointabort,
+odczyt stosu i11nagłówkówPM; bez wywołań funkcji targetu lub zapisówRAM.
+O→173161 normal/SAN nadal pending w sesji58377. KodC/PsyZ bez zmian.
+
 ### N6: diagnoza kontaktowego ciosu poPowerCharge; korekta pilota
 
 173161→173801 oryginalneHeal3 dałoHP714, bez obrażeńEve.

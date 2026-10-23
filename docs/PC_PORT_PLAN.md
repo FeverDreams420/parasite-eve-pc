@@ -2,6 +2,17 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### 1bb5b16e7: nowe osobne buildy pełnego katalogu95
+
+Rozpoczęto normal/SAN/coverage w /tmp/pe-room-catalog-v1-*, sesje48042/53701/18512.
+Procesy konfiguracji SDL potwierdzone aktywne; nie uznano jeszcze buildów ani
+testów za zaliczone. Wymagania O2/C11, SAN C/ObjC address/undefined/function,
+coverage atomowy,675 kompilacji/21 programów/95 testów. Run.py i verifier
+przygotowane, uchwyty i skrypty w /tmp/pe-room-catalog-v1-progress.json.
+Poprzednie kandydaty nieprzebudowane; ich macierze nadal mają własne wyniki.
+Nowy katalog loadera95 nie dowodzi wykonania wszystkich aktorów/skryptów,
+pełnej kampanii, wszystkich funkcji, obrazu/audio ani platform.
+
 ### Naprawione brakujące wiązania M434/M435, pełny katalog loadera
 
 Nowy test wszystkich450 slotów wykrył rzeczywisty brak na b6cdcbf26:

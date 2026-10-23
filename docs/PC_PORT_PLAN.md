@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N6: autentycznyO→galerie71–76→wejście77; pełny cold SaveO PASS
+
+`/tmp/pe-N5-save-O-cold-v1-proof.json`: pełny genuineN→356696/FileSavedO
+normal/SAN exit0/czysto, całyJSON/1MiBVRAM równy frozenlive;
+wszystkie8192B nowo wytworzonegoO identyczne z live/sourceO, N bez zmian.
+To niezależne ponowne wygenerowanie zapisu, oprócz wcześniejszegoContinueO.
+
+N6 wyłącznie zO: z telefonuM042 bieg/obejście biurek doM04315433;
+próby zbyt wczesnego skrętu do ściany zatrzymane bez edycji kolizji.
+Autorytatywne stare snapshoty potwierdziły właściwy portalM043 przy
+[576,−2365], nie współrzędneM046. Nawigacja centrum→[800,−2350]
+dałaM04621069. Obejście lady przezx−1100,z−500 i środek wyjścia
+przyz−1127 dało mapę23461. Left wybrałoChrysler; dwaCross→M29024117.
+Panel[2259,−253],neutral/Cross i wejścieM29326308. Key7 bez niższych
+kluczy pozwolił69Up→70; jazda i wyjścieM29229489/slot25.
+Układ70 nadalseed29843,QueenBee pozostaje pokonana poContinue.
+Trasa25→26/M335→27/M304→15/M418, dalej+x dała35849/M312/floor71.
+
+Ruch galerii oparty na pełnym oryginalnym padzie517085–532053 staregoN2,
+bez jego wcześniejszej pętli powrotu doM418:176segmentów/14968klatek,
+tylko kierunki/neutral, żadneCross/RAM/RNG edits. N6 przechodzi
+M31340933/floor72,M31442401/73,M31543925/74,M31646029/75,
+M31749429/76,M31850817/77. HP869 iRevive4 zachowane, zero walk.
+Zamrożone `/tmp/pe-N6-floor77-entry-v1`; boss jeszcze nieuruchomiony.
+Pełny cold O→50817 normal/SAN uruchomiony:
+`/tmp/pe-N6-floor77-cold-v1.py`,PTY69011; wynik pending.
+
+HostpilotEve przed dalszą walką ogranicza liczbę komend broni do faktycznego
+modyfikatoraCommand (0x74/3,0x73/2) i załadowanej amunicji. Przy ammo2
+pomija trzeci slot, przy ammo1 wykonuje jeden; pusty magazynek tylko jedną
+akcję przeładowania/strzału. Zapobiega dodatkowej zwłoce przeładowania
+w ostatnim slocie tuż przedMayą. To zmiana hostowego inputu, nie reguł gry;
+bez dowodu jeszcze, że trzy trafienia mieszczą się w oknieEveATB≤1000.
+Pełny Chrysler77,port iPS1oracle pozostają nieukończone.
+
 ### N6: prawdziwy ContinueO i przekazanie sesji zweryfikowane
 
 Nowa sesja `/tmp/pe-inv-mask-N6-live`,nativePID wpid.json,

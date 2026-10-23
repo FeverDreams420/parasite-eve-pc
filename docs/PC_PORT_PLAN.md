@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### b6cdcbf26: Tutorial2/2 i osiem świeżych częściowych dowodów CPU
+
+`/tmp/pe-seeker-original-v1-tutorial-cold/proof.json`: normal/SAN2/2,
+123 pełne JSON/VRAM/PPM checkpoints zgodne ze wzorcem live i między profilami,
+końcowe PCM45203257216bacc8148e1b37048a9ed0ad5fc578cb244cf73708113753cc49d7,
+puste prywatne karty. To oryginalna trasa pad/menu; nie hardware oracle PS1.
+Nowe EX i GPU2× działają osobno, uchwyty w full-progress.json.
+
+`/tmp/pe-seeker-original-v1/catalog/function-evidence-catalog.json`:220 wariantów
+kompilacji,2986 definicji, zero błędów parsera, źródła zgodne z git b6cdcbf26.
+Osiem częściowych dowodów CPU po świeżych wykonaniach na pełnych obiektach:
+sześć AKAO(29 696/prófil), gated motion(36 864/profil) i seeker state1/2
+(132 152/profil). Katalog nie zawiera już JointSprayParticle; zawiera oryginalny
+SeekerSparkCallback z właściwym plikiem. Pozostałe2978 nadal niezatwierdzone
+w katalogu; inne istniejące fixture wymagają przypisania i oceny zakresu.
+Cały audyt funkcji/zawartości oraz pełne macierze94 wciąż niezaliczone.
+
 ### b6cdcbf26: pełne buildy94 i niezależny oracle CPU seeker
 
 Normal/SAN/coverage pełne buildy zakończone exit0,675 kompilacji,21 programów,

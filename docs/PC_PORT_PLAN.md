@@ -36507,3 +36507,17 @@ JSON/VRAM/PPM z checkpointem, pełnePCM identyczne SHA256
 922c1f6daa2289283e64e4a64e7c457647742e0716f84d373c041fb3e29055fc,
 logi bez wykrytych błędów. cold-M358-pair-proof.json w tym samym /tmp.
 Ten PASS dotyczy wejściaM358, nie późniejszych walk, porażki iContinue.
+
+### M065 ponownie: zatrucie wymaga Cure-P
+
+Live594862 weszło doM065 z101/101. Pierwszy przeciwnik pokonany,
+Heal1 przy596208 podniosło35→65, ostatni przeciwnik zmniejszony do20HP,
+ale597058 Aya0HP; końcowycheckpoint597326-death. To druga porażka,
+nie dowód ukończenia walki. Stan przy595202 i później ma(state_flags&3)==1:
+oryginalny battle_ailment.h definiuje AYA_POISON_MASK3/AYA_POISON1.
+Zatrucie było aktywne również poHeal1, więc samo zwiększenie początkowegoHP
+nie rozwiązało problemu. item_ids.h identyfikuje Cure-P/id13 jako leczenie
+i prewencję zatrucia; przedmiot jest dostępny. Następna próba powinna
+użyć oryginalnego Cure-P, zamiast liczyć wyłącznie naHeal1. Szczegółowe
+odczyty w M065-retry-poison-evidence.json w /tmp/pe-campaign-replay-v3.
+Nie zmieniono kodu, stanu, RNG ani zapisów. Proceslive pozostaje przy597326.

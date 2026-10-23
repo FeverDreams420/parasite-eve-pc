@@ -36194,3 +36194,17 @@ a80290c8, kadr przed muzeum, dialog zamknięty, HP72/72, BP74.
 Checkpoint406419 i `/tmp/pe-campaign-replay-v3/museum-arrival-proof.json`.
 Wnętrze muzeum jeszcze nieodwiedzone w tym przejściu; odcinek po391549
 pozostaje poza niezależnym replay. Pełny cel nadal nieukończony.
+
+
+### Bieżąca kampania: wejście do wnętrza muzeum
+
+Podejście po schodach do ochrony i Daniela uruchomiło dialog29 przy410839.
+Scena przeszła do wnętrza a80292c8; przy414031 dialog47 zamknięty,
+sterowanie oddane, HP72/72, BP74. Kadr wnętrza obejrzano.
+Checkpoint414031 i `/tmp/pe-campaign-replay-v3/museum-interior-proof.json`.
+Rozmowa z Klampem i dalsza eksploracja jeszcze nieukończone.
+
+Uruchomiono rozszerzony cold normal/SAN od New Game do414031:
+`/tmp/pe-campaign-replay-v3/cold-museum.py`, normal session59475/PID192,
+SAN session90111/PID269. Obejmuje mapę, przejazd i wejście; wyniki nieznane.
+Bieżąca session37796 pozostaje przy414031.

@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N6: pełne trzy trafieniaEve przedMayą, dystans pilota poprawiony
+
+Drugie okno do64601 obniżyłoEve1039532→1039064,HP751,ammo13→10;
+brak leczeniaEve w następnym cyklu. Snapshoty strzałów pokazały rosnący
+dystans przy trzeciej komendzie (około1685 i1493 do aimpoint), mimo
+cache targetdistance1189/1188. To przesłanka dystansu, nie dowód błęduC.
+Hostowy orbit zmieniono1000–1400→750–950; okno zaczyna się tylko przy
+dystansie≤950 i dotychczasowych Maya/ATB/queue guards. Bez zmian gry/RNG.
+
+Trzecie okno do65985: trzy trafienia po234 przy65905/65937/65969,
+EveATB2944/4992/7040, Maya4/29,30 niewidoczne. Eve1039064→1038362,
+ammo10→7,HP805,PEmax. W całym59137–65985EveHP nigdy nie wzrosło,
+M4 iRevive4 zachowane. `/tmp/pe-N6-Eve-Triple-three-hits-v1/proof.json`
+live PASS. Pełny cold O→65985 normal/SAN uruchomiony:
+`/tmp/pe-N6-Eve-triple-cold-v1.py`,PTY9383; wynik pending.
+Kolejne8okien farm−2 uruchomione. To nie wygrana ani zaliczenie77.
+
 ### N6: trzy komendy broni przedMayą; dwa trafienia, trzecie bez obrażeń
 
 Pierwsze strzeleckie okno zakończone63217:HP810,Preraise aktywne,

@@ -2,6 +2,22 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N11: oryginalne zakończenie EX, napisy i powrót do tytułu live
+
+Po dialogach112–138 przy292705 scena0xaa108448/story1000 uruchomiła
+napisy z ilustracjami. Render obejrzano przy292705 („Based on a Novel by
+Hideaki Sena”),316705 (Square Electronic Arts) i329013 („The End…”).
+OryginalnyCross i300neutralnych vblank→329321/M431, kolejnyCross po
+1800neutralnych→331129/title. Przy332629 obejrzano prawidłowy ekran
+„Press Start Button”. Nie był to reset wymuszony przez hosta.
+
+`/tmp/pe-N11-EX-credits-entry-v1/proof.json` dokumentuje live wejście;
+pełny powrót zamrożono w`/tmp/pe-N11-EX-ending-return-v1`
+(JSON/VRAM/wejścia/baseargs). Prywatna karta nadal ma tylko oryginalnąO;
+nie wygenerowano nowegoClearData. Nie należy opisywać tego jako testu
+zapisu poEX. To live przejście końcaChryslera77, nie zakończony audyt
+pełnegoportu ani referencjaPS1. Niezależnycold do281505 nadal pending.
+
 ### N11: HP Eve wyczerpane, oryginalny dialog zakończenia uruchomiony
 
 Przy281505 EveHP999935, czyli poniżej sentinel1000000; pilot zatrzymał

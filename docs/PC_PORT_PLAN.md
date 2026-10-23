@@ -36441,3 +36441,16 @@ Normal i SAN: cały character/inventory/scena/stage identyczne z zapisem
 czyste logi, wszystkie trzy prywatne pliki kart niezmienione. Wcześniejsze
 ograniczenie wyboru wieloplikowego rozstrzygnięto jako błąd harmonogramu
 testu, bez zmian kodu gry. Nadal brak dowodu dalszej kampanii lub PS1 oracle.
+
+### Park: trzecia wygrana i wejście M358
+
+Live New Game567258: telefon M064 opuszczony, M063 walka3:31/57HP
+wygrana559464 (HP69/92), nagrody odebrane: EXP89→99, PEbonus3→9.
+Heal1 w oryginalnym menu przy560742 przywróciło92/92. Obejście placu
+przez[104,2744], Right350 uruchomiło M358/a8065448 przy566658;
+po600 bez inputu scena wyświetlona. Checkpoint567258 i
+`/tmp/pe-campaign-replay-v3/park-M358-entry-proof.json` to obserwacja,
+nie niezależny PASS. Uruchomione cold-M358 normal PID52080/session86138
+oraz SAN PID52171/session59866 od pustych prywatnych kart/New Game,
+do567258. Wyniki jeszcze nieznane; nie restartować bez sprawdzenia procesu.
+Bez zmian kodu gry, RAM, RNG lub payloadów zapisów.

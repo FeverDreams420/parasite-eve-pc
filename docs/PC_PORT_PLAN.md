@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### script-locals-v1:70/70regresji PASS, pełne nowe obserwacje powtarzalne
+
+`/tmp/pe-script-locals-v1-fixture-regression-proof.json`:64/64exit0/czysto,
+łącznie zcore, Melissą, M318i danymi/ładowaniemefektów.
+`/tmp/pe-script-locals-v1-six-replay-proof.json`:6/6 head2/phone/medicine
+normal/SAN PASS. Wszystkie poprzednie polaJSON, pełnyVRAM i karty równe
+poprzedniemu kandydatowi; sourceA/B bez zmian. Każdy aktor ma56rawu32;
+pełny nowyJSON, łącznie z tymi rejestrami, identyczny normal/SAN dla
+każdego z3scenariuszy. Nie usunięto innych pól z porównania poprzedniej
+wersji; jedyny jawny dodatek schematu toscript_locals.
+
+Świeża gra normalSHA2564f75dddc8f6457318b73d457e3b18e42a8c04558462aa4ed71255bfd7b457410,
+SAN159e7b6cd8545a01939e5d5e80d07d2514b69082c505cac39f431d97ae72e3a6.
+SDK nadal nieinstrumentowane. Te70przypadków nie oznaczają ukończenia
+kampanii, końcówkiChryslera, PCM/pikseliPS1 lub macierzyplatform.
+
+N10/69228 i niezależnySAN91549 do210465 pozostają aktywne.
+Żaden kolejny input nowej strategii nie został wysłany przed wymaganym
+porównaniem pełnego nowegoJSON/VRAM i wszystkich starych pól zN9.
+Wynik handoffu i ruchu według celu lotuEve nadal pending.
+
 ### N9: rezerwaPE zadziałała; porażka kontaktowa poPowerCharge
 
 `/tmp/pe-m318-flash-N9-live/handoff-proof.json`: normal/SAN do210465,

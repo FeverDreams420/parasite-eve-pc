@@ -2,6 +2,54 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### gpu-port-v1: świeża integracjaSDK,80/80 regresji i zgodny stan1×/2×/8×
+
+W istniejącym `src/main/boot/main.c` dodano `--headless-gpu` oraz
+`--internal-resolution 1..8`. Ustawienie jest przekazane przed oryginalnym
+Boot_InitSystem i sprawdzone po inicjalizacji. Software headless odrzuca
+mnożnik>1; sprzeczne/zdublowane tryby nie uruchamiają grafiki. Istniejący
+runner stdin dopuszcza ukrytyGPU. Nie dodano plików produkcyjnych ani nie
+zmieniono oryginalnych modułów rozgrywki przy tejintegracji.
+
+`/tmp/pe-gpu-port-v1-build-proof.json`:438świeżych obiektów, wszystkie
+zależności i hashe obiektów/SDK/SDL/binarii zgodne. SDK/SDL wprofiluSAN
+mają instrumentację C iObjective-C. NormalgameSHA
+e94468a33d3c37f1ed784108b27f3805003c15d4134143e4169b0d04143de8e7,
+SANf8f7d8181919ea0976102a25357104922fecd6cef6433ea888fc346da98b6d9b.
+`pe-gpu-port-v1-fixture-regression-proof.json`:64/64;
+`pe-gpu-port-v1-six-replay-proof.json`:6/6 head2/phone/medicine,
+dotychczasowe polaJSON/VRAM/karty zgodne z poprzednimi referencjami,
+pełny nowyJSON normal/SAN zgodny. `pe-gpu-port-v1-credits-regression/proof.json`:
+10/10. Łącznie80/80 exit0/czysto, nie pełnyzakresportu.
+
+`/tmp/pe-gpu-port-v1-gpu-matrix/proof.json`:6uruchomień oryginalnego
+ContinueB/menu/użyciaMedicine do26308/scene0xA8021148. UkrytyMetal1×/2×/8×,
+normal/SAN: całyJSON i natywny1MiBVRAM identyczne między wszystkimi
+wariantami, prywatna i źródłowaB bez zmian. `pe-gpu-port-v1-gpu-control/proof.json`:
+2×/normal/SAN, control1000→advance8→quit, obaJSON i VRAM zgodne, exit0.
+`pe-gpu-port-v1-cli-matrix/proof.json`:22przypadki niepoprawnychopcji
+odrzucone przed odczytemobrazu/uruchomieniemGPU. Obejrzano natywny render
+menu/otoczenia; scaled readback nadal nie jest dostępny, więc niezaliczono
+szczegółowości obrazuhi-res, całej kampanii ani macierzy wszystkich scen.
+
+Pozostaje konkretna rozbieżność obrazu: GPU1× vs poprzedni software w tym
+samym punkcie26308 ma całyJSON identyczny, ale926różnych słówVRAM
+(1590bajtów), zero różnic wyłącznie bitumaski. DeltaRGB5 to głównie+1,
+dwa piksele+2 na wszystkichkanałach. `pe-gpu-port-v1-gpu-software-diff.json`.
+Zapisano rozbieżność do dalszej diagnostyki, bez zmiany tolerancji/wzorców.
+Nie jest to dowód pixel-perfect ze sprzętemPS1.
+
+### N11: pełny niezależnycold zakończenia EX PASS na script-locals-v1
+
+`/tmp/pe-N11-EX-ending-return-cold-v1-proof.json`: autentyczneContinueO,
+TruebredEve, dialogi112–138, EXcredits do„The End” i powrót do tytułu332629.
+Normal/SAN exit0/czysto, cały nowyJSON i1MiBVRAM identyczne z zamrożonym
+live, karty bez zmian. PTY23976 zakończony. To dowód starego niezmienionego
+script-locals-v1 o wcześniej zapisanychhashach, nie nowegogpu-port-v1.
+Pełnycold tego samego przebiegu uruchomiono już dla nowego kandydata:
+`/tmp/pe-gpu-port-v1-EX-ending-cold.py`, PTY64763; wynik pending. Nie jest to
+pełneNewGame→EX77 ani zakończony audyt całegoportu.
+
 ### PsyZ: interpolacja, bitmaski i natywnyVRAM przyhi-res —118/118 PASS
 
 Własnyfork `679ff84` naprawia istniejący SDL_GPU: atrybutyUV/RGB mają

@@ -6,6 +6,7 @@
 #include <limits.h>
 #include <SDL3/SDL.h>
 #include <psyz/audio.h>
+#include <psyz/video.h>
 #include "pe1/boot.h"
 #include "pe1/boot_disc_check.h"
 #include "pe1/boot_display.h"
@@ -26,15 +27,27 @@ int main(int argc,char **argv) {
     PeDisc images[2]={{0}};
     const char *paths[2]={NULL,NULL};
     int result=EXIT_FAILURE;
+    unsigned internal_resolution=1;
+    int resolution_argument=0,headless_argument=0;
     for(int arg=1;arg<argc;++arg){
         if(!strcmp(argv[arg],"--help")){
-            printf("Usage: %s --disc <USA Disc 1 CUE/BIN> [--disc2 <USA Disc 2 CUE/BIN>] [--headless] [--frame-limit N] [--control-at N] [--dump-vram PATH] [--pad-at VBLANK:BUTTON_MASK ...]\n",argv[0]);
+            printf("Usage: %s --disc <USA Disc 1 CUE/BIN> [--disc2 <USA Disc 2 CUE/BIN>] [--headless | --headless-gpu] [--internal-resolution 1..8] [--frame-limit N] [--control-at N] [--dump-vram PATH] [--pad-at VBLANK:BUTTON_MASK ...]\n",argv[0]);
+            printf("--headless uses native-resolution software rendering; --headless-gpu keeps the actual GPU window hidden and supports internal scaling.\n");
             printf("Headless control: --control-at N pauses for stdin commands: advance FRAMES BUTTON_MASK or quit (requires --frame-limit).\n");
             printf("Headless fixtures only: --diagnostic-hp-at VBLANK:EXPECTED_HP:VALUE (requires --frame-limit; output is marked coverage-only)\n");
             return EXIT_SUCCESS;
         }
-        if(!strcmp(argv[arg],"--headless")){
-            if(!SDL_SetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_HEADLESS","1",true))return EXIT_FAILURE;
+        if(!strcmp(argv[arg],"--headless") || !strcmp(argv[arg],"--headless-gpu")){
+            if(headless_argument++){fprintf(stderr,"Duplicate or conflicting headless mode\n");return EXIT_FAILURE;}
+            const char *backend=!strcmp(argv[arg],"--headless-gpu")?"gpu":"1";
+            if(!SDL_SetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_HEADLESS",backend,true))return EXIT_FAILURE;
+        }else if(!strcmp(argv[arg],"--internal-resolution")){
+            if(resolution_argument++ || arg+1>=argc){fprintf(stderr,"Missing or duplicate internal resolution\n");return EXIT_FAILURE;}
+            char *end;errno=0;
+            const char *value=argv[++arg];
+            unsigned long scale=strtoul(value,&end,10);
+            if(*value<'1' || *value>'9' || *end || errno || scale>PSYZ_INTERNAL_RES_MAX){fprintf(stderr,"Invalid internal resolution\n");return EXIT_FAILURE;}
+            internal_resolution=(unsigned)scale;
         }else if(!strcmp(argv[arg],"--frame-limit")){
             char *end;errno=0;
             unsigned long limit=arg+1<argc?strtoul(argv[++arg],&end,10):0;
@@ -89,10 +102,14 @@ int main(int argc,char **argv) {
         }else{fprintf(stderr,"Unknown argument: %s\n",argv[arg]);return EXIT_FAILURE;}
     }
     if(!paths[0]){fprintf(stderr,"Supply --disc with a USA CUE/BIN image\n");return EXIT_FAILURE;}
+    const char *headless_mode=SDL_GetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_HEADLESS");
+    if(internal_resolution>1 && headless_mode && !strcmp(headless_mode,"1")){
+        fprintf(stderr,"Software headless supports only internal resolution 1; use --headless-gpu\n");return EXIT_FAILURE;
+    }
     if(g_BootHostVramPath && !g_BootHostVBlankLimit){fprintf(stderr,"VRAM capture requires --frame-limit\n");return EXIT_FAILURE;}
     if(g_BootHostControlAt){
         const char *headless=SDL_GetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_HEADLESS");
-        if(!headless || strcmp(headless,"1") || !g_BootHostVBlankLimit || g_BootHostControlAt>=g_BootHostVBlankLimit){
+        if(!headless || (strcmp(headless,"1") && strcmp(headless,"gpu")) || !g_BootHostVBlankLimit || g_BootHostControlAt>=g_BootHostVBlankLimit){
             fprintf(stderr,"Control requires headless mode and a later frame limit\n");return EXIT_FAILURE;
         }
         if(g_BootHostPadEventCount && g_BootHostPadEvents[g_BootHostPadEventCount-1].vblank>g_BootHostControlAt){
@@ -123,7 +140,9 @@ int main(int argc,char **argv) {
     CdRom_BindImage(g_CdImageVolumes[0],NULL);
 
     g_BootHostActive=1;
+    if(Psyz_VideoSetInternalResolution(internal_resolution)<0){fprintf(stderr,"Cannot select internal resolution\n");goto shutdown;}
     Boot_InitSystem();
+    if(Psyz_VideoGetInternalResolution()!=internal_resolution){fprintf(stderr,"Requested internal resolution unavailable\n");goto shutdown;}
     mode = 0;
 
     for (;;) {

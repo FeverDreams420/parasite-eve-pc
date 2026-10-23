@@ -36290,3 +36290,20 @@ odprawę (129 przy489119). Przy494279 powrót M043, stage224, dwa
 Mod Permit55, HP72/72, BP74, bez menu/dialogu. Checkpoint494279 i
 `/tmp/pe-campaign-replay-v3/second-briefing-proof.json`. Trasa do parku
 jeszcze nieprzebyta w tej próbie; ten odcinek po456327 bez cold SAN.
+
+
+### Bieżąca kampania: film wyjazdu i intro Central Park ukończone
+
+Po drugiej odprawie zwykłe wyjście M043→M046 uruchomiło obowiązkowy
+film (kadr przy499026 obejrzano), bez przewijania. Film zakończył się
+przejazdem M039/a80034c8/dialog32. Następnie M374/a8067248, intro
+Daniela i Ayi102–106. Przy510342 dialog zamknięty, stage232, HP72/72,
+BP74, bez menu/przeciwników. Checkpoint510342 i
+`/tmp/pe-campaign-replay-v3/park-intro-proof.json`. Eksploracja parku
+i dalsza kampania nadal nieukończone; brak pełnego oracle PS1 filmu.
+
+Uruchomiono niezależne cold normal/SAN od pustych kart do510342,
+obejmujące drugą odprawę, film i intro parku:
+`/tmp/pe-campaign-replay-v3/cold-park-intro.py`, normal session2330/PID89861,
+SAN session58873/PID89944. Wyniki nieznane; bieżąca session37796
+pozostaje na510342.

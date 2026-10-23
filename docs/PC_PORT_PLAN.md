@@ -36680,3 +36680,26 @@ identyczna sekwencja oryginalnego pada w menuBP do16300. Character,
 inventory, scene, stage zgodne z obserwowanym stanem po ulepszeniuE;
 pełny końcowyJSON/VRAM/PPM normal/SAN identyczny, native0, czyste logi,
 D niezmienione. Ten dowód obejmuje alokacjęBP, nie sam zapisE ani dalsząM065.
+
+### Tabela siedmiu klas M358/M384/M387: rozszerzony trwały test
+
+Audyt oryginalnych assetów: wszystkie49 adresów metod zgodne z sześcioma
+wierszami M022 przesuniętymi o0x60 i wierszem okna M063 o0x34f4.
+Faktyczne deskryptory wszystkich trzech pokoi eksportują tylkoE/slot75
+orazWindow/slot74; loader już waliduje i wiąże oba z istniejącymi handlerami.
+Nie znaleziono brakującego wiązania. actor_window_class_table.c nie jest
+dodatkową implementacją funkcji: to skład sześciu istniejących klas i okna.
+Nie trzeba dopisywać nowej tabeli lub przenosić funkcji, aby odtworzyć te
+faktycznie eksportowane deskryptory.
+
+Istniejący tests/original_actor_animation.c/original_window_assets rozszerzono
+w miejscu o kontrolę pozostałych wierszy: teraz wszystkie49, zachowując
+porównanie ciałE/Window, tablic skoków i deskryptorów. Świeże obiekty testu
+normal/SAN skompilowane z oryginalnych poleceń kompilacji i połączone z
+zamrożonymi obiektami produkcji poza istniejącymi katalogami build;
+--assets oba exit0, marker49 obecny, brak diagnostyk runtime. Wcześniejsze
+11 ostrzeżeń typów wskaźników w innych częściach testu pozostaje.
+Dowód /tmp/pe-window-table-v1/proof.json, skryptbuild i logi w tym samym
+katalogu; surowy audyt /tmp/pe-combined-window-class-table-audit.json.
+Pełne95 dotyczą wcześniejszych binariów testów; nie przypisywać ich nowemu
+programowi testowemu. Produkcja bez zmian, M065 i całyport nadal otwarte.

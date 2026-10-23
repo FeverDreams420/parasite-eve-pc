@@ -9367,6 +9367,14 @@ static int original_window_assets(PeDisc *disc,PeDiscFile *exe)
     SceneRoomSectorRange reference_range;
     if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+58*8,&reference_range,sizeof(reference_range)) ||
        !pe_disc_read(disc,&archive,(u64)(reference_range.start+reference_range.scratchSectors+reference_range.textureSectors)*2048+8+0xf4c,class_e,sizeof(class_e)))return 0;
+    /* Audit every row, including the five actor classes not exported by
+     * these rooms' two descriptors. Their shared native handlers are linked
+     * through actor_class_table.c; no separate replacement table is needed. */
+    u32 actor_methods[6][7];
+    SceneRoomSectorRange actor_range;
+    if(!pe_disc_read(disc,exe,0x800ull+0x80093378u-base+21*8,&actor_range,sizeof(actor_range)) ||
+       !pe_disc_read(disc,&archive,(u64)(actor_range.start+actor_range.scratchSectors+actor_range.textureSectors)*2048+
+                     8+0x801924e8u-0x8018eff0u,actor_methods,sizeof(actor_methods)))return 0;
     const unsigned combined_rooms[]={358,384,387};
     const u32 e_methods[]={0x8018ff9c,0x8018ffa4,0x80190020,0x80190298,0x801902a0,0x801909e0,0x80190a38};
     for(unsigned room_index=0;room_index<3;++room_index){
@@ -9404,6 +9412,10 @@ static int original_window_assets(PeDisc *disc,PeDiscFile *exe)
             for(unsigned i=0;valid && i<7;++i){
                 u32 actual;memcpy(&actual,code+0x4388+i*4,4);valid=actual==methods[i]+0x34f4;
             }
+            for(unsigned row=0;valid && row<6;++row)for(unsigned method=0;valid && method<7;++method){
+                u32 actual;memcpy(&actual,code+0x42e0+(row*7+method)*4,4);
+                valid=actual==actor_methods[row][method]+0x60;
+            }
             valid=valid && !memcmp(code+0x4318,e_methods,sizeof(e_methods));
             for(unsigned i=0;valid && i<sizeof(class_e)/sizeof(*class_e);++i){
                 u32 expected=class_e[i],actual;memcpy(&actual,code+0xfac+i*4,4);
@@ -9416,7 +9428,7 @@ static int original_window_assets(PeDisc *disc,PeDiscFile *exe)
         }
         free(room);if(!valid)return 0;
     }
-    puts("Original window assets: M063/M083 and combined M358/M384/M387 window/class-E bodies, jump tables and descriptors passed");return 1;
+    puts("Original window assets: M063/M083 and combined M358/M384/M387 window/class-E bodies, all 49 combined class methods, jump tables and descriptors passed");return 1;
 }
 
 static int original_window_motion(void)

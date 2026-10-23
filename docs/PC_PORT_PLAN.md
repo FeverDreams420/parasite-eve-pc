@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### O2 CMake: wykryte UB M350 i naprawa w istniejącym module
+
+Pierwotne macierze CMake-v1 zakończone: normal87/90 (actor-animation,
+player-input-assets i timeout fx-frames), SAN87/90 (M350, player-input-assets
+i timeout fx-frames). To FAIL, nie audyt ukończenia. Logi zachowane w
+`/tmp/pe-cmake-native-v1-{normal,san}-ctest.log`; procesy zakończone.
+
+SAN w M350 wskazał dwa obliczenia offsetu przez adres pola null wskaźnika:
+OrbImpactEmitter1027 i OrbTrailEmitter1100. W obu istniejących funkcjach
+zastosowano istniejący standardowy PE1_OFFSETOF/offsetof. Brak zmian kolejki,
+układu, algorytmu, plików produkcyjnych czy przenoszenia funkcji. Przegląd
+src nie wykazał kolejnych takich wyrażeń wykonywanych; pozostałe dwa są
+wewnątrz sizeof, więc nie dereferują null.
+
+`/tmp/pe-m350-offset-v1/test-proof.json`:4/4 loader/M350 normal/SAN O2.
+Cały oryginalny m350.c skompilowany poleceniem CMake-v1; podmieniono tylko
+jego obiekt w prywatnie połączonym fixture, zachowując wszystkie pozostałe
+obiekty i biblioteki. Binariów trwających wtedy CTest nie przebudowywano.
+Testy:4320 stanów20 oryginalnych callbacków CPU,108 flash/pool,3168 contact,
+24 pełne cykle sześciu PM w obu draw slots, wszystkie9 deskryptorów i loader
+uruchomiony dwukrotnie. Brak raportów sanitizerów. Proofy mają hashe źródła,
+zależności, obiektów, binariów i logów. Pełne CMake macierze z tą poprawką
+wymagają ponownego buildu; osobne problemy aktorów/fx-frames są analizowane.
+
 ### Pełny odcinek ContinueO→Truebred Eve→EX credits→tytuł z audio
 
 `/tmp/pe-audio-port-v4-EX-ending-cold-proof.json`: PASS2/2 świeżych cold replayów

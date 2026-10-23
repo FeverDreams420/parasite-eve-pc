@@ -1024,7 +1024,7 @@ int RoomM350_OrbImpactEmitter(int event, void *_payload, intptr_t argument) {
             firstIndex=0;
             i=firstIndex;
             if (g_RoomM350OrbState.pointerCount>firstIndex) {
-                Queue *queue=(Queue *)((char *)count-(unsigned long)&((Queue *)0)->count);
+                Queue *queue=(Queue *)((char *)count-PE1_OFFSETOF(Queue,count));
                 Vector **position=queue->positions;
                 while (i<queue->count) {
                     {
@@ -1097,7 +1097,7 @@ int RoomM350_OrbTrailEmitter(int event, void *_payload, intptr_t argument) {
             firstIndex=0;
             i=firstIndex;
             if (g_RoomM350OrbState.positionCount>firstIndex) {
-                RoomM350PositionQueue *queue=(RoomM350PositionQueue *)((char *)count-(unsigned long)&((RoomM350PositionQueue *)0)->count);
+                RoomM350PositionQueue *queue=(RoomM350PositionQueue *)((char *)count-PE1_OFFSETOF(RoomM350PositionQueue,count));
                 Vector *position=queue->positions;
                 while (i<queue->count) {
                     {

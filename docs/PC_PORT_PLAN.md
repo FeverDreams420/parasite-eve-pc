@@ -2,6 +2,53 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### PsyZ: interpolacja, bitmaski i natywnyVRAM przyhi-res —118/118 PASS
+
+Własnyfork `679ff84` naprawia istniejący SDL_GPU: atrybutyUV/RGB mają
+oryginalne signed12-fractional-bit gradients, autorski wybór lewegowierzchołka
+i half-unitbias. Dwie połowy czworokąta mają osobnepłaszczyzny (6wierzchołków);
+bufor uwzględnia tenrozmiar. Osobny przebieg zapisu alfy zachowuje bitmaski
+tekstury po odejmowaniu koloru. Rysowanie natywnegoVRAM odbywa się
+niezależnie od skalowanegotargetu, zamiast zmieniać readback przez downsample.
+To nadal ten samrendererGPU i pakietyPS1, bez nowego silnika lub plików gry.
+
+`/tmp/pe-gpu-grad12-v1-proof/proof.json`: normal59/59 i pełny SDK/SDL
+ASan/UBSan/function59/59, exit0/czysto, bezSKIP. Obejmuje cały zestaw
+gpu/dither/horizontal_grid, w tym oba wcześniejszebłędyUV/gradientów,
+przełączenie1×→2×→1× i ukryteokno. Istniejące144goldeny izolowanego
+referencyjnegoGPU PS1 porównano osobno przy wszystkich mnożnikach1–8
+(1152przypadki/profil); cały natywnyreadback jest zgodny. Nowy test1025
+czworokątów wymusza granicebufora i sprawdza17472słowa wraz z tłem.
+Żadnego wzorca ani tolerancji nie zmieniono. Nie jest to pełnyoraclegry
+ani bezpośrednie porównanie ze sprzętemPS1.
+
+SPIR-V zwalidowany, MSL wykonany naMetal, DXIL skompilowany; sześć
+nagłówków daje identycznebajty po regeneracji istniejącymbuildscript.
+Skrypt obsługuje teraz także SDLshadercross jako alternatywę dxc i wybór
+konkretnychshaderów. Pochodzenie oficjalnegoartefaktuSDL i jegoSHA w
+`shader-toolchain-provenance.json` pod prefiksemproof. Windows/Vulkan/GL
+runtime nieprzetestowane; całegoSDK poza wymienionym zestawem niezaliczono.
+
+Zamrożone biblioteki i raporty: `pe-gpu-grad12-v1-proof/{normal,san}-sdk`.
+Gra i trwającecoldO nie są relinkowane; dotychczasowy script-locals-v1
+pozostaje niezmieniony. Dalsze wymagania: pełna integracja nowegoSDK w grze,
+obserwacja rzeczywistego obrazuhi-res (capture nadalnatywne), porównanie stanu
+rozgrywki i całegozakresu. Pełnyport nadal nieukończony.
+
+### N11: niezależnecold pokonania TruebredEve PASS normal/SAN
+
+`/tmp/pe-N11-Eve-HP-exhausted-cold-v1-proof.json`: autentyczneContinueO
+do281505, cały nowyJSON (w tym56lokalnychsłów każdegoaktora) i1MiBVRAM
+identyczne z zamrożonymlive; obaexit0/czysto, karty bez zmian.
+NormalSHA4f75dddc8f6457318b73d457e3b18e42a8c04558462aa4ed71255bfd7b457410,
+SAN159e7b6cd8545a01939e5d5e80d07d2514b69082c505cac39f431d97ae72e3a6.
+PTY44777 zakończony. To świeży dowód ostatniegotrafienia, nie całegokońca.
+
+Uruchomiono pełnycoldO→332629/title dla dialogów112–138, EXcredits,
+„The End” i powrotu: `/tmp/pe-N11-EX-ending-return-cold-v1.py`, PTY23976.
+Ten sam niezmienionykandydat i prywatneO; wynik pending. NoweSDKGPU nie
+jest podlinkowane do tychbinarii. Całyport nadal nieukończony.
+
 ### PsyZ: naprawa koloruClearImage przed mieszaniemGPU
 
 Własnyfork `06ffbcd` zmienia istniejący `Draw_ClearImage` GPU:

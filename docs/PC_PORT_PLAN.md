@@ -4,9 +4,10 @@
 
 ### Akceptacja kandydata desktopowego 4c34cd893
 
-Uruchomiono odrębne świeże buildy RelWithDebInfo normal/SAN/coverage na tym
-samym snapshotcie źródeł, z PE_REQUIRE_GAME_ASSETS=1 i oboma PE_TEST_DISC /
-PE_TEST_DISC2. Pipeline `/tmp/pe-desktop-acceptance-v1.py` zapisuje stan kroków,
+Uruchomiono pipeline kolejnych świeżych buildów RelWithDebInfo normal/SAN/coverage
+na tym samym snapshotcie źródeł, z PE_REQUIRE_GAME_ASSETS=1 i oboma PE_TEST_DISC /
+PE_TEST_DISC2. W chwili wpisu build normal i czysty checkout są zakończone0,
+pełne96 testów normal trwają; SAN i coverage oczekują na wcześniejsze etapy. Pipeline `/tmp/pe-desktop-acceptance-v1.py` zapisuje stan kroków,
 PID-y, hashe źródeł/artefaktów, listę96 testów i JUnit. Wyniki nie są jeszcze
 zamknięte; źródłem aktualnego stanu jest `/tmp/pe-desktop-acceptance-v1/progress.json`.
 Dowód profilu powstaje dopiero po96 PASS, zerze SKIP i ponownym hashowaniu

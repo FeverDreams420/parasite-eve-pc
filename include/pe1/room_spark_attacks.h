@@ -45,7 +45,7 @@ extern u16 g_RoomBurstOrbScript[22], g_RoomBeamSparkScript[18], g_RoomJitterSpar
 extern FieldFxTaskProgram g_RoomBurstOrbProgram, g_RoomBeamSparkProgram, g_RoomJitterSparkProgram;
 
 /* Complete USA M413/M416/M417/M437 joint-spray unit (original slot135). */
-int RoomEffect_JointSprayParticle(int mode, void *data, intptr_t argument);
+int RoomEffect_SeekerSparkCallback(int mode, void *data, intptr_t argument);
 int RoomEffect_JointSprayController(int mode, void *data, intptr_t argument);
 intptr_t RoomEffect_SetJointSprayArgs(int mode, intptr_t speed, intptr_t spread, intptr_t unused);
 extern int g_RoomJointSprayArgs[2];

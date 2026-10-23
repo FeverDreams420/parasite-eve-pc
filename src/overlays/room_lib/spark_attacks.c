@@ -1142,132 +1142,6 @@ FieldFxTaskProgram g_RoomJitterSparkProgram = {
 /* Original USA M413/M416/M417/M437: the complete three-function joint
  * spray unit, at 80192500..801930ef. Keep its particle, controller, argument
  * setter and authored program together in the existing room spark module. */
-int RoomEffect_JointSprayParticle(int mode, void *data, intptr_t argument) {
-    RoomDampedSpark *spark = data;
-    const int *params = (const int *)argument;
-    RenderColor core = {200, 100, 0, 0};
-    RenderColor glow = {200, 200, 150, 0};
-    GteShortVector position;
-    RoomDampedSpark *child;
-    int scale, opacity, palette;
-    u16 clut;
-
-    if (mode == 1) {
-        switch (spark->state) {
-        case 0:
-            spark->timer++;
-            FieldFx_AnglesToVector((GteShortVector *)&spark->vx, (s16)params[0], &position);
-            spark->x += position.x;
-            spark->y += position.y;
-            spark->z += position.z;
-            if (!(spark->timer & 3)) {
-                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
-                if (child) {
-                    child->x = spark->x;
-                    child->y = spark->y;
-                    child->z = spark->z;
-                    child->vx = (rand() & 31) - 16;
-                    child->vy = 0;
-                    child->vz = (rand() & 31) - 16;
-                    child->state = 1;
-                    child->timer = 0;
-                }
-            }
-            FieldFx_AnglesToVector((GteShortVector *)&spark->vx, 180, &position);
-            position.x += spark->x;
-            position.y += spark->y;
-            position.z += spark->z;
-            if (FieldFx_IsPlayerWithinRadius(&position, 50)) {
-                if (g_FieldFxTaskContext->flags) {
-                    FieldActorState *owner = g_FieldFxOwner->actor->state;
-                    if ((owner->core_flags & 0x3F000000u) == 0x01000000u) {
-                        ((Combatant *)g_PlayerEntity->state)->stateFlags |= 0x4000;
-                        owner->core_flags = (owner->core_flags & 0xC0FFFFFFu) | 0x99000000u;
-                    }
-                }
-                spark->x = position.x;
-                spark->y = position.y;
-                spark->z = position.z;
-                spark->state = 2;
-                spark->timer = 0;
-            }
-            return !Geo_PointInPoly(spark->x * 65536, spark->z * 65536,
-                                   g_FloorPolygonVertices, g_FloorPolygonVertexCount);
-        case 1:
-            spark->x += spark->vx;
-            spark->y += spark->vy;
-            spark->z += spark->vz;
-            spark->timer++;
-            spark->vx = spark->vx * 63 / 64;
-            spark->vz = spark->vz * 63 / 64;
-            spark->vy -= 2;
-            if (spark->y >= g_RoomFloorY->y) spark->vy = -(s16)spark->vy;
-            return (s16)spark->timer >= 8;
-        case 2:
-            spark->timer++;
-            return (s16)spark->timer >= 8;
-        }
-    } else if (mode == 2) {
-        gte_ldrotmatrix(g_ViewMatrixSlot.value);
-        gte_ldtransmatrix(g_ViewMatrixSlot.value);
-        switch (spark->state) {
-        case 0:
-            opacity = ((g_FieldFxCurrentAge & 1) << 5) + 96;
-            gte_ldrotmatrix(g_ViewMatrixSlot.value);
-            gte_ldtransmatrix(g_ViewMatrixSlot.value);
-            g_FieldFxSpriteParams.palette = 4;
-            g_FieldFxSpriteParams.parameter06 = 0;
-            g_FieldFxSpriteParams.tpage = g_FieldFxTpageTable[g_FieldFxTpageSlot4];
-            palette = g_FieldFxPaletteTable[4];
-            if (g_FieldFxAltPaletteFlag) palette += 4;
-            clut = GetClut(0, palette);
-            FieldFx_DrawRotatedQuad((GteShortVector *)spark, (GteRotation *)&spark->vx,
-                                   320, 120, 0, g_FieldFxAltPaletteFlag ? 96 : 0,
-                                   64, 16, clut, &core, &glow, (s16)opacity, 1);
-            if (!(g_FieldFxCurrentAge & 3)) {
-                gte_ldrotmatrix(g_ViewMatrixSlot.value);
-                gte_ldtransmatrix(g_ViewMatrixSlot.value);
-                FieldFx_AnglesToVector((GteShortVector *)&spark->vx, 240, &position);
-                position.x += spark->x;
-                position.y += spark->y;
-                position.z += spark->z;
-                FieldFx_DrawStarFan(&position, 200, 200, 5, NULL, 4096, 4096,
-                                    &glow, NULL, opacity / 2, 1);
-            }
-            break;
-        case 1:
-            scale = rcos((s16)spark->timer * 128) * 2 / 3;
-            opacity = rsin((s16)spark->timer * 128) / 64 + 64;
-            g_FieldFxSpriteParams.parameter00 = 16;
-            g_FieldFxSpriteParams.parameter02 = 1;
-            g_FieldFxSpriteParams.extent_x = 16;
-            g_FieldFxSpriteParams.extent_y = 16;
-            g_FieldFxSpriteParams.palette = 2;
-            g_FieldFxSpriteParams.parameter06 = 0;
-            g_FieldFxSpriteParams.tpage = g_FieldFxTpageTable[g_FieldFxTpageSlot2];
-            clut = GetClut(48, g_FieldFxPaletteTable[2]);
-            FieldFx_DrawShapeQuads((GteShortVector *)spark, NULL, scale, scale,
-                                  (s16)g_FieldFxSpriteParams.parameter02 * (spark->timer & 1) + 220,
-                                  clut, 1, opacity, &core);
-            break;
-        case 2:
-            g_FieldFxSpriteParams.parameter00 = 32;
-            g_FieldFxSpriteParams.parameter02 = 2;
-            g_FieldFxSpriteParams.extent_x = 32;
-            g_FieldFxSpriteParams.extent_y = 32;
-            g_FieldFxSpriteParams.palette = 2;
-            g_FieldFxSpriteParams.parameter06 = 0;
-            g_FieldFxSpriteParams.tpage = g_FieldFxTpageTable[g_FieldFxTpageSlot2];
-            clut = GetClut(0, g_FieldFxPaletteTable[2]);
-            FieldFx_DrawShapeQuads((GteShortVector *)spark, NULL, 4096, 4096,
-                                  (s16)g_FieldFxSpriteParams.parameter02 * ((s16)spark->timer / 2) + 192,
-                                  clut, 1, 128, &glow);
-            break;
-        }
-    }
-    return 0;
-}
-
 int RoomEffect_JointSprayController(int mode, void *data, intptr_t argument) {
     const int *params = (const int *)argument;
     GteShortVector flashOffset = {0, 0, -50, 0};
@@ -1284,7 +1158,7 @@ int RoomEffect_JointSprayController(int mode, void *data, intptr_t argument) {
         }
         FieldFx_PlaySoundAtOwner(0x5A8, FieldFx_GetOwnerProgress());
         return FieldFx_InitCallbackList(g_FieldFxActiveTaskSlot->end, 20, 55,
-                                       RoomEffect_JointSprayParticle);
+                                       RoomEffect_SeekerSparkCallback);
     case 1:
         FieldFx_TransformMatrixPoint((void *)g_FieldFxOwner->actor, 3, &flashOffset, &position);
         FieldFx_GetTransformLookAngles((void *)g_FieldFxOwner->actor, 0, &heading);

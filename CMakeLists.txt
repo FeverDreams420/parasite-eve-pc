@@ -296,6 +296,7 @@ add_library(parasite-eve-original OBJECT
     src/overlays/room_m123_nypd/m123.c
     src/overlays/room_m123_nypd/RoomM123_SelectSlotPointer.c
     src/overlays/room_lib/spark_attacks.c
+    src/overlays/room_lib/seeker_spark.c
     src/overlays/room_lib/capture_frame_sample.c
     src/overlays/room_lib/script_arg.c
     src/overlays/room_lib/script_task_var.c

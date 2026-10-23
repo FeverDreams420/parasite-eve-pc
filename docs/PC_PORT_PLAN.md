@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Oryginalny seeker podłączony, duplikat callbacku usunięty
+
+Kontroler JointSpray używa teraz RoomEffect_SeekerSparkCallback z istniejącego
+seeker_spark.c, dodanego do listy źródeł. Usunięto osobny127-wierszowy callback
+JointSprayParticle ze spark_attacks.c; kontroler i dane task135 pozostają w miejscu.
+Bez nowych plików produkcyjnych ani dodatkowej warstwy.
+
+`/tmp/pe-seeker-original-v1/flight-comparison-proof.json`: normal/SAN/coverage
+po2304 porównania lotu. Porównano pełną cząstkę/pulę/RNG/owner flags/player flags
+oraz wynik:288 okazji spawn,1152 kontakty,1152 wyjścia poza podłogę na profil.
+Różne timery, trzy heading/speed, task flags, uprawniony/nieuprawniony owner,
+pełna/wolna pula i obie strony wielokąta. Razem z wcześniejszymi2 359 296
+stanami i1536 renderami nie wykryto różnic. To porównanie natywnych implementacji,
+nie zastępuje oryginalnego oracle CPU i pełnej regresji nowego kandydata.
+
+Nowy pełny normal build /tmp/pe-seeker-original-v1-full-normal w sesji93978;
+stan i hashe w integration-progress.json. Nie zaliczono jeszcze builda/testów
+tej integracji, użytkowa binarka bez podmiany. Poprzedni e8ff03f56 normal93/93
+zweryfikowany (511,75s), a EX normal/SAN2/2 zakończony zgodnym PCM i stanem;
+te dowody nie są automatycznie przypisywane nowej integracji seeker.
+
 ### seeker_spark: zgodność pakietów renderowania 1536/profil
 
 `/tmp/pe-seeker-original-v1/render-comparison-proof.json`: normal/SAN/coverage

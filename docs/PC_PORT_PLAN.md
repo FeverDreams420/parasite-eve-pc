@@ -36373,3 +36373,24 @@ SAN session55189/PID52071. Porównanie stanu potwierdzi reprodukcję,
 nie poprawność M061. Wcześniejsze cold do532148 (session38123/18971)
 nadal nie miały wyniku przy ostatnim sprawdzeniu; nie restartowano ich.
 Bieżąca session37796 pozostaje na540368 do diagnozy bez zmian RAM.
+
+
+### M061: podejrzenie zatrzymania wyjaśnione; ruch działa
+
+Odczyt LLDB bez wywoływania funkcji gry/zmian pamięci potwierdził
+callback Entity_IntegratePositionFull, prawidłowy pakiet pada i tryb
+chodzenia22 po Up. Stan, model i action_data są obecne. Nie wykryto
+oczekiwania na brakujący opcode ani utraty sterowania. Right120 przesunęło
+pozycję z[45,160,−3111] do[55,160,−2800], potem Right200/Up500 do
+[−1006,233,−2290]. Kolejne ruchy obchodzą zbiornik. Wcześniejsza
+obserwacja Left/Up dotyczyła kolizji w narożniku wejścia; nie potwierdzała
+zamrożenia. Nie zmieniano kodu, RAM, flag ani pozycji. Checkpoint543070
+i `/tmp/pe-campaign-replay-v3/M061-movement-proof.json`. Nie jest to
+porównanie wszystkich kolizji z PS1 ani ukończenie M061.
+
+Oba cold do532148 zakończyły się0 bez raportów błędów: pełny
+JSON/VRAM/PPM zgodne z checkpointem, całe PCM normal/SAN identyczne
+SHA2564e18dd48e80b603436de87402b8eb522beaa86cd47417da9e1a6d6f33963682f.
+Dowód `cold-park-first-pair-proof.json`. Obejmuje pierwszą walkę, nagrody
+i Heal1. Cold normal do540368 również zgodny, ale tylko odtwarza wcześniejszy
+punkt obserwacji narożnika; wynik SAN tego drugiego punktu jeszcze nieznany.

@@ -2,6 +2,18 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### e8ff03f56: świeże ukryte Metal2× 2/2
+
+`/tmp/pe-motion-gate-v1-gpu-replay/proof.json`: normal/SAN2/2,
+ContinueB/menu/Medicine w ukrytym Metal2×, stan i VRAM zgodne z software
+reference, obraz640×448 zgodny między profilami i wcześniejszym GPU capture.
+PCM19 355 892 klatki, SHA256f9a8f386a1c6d526cd46926d68f53bfb507181db97b16fe9c78cb2859b8b1055.
+Hashe obu gier zgodne z manifestami nowych pełnych buildów; prywatne karty
+bez zmian. Bez niezależnego oracle PS1 ani akceptacji wszystkich scen hi-res.
+Nowe zakończenie EX i Tutorial123 normal/SAN również uruchomione; ich sesje
+w /tmp/pe-motion-gate-v1-progress.json wymagają sprawdzenia. Pełne macierze
+nadal pozostają osobnym warunkiem odbioru.
+
 ### e8ff03f56: bramka motion — 36 864 porównania USA CPU na profil
 
 `/tmp/pe-motion-gate-v1-oracle/proof.json`: pełne, dokładne obiekty Gated

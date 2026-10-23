@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### d22826cb0/SDK33153a4: pełne trzy buildy93 gotowe, macierze uruchomione
+
+`/tmp/pe-spu-sync-v1/root-{normal,san,coverage}-build-proof.json`: każdy pełny
+root build zakończony exit0,674 polecenia C/ObjC,21 programów i93 testy.
+Wszystkie239 kompilacji gry/fixture mają kontrakt aliasowania; SAN obejmuje
+wszystkie C/ObjC, coverage wszystkie atomowe liczniki. Manifesty zachowują
+hashe programów oraz źródeł gry i dokładnego forka33153a4. Weryfikowano też
+.gitmodules: nowy commit jest dostępny z własnego zdalnego repo, nie tylko lokalnie.
+
+Pełne normal93, SAN93 i coverage93 uruchomione w osobnych
+/tmp/pe-spu-sync-v1-root-*; jeszcze nie zaliczone jako całość. Nowa regresja
+setterów już przechodzi. Uchwyty i pozostałe kroki w pe-spu-sync-v1/progress.json,
+z koniecznością ponownego sprawdzenia rzeczywistej sesji. Następne kroki obejmują
+weryfikację pełnych macierzy i świeże EX/GPU/CPU/cat evidence na dokładnych
+pełnych programach. Dotychczasowe poprawne celowane linki nie zastępują tego
+odbioru. Binariów wcześniejszych kandydatów ani użytkowej kopii nie przebudowano.
+
 ### Synchronizacja SPU: fork33153a4, dziewięć oryginalnych setterów i regresja93
 
 Psyz_SpuWrite mógł zmieniać decoder cursor przez key-on w trakcie odtwarzania.

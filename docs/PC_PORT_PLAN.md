@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Akceptacja kandydata desktopowego 4c34cd893
+
+Uruchomiono odrębne świeże buildy RelWithDebInfo normal/SAN/coverage na tym
+samym snapshotcie źródeł, z PE_REQUIRE_GAME_ASSETS=1 i oboma PE_TEST_DISC /
+PE_TEST_DISC2. Pipeline `/tmp/pe-desktop-acceptance-v1.py` zapisuje stan kroków,
+PID-y, hashe źródeł/artefaktów, listę96 testów i JUnit. Wyniki nie są jeszcze
+zamknięte; źródłem aktualnego stanu jest `/tmp/pe-desktop-acceptance-v1/progress.json`.
+Dowód profilu powstaje dopiero po96 PASS, zerze SKIP i ponownym hashowaniu
+artefaktów. SAN instrumentuje również SDK/SDL: address, undefined, function.
+Po trzech zaakceptowanych macierzach odrębna bramka uruchomi ponownie oryginalny
+Continue O → Truebred Eve → EX ending/credits/title na tych samych binariach
+normal/SAN, z prywatnymi kopiami oryginalnej karty i porównaniem stanu/VRAM/PCM.
+`ending-gate-progress.json` odróżnia oczekiwanie od uruchomionego replayu.
+
+Świeży katalog AST: `/tmp/pe-desktop-acceptance-v1/catalog/definition-delta-proof.json`:
+210 unikalnych plikówC,220 TU,2999 definicji, zero błędów. Przybyło13 definicji
+w istniejących boot/main.c i boot/init.c, nie ubyła żadna poprzednia definicja.
+Katalog nie nadaje automatycznie statusu poprawności ani pełnego pokrycia.
+
+Naprawiono konkretny błąd .github/workflows/pc.yml: SDL jest zagnieżdżonym
+submodułem PsyZ i wymaga osobnej komendy git -C third_party/psyz. Świeży checkout
+na lokalnym transporcie Git reprodukuje błąd starej komendy (exit1), poprawione
+komendy pobierają oba moduły (exit0), następnie configure/build oraz dwa testy
+ustawień/inputu kończą się0. Dowód `/tmp/pe-desktop-clean-checkout-v1/proof.json`.
+To lokalny czysty checkout, nie dowód wykonania hostowanego GitHub Actions ani
+przetestowania gotowych paczek na Windows/Linux.
+
 ### Korekta zakresu i ustawienia desktopowe
 
 Grę wcześniej przeszedłem zwykłym inputem aż do Truebred Eve, EX ending,

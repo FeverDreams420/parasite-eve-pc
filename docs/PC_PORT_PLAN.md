@@ -30892,10 +30892,15 @@ bezpośredniego przestawiania flag. Obserwacje obejmują kanoniczny stan gry,
 zdarzenia/skrypty, aktorów, input, render, audio i kolejki. Oczekiwanie na stan,
 asercje, trace i timeout są częścią interfejsu programu, nie automatyzacją pulpitu.
 
-Obecny frontend ma `--headless`, `--replay`, `--trace` i konfigurowany timeout;
-`pc/automation.h` publikuje rzeczywiste stany prezentacji i pozwala sterować
-wejściem testu. To początek WP01, nie dowód pełnego sterowania niepodłączoną
-jeszcze logiką gry. Stan domenowy i wirtualny zegar zostaną dołączone przy WP02.
+Sterowanie testami działa w oryginalnych `src/main/boot/main.c` i
+`src/main/boot/init.c`: `--headless`, `--frame-limit`, `--pad-at`,
+`--control-at`, `--dump-vram`, komendy stdin `advance`/`quit` oraz obserwacje
+JSON oryginalnego stanu. Usunięty frontend `pc/` i jego historyczne opcje
+`--replay`/`--trace` nie są interfejsem obecnego programu. Pełne przejścia
+używają zwykłych wejść i autentycznych zapisów; opcja diagnostycznej zmiany
+HP służy wyłącznie izolowanym fixture'om i nie zalicza przejścia kampanii.
+Obecne sterowanie nie dowodzi jeszcze kompletności katalogu, testów awarii,
+obrazu/audio ani obsługi wszystkich wymaganych urządzeń.
 
 `save-editor/` to osobny projekt prowadzony przez Gemini. Nie jest zależnością
 buildu ani częścią prac nad portem. Gdy jego interfejs będzie dostępny, można
@@ -30903,18 +30908,21 @@ wykorzystać go do generowania fixture’ów zapisów o zadanych parametrach;
 fixture’y i ich oczekiwany wynik trzeba niezależnie zweryfikować. Nie zastępują
 one kampanii od New Game ani testów serializacji w rzeczywistym runtime.
 
-## 2. Architektura docelowa
+## 2. Oryginalne moduły i zakres odpowiedzialności
 
-| Warstwa | Odpowiedzialność i kontrakt |
+Naprawiamy moduły w istniejących plikach; poniższy podział opisuje ich
+odpowiedzialności, nie nowe warstwy, katalogi lub silnik. Nie wydzielamy
+implementacji do `game_core`, `game_content`, `asset_io` ani `test_runner`.
+
+| Istniejące moduły | Odpowiedzialność i wymagany rezultat |
 | --- | --- |
-| `game_core` | Stan gry, reguły, skrypty, aktorzy, kolizje, ATB, PE, przedmioty i progresja; bez SDL, FFmpeg, ściennego zegara i adresów PS1 |
-| `game_content` | Statycznie linkowane moduły map/scen/efektów i adaptery danych; identyfikatory mapowane na natywne entry pointy i jawny stan/reset |
-| `asset_io` | Jeden logiczny katalog obu CUE/BIN, ISO9660, PE.IMG i dekodery; jawne pochodzenie zasobu/offsetu, bez napędu CD i ręcznej zmiany płyt |
-| `render` | Tła, maski, modele, animacja, tekst, UI, efekty i hi-res własnego PsyZ; jeden właściciel okna, logiczne współrzędne niezależne od rozdzielczości |
-| `audio` | AKAO, próbki, efekty, muzyka, SPU/DSP i dźwięk filmów; własny zegar i miksowanie, kontrolowane przejścia oraz wyciszanie |
-| `platform` | SDL/PsyZ, urządzenia, okno, wejście, zegary, pliki użytkownika; jawne interfejsy dające się zastąpić w testach |
-| `persistence` | Wersjonowany zapis i ustawienia; serializacja stanu domenowego, bez zrzutów struktur i wskaźników |
-| `test_runner` | Akcje wejścia na tickach, seed RNG, wirtualny czas, kontrolowane I/O, checkpointy, asercje zdarzeń/stanu/obrazu/audio i powtarzalny replay |
+| `src/main/boot/`, `entity/`, `script/`, `battle/` | Oryginalna pętla, aktorzy, skrypty, kolizje, ATB i PE; zachowane reguły i kolejność zdarzeń |
+| `src/overlays/` | Całe oryginalne moduły scen, map i efektów linkowane statycznie, z właściwym resetem stanu |
+| `src/main/cdrom/`, `asset/`, `scene/` | Dane obu CUE/BIN jako jeden zestaw, poprawne pochodzenie/offsety i odczyt bez fizycznego napędu lub ręcznej zmiany CD |
+| `src/main/render/` i własny PsyZ | Oryginalne tła, maski, modele, animacja, tekst i efekty; hi-res bez zmiany symulacji |
+| `src/main/akao/`, istniejące moduły video/MDEC w `src/overlays/` i własny PsyZ | Oryginalne sekwencje, próbki, muzyka, efekty i filmy wraz z dźwiękiem; poprawne zegary i przejścia |
+| `src/main/item/`, `menu/`, `save/` | Oryginalny ekwipunek, menu i serializacja; trwałość i testowane błędy zapisu |
+| Istniejące `src/main/boot/` i `tests/` | Headless input, obserwacje, powtarzalne scenariusze i asercje stanu/obrazu/audio, bez zastępowania logiki gry |
 
 Kod pod `src/main/psyq/` służy do porównania funkcjonalności z PsyZ. Nie linkujemy całego legacy SDK obok jego natywnego odpowiednika. Każde używane API otrzymuje decyzję: usunąć po zmianie call-site, uprościć/scalić, zastąpić C, użyć PsyZ albo rozszerzyć własny fork. Testujemy zachowanie wymagane przez grę; nie portujemy niepotrzebnych kontraktów sprzętowych.
 
@@ -30924,7 +30932,13 @@ Symulacja korzysta ze stałego kroku i jawnych kadencji podsystemów, potwierdzo
 
 ## 3. Katalog wymagań i dowodów
 
-Pierwszym artefaktem implementacji jest maszynowo czytelny katalog, a nie procent „postępu dekompilacji”. Docelowe pliki `tests/catalog/features.json`, `content.json`, `cases.json` i `platforms.json` jeszcze nie istnieją; tworzy je WP00/WP01.
+Wymagany jest maszynowo czytelny katalog funkcji, zawartości, przypadków i
+platform, a nie procent „postępu dekompilacji”. Pełny katalog nadal nie jest
+udowodniony. Historyczna propozycja czterech nowych plików w `tests/catalog/`
+nie obowiązuje wobec zakazu dodawania plików podczas odtwarzania 1:1.
+Katalog i powiązania z dowodami należy utrzymywać w istniejących plikach,
+z formatem pozwalającym automatycznie sprawdzić kompletność. Zmiana miejsca
+zapisu nie usuwa żadnej wymaganej pozycji ani bramki wydania.
 
 Każda pozycja zawiera: stabilne ID, opis zachowania, podsystem i właściciela zadania, zależności, źródło ustalenia, pozytywne/negatywne testy, oczekiwane wyniki, obsługiwane warianty, status implementacji i ostatni wynik dla konkretnego commita. Statusy to: zinwentaryzowane, opisane, zaimplementowane, automatycznie zweryfikowane. Wyłącznie ostatni status oznacza gotowość.
 
@@ -31108,7 +31122,7 @@ Paczka nie potrzebuje kompilatora, Pythona, repo ani narzędzi deweloperskich. T
 | --- | --- | --- |
 | PR01 | Katalog pełnej gry/2 dysków, mapa brakujących danych/API i zakres platform | Każda znana funkcja ma ID i zaplanowany test; nieznane obszary widoczne jako blokady |
 | PR02 | Rozszerzenie headless runnera o ticki/RNG i checkpointy stanu gry oraz wymagane testy prywatne | Boot powtarzalny bez sleeps; brak danych i celowe regresje dają FAIL |
-| PR03 | Rozdział aplikacji, game_core i platformy; statyczne moduły, normalne bufory i usunięcie zbędnego PS1 API | New Game/Tutorial prowadzą do rzeczywistego dispatchera, reset ma testy |
+| PR03 | Naprawa całych oryginalnych modułów na miejscu; statyczne linkowanie, zwykłe bufory i usunięcie zbędnego PS1 API, bez nowych warstw | New Game/Tutorial prowadzą do rzeczywistego dispatchera, reset ma testy |
 | PR04 | Oba CUE/BIN jako jeden zestaw, asset manager i loader pierwszego pokoju | Poprawne pochodzenie/wybór danych bez zmiany CD; błędne pary, rekordy i anulowanie mają testy |
 | PR05 | Renderer pierwszej sceny z hi-res własnego PsyZ oraz AKAO/SPU | Tło + maski + model + kamera + animacja + audio zgodne z referencją; rozdzielczość nie zmienia gameplay |
 | PR06 | Skrypty, eksploracja, interakcje i pierwsze zdarzenia fabularne | Replay ruchu/dialogu/przejścia bez bezpośredniej manipulacji progresją |

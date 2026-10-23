@@ -36010,3 +36010,15 @@ Bieżące przejście po checkpoint291736 weszło do gabinetu Bakera
 a80040c8; przy295850 pozostaje pod oryginalną kontrolą gracza, HP72/72,
 BP74. Te późniejsze wejścia są zachowane w commands.jsonl, ale jeszcze
 nie objęte powyższym cold replay. Session37796 nadal żywa.
+
+
+### Bieżący Day2: Mod Permit i powrót z gabinetu
+
+Zweryfikowano w rzeczywistym stanie ekwipunku Mod Permit55 w slocie7
+i story_stage144 po pierwszej rozmowie z Bakerem. Oryginalny ruch
+i wyjście prowadzą M041/a80040c8→M042/a8004148; przy299103 HP72/72,
+BP74, dialog17. Checkpoint299103 i dowód
+`/tmp/pe-campaign-replay-v3/baker-permit-return-proof.json`.
+To dalszy odcinek bieżącej kampanii, jeszcze poza ostatnim cold replay
+do291736; zbrojownia Torresa i dalszy Day2 pozostają do przejścia
+na tym kandydacie. Nie zmieniano kodu ani warunków sceny.

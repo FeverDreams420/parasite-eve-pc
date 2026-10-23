@@ -2,6 +2,20 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### a904055bc: poprawne pełne buildy95, macierze uruchomione
+
+Wszystkie3 buildy95 zakończyły się exit0 i odświeżyły fixture po korekcie
+montowania. Manifesty /tmp/pe-room-catalog-v1-*-build-proof.json: źródła
+bajtowo zgodne z a904055bc, fork33153a4,675 kompilacji,21 programów,95 testów.
+Sprawdzono aliasowanie, pełne SAN C/ObjC i atomowe coverage oraz obecność
+oryginalnego Gated i seekera. Te katalogi są teraz zamrożone na czas testów.
+
+Pełne macierze normal33744/SAN9535/coverage74133 uruchomione z oboma CUE,
+PE_REQUIRE_GAME_ASSETS=1, headless i dummy audio. Uchwyty, skrypty oraz
+starsze niezależne joby w /tmp/pe-room-catalog-v1-progress.json. Nie przypisujemy
+im jeszcze wyniku95/95; pełne EX/GPU/Tutorial i katalog funkcji/zawartości
+na tym kandydacie również wymagają świeżej weryfikacji. Kopia użytkowa bez zmian.
+
 ### Korekta montowania w fixture katalogu, oba obrazy sprawdzane osobno
 
 W nowym fixture błędnie przekazano PeDisc* jako drugi argument CdRom_BindImage,

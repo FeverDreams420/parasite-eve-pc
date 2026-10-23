@@ -36167,3 +36167,14 @@ obejmujące również magazyn, zmianę pancerza i Bena/Daniela. Skrypt
 `/tmp/pe-campaign-replay-v3/cold-conference.py`: normal session92791/PID67632,
 SAN session8204/PID67712. Wyniki jeszcze nieznane; bieżąca session37796
 pozostaje na391549. Nie jest to ukończenie całego Day2 ani portu.
+
+
+### Day2: recepcja → mapa miasta → powrót NYPD
+
+Bieżące przejście po konferencji doszło M042→M043→M046. Interakcja
+z Eddiem ustawiła stronę dialogu192; przy398583 brak otwartego dialogu.
+Wyjście środkiem recepcji uruchomiło mapę miasta/system a8000048
+przy397375 (kadr obejrzano). Cross po oczekiwaniu wybrał domyślne NYPD
+i wrócił do M046 przy398583. Nie dotarto jeszcze do innej lokacji; nie
+uznawać tego za przejście do muzeum. Checkpoint398583 i
+`/tmp/pe-campaign-replay-v3/station-map-return-proof.json` zachowują zakres.

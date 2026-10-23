@@ -36107,3 +36107,20 @@ do358826 i porównują pełny stan/VRAM/PPM. Skrypt
 `/tmp/pe-campaign-replay-v3/cold-armory.py`, normal session50902/PID16843,
 SAN session1913/PID16954. Procesy uruchomione; wyniki jeszcze nieznane.
 Bieżąca session37796 pozostaje na358826, aby zachować punkt porównania.
+
+
+### Wayne: odłożenie i odbiór M84F przez oryginalne menu
+
+Przy359792 Move→prawa lista→pusty slot przeniosło M84F/rekord256
+z Aya slot0 do Wayne slot1. Ten magazyn w JSON nosi nazwę special_storage
+(wcześniejsze założenie, że musi trafić do storage, było błędne).
+Move z prawej listy→lewa lista→pusty slot0 odebrało broń przy360092.
+Cała inventory oraz character są identyczne z358826; wszystkie dane
+rekordów zachowane, M16A1 nadal weapon_slot8. Dowód
+`/tmp/pe-campaign-replay-v3/wayne-storage-roundtrip-proof.json`.
+Nie dowodzi trwałości przez zapis/Continue ani zgodności z PS1.
+
+Rozszerzony cold normal do358826 zakończył się0 i ma pełny stan/VRAM/PPM
+identyczne z checkpointem. Proof w cold-armory-normal. SAN session1913
+jeszcze w trakcie przy ostatnim sprawdzeniu; brak wyniku. Bieżąca gra
+pozostaje przy360092 w menu magazynu; odcinek magazynu nieobjęty tym replay.

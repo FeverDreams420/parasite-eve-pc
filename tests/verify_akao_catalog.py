@@ -1,10 +1,38 @@
 #!/usr/bin/env python3
-"""Verify the original AKAO catalog against a supplied USA executable."""
+"""Verify the original AKAO and resident script catalogs against a USA executable."""
 import argparse
 import json
 import pathlib
 import re
 import struct
+
+
+def verify_script_catalog(root, data, offset):
+    catalog = json.loads((root / "docs/SCRIPT_OPCODE_TABLE.json").read_text())
+    entries = catalog["entries"]
+    if [entry["opcode"] for entry in entries] != list(range(241)):
+        raise ValueError("Missing or reordered resident script entries")
+    source = (root / "src/main/script/flow_opcodes.c").read_text()
+    table = re.search(r"g_ScriptQueueOpcodeHandlers\[8192\][^;={]*=\s*\{([^}]+)\}", source)
+    if not table:
+        raise ValueError("Missing native resident script table")
+    bindings = re.findall(r"\[(\d+)\]\s*=\s*(\w+)", table[1])
+    native = {int(op): name for op, name in bindings}
+    if len(native) != len(bindings) or any(op >= len(entries) for op in native):
+        raise ValueError("Duplicate or out-of-catalog resident script binding")
+    bound = 0
+    for entry in entries:
+        op = entry["opcode"]
+        address = int(entry["original_address"], 16)
+        actual = struct.unpack_from("<I", data, offset(0x800910A0 + op * 4, 4))[0]
+        if actual != address:
+            raise ValueError(f"Resident script address mismatch: {op}")
+        if bool(address) != bool(entry["function"]):
+            raise ValueError(f"Unresolved resident script procedure: {op}")
+        if native.get(op) != entry["function"]:
+            raise ValueError(f"Native resident script handler mismatch: {op}")
+        bound += bool(address)
+    return len(entries), bound
 
 
 def main():
@@ -60,7 +88,10 @@ def main():
                     raise ValueError(f"Missing original procedure: {entry['handler']}")
             handlers.add(entry["handler"])
             entries += 1
+    script_entries, script_bound = verify_script_catalog(root, data, offset)
     print(f"Original AKAO catalog verified: {entries} entries, {len(handlers)} source procedures")
+    print(f"Resident script catalog verified: {script_entries} entries, "
+          f"{script_bound} native bindings, {script_entries - script_bound} original null entries")
     print("This verifies catalog addresses/skip values and source presence, not runtime dispatch or audio.")
 
 

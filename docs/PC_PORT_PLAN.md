@@ -2,6 +2,22 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Powtarzalny audyt resident script dispatch
+
+Rozszerzono istniejący `tests/verify_akao_catalog.py`, bez nowych plików,
+o porównanie wszystkich241 pozycji `SCRIPT_OPCODE_TABLE.json` z rzeczywistą
+tabelą USA EXE0x800910A0 oraz inicjalizatorem oryginalnego flow_opcodes.c.
+220 funkcji ma zgodne natywne powiązania;21 pustych pozycji jest zerowych
+także w oryginale, więc nie są brakującymi handlerami do zastąpienia atrapą.
+Dotychczasowy audyt AKAO128 wpisów/90 procedur nadal przechodzi.
+
+`/tmp/pe-native-coverage-v1/script-catalog-negatives/proof.json`:10/10 kontroli,
+w tym poprawny rzeczywisty katalog oraz odrzucenie usuniętego/przestawionego
+wpisu, zmienionego adresu/procedury/EXE i brakującego/zmienionego/podwójnego/
+nadmiarowego bindingu. To dowód spójności tablic, nie semantyki wykonania220
+opcode'ów. Macierz coverage nadal działa na niezmienionym binarium; Melissa
+PASS102.66s i backstage PASS115.42s, timeout bootstrapu pozostaje w historii.
+
 ### Opcjonalne pokrycie LLVM — pomiar, nie akceptacja funkcji
 
 Dodano domyślnie wyłączone `PE_ENABLE_COVERAGE` w istniejącym CMake oraz zapis

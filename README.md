@@ -141,6 +141,12 @@ test launches the actual original entrypoint with a real CUE/BIN and checks
 bounded headless execution, scheduled START, New Game and Continue input,
 and a deterministic opening VRAM capture.
 
+With an extracted USA `SLUS_006.62`, run `python3 tests/verify_akao_catalog.py
+/path/to/SLUS_006.62` to check the AKAO and resident script catalogs against
+the original tables and current native bindings. The resident check includes
+all 241 slots: 220 handlers and 21 originally null entries. This checks catalog
+consistency; it does not establish runtime correctness of each opcode.
+
 For optional Clang/LLVM execution coverage, configure a separate build with
 `-DPE_ENABLE_COVERAGE=ON -DBUILD_TESTING=ON`. This is off by default and uses
 atomic counters in the game, PsyZ and SDL. CTest writes separate process profiles

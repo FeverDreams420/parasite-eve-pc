@@ -24,7 +24,15 @@ ustawieniami. Zaktualizowano również wykonywalny build/parasite-eve-pc.
 Pełny pipeline ponownej akceptacji ma osobny prefix pe-desktop-acceptance-v2,
 źródła zamrożone na6baf155cf, SDKec33b9f. Jego stan oraz oddzielna bramka
 końcówki są w `/tmp/pe-desktop-acceptance-v2/{progress,ending-gate-progress}.json`.
-W chwili wpisu normal jest konfigurowany; SAN/coverage/EX oczekują na zależności.
+Build normal zakończony0, pełne96 testów normal trwają; SAN/coverage/EX oczekują
+na zależności. Świeży AST220 TU/210 plikówC ma3000 definicji i zero błędów;
+jedyna nowa definicja wobec poprzedniej wersji to Boot_InitHostBindings, żadna
+nie zniknęła. `/tmp/pe-desktop-acceptance-v2/catalog/definition-delta-proof.json`.
+Dodatkowy fuzz bez zmian źródeł: `/tmp/pe-host-toml-fuzz-v1/proof.json`, milion
+mutacji Host_String z buforami ochronnymi i sprawdzaniem niezmienności wejścia
+oraz10000 roundtripów Host_WriteString → Host_String. ASan/UBSan bez błędów,
+seed84591bcd. Dowód dotyczy pamięci i obsługiwanych escape'ów, nie zgodności
+z całą specyfikacją TOML ani fuzzowania payloadów gry.
 Nie restartowano starego pipeline'u ani nie nadpisano jego nieudanego wyniku.
 
 ### Akceptacja kandydata desktopowego 4c34cd893

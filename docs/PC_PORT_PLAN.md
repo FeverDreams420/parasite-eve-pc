@@ -2,6 +2,38 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N6: kontratak po Power Charge — sześć trafień, cold w toku
+
+Dalsze jedno okno157785→163681 dało cztery234trafienia:
+Eve1015430→1014494, bezMayi przy strzałach i bez leczeniaEve.
+Przy164233 HP0 zPreraise; oryginalne328klatek przywróciło164561HP434,
+Revive3 bez zmian. Kolejna ograniczona seria trwa; nie jest dowodem wygranej.
+
+Zamrożony `/tmp/pe-N6-Eve-postcharge-first-v1/proof.json` dokumentuje
+154169→157785: sześć trafień po234, Eve1016834→1015430, bez wzrostuHP
+Eve i bez widocznejMayi podczas strzałów. Aya561/869, Preraise aktywne,
+Revive3 zachowane w tym odcinku. To dowód live, nie zakończenie walki.
+
+Wcześniej przy152705 HP0 bezPreraise; oryginalny Revive przy153033
+przywrócił434HP i zmniejszył liczbęRevive4→3. Oryginalna mieszana tura
+Medicine4 ze slot26/Haste dała154169HP834; Medicine4 pozostały2.
+PowerCharge usuwaHaste/Preraise i sprowadzaHP do1 — potwierdza to
+`ENEMY_EFFECT_REDUCE_HP_TO_1` w istniejącym enemy_actions.c.
+
+Błąd tymczasowego pilota: wymagał ATB przeciwnika≤1000 także podczas
+regeneracji poPowerCharge. Oryginalny boss pozostawia tam ATB9000.
+Pilot dopuszcza teraz mode18 zDEF≤200 oraz krótki obserwowany mode2
+po18, nadal wykluczając widocznąMayę i przygotowanie jej przywołania.
+Nie zmieniono C/PsyZ ani danych rozgrywki. Mieszane Preraise/Heal3
+z dodatkowymi strzałami działają przez oryginalne menu TripleCommand.
+
+Pełna powtórka O→157785 normal/SAN została uruchomiona w
+`/tmp/pe-N6-Eve-postcharge-cold-v1.py`; wynik pozostaje pending do
+porównania całegoJSON/VRAM, czystego wyjścia i niezmienności kartyO.
+QueenBee dałaKey7; TripleCommand pochodzi zM96R ze skrzyni64 i został
+wcześniej przeniesiony oryginalnymToolem doM8000. Pełny port, zwycięstwo
+nadEve i porównanie zPS1 nadal nieudowodnione.
+
 ### N6: cold trzech trafień PASS; dłuższa walka doEve16834, HP0/Preraise
 
 `/tmp/pe-N6-Eve-triple-cold-v1-proof.json`:O→65985 normal/SAN exit0/czysto,

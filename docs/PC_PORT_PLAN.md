@@ -36071,3 +36071,21 @@ To zwykłe przejścia pada, bez zmian kodu/flag. Przy341786 ponownie
 M056, HP72/72. Zbrojownia nadal nieosiągnięta. Audyt oryginalnych tokenów
 `/tmp/pe-campaign-replay-v3/M043-destination-token-audit.json` zachowuje
 pozycje wystąpień; same wystąpienia nie dowodzą warunków przejścia.
+
+
+### Day2: właściwa trasa do M051/M052 i odbiór M16A1
+
+Oryginalny skrypt M043 zawiera warunek poprzedniej mapy51 i ustawia
+pozycję wejściową X−617/Z−2311 (zachowany binarny M043 w artefaktach). Odczyt tego warunku pozwolił zwykłym ruchem
+dotrzeć M043→M051/a80050c8 przy345630, a następnie M052/a8005148
+przy349004. M051 dla wejścia z52 ma X−307/Z−3661. Nie modyfikowano
+pozycji ani warunków skryptu; współrzędne posłużyły do nawigacji padem.
+
+Rozmowa Wayne25→Torres30→34 i dalsze dialogi zakończyły się odbiorem
+M16A1: rekord260 w ekwipunku; ekran listy pokazuje16 nabojów. Menu
+Tune Up otworzyło się przy355418; Circle je anulowało i uruchomiło
+oryginalny dialog51. Przy355930 M052/dialog42, HP72/72, BP74.
+Checkpoint355930, pełne wejścia i
+`/tmp/pe-campaign-replay-v3/armory-receipt-proof.json` zachowane.
+To aktualne zwykłe przejście; samouczek, magazyn, założenie broni i cold
+SAN odcinka po291736 nadal wymagają wykonania.

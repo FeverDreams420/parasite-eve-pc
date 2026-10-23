@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N7: pełna powtórka za abortem PASS — Preraise97 działa
+
+`/tmp/pe-m318-flash-N7-live/cold-proof.json`: O→182713 normal/SAN,
+oba nativeexit0/czysto, pełnyJSON/1MiBVRAM zgodny, źródłowaO i prywatne
+karty bez zmian. Nie ma dawnego abortu97/−3. Preraise aktywne, HP1,
+Eve1011686→1011218 po dwóch234trafieniach, Revive0. Wciąż żyjeEve:
+nie zaliczono zwycięstwaChrysler77, PS1oracle ani pełnegoportu.
+
+Normalny kontrolerN7 otrzymałEOF po osiągnięciu punktu kontrolnego;
+jego finally wysłało oryginalnequit i zamknęło nativeexit0. Sam kontroler
+zakończył sięEOFError/1. Dlatego to dowód dwóch zimnych zamkniętych
+powtórek, nie żywyhandoff. Pierwotny handoffverifier nie został zaliczony;
+oddzielny coldverifier wymaga exit0 obu procesów. Nie ukrywamyEOF jako
+sukcesu otwartej sesji. Obraz z prawdziwegoVRAM obejrzany offline:
+`/tmp/pe-m318-flash-N7-live/frame.png`; brak niezależnej referencjiPS1.
+
+Dalsza sesjaN8 uruchomiona z utrzymanymPTY (67466),
+`/tmp/pe-m318-flash-N8-live.py`, root `/tmp/pe-m318-flash-N8-live`.
+Odtwarza identyczne oryginalne wejściaO→182713 na tym samym kandydacie.
+Przed kolejnym wejściem wymagany
+`/tmp/pe-m318-flash-N8-handoff-v1.py`: porównanie z zakończonymSAN
+oraz sprawdzenie żywego procesu, kart i hashy; wynik jeszcze pending.
+Tymczasowy pilot przygotowany doFullRecover zamiast powtarzaniaHeal3
+przyHP<400 i wystarczającymPE, z priorytetemPreraise. To tylko wejścia
+przez oryginalne menu, bez zmian zasad lub produkcyjnegoC/PsyZ.
+
 ### TimeoutM318: dodatkowe6replayów PASS — łącznie70/70
 
 `/tmp/pe-m318-flash-timeout-v1-six-replay-proof.json`: head2/phone/medicine

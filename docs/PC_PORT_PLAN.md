@@ -2,6 +2,35 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N6: trzy komendy broni przedMayą; dwa trafienia, trzecie bez obrażeń
+
+Pierwsze strzeleckie okno zakończone63217:HP810,Preraise aktywne,
+PEmax196608000,ammo16→13. Przy63137 Eve1040000→1039766/ATB2944;
+63169→1039532/ATB4992;Trzecia komenda przy63201/ATB7040
+zużyła nabój bez dalszych obrażeń. Wszystkie trzy stany mają Maya4/29,30
+niewidoczne; Eve.mode2. Kolejka zakończona przyATB8064 przedmode4.
+`/tmp/pe-N6-Eve-Triple-first-window-v1/proof.json` live PASS czasów,
+nie trzech trafień. Przyczyna trzeciego braku obrażeń nieustalona;
+nie zmieniono hitów ani RNG. Następne pojedyncze okno uruchomione,
+żeby sprawdzić brak leczenia w kolejnym cykluMayi; cold od50817 pending.
+
+### N6: cold wejście77 PASS; oryginalne introEve i pierwsze oknoPE
+
+`/tmp/pe-N6-floor77-cold-v1-proof.json`:O→50817 normal/SAN exit0/czysto,
+całyJSON/1MiBVRAM równy frozenlive, O bez zmian. Intro M318 rozpoczęte
+zwykłym runUp i neutralnymi klatkami; oryginalne strony83–111 przechodzą
+natywnymCross, nie są zastąpione nową sceną. Przy59137 mode0/live3,
+Eve type3/sub31 HP1040000,def130; Maya helpers4/29,30 po8800.
+HP869/869,Revive4,ATK235/TripleCommand. Zamrożone
+`/tmp/pe-N6-Eve-battle-start-v1` (live-only po50817).
+
+Hostpilot dodał pojedyncze okno farm−3 do sprawdzenia czasów i poprawił
+pomijanie obu wolnych slotów poPE w wait_eve_window. Pierwsze okno do61025
+wykonałoPreraise zamiast strzałów: Eve1040000 bez zmian,ammo16 zachowane,
+HP810,PE184044806,efektPreraise aktywny. Nie jest to dowód trzech trafień
+ani zwycięstwa; następne pojedyncze okno uruchomione do sprawdzenia.
+Maya/ATB guard nadal obowiązuje, bez zmian mechaniki ani RAM/RNG.
+
 ### N6: autentycznyO→galerie71–76→wejście77; pełny cold SaveO PASS
 
 `/tmp/pe-N5-save-O-cold-v1-proof.json`: pełny genuineN→356696/FileSavedO

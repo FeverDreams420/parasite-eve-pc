@@ -36275,3 +36275,18 @@ na mapie jeszcze niesprawdzony.
 Cold normal do456327 (cała scena Klampa) zakończył się0 z pełnym
 stanem/VRAM/PPM zgodnym z checkpointem. Dowód cold-klamp-normal/proof.json.
 SAN session84283 przy ostatnim sprawdzeniu nadal pracował; wynik nieznany.
+
+
+### Cold Klamp normal/SAN PASS; druga odprawa i etap224
+
+Oba cold replaye do456327 zakończyły się0 bez raportów błędów.
+Pełny stan/VRAM/PPM zgodne z checkpointem, całe PCM normal/SAN zgodne:
+fa59aa4c68211f642883c76c29275156594c37ce880db02e859be426b5b55ca7.
+Dowód `/tmp/pe-campaign-replay-v3/cold-klamp-pair-proof.json`.
+
+Dalszy zwykły powrót do korytarza: Cathy199, następnie Daniel200 przy
+końcu korytarza. Wejście M047 i podejście do Bakera uruchomiło drugą
+odprawę (129 przy489119). Przy494279 powrót M043, stage224, dwa
+Mod Permit55, HP72/72, BP74, bez menu/dialogu. Checkpoint494279 i
+`/tmp/pe-campaign-replay-v3/second-briefing-proof.json`. Trasa do parku
+jeszcze nieprzebyta w tej próbie; ten odcinek po456327 bez cold SAN.

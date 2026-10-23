@@ -2,6 +2,18 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### d22826cb0: oryginalna tabela actor/window — 49/49 wpisów
+
+`/tmp/pe-spu-sync-v1/seven-rows/proof.json`: helper normal/SAN/coverage
+porównuje wszystkie49 adresów callbacków z oryginalnego niekompilowanego
+actor_window_class_table.c z sześcioma podłączonymi wierszami actor i wierszem
+window. 3/3 profile poprawne. Helper lokalnie wycisza diagnostykę niezgodnych
+typów wskaźników w legacy initializer int(*)(); nie wywołuje przez nie funkcji.
+Nie zmieniono źródeł ani obiektów gry. Dowód dotyczy zgodności danych tabeli,
+nie zachowania callbacków ani kompletności mapowania w room_load dla m358/384/387.
+Pełna macierz SAN zaliczyła też original-game-alligator-entry w147,91 s;
+całość pozostaje w toku i nie jest jeszcze zatwierdzona jako93/93.
+
 ### d22826cb0: odświeżony katalog definicji funkcji
 
 `/tmp/pe-spu-sync-v1/catalog/function-evidence-catalog.json`: libclang parsuje

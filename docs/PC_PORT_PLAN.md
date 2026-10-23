@@ -35961,3 +35961,17 @@ gra przeszła do a8004148, biura na komisariacie z Danielem i Bakerem
 (dialogue page9). Dowód `/tmp/pe-campaign-replay-v3/day2-save-office-proof.json`.
 Zapis jest autentycznym wynikiem menu; poprawność Continue tego konkretnego
 pliku i niezależny replay normal/SAN pozostają do wykonania.
+
+
+### Niezależne powtórzenia New Game → Day2/komisariat uruchomione
+
+Dla checkpointu291736 (a8004148, dialogue15, HP72/72) uruchomiono nowe
+normal i SAN od całkowicie pustych prywatnych kart. Skrypt
+`/tmp/pe-campaign-replay-v3/cold-replay.py` scala oryginalny prefiks pad-at
+z całym commands.jsonl, używa kandydata a904055bc i oryginalnego menu,
+włącznie z utworzeniem zapisu Day2. Na końcu porównuje cały JSON stanu
+oraz VRAM/PPM z zachowanym checkpointem; audio na razie tylko hashuje.
+Po uruchomieniu potwierdzono żywe procesy; wyniki nadal nieznane.
+Normal session15194/PID79153, SAN session24346/PID79518. To nie jest
+PASS ani dowód zgodności audio lub PS1. Bieżąca session37796 pozostaje
+na checkpoint291736 i nie postępuje podczas tego porównania.

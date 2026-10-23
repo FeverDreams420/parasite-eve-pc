@@ -36411,3 +36411,33 @@ A/B bajtowo niezmienione. Checkpoint551920 i
 `/tmp/pe-campaign-replay-v3/park-phone-save-proof.json` zachowują pliki
 i hashe. Continue C, niezależny replay drugiej walki i zapisu oraz dalsze
 zoo nadal wymagają weryfikacji. Bez zmian kodu/RAM/RNG.
+
+### Park: Continue autentycznego zapisu C, normal/SAN
+
+PASS `/tmp/pe-campaign-replay-v3/continue-park-C-pair-proof.json`:
+dwa niezależne uruchomienia zamrożonego kandydata room-catalog-v1,
+oryginalne Continue do15000, M064/a8006248. Cały character, inventory,
+story_stage232 i scena zgodne z autentycznym File saved551920 (Level7,
+HP92/92, BP83). Cały końcowy JSON, VRAM i PPM normal/SAN identyczne;
+oba native exit0, logi bez wykrytych błędów, prywatny plik C niezmieniony.
+Karty użytkownika nietknięte; test używa kopii C jako jedynego pliku karty.
+
+Pierwsze próby z trzema plikami wczytały A, nie C: zaplanowane Down nie
+wybrało oczekiwanego zapisu. Zachowane katalogi continue-park-C-normal/san
+nie są dowodem Continue C. Wybór C na karcie wieloplikowej nadal wymaga
+osobnej obserwacji i testu; nie przypisujemy przyczyny kodowi gry bez
+sprawdzenia menu. Poprawne próby są w continue-park-C-only-normal/san.
+Nie jest to dowód zgodności z PS1 ani ukończenia dalszego zoo/kampanii.
+
+### Park: wybór C na karcie z A/B/C potwierdzony
+
+PASS `/tmp/pe-campaign-replay-v3/continue-park-C-multifile-proof.json`.
+Oryginalna lista plików (menu37) jest już przy11400; poprzednia próba
+wysyłała Down po załadowaniu A. Nowy test zatrzymuje na11400, czeka200,
+Down8/release80, Down8/release80: kursory [0,0]→[0,1]→[0,2]. Cross8,
+release2000 ładuje C do13784 (komunikat potwierdzenia40 nadal otwarty).
+Normal i SAN: cały character/inventory/scena/stage identyczne z zapisem
+551920, cały końcowy JSON/VRAM/PPM identyczny między profilami, native0,
+czyste logi, wszystkie trzy prywatne pliki kart niezmienione. Wcześniejsze
+ograniczenie wyboru wieloplikowego rozstrzygnięto jako błąd harmonogramu
+testu, bez zmian kodu gry. Nadal brak dowodu dalszej kampanii lub PS1 oracle.

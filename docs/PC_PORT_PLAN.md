@@ -2,6 +2,22 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Potwierdzona bramka slot12 i zakończone EX normal/SAN
+
+`/tmp/pe-spu-sync-v1/gated-table-proof.json` potwierdza rzeczywiste rekordy
+slot12 wszystkich pięciu pokojów: descriptor80193f74/execute8018f284 dla
+M075/M080/M082 i descriptor80194c5c/execute8018f2c8 dla M419/M420.
+Każdy execute prowadzi do wskazanej procedury z lbu startFlag; zachowano
+SHA256 każdego room payload. To potwierdza powiązanie znalezionej bramki
+z podłączoną klasą, nie tylko podobieństwo fragmentu instrukcji.
+
+`/tmp/pe-spu-sync-v1/full-EX-ending-cold-proof.json`: normal/SAN 2/2,
+ContinueO przez Truebred Eve, pełne authored EX dialogi i napisy do menu332629.
+Pełny JSON i VRAM zgodne z frozen live, obraz zgodny między profilami i wzorcem.
+PCM244 727 451 klatek, SHA256c387b45c52822183dc003117acc8a2610079d3e04e4b7dbe2d048015da3455c0.
+Oryginalny zapisO bez zmian. To późny fragment EX, nie pełna kampania od New Game
+ani niezależny oracle PS1. Błąd bramki nadal wymaga naprawy przed odbiorem.
+
 ### Otwarta rozbieżność: gated registration w pięciu modułach motion
 
 Odczyt oryginalnych room ranges z USA EXE/PE.IMG i skan instrukcji wykrył

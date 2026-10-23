@@ -2,6 +2,39 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Obecny CMake O2: normal90/90, hi-res/audio i pełny odcinek EX
+
+`/tmp/pe-cmake-native-v2-normal-proof.json`: wszystkie90 zarejestrowanych CTest
+PASS w zoptymalizowanym C11 normal buildzie, bez SKIP/NotRun. Zweryfikowano
+zgodność90 nazw/ID z rejestrem CTest, pełny LastTest (bez raportów błędów),
+hashe wszystkich21 użytych plików wykonywalnych oraz hashe z manifestu buildu.
+To obejmuje wcześniej nieudane core/assets i fx-frames po naprawach. Pełna
+macierzSAN nadal pracuje, w momencie wpisu wykonywała M023/test60; nie jest
+jeszcze zaliczona. Źródła7675a2b90/PsyZ6e08856, bez kolejnych zmian kodu.
+
+`/tmp/pe-cmake-native-v2-gpu-replay/proof.json`:2/2 zimne oryginalne ContinueB,
+menu i Medicine do26308, rzeczywiste obecne binaria CMake normal/SAN, ukryty
+Metal2× i oba USA CUE. Cały JSON i1MiBVRAM zgodne z zachowanym software
+checkpointem. PPM640×448 identyczny normal/SAN i ze wcześniejszym poprawnym
+zrzutem2×. PCM19355892 klatki, SHA256f9a8f386a1c6d526cd46926d68f53bfb507181db97b16fe9c78cb2859b8b1055,
+identyczny normal/SAN oraz ze wcześniejszą referencją audio. KartyB niezmienione.
+
+`/tmp/pe-cmake-native-v2-EX-ending-cold-proof.json`:2/2 pełne zimne ContinueO
+przez Truebred Eve, oryginalne dialogi, całe EX credits i powrót do tytułu
+przy332629, teraz na tych samych obecnych targetach CMake O2. Cały stan,
+VRAM i PPM identyczne normal/SAN oraz z zachowanymi rzeczywistymi przebiegami.
+PCM244727451 klatek, SHA256c387b45c52822183dc003117acc8a2610079d3e04e4b7dbe2d048015da3455c0,
+identyczny z wcześniejszym audio-port-v4 oraz między profilami. Źródłowe/
+prywatneO niezmienione, bu10 puste, exit0, brak raportów sanitizerów.
+Proofy zawierają hashe artefaktów i wskazują te same binaria z manifestu.
+`/tmp/pe-cmake-native-v2-assets-proof.json` identyfikuje oba CUE/BIN i USA EXE.
+
+To potwierdza te konkretne oryginalne trasy i obecną normal macierz testów,
+nie pełne NewGame→EX77, wszystkie funkcje/zawartość, hardware audio/image oracle
+lub platformowy audyt wydania. Nadal czekać na tę samą sesjęSAN47052 i dopiero
+ocenić pełny wynik; metadane `/tmp/pe-cmake-native-v2-progress.json`. Użytkowy
+build/ nie był jeszcze podmieniany na nowe zoptymalizowane binarium.
+
 ### CMake-v2: pełna powtórka po trzech naprawach
 
 Po zakończeniu obu pierwotnych CTest (87/90 każdy) zachowano ich oryginalne

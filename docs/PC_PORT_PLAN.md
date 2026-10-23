@@ -2,6 +2,32 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### PsyZ: rzeczywisty GPU bez widocznego okna; ujawnione3 błędy renderera
+
+Własnyfork `b22a768` dodaje `PSYZ_HEADLESS=gpu` w istniejącym
+`sdl3_gpu.c`: natywnySDL GPU i ukryteokno, bez swapchain/prezentacji
+oraz limitera. Nie zmienia rasteryzacji/shaderów. `PSYZ_HEADLESS=1`
+zachowuje dotychczasowy software1×. Dokumentacjaforka opisuje różnicę.
+Próba `SDL_VIDEODRIVER=offscreen` na tymMacu nie znalazła backenduGPU
+(exit153 testucredits-images); nie uznano jej za udanytest ani błąd gry.
+
+Istniejący test `gpu::move_image_internal_res` rozszerzono o rzeczywistą
+asercjęSDL_WINDOW_HIDDEN po prezentacji i przełączeniach1×→2×→1×,
+oraz braklimitera. Przeszedł naMetal. Cały zestawgpu przy tymtrybie:
+40PASS/3FAIL/0SKIP. `/tmp/pe-hidden-gpu-v1-tests/proof.json` ma
+passed:false; błędy: rotated_triangle_samples_signed_affine_uv,
+untextured_transp_poly_take_abr_from_drawenv oraz
+ps1_polygon_attribute_gradients. Wszystkie pozostają do diagnostyki,
+nie uznano hi-res ani rendereraGPU za kompletniezweryfikowane.
+
+Biblioteki zamrożono w`/tmp/pe-hidden-gpu-v1-sdk`; libpsyzSHA256
+21e2106ce0ec9f4f7c03287d53584ebdde92e36cbe8a4cee4be67dc98cbb4f66.
+Nie relinkowano gry ani trwającychcold z nowymSDK. Kandydat
+script-locals-v1 nadal używa wcześniejszych zamrożonychbibliotek,
+więc bieżące odtworzeniaO badają niezmienionyprogram.
+Readback/capture nadal mają natywne wymiary; sam mnożnikGPU nie jest
+dowodem rzeczywistej szczegółowości obrazu ani niezmienionejsymulacji.
+
 ### script-locals-v1: dodatkowe10/10 testów napisów PASS; N11 zamknięty
 
 `/tmp/pe-script-locals-v1-credits-regression/proof.json`: świeże wykonanie

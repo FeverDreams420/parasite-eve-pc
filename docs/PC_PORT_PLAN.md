@@ -36124,3 +36124,18 @@ Rozszerzony cold normal do358826 zakończył się0 i ma pełny stan/VRAM/PPM
 identyczne z checkpointem. Proof w cold-armory-normal. SAN session1913
 jeszcze w trakcie przy ostatnim sprawdzeniu; brak wyniku. Bieżąca gra
 pozostaje przy360092 w menu magazynu; odcinek magazynu nieobjęty tym replay.
+
+
+### Cold New Game do założenia M16A1: normal/SAN PASS
+
+Oba rozszerzone replaye do358826 zakończyły się0, bez raportów błędów.
+Pełny stan, VRAM i PPM identyczne z zachowanym przebiegiem. Całe PCM
+normal/SAN identyczne, SHA256
+3d79f9550db0e7d9becab2bb6d8e82eafba76c4374f6d7b834a88aed0cbff921.
+Dowód `/tmp/pe-campaign-replay-v3/cold-armory-pair-proof.json`.
+To porównanie natywnych profili, nie pełna kampania ani oracle PS1.
+
+Dalszy oryginalny wybór pancerza założył Kv Vest1, armor_slot4,
+panel DEF20/PE12. Następnie M052→M051/a80050c8 przy362121,
+weapon_slot8/M16A1, HP72/72, BP74, bez menu/dialogu. Checkpoint362121.
+Magazyn i zmiana pancerza po358826 nadal poza tym niezależnym replay.

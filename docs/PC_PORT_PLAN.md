@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### O2: korekta granicy areny list callbacków
+
+Oba normal-O2 błędy actor-animation/player-input-assets wynikały z odmowy
+poprawnego zewnętrznego przydziału w FieldFx_AllocCallbackList. Diagnostyczny
+fixture `/tmp/pe-o2-core-diag-v2-run/test.log` pokazał ret=-1 zamiast88:
+zewnętrzny arena[256] leżał dokładnie pod adresem końca innego kontekstu.
+Warunek address<=end błędnie zaliczał ten odrębny obiekt do poprzedniej areny.
+
+W istniejącym fieldfx/task_list.c granica uwzględnia teraz właściciela slotu:
+bufor zewnętrzny na tym samym adresie jest dopuszczony, natomiast slot własnego
+kontekstu nadal odrzuca zapis od one-past-end i przekroczenie końca. Brak
+zmiany layoutu, listy callbacków, nowych modułów lub przenoszenia funkcji.
+W istniejącym fixture dodano jawnie sąsiadujące obiekty, odmowę przydziału
+przez własny slot na końcu/tuż przed końcem areny i canaries; test nie zależy
+od przypadkowego układu stosu kompilatora.
+
+`/tmp/pe-callback-boundary-v1/boundary-proof.json`: stary obiekt task_list +
+nowy identyczny test FAIL123, poprawiony PASS0, zarówno normal jak iSAN O2.
+`/tmp/pe-callback-boundary-v1/regression-proof.json`:4/4 kompletnych core/assets
+normal/SAN z wymaganymi assetami. Całe istniejące obiekty task_list i fixture
+skompilowane poleceniami CMake; M350 z poprzedniej poprawki, pozostałe obiekty
+oraz biblioteki bez zmian. Hashe źródeł/binariów/logów zachowane. Nie jest to
+jeszcze pełna powtórzona macierz90/90; osobny timeout fx-frames analizowany.
+
 ### O2 CMake: wykryte UB M350 i naprawa w istniejącym module
 
 Pierwotne macierze CMake-v1 zakończone: normal87/90 (actor-animation,

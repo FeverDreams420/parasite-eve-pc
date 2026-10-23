@@ -822,8 +822,35 @@ static int record_list_callback(int mode,void *payload,intptr_t argument)
     ++list_draws;
     return 0;
 }
+/* A valid separate buffer may occupy the address immediately after an arena.
+ * Make the boundary deterministic rather than relying on optimizer stack layout. */
+static int callback_list_adjacent_storage(void)
+{
+    struct {
+        FieldFxTaskContext context;
+        _Alignas(void *) char external[64];
+    } storage = {0};
+    FieldFxTaskContext *saved_context=g_FieldFxTaskContext;
+    FieldFxTaskSlot *saved_slot=g_FieldFxActiveTaskSlot;
+    memset(storage.context.arena,0xa5,sizeof(storage.context.arena));
+    memset(storage.external,0x5a,sizeof(storage.external));
+    g_FieldFxTaskContext=&storage.context;g_FieldFxActiveTaskSlot=NULL;
+    int ok=storage.external==storage.context.arena+sizeof(storage.context.arena);
+    if(ok)ok=FieldFx_InitCallbackList(storage.external,0,0,record_list_callback)==sizeof(FieldFxCallbackList);
+    char snapshot[64];memcpy(snapshot,storage.external,sizeof(snapshot));
+    g_FieldFxActiveTaskSlot=&storage.context.slots[0];
+    if(ok)ok=FieldFx_InitCallbackList(storage.context.arena+sizeof(storage.context.arena),0,0,record_list_callback)==-1;
+    if(ok)ok=FieldFx_InitCallbackList(storage.context.arena+sizeof(storage.context.arena)-_Alignof(FieldFxCallbackList),0,0,record_list_callback)==-1;
+    if(ok)ok=!memcmp(snapshot,storage.external,sizeof(snapshot));
+    for(size_t i=0;i<sizeof(storage.context.arena);++i)if((u8)storage.context.arena[i]!=0xa5)ok=0;
+    g_FieldFxTaskContext=saved_context;g_FieldFxActiveTaskSlot=saved_slot;
+    if(!ok)fprintf(stderr,"Callback-list adjacent external buffer or owned arena boundary failed\n");
+    return ok;
+}
+
 static int callback_list_storage(void)
 {
+    if(!callback_list_adjacent_storage())return 0;
     _Alignas(void *) u8 arena[256]; memset(arena,0xa5,sizeof(arena));
     int bytes=FieldFx_InitCallbackList((char *)arena,sizeof(NativeListState),3,record_list_callback);
     size_t stride=(sizeof(FieldFxCallbackListEntry)+sizeof(NativeListState)+_Alignof(FieldFxCallbackListEntry)-1)/
@@ -18424,6 +18451,7 @@ int main(int argc, char **argv)
         PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;
         int result=original_fx_scene_init(&disc) && original_fx_controller();pe_disc_close(&disc);return result?0:151;
     }
+    if(argc==2 && !strcmp(argv[1],"--callback-list-storage"))return callback_list_storage()?0:123;
     if(argc==2 && !strcmp(argv[1],"--fx-frames")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;

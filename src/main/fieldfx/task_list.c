@@ -85,7 +85,14 @@ int FieldFx_InitCallbackList(char *out, int stride, int count, FieldFxTaskCallba
         uintptr_t begin = (uintptr_t)g_FieldFxTaskContext->arena;
         uintptr_t end = begin + sizeof(g_FieldFxTaskContext->arena);
         uintptr_t address = (uintptr_t)out;
-        if (address >= begin && address <= end && bytes > end - address) return -1;
+        int owned_end = 0;
+        if (address == end) {
+            /* A distinct caller-owned buffer can start at this address. Only
+             * a slot owned by this context identifies it as arena exhaustion. */
+            for (unsigned i = 0; i < 8; ++i)
+                if (g_FieldFxActiveTaskSlot == &g_FieldFxTaskContext->slots[i]) owned_end = 1;
+        }
+        if (address >= begin && (address < end || owned_end) && bytes > end - address) return -1;
     }
     FieldFxCallbackList *list = (FieldFxCallbackList *)out;
     list->callback = callback;

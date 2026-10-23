@@ -73,6 +73,13 @@ actors and raw 16.16 animation positions, menus, inventory, character and combat
 original reward lists, movie state and the active display rectangle/format.
 Decode the selected rectangle as RGB555 or packed RGB24 according to
 `display.rgb24`.
+`--headless-gpu --internal-resolution 2` uses the actual GPU renderer with a
+hidden window (multipliers 1–8). `--dump-frame PATH` writes the rendered display
+as binary RGB888 PPM at each control/terminal boundary, before window/aspect
+scaling. RGB24 movies remain native resolution. It requires `--frame-limit`;
+use a different path from `--dump-vram`. Captures overwrite their previous
+boundary output, so copy them before advancing when retaining a sequence.
+
 Repeat `--pad-at VBLANK:BUTTON_MASK` for deterministic digital input, using
 pressed PS1 button bits (for example `10000:8` holds START; `10010:0` releases it).
 Input enters the original pad packet before the original mapping/repeat logic.

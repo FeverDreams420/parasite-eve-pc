@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <ctype.h>
 #include <psyz/system.h>
+#include <psyz/video.h>
 #include "common.h"
 #include "pe1/aya.h"
 #include "pe1/battle_runtime.h"
@@ -61,6 +62,7 @@ void Boot_InitMemCard(void);
 int g_BootHostActive;
 u32 g_BootHostVBlankLimit,g_BootHostVBlankCount,g_BootHostControlAt;
 const char *g_BootHostVramPath;
+const char *g_BootHostFramePath;
 BootHostPadEvent *g_BootHostPadEvents;
 unsigned g_BootHostPadEventCount;
 BootHostHealthEvent *g_BootHostHealthEvents;
@@ -98,6 +100,18 @@ static void Boot_PollHost(void) {
         if(!out){fprintf(stderr,"Cannot write VRAM capture\n");fflush(stderr);_Exit(2);}
         int written=fwrite(vram,1,sizeof(vram),out)==sizeof(vram);
         if(fclose(out)!=0 || !written){fprintf(stderr,"Cannot finish VRAM capture\n");fflush(stderr);_Exit(2);}
+    }
+    if(g_BootHostFramePath){
+        int width=0,height=0;
+        unsigned char *pixels=Psyz_VideoAllocRenderedFrame(&width,&height);
+        if(!pixels || width<=0 || height<=0){free(pixels);fprintf(stderr,"Cannot capture rendered display\n");fflush(stderr);_Exit(2);}
+        FILE *out=fopen(g_BootHostFramePath,"wb");
+        if(!out){free(pixels);fprintf(stderr,"Cannot write rendered capture\n");fflush(stderr);_Exit(2);}
+        size_t bytes=(size_t)width*(size_t)height*3;
+        int written=fprintf(out,"P6\n%d %d\n255\n",width,height)>0;
+        if(written)written=fwrite(pixels,1,bytes,out)==bytes;
+        free(pixels);
+        if(fclose(out)!=0 || !written){fprintf(stderr,"Cannot finish rendered capture\n");fflush(stderr);_Exit(2);}
     }
     DISPENV display;GetDispEnv(&display);
     printf("{\"event\":\"%s\",\"vblanks\":%u,\"scene\":%u,\"flags\":%u,\"draw_slot\":%d,\"movie\":%d,\"pad\":%u,\"game_flags\":%u,\"video_state\":%u,\"game_frame\":%u,\"movie_frame\":%d,\"move_lock\":%d,\"display\":{\"x\":%d,\"y\":%d,\"w\":%d,\"h\":%d,\"rgb24\":%d},\"dialogue\":[",

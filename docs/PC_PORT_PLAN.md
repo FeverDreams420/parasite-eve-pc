@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Runner: zrzut skalowanego obrazu z oryginalnej gry
+
+W istniejących boot/main.c, boot/init.c i boot.h dodano `--dump-frame PATH`.
+Przy każdej granicy control/frame-limit zapisuje binarny PPM RGB888 z nowego
+API PsyZ. Wymaga limitu klatek; JSON obserwatora pozostaje bez zmian.
+Nie dodano plików produkcyjnych ani zastępczych modułów gry.
+
+Świeże 438 kompilacji (219/profil) i linkowanie gry/fixture:
+`/tmp/pe-rendered-port-v1-build-manifest.json`; zależności, obiekty i biblioteki
+zweryfikowane hashami. `/tmp/pe-rendered-port-v1-gpu-matrix/proof.json`: PASS
+12/12 zimnych przebiegów ContinueB/menu/Medicine do26308, ukryty Metal,
+1×/2×/8×, zwykły i ASan/UBSan build, ze zrzutem oraz bez. Cały JSON
+oraz natywne snapshoty VRAM identyczne między przebiegami i z zachowanym
+software checkpointem. Karty źródłowa i prywatne niezmienione. PPM ma
+320×224/640×448/2560×1792 i jest identyczny normal/SAN dla danej skali.
+Obejrzano obrazy wszystkich trzech rozdzielczości. Przy2×11533 piksele różnią
+się od nearest-neighbor natywnego obrazu; nie jest to niezależny oracle PS1.
+
+Ważna granica dowodu: snapshot VRAM gry zapisywany jest przed odczytem
+obrazu. Zachowanie VRAM po odczycie sprawdza test SDK; ta macierz terminalna
+nie zastępuje sprawdzenia dalszego działania gry po zrzucie na granicy control.
+CLI:4/4 odrzucone błędne kombinacje (`/tmp/pe-rendered-port-v1-cli-proof.json`).
+Błędy otwarcia docelowego pliku:2/2 (`/tmp/pe-rendered-port-v1-io/proof.json`).
+Nie testowano tu pełnego dysku/krótkiego zapisu. Prywatne programy testowe
+nie zostały zainstalowane do użytkowego build/parasite-eve-pc. Pełny zakres
+portu i wizualna weryfikacja pozostałych scen nadal nieukończone.
+
 ### PsyZ 8f2daf7: odczyt rzeczywistego obrazu hi-res
 
 W istniejących backendach i nagłówku dodano `Psyz_VideoAllocRenderedFrame`:

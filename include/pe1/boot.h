@@ -18,6 +18,7 @@ extern u32 g_BootHostVBlankLimit,g_BootHostVBlankCount;
 /* Headless diagnostic boundary; stdin advances ordinary input only. */
 extern u32 g_BootHostControlAt;
 extern const char *g_BootHostVramPath;
+extern const char *g_BootHostFramePath;
 extern BootHostPadEvent *g_BootHostPadEvents;
 extern unsigned g_BootHostPadEventCount;
 

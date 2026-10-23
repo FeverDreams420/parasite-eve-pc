@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Otwarty audyt seeker_spark: błędy kompilacji i banki E03/E06/E07/E27
+
+Celowana próba kompilacji całego pominiętego seeker_spark.c z aktualnymi
+flagami kończy się6 błędami brakującej deklaracji g_GeomScroll w odwołaniach
+g_ViewMatrixSlot. Log `/tmp/pe-motion-gate-v1-seeker-compile.log`.
+Brak odwołań do RoomEffect_SeekerSparkCallback w obecnych produkcyjnych
+źródłach; podobny M086 nie jest dowodem zastępstwa.
+
+Historyczne configi z09c3e3e54 wskazują specjalne banki E03/E06/E07/E27,
+wejście callbacku80192500 i wycinek kodu0x3518..0x3d8c. Hinty zachowane
+w /tmp/pe-motion-gate-v1-seeker-history.json, odczyt USA PE.IMG w
+seeker-slice-audit.json. Cztery fragmenty kodu mają identyczny SHA256
+cfdc3b3da6381dc7186032d367577f7bb1e7cfe81b444e7942581e094db9db6b;
+w tych wycinkach nie znaleziono surowego wskaźnika wejścia callbacku.
+To nadal wskazówki historyczne, nie zweryfikowane asset-table binding ani
+runtime consumer. Następny krok: ustalić oryginalny mechanizm wywołania,
+naprawić istniejący plik i podłączyć z testami dopiero po jego potwierdzeniu.
+Nie zmieniono produkcyjnego kandydata podczas tego audytu.
+
 ### e8ff03f56: Tutorial123 i odświeżony katalog funkcji
 
 `/tmp/pe-motion-gate-v1-tutorial-cold/proof.json`: normal/SAN2/2, wszystkie

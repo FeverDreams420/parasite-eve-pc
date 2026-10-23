@@ -35911,3 +35911,27 @@ Kolejny krok: oryginalne dane/osiem programów PM, dziesięć bindingów loadera
 pełne cykle efektów z rzeczywistymi assetami, numeryczne referencje MIPS,
 naprawy ewentualnego UB, następnie świeży pełny build i regresje obu profili.
 Dotychczasowy build użytkownika pozostaje kandydatem M256.
+
+
+### Bieżący kandydat: 95/95 coverage i zwycięstwo nad pierwszym aligatorem
+
+Zamrożony kod a904055bc z PsyZ 33153a4b1c zakończył również pełną macierz
+coverage: 95/95, bez SKIP. Weryfikator sprawdził rejestr przypadków,
+21 plików wykonywalnych i hashe źródeł; dowód:
+`/tmp/pe-room-catalog-v1-coverage-matrix-proof.json`. Normal i SAN tego
+samego kodu miały wcześniej 95/95. Nie dowodzi to pełnej zgodności gry.
+
+Autentyczna trzecia próba New Game, z pustymi prywatnymi kartami i oboma
+CUE, zakończyła obie fazy pierwszego aligatora zwykłym padem. Przy 269174
+scena a8064448 ma zero przeciwników, HP24/67, ekran nagród (selection20),
+EXP30, PE bonus25 i przedmiot155. Ogon osiągnął HP0 przed przejściem
+M033→M344; w drugiej fazie również wykonano oryginalny przebieg śmierci
+bossa. Leczenie PE zadziałało 19→49. Nie zmieniano RAM, save, RNG ani
+statystyk. Przeładowanie opóźnia drugą z kolejki akcji; wcześniejszy odczyt
+przy120 vblankach był za wczesny, by oceniać jej ostateczny rezultat.
+
+`/tmp/pe-campaign-replay-v3/alligator-victory-proof.json` zachowuje stan,
+hashe VRAM/PPM i dziennika poleceń; checkpoint269174 oraz pełny game.log
+pozwalają odtworzyć wejścia. To obserwowane zwycięstwo w bieżącej próbie,
+jeszcze bez niezależnego ponownego replay normal/SAN i bez ukończenia
+reszty kampanii. Proces pozostaje na ekranie nagród, kontrolowany stdin.

@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Kandydat c10f06af6: pełne buildy i niezależny oracle sześciu komend AKAO
+
+Świeże root CMake normal `/tmp/pe-tutorial-registry-v1` oraz SAN
+`/tmp/pe-tutorial-cmake-v1-san` zbudowane exit0. Oba674 polecenia C/ObjC,
+21 programów,91 zarejestrowanych testów; wszystkie C i Objective-C SAN mają
+address/undefined/function. Manifesty `full-{normal,san}-build-proof.json`
+w `/tmp/pe-tutorial-audio-fix-v1/` zachowują hashe programów i zmienionych źródeł.
+Obie pełne macierze91 uruchomione z wymaganymi USA CUE/BIN, bez SKIP jako
+akceptacji. Normal zaliczył m.in. nowy Tutorial13.24s oraz alligator-entry60.34s;
+SAN zaliczył Tutorial i bootstrap71.15s, wykonuje field-control. Żadna z tych
+macierzy nie jest jeszcze zakończona ani zaliczona jako całość.
+
+`/tmp/pe-tutorial-audio-fix-v1/signed-global-comparison-proof.json`: niezależne
+wykonanie sześciu oryginalnych procedur USA EXE w Unicorn, bez hooków handlerów,
+dało29696 referencyjnych stanów akumulatora/kroku/licznika. Wszystkie są zgodne
+z pełnym oryginalnym voice_bank.c normal i ASan/UBSan/function. Obejmuje każdy
+podpisany bajt komendy, różne akumulatory, zerowy/dodatni/ujemny czas tam, gdzie
+oryginał go przyjmuje, oraz oba warianty słowa startowego z istotnym dolnym
+bajtem. Adresy8c16c/8c18c/8c1f8 i8c270/8c290/8c2fc. Zakres nie obejmuje
+błędnego dzielenia przez0 ani dowodu całego sequencera; to mocniejszy dowód
+zgodności sześciu naprawionych funkcji niż sam brak raportu UBSan.
+
+Stara macierz coverage90 nadal działa na wcześniejszym źródle i zaliczyła
+m028-sewer297.59s. Jej AST/eksporty używają zachowanego starego voice_bank.c
+(także przez libclang unsaved file), z jawną ścieżką snapshotu i hashem.
+Nie przypisują nowej poprawki do starego pliku wykonywalnego. Użytkowy build
+nie był aktualizowany. Pełny cel portu i pozostałe wymagania pozostają otwarte.
+
 ### Trwała regresja Tutorial zarejestrowana jako test91
 
 W istniejącym tests/original_actor_animation.c dodano `--native-tutorial`,

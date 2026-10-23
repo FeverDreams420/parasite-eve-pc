@@ -36631,3 +36631,21 @@ a27b08e5055f8c11b26f3d869ff4467ab37482ef5e65e309729f4806d64d585f,
 logi czyste; cold-M358-recovery-pair-proof.json. Obejmuje porażki,
 Continue, nieudane/udaneEscape i ponowne zwycięstwoM358, nie późniejsze
 Cure-P ani nowy trening. Aktualnylive665660: potwierdzenieFile saved40.
+
+### Oryginalne BP: M16A1 +1ATK, osobny zapisE
+
+Live root→Distribute Bonus Points→M16A1→Attack. Otwarcie dialogu,
+Down dodaje100BP doATK, Cross zatwierdza; wyjście z widoku alokacji
+przy667332 utrwaliło BP104→4 i bonusATK1→2 (sumaryczneATK35→36).
+W całym equipment_records względem zapisuD zmienił się tylko byte142,
+1→2. Bez edycji RAM/danych. Telefon utworzył nowyE668602, Level8,
+HP101/101, EXP119. A/B/C/D bitowo niezmienione. E SHA256
+269eb8283a2d546acdb0122744cef0b9e7dd59ce5d0c853cf36fa8c5f5c78657.
+Checkpoint668602, park-BP-upgrade-save-E-proof.json w /tmp/pe-campaign-replay-v3.
+Continue samegoE nadal wymaga weryfikacji; live czeka naFile saved40.
+
+PASS BP-from-D-pair-proof.json: dwa niezależne cold Continue autentycznegoD,
+identyczna sekwencja oryginalnego pada w menuBP do16300. Character,
+inventory, scene, stage zgodne z obserwowanym stanem po ulepszeniuE;
+pełny końcowyJSON/VRAM/PPM normal/SAN identyczny, native0, czyste logi,
+D niezmienione. Ten dowód obejmuje alokacjęBP, nie sam zapisE ani dalsząM065.

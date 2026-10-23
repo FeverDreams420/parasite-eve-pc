@@ -2,6 +2,17 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N6: prawdziwy ContinueO i przekazanie sesji zweryfikowane
+
+Nowa sesja `/tmp/pe-inv-mask-N6-live`,nativePID wpid.json,
+kontrolerPTY97157: zimny start tylkoO, zwykłyContinue/slot14/OK,
+endpoint14744/M042/HP869. `handoff-proof.json` PASS: całyJSON i1MiBVRAM
+identyczne z terminalnym normal/SAN ContinueO; O niezmieniony.
+PoprzednieN5 poFileSavedO i diagnostyczneN3b/Eve zamknięte oryginalnym
+quit/nativeexit0; nie używać ich dawnychPTY98364/7589 do dalszej gry.
+Pełny cold N→ponowneFileSavedO nadal działa naPTY57256; nie restartowano.
+Dalsze oryginalne przejście ma zaczynać się z autentycznegoO, bez RAM edits.
+
 ### N5: cold QueenBee PASS, Key6 odłożony i autentyczny zapisO
 
 `/tmp/pe-N5-QueenBee-cold-v1-proof.json`: genuineN→326333 normal/SAN

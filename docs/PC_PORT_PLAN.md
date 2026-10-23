@@ -2,6 +2,59 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### PsyZ 3e7f1b8: mieszanie RGB555 i granice interpolacji
+
+W istniejącym SDL_GPU poprawiono mieszanie półprzezroczystości: shader
+wykonuje całkowitoliczbowe operacje RGB555, z obcięciem i nasyceniem po
+każdym prymitywie. Poprzednia zawartość jest kopiowana tylko w obszarze
+rysowanej figury. Kolejność nakładania pozostaje zachowana. Test wszystkich
+32×32 wartości, czterech ABR i dwóch warstw odtwarza FAIL starej biblioteki
+i PASS nowej; przechodzi również przez istniejący rasteryzator software.
+
+Usunęło to 924 z 926 różnic w rzeczywistej scenie ContinueB/menu/Medicine.
+Pozostały punkt (189,88), powtórzony w drugiej stronie VRAM, pochodził
+z cienkiego trójkąta modelu. Przy dokładnie całkowitym V=103 interpolacja
+zmiennoprzecinkowa spadała poniżej granicy. Korekta połowy LSB siatki
+12-bitowej dotyczy wyłącznie natywnego próbkowania 1:1. Nowy test obejmuje
+ten trójkąt oraz V=46+4095/4096, które musi pozostać poniżej 47.
+Stary GPU oblewa pierwszy przypadek, software przechodzi oba; po poprawce
+przechodzą oba backendy. Nie zmieniono koloru modelu ani wzorców obrazów.
+Diagnostyka `pe-gpu-blend5-trace-v2/run/proof.json` zachowuje cały stan
+i VRAM identyczne z przebiegiem bez śledzenia; kod diagnostyczny był tylko
+w prywatnym wariancie w /tmp, nie w źródłach projektu.
+
+`/tmp/pe-gpu-blend5-v2-proof/proof.json`: 61/61 normal i 61/61 z pełną
+instrumentacją SDK/SDL C i Objective-C, exit0 bez błędów sanitizerów/SKIP.
+Obejmuje dotychczasowe referencje GPU/dither/grid oraz 144 referencyjne
+przypadki atrybutów przy każdym mnożniku 1–8. Fragment SPIR-V zwalidowano,
+MSL wykonano na Metal, DXIL skompilowano; trzy nagłówki odtwarzają się
+identycznie przez istniejący skrypt: `pe-gpu-blend5-v2-shader-repro/proof.json`.
+Nie wykonano runtime Windows/Vulkan/GL ani pełnego audytu SDK.
+
+`/tmp/pe-gpu-blend5-port-v2-gpu-matrix/proof.json`: wszystkie sześć
+uruchomień do26308 (normal/SAN, ukryty GPU 1×/2×/8×) ma identyczny cały
+JSON i natywny1MiBVRAM, także względem zachowanego software. Zero różnic
+bajtów; obie karty B bez zmian. To konkretny scenariusz, nie pixel-perfect
+całej gry ani dowód szczegółowości skalowanego obrazu.
+Wcześniejszy wariant z dwoma punktami pozostaje FAIL:
+`pe-gpu-blend5-port-v1-gpu-matrix/failure.json`.
+
+Wariant v2 podlinkowano z nowym SDK po ponownym sprawdzeniu wszystkich
+zależności i hashów niezmienionych obiektów gry z gpu-port-v1;
+`pe-gpu-blend5-port-v2-build-proof.json`. Nie jest to nowy pełny rebuild
+438 obiektów ani nowy dowód całego EX. Własny fork wypchnięty; gra
+w `build/parasite-eve-pc` nie została zastąpiona tym prywatnym wariantem.
+
+### gpu-port-v1: pełny cold EX do tytułu PASS normal/SAN
+
+`/tmp/pe-gpu-port-v1-EX-ending-cold-proof.json`: autentyczne ContinueO,
+cała trasa do Truebred Eve, zwycięstwo, dialogi112–138, pełne napisy i
+powrót do tytułu332629. Oba exit0/czysto, cały JSON i VRAM identyczne
+z zamrożonym live, karty bez zmian. PTY64763 zakończony. Dotyczy dokładnie
+kandydata e94468a…/f8f7d818… z poprzednim SDK, nie wariantu blend5-v2.
+Nie zastępuje NewGame→EX77 ani pełnego katalogu funkcji, obrazu/audio,
+platform i paczek. Cały port nadal nieukończony.
+
 ### gpu-port-v1: świeża integracjaSDK,80/80 regresji i zgodny stan1×/2×/8×
 
 W istniejącym `src/main/boot/main.c` dodano `--headless-gpu` oraz

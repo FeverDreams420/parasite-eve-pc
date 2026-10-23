@@ -2,14 +2,40 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Korekta wspólnej inicjalizacji klawiatury — kandydat6baf155cf
+
+Pełny normal kandydata4c34cd893 zakończył się8:94 PASS, dwa FAIL i zero SKIP.
+`/tmp/pe-desktop-acceptance-v1/normal-failure-proof.json` zachowuje wynik i
+potwierdza zgodność haszy pierwotnych artefaktów. Oba FAIL to wspólny program
+actor-animation (z danymi / bez danych), reprodukcja exit30 przy pierwszym
+ruchu klawiatury. Przyczyna: main ustawiał własne domyślne klawisze gry, ale
+izolowane oryginalne moduły używały konfliktujących domyślnych klawiszy SDK.
+SAN/coverage/EX tego pipeline'u nie ruszyły, bramka końcówki zatrzymana1 na
+zależności. Nie zastępujemy nieudanego pełnego wyniku węższymi testami.
+
+Domyślne klawisze mają teraz jedną inicjalizację Boot_InitHostBindings w
+istniejącym boot/init.c, wywoływaną przez start i reset pada. Pierwsza
+inicjalizacja instaluje domyślne przypisania gry; późniejsze resety zachowują
+wybór użytkownika. Osobny test sprawdza zachowanie remapu START po resecie.
+Cztery dotknięte testy przechodzą normal i ASan/UBSan (SAN54.32s), w tym oba
+wcześniejsze FAIL. `/tmp/pe-host-bindings-fix-proof.json` zawiera hashe binariów
+oraz wynik15000 klatek z identycznym pełnym JSON/VRAM/PPM/PCM wobec wersji przed
+ustawieniami. Zaktualizowano również wykonywalny build/parasite-eve-pc.
+Pełny pipeline ponownej akceptacji ma osobny prefix pe-desktop-acceptance-v2,
+źródła zamrożone na6baf155cf, SDKec33b9f. Jego stan oraz oddzielna bramka
+końcówki są w `/tmp/pe-desktop-acceptance-v2/{progress,ending-gate-progress}.json`.
+W chwili wpisu normal jest konfigurowany; SAN/coverage/EX oczekują na zależności.
+Nie restartowano starego pipeline'u ani nie nadpisano jego nieudanego wyniku.
+
 ### Akceptacja kandydata desktopowego 4c34cd893
 
 Uruchomiono pipeline kolejnych świeżych buildów RelWithDebInfo normal/SAN/coverage
 na tym samym snapshotcie źródeł, z PE_REQUIRE_GAME_ASSETS=1 i oboma PE_TEST_DISC /
 PE_TEST_DISC2. W chwili wpisu build normal i czysty checkout są zakończone0,
-pełne96 testów normal trwają; SAN i coverage oczekują na wcześniejsze etapy. Pipeline `/tmp/pe-desktop-acceptance-v1.py` zapisuje stan kroków,
-PID-y, hashe źródeł/artefaktów, listę96 testów i JUnit. Wyniki nie są jeszcze
-zamknięte; źródłem aktualnego stanu jest `/tmp/pe-desktop-acceptance-v1/progress.json`.
+pełne96 testów normal zakończyło się8 (94+2, opis powyżej); SAN/coverage nie
+uruchomiono z powodu błędu zależności. Pipeline `/tmp/pe-desktop-acceptance-v1.py` zapisuje stan kroków,
+PID-y, hashe źródeł/artefaktów, listę96 testów i JUnit. Wynik tego pipeline'u
+jest nieudany; zapisany stan znajduje się w `/tmp/pe-desktop-acceptance-v1/progress.json`.
 Dowód profilu powstaje dopiero po96 PASS, zerze SKIP i ponownym hashowaniu
 artefaktów. SAN instrumentuje również SDK/SDL: address, undefined, function.
 Po trzech zaakceptowanych macierzach odrębna bramka uruchomi ponownie oryginalny

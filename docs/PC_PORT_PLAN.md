@@ -36339,3 +36339,19 @@ ekran nagród20, HP66/72, broń ma11 nabojów. Checkpoint531028 i
 `/tmp/pe-campaign-replay-v3/park-first-victory-proof.json`. To faktyczne
 zwycięstwo bez zmian HP/stanu/RNG; odcinek po510342 jeszcze bez cold SAN.
 Nagrody nieodebrane, dalszy park i dzień2 pozostają do ukończenia.
+
+
+### Park: odbiór nagród i oryginalne leczenie PE
+
+Menu nagród pierwszego spotkania wydało Cure-P13 i Medicine1/id6.
+Postać osiągnęła level7, EXP77, BP83, MaxHP92. Oryginalne
+Triangle→PE→Heal1→potwierdzenie przy532044 przywróciło HP66→92;
+Medicine1 niezużyte. Przy532148 menu zamknięte, M059, HP92/92.
+Checkpoint532148 i `/tmp/pe-campaign-replay-v3/park-rewards-heal-proof.json`.
+Nie zalicza to pełnego parku ani porównania leczenia z PS1.
+
+Nowe niezależne cold normal/SAN od pustych kart do532148 obejmują
+pierwszą walkę, rozdzielenie celów, nagrody i leczenie PE:
+`/tmp/pe-campaign-replay-v3/cold-park-first.py`, normal session38123/PID35719,
+SAN session18971/PID35801. Wyniki nieznane; bieżąca session37796
+pozostaje przy532148.

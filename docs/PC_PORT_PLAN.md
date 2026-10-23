@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### script-locals-v1: dodatkowe10/10 testów napisów PASS; N11 zamknięty
+
+`/tmp/pe-script-locals-v1-credits-regression/proof.json`: świeże wykonanie
+istniejących credits-text/sprites/images/playback/video-clock w obu profilach,
+każdy exit0/czysto, bezSKIP. Hashe fixture zgodne z manifestem kandydata.
+Zakres obejmuje tekst/ilustracje/sprite, pełny przepływ obrazów, transport
+PCM i zegarVBlank. Fixture używa Disc1 i zastępczego prawdziwegoFMV000
+dla transportuXA; nie jest oracleaudio muzyki napisówDisc2 aniPS1.
+
+`/tmp/pe-N11-EX-ending-return-v1/proof.json`: zamrożony powrót332629/title,
+oryginalnequit exit0; prywatna i źródłowaO identyczne, nowyClearData nie
+powstał. LiveN11 jest zamknięty, nie należy próbować wznowieniaPTY28559.
+Dwa niezależnecold do281505 nadal pracują wPTY44777. Read-onlyLLDB
+potwierdził liczniki102046 normal i99522 SAN, oba procesy odłączono;
+nie wywołano funkcji targetu. Logi`pe-N11-cold-progress-10978-v1.log`
+i`-10979-v1.log`. To potwierdzony postęp, nie terminalny wynik replayu.
+Przygotowano, lecz jeszcze nie uruchomiono, pełnycold zakończenia:
+`/tmp/pe-N11-EX-ending-return-cold-v1.py`. Po wyniku obecnego replayu
+należy odtworzyć również dialogi/napisy/powrót, porównać całeJSON/VRAM
+i karty. Cały zakresportu pozostaje nieukończony.
+
 ### N11: oryginalne zakończenie EX, napisy i powrót do tytułu live
 
 Po dialogach112–138 przy292705 scena0xaa108448/story1000 uruchomiła

@@ -34,6 +34,26 @@ m358/m384/m387 są już mapowane w room_load.c, ale samo podobieństwo nazw
 nie dowodzi pełnej równoważności. Wszystkie674 polecenia C/ObjC mają flagi
 coverage i atomowych liczników. Nie zmieniano danych użytkowej karty bu00.
 
+### Coverage: bootstrap ponowiony poprawnie, agregacja tylko zaliczonych testów
+
+`/tmp/pe-native-coverage-v1/bootstrap-retry-proof.json`: wszystkie6 wariantów
+oryginalnego bootstrapu PASS, te same asercje i hashe VRAM, ten sam plik gry,
+bez limitu CTest180s. Exit0 po120.56s,7 niepustych profilów (rodzic+6 dzieci).
+Nie zastępuje to nieudanego wiersza pierwszej macierzy. Field-control przeszedł
+w333.26s, stage-transition w77.09s; pełna macierz nadal pracuje.
+
+`passed-profile-groups.json` i `passed-exports/` agregują wyłącznie profile
+z testów zakończonych PASS, osobno według sygnatury funkcji danego programu.
+Katalog zachowuje hashe programów/profilów/eksportów i nazwy testów. Pierwsza
+agregacja zwiększyła mapowania do3424 (895 z wejściem). Powiązanie z AST nadal
+obejmuje wszystkie2986 definicji bez niejednoznaczności:885 definicji ma wejście,
+2101 nie ma go w tym częściowym zestawie. Status poprawności każdej funkcji
+pozostaje nieoceniony. Kolejne eksporty są aktualizowane idempotentnie; nie
+sumują ponownie wcześniej wczytanych liczników. Następny częściowy eksport
+po testach do50 daje1039 mapowań z wejściem i1028 definicji AST z wejściem
+(`partial-progress.json`); macierz nadal nie jest zakończona. Wyniki pochodzą z tego samego
+instrumentowanego buildu; źródła gry i użytkowa karta nie były modyfikowane.
+
 ### Coverage: rzeczywisty New Game do24000 i pomiar kosztu
 
 `/tmp/pe-native-coverage-v1/scene-parity/proof.json`: instrumentowany root build

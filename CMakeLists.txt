@@ -66,6 +66,22 @@ if(APPLE AND PE_MACOS_BUNDLE)
     target_sources(parasite-eve-pc PRIVATE packaging/macos/ParasiteEve.icns)
     set_source_files_properties(packaging/macos/ParasiteEve.icns PROPERTIES
         MACOSX_PACKAGE_LOCATION Resources)
+    foreach(notice README.md LICENSE.md THIRD_PARTY_NOTICES.md)
+        target_sources(parasite-eve-pc PRIVATE ${notice})
+        set_source_files_properties(${notice} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
+    endforeach()
+    foreach(notice_dir third_party/psyz third_party/psyz/decomp
+            third_party/psyz/psyz/src/platform third_party/psyz/psyz/src/psyz
+            third_party/psyz/external/SDL/src/video/yuv2rgb)
+        target_sources(parasite-eve-pc PRIVATE ${notice_dir}/LICENSE)
+        set_source_files_properties(${notice_dir}/LICENSE PROPERTIES
+            MACOSX_PACKAGE_LOCATION "Resources/licenses/${notice_dir}")
+    endforeach()
+    target_sources(parasite-eve-pc PRIVATE third_party/psyz/external/SDL/LICENSE.txt
+        third_party/psyz/external/SDL/src/hidapi/LICENSE-bsd.txt)
+    set_source_files_properties(third_party/psyz/external/SDL/LICENSE.txt
+        third_party/psyz/external/SDL/src/hidapi/LICENSE-bsd.txt PROPERTIES
+        MACOSX_PACKAGE_LOCATION Resources/licenses/SDL)
 endif()
 psyz_title(parasite-eve-pc "Parasite Eve")
 psyz_web_configure_target(parasite-eve-pc)

@@ -36139,3 +36139,15 @@ Dalszy oryginalny wybór pancerza założył Kv Vest1, armor_slot4,
 panel DEF20/PE12. Następnie M052→M051/a80050c8 przy362121,
 weapon_slot8/M16A1, HP72/72, BP74, bez menu/dialogu. Checkpoint362121.
 Magazyn i zmiana pancerza po358826 nadal poza tym niezależnym replay.
+
+
+### Day2: oryginalna scena Bena i Daniela ukończona
+
+Powrót M051→M043 przy363315 podniósł etap do152. Zwykły powrót
+przez M042 i ponowne wejście do M043, następnie podejście do Bena
+uruchomiły dialog59 przy367661. Przeszła scena z Danielem przez69/71;
+przy371725 dialog zamknięty, stage164, M043, HP72/72, BP74.
+M16A1 i Kv Vest1 pozostają założone. Checkpoint371725 i dowód
+`/tmp/pe-campaign-replay-v3/ben-daniel-scene-proof.json`.
+To aktualne przejście od New Game, jeszcze bez cold SAN odcinka po358826;
+konferencja u Bakera i dalszy dzień2 nadal wymagają przejścia.

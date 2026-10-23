@@ -36323,3 +36323,19 @@ jeszcze nieuruchomiona; dalszy park nadal otwarty.
 Cold normal do510342 przeszedł z pełnym JSON/VRAM/PPM zgodnym
 z checkpointem, exit0. Proof cold-park-intro-normal/proof.json.
 SAN session58873 nadal pracował przy ostatnim sprawdzeniu; wynik nieznany.
+
+
+### Cold intro parku normal/SAN PASS; pierwsza walka wygrana
+
+Oba niezależne cold replaye do510342 zakończyły się0, bez raportów
+błędów. Pełny stan/VRAM/PPM zgodne z checkpointem, całe PCM normal/SAN
+identyczne SHA25697549c543d104584966969f73918f37fd1a5a711aa06f398041c329f71eabceb.
+Dowód `/tmp/pe-campaign-replay-v3/cold-park-intro-pair-proof.json`.
+
+W bieżącym M059 wejście na wschodnią część ścieżki uruchomiło spotkanie
+5:31/HP32 i6:3/HP44. Oryginalne M16A1 i wybór dwóch celów z kolejki
+akcji pokonały obu. Przy531028 zero przeciwników, battle mode2,
+ekran nagród20, HP66/72, broń ma11 nabojów. Checkpoint531028 i
+`/tmp/pe-campaign-replay-v3/park-first-victory-proof.json`. To faktyczne
+zwycięstwo bez zmian HP/stanu/RNG; odcinek po510342 jeszcze bez cold SAN.
+Nagrody nieodebrane, dalszy park i dzień2 pozostają do ukończenia.

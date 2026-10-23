@@ -1,4 +1,6 @@
 #ifdef PE_HOST_SETTINGS_TEST
+extern long SetRCnt(long spec, unsigned short target, long mode);
+extern long GetRCnt(long spec);
 #undef NDEBUG
 #include <SDL3/SDL.h>
 #include <assert.h>
@@ -83,6 +85,18 @@ static int SDLCALL Drive(void *unused){
     Key(SDL_SCANCODE_LEFT); /* 100 -> 95 */
     Key(SDL_SCANCODE_ESCAPE);return 0;
 }
+static int SDLCALL DriveFocus(void *window){
+    SDL_Delay(30);
+    assert(Psyz_AudioIsPaused());
+    unsigned tick=(unsigned)Psyz_VideoVSync(-1);
+    long counter=GetRCnt(0xf2000002);
+    SDL_Delay(90);
+    assert((unsigned)Psyz_VideoVSync(-1)==tick);
+    assert(GetRCnt(0xf2000002)==counter);
+    SDL_Event gained={0};gained.type=SDL_EVENT_WINDOW_FOCUS_GAINED;
+    gained.window.windowID=SDL_GetWindowID(window);
+    assert(SDL_PushEvent(&gained));return 0;
+}
 int main(int argc,char **argv){
     assert(argc==2);test_directory=argv[1];assert(SDL_CreateDirectory(test_directory));
     assert(SDL_SetHint(SDL_HINT_VIDEO_DRIVER,"dummy"));
@@ -118,6 +132,17 @@ int main(int argc,char **argv){
     assert(!strcmp(host_options.discs[0],"/tmp/zażółć # \"quotes\" \\ disc.cue"));
     assert(SDL_SetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_AUDIO_CLOCK","video",true));
     assert(Psyz_AudioInit()==0 && !Psyz_AudioIsPaused());
+    assert(SetRCnt(0xf2000002,65535,0));
+    SDL_Window *focus=SDL_CreateWindow("focus fixture",320,240,SDL_WINDOW_HIDDEN);assert(focus);
+    SDL_Thread *focus_thread=SDL_CreateThread(DriveFocus,"focus pause",focus);assert(focus_thread);
+    Host_PauseForFocus(focus);SDL_WaitThread(focus_thread,NULL);
+    assert(!Psyz_AudioIsPaused());
+    Psyz_AudioPause();
+    focus_thread=SDL_CreateThread(DriveFocus,"already paused focus",focus);assert(focus_thread);
+    Host_PauseForFocus(focus);SDL_WaitThread(focus_thread,NULL);
+    assert(Psyz_AudioIsPaused());Psyz_AudioUnpause();
+    SDL_DestroyWindow(focus);
+
     int original_key=host_options.keys[0];
     SDL_Thread *thread=SDL_CreateThread(Drive,"settings input",NULL);assert(thread);
     SDL_Event open={0};open.type=SDL_EVENT_KEY_DOWN;open.key.scancode=SDL_SCANCODE_ESCAPE;

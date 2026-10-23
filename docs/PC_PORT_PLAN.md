@@ -2,6 +2,33 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Pauza focusu, resztki XA i incydent automatyzacji pulpitu
+
+Natywny smoke ujawnił dalszy rozjazd po przełączaniu aplikacji. Main obsługuje
+teraz focus głównego okna blokującym oczekiwaniem na powrót lub zamknięcie;
+jednocześnie zamraża audio, VBlank i czas root counterów. Kernel odejmuje czas
+pauzy od zegara hosta, aby AKAO nie sekwencjonowało w tle. Powrót zachowuje
+wcześniejszy stan pauzy. Headless fixture dwukrotnie czeka 90 ms w pauzie
+(w tym z audio już wstrzymanym), sprawdza niezmienny VBlank i GetRCnt oraz
+właściwy stan audio po powrocie. To test syntetycznych zdarzeń/okna SDL dummy;
+nie jest dowodem wszystkich rzeczywistych zachowań window managerów.
+
+Nowy test istniejącego SDK xa_playback odtworzył resztki prefetcha: po CdStop
+SPU zwracało 2046 zamiast zera. Przy stop/pause/nowym XA czyszczony jest tylko
+ring wejścia CD w SPU, bez resetowania głosów i reverb. Ten sam fixture teraz
+przechodzi. Zachowano czerwony wynik `/tmp/pe-cd-stop-red2/normal/output.log`.
+Zestaw CD/SPU przechodzi 68/68 normal oraz 68/68 ASan/UBSan/function, zero SKIP:
+`/tmp/pe-cd-spu-focus-green/proof.json`. Trzy fixture'y gry/ustawień/inputu
+przechodzą w obu profilach: `/tmp/pe-focus-buffer-normal-tests.log` oraz
+`/tmp/pe-focus-buffer-san-tests.log`. Pełny zestaw nowej wersji pozostaje do
+wykonania; wyników 6baf155cf nie przypisujemy tym poprawkom.
+
+Użytkownik zgłosił blokadę fizycznego kursora również po zamknięciu gry.
+Reset sesji CUA nie pomógł. Zatrzymanie procesu SkyComputerUseService SIGTERM
+przywróciło mysz, co użytkownik potwierdził. Nie uruchamiamy ponownie usługi
+ani sterowania pulpitem; dalsze testy są headless. Dwa pozostałe procesy gry
+miały SDL_AUDIODRIVER=dummy, a widoczna aplikacja była już zamknięta.
+
 ### Obrazy płyt, audio FMV i tryb pulpitu — poprawki w desktop-disc-management
 
 Praca pozostaje w osobnym worktree `/tmp/pe-disc-management-v1`; nie zmienia

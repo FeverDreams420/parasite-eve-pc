@@ -387,7 +387,30 @@ static void Host_Settings(SDL_Window *game) {
     if(!paused)Psyz_AudioUnpause();
     if(quit){SDL_Event event={0};event.type=SDL_EVENT_QUIT;SDL_PushEvent(&event);}
 }
+static void Host_PauseForFocus(SDL_Window *game) {
+    int paused=Psyz_AudioIsPaused();
+    Psyz_PauseHostClock_SDL3(true);Psyz_AudioPause();
+    SDL_Event pending;
+    while(SDL_WaitEvent(&pending)){
+        if(pending.type==SDL_EVENT_WINDOW_FOCUS_GAINED &&
+           pending.window.windowID==SDL_GetWindowID(game))break;
+        if(pending.type==SDL_EVENT_QUIT ||
+           (pending.type==SDL_EVENT_WINDOW_CLOSE_REQUESTED &&
+            pending.window.windowID==SDL_GetWindowID(game))){
+            SDL_PushEvent(&pending);break;
+        }
+    }
+    SDL_ResetKeyboard();
+    Psyz_PauseHostClock_SDL3(false);
+    if(!paused)Psyz_AudioUnpause();
+}
 static bool Host_SettingsEvent(const SDL_Event *event) {
+    SDL_Window *game=Psyz_GetWindow_SDL3();
+    if(game && event->type==SDL_EVENT_WINDOW_FOCUS_LOST &&
+       event->window.windowID==SDL_GetWindowID(game)){
+        Host_PauseForFocus(game);
+        return true;
+    }
     if(event->type==SDL_EVENT_KEY_DOWN && event->key.scancode==SDL_SCANCODE_ESCAPE){
         if(!event->key.repeat)Host_Settings(Psyz_GetWindow_SDL3());
         return true;

@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N6: cold trzech trafień PASS; dłuższa walka doEve16834, HP0/Preraise
+
+`/tmp/pe-N6-Eve-triple-cold-v1-proof.json`:O→65985 normal/SAN exit0/czysto,
+całyJSON/1MiBVRAM równy frozenlive, O niezmieniony. Pełne trzy234hit
+przedMayą potwierdzone powtarzalnie na tym samym inv-mask-v1.
+
+Kolejne8okien→80025: Eve1038362→1033916 (−4446),HP857,PEmax,
+Revive4/M4 zachowane. Oryginalny BJack1→BArmor→BJack1 przy80721
+zachowałHP857 i całyinventory (porównanie od menu przed zatwierdzeniem),
+recovery185970→268697/div60000. `/tmp/pe-N6-Eve-armor-reset-after-v1`.
+Następne8okien→94593:Eve1028768,HP869,PE~1474. Hostguard1500 zatrzymał
+próbęresetu przed akcją; próg zmieniono1300 (kosztFullRecover), reset95289
+HP869 zachowane. Dalej4okna/reset:103665/Eve1026428,114505/1023620,
+124737/1021280,135353/1018940, wszystkieHP869,Revive4. Resety nie uleczyłyEve.
+
+Przy144161 Eve1016834/HP869. Atakmode7 dał145193HP530; staryhelper
+wybrałHeal3 w jego przygotowaniu,145665HP810; mode11 przy145889→HP0.
+Guard zatrzymał automat. `/tmp/pe-N6-Eve-half-HP0-before-v1`.
+328neutralnych klatek uruchomiło oryginalnePreraise:146217HP434,
+PE45867916,Revive4 nienaruszone. `/tmp/pe-N6-Eve-Preraise-half-v1`.
+
+Host odtąd nie rzucaPE przyEve.mode7/11; leczy wMaya/summon lubATB≤2500,
+w groźnych animacjach strafe, nie proste cofanie. Preraise ma próg1500
+(koszt1000+500naHeal3). Pierwsza próba do149433 nie zadała obrażeńEve,
+HP1,PE77278040,Preraise aktywne,Revive4. Nie zaliczono jej jako bezpiecznej
+strategii; kolejne pojedyncze okno uruchomione do oceny odzyskaniaHP.
+Wszystko po65985 nadal live-only; brak ukończenia77/portu/oraclePS1.
+
 ### N6: pełne trzy trafieniaEve przedMayą, dystans pilota poprawiony
 
 Drugie okno do64601 obniżyłoEve1039532→1039064,HP751,ammo13→10;

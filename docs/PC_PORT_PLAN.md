@@ -2,6 +2,22 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### b6cdcbf26: częściowy katalog wykonania z36 zakończonych testów
+
+`/tmp/pe-seeker-original-v1/coverage-snapshot/function-execution-catalog.json`:
+36 zaobserwowanych Passed,64 niezmienne kopie profili,16 grup rozdzielonych
+pełnym fingerprintem nazw/hash/liczby liczników. Profile gry oddzielone od
+fixture; bez mieszania różnych programów. Źródła bajtowo zgodne z b6cdcbf26,
+hashe16 programów zgodne z manifestem pełnego coverage builda.
+
+W migawce1512/3429 wpisów mapowania zostało wykonanych. Wpis mapowania LLVM
+nie jest równoważny jednej definicji C i samo wykonanie nie dowodzi poprawności.
+Nie jest to wynik końcowej macierzy94 ani pełne pokrycie gałęzi/funkcji.
+Pozostałe testy nadal pracują, a migawka nie czyta ich aktywnych profili.
+Nowy GPU2× normal/SAN2/2 również zakończył się poprawnie (gpu-replay/proof.json
+pod /tmp/pe-seeker-original-v1-gpu-replay): pełny stan/VRAM/obraz/PCM zgodne
+z zachowanymi wynikami; bez niezależnego hardware oracle i pełnej akceptacji hi-res.
+
 ### b6cdcbf26: Tutorial2/2 i osiem świeżych częściowych dowodów CPU
 
 `/tmp/pe-seeker-original-v1-tutorial-cold/proof.json`: normal/SAN2/2,

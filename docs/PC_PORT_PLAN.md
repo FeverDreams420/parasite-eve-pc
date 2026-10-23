@@ -36579,3 +36579,27 @@ To obserwacja item/status, nie PASS walki ani niezależnego replay.
 Cold-M358-recovery normal/session58243 iSAN/session45515 nadal działają
 przy ostatnim odczycie uchwytów; wyniki do632438 jeszcze nieznane.
 Ten zakres kończy się przed odbiorem nagród/Cure-P. Brak zmian produkcji.
+
+### M065: audyt ruchu i statusu, bez przypisywania winy portowi
+
+Świeże CTest normal/SAN: po4/4 original-game-input-rules,
+original-game-movement, original-game-actor-animation i
+original-attack-effect-status-gate PASS. Logi /tmp/pe-M065-{normal,san}-movement-status-audit.log.
+Istniejący actor-animation obejmuje m.in. oryginalny oracle USA MIPS dla
+65536 przypadków timerów/statusów; te testy nie dowodzą kolizji całejM065.
+
+Automatyczny odczyt kontrolnych stanów M065-CureP: ruch zCircle faktycznie
+przemieszczał Ayę, np637292→637412 o622 jednostki bez stratHP;
+639108→639208 o472 zHP88→65,639804→639904 o707 z39→19.
+Up639408→639508 tylko90 jednostek, przyczyna ograniczenia nieustalona.
+Brak ogólnego zamrożenia wejścia; nie dowodzi to poprawności wszystkich
+kolizji/trafień. M065-movement-damage-audit.json zachowuje dokładne
+pozycje i delty (przemieszczenie, nie długość przebytej ścieżki).
+
+Flaga Cure-P3 pojawia się638252, znika639524 do0; do końca nie ma
+ponownego poison1. Oryginalne enemy_actions.c przy ENEMY_EFFECT_POISON
+zużywa AYA_POISON_IMMUNE, zerując maskę i przerywając nałożenie trucizny.
+Nie traktować tej odporności jako trwałej ani jej wygaśnięcia jako błędu.
+Cold recovery normal zakończył0/PASS do632438, całyJSON/VRAM/PPM zgodny,
+PCM a27b08e5055f8c11b26f3d869ff4467ab37482ef5e65e309729f4806d64d585f.
+SAN/session45515 nadal żywy przy odczycie, wynik nieznany. M065 nieukończone.

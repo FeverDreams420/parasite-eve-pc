@@ -36491,3 +36491,19 @@ checkpoint579088-recovery. Niezależny replay porażki/powrotu jeszcze nie
 wykonany. Następna próba wymaga lepszego zarządzania leczeniem przedM065;
 bez edycji stanu gry. Cold-M358 SAN PID52171/session59866 potwierdzony
 R po5min, nadal brak wyniku; nie restartować na podstawie czasu odczytu.
+
+### Powtórna trasa po Continue: pełneHP przed M065
+
+Live poContinueC: M063 ponownie wygrane, Heal1 do92/92; M358 wejście
+587284. Spotkanie trzech przeciwników wygrane590264 przyHP27/92,
+awans8, max101 iBP98 (inna rozgrywka od wcześniejszego przebiegu).
+Nagrody odebrane, Heal1 przy591528 dało27→57. Zwykłe Item/Medicine1,
+Use przy592402 podniosło57→101/101 i zużyło przedmiot, bez edycji stanu.
+Checkpoint592402, M358-retry-heal-proof.json; menuItem1 otwarte.
+Zwycięstwo wM065 pozostaje niepotwierdzone, ten odcinek wymaga replay.
+
+Cold-M358 SAN zakończył native0. Oba profile do567258 zgodne całym
+JSON/VRAM/PPM z checkpointem, pełnePCM identyczne SHA256
+922c1f6daa2289283e64e4a64e7c457647742e0716f84d373c041fb3e29055fc,
+logi bez wykrytych błędów. cold-M358-pair-proof.json w tym samym /tmp.
+Ten PASS dotyczy wejściaM358, nie późniejszych walk, porażki iContinue.

@@ -2,6 +2,18 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Kandydat po porządkach fc1c1a6fc: świeże testy jeszcze trwają
+
+Nowe buildy normal/SAN zakończone0, pełne95 CTest w toku (sesje5276/94283).
+Ich wyniki nie są jeszcze potwierdzone. Kodsrc/include/tests/CMake zgodny
+ze snapshotem /tmp/pe-clean-source-v1-snapshot.json (738 plików).
+Nowy katalog AST obejmuje wszystkie210 plikówC wsrc,220 instancji TU,
+2986 definicji, zero błędów parsera. Zestaw(file,name) definicji identyczny
+z katalogiem sprzed porządków: nie usunięto aktywnych definicji funkcji.
+/tmp/pe-clean-source-catalog-v1/function-evidence-catalog.json zawiera hashe
+źródeł i jawne correctness=not_assessed. To dowód zakresu i tożsamości,
+nie działania wszystkich funkcji; SDKPsyZ/SDL pozostają osobnym zakresem.
+
 ### Bieżący punkt: oryginalny zapis E i dalsza kampania Day2
 
 Zamrożony kandydat produkcji a904055bc/PsyZ33153a4b: pełne95/95 CTest

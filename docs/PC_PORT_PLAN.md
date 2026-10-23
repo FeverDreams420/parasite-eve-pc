@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Tutorial: pełny przebieg ujawnił UB w oryginalnych komendach AKAO
+
+Oryginalnym padem z pustych prywatnych kart wybrano Tutorial, przeszło obie
+plansze kontrolera, ikony, instrukcje walki i zapisu, następnie wrócono przez
+intro do menu tytułowego bez EX Game. Input i123 pełne checkpointy zachowano
+w `/tmp/pe-tutorial-v1-live/`. Osiem odwiedzonych scen:651c8,65248,652c8,
+660c8,66148,661c8,66348 oraz title (pełne tokeny w states.json).
+Nie zmieniano stanu/RNG/save gry; tylko rzeczywiste przyciski runnera.
+
+Pierwsze zimne odtworzenie normal PASS, ale dotychczasowy SAN przerwał już
+wejście do Tutorial: voice_bank.c:1675, left shift of negative value -48.
+To nowy rzeczywisty błąd, którego wcześniejsze90 testów nie wykrywało.
+Stare wyniki pozostają w `/tmp/pe-tutorial-v1-cold/`; nie są zaliczeniem SAN.
+
+Naprawiono sześć oryginalnych procedur D2D0/D2CC w istniejącym voice_bank.c:
+podpisane bajty skalowane mnożeniem65536 zamiast przesunięcia ujemnej liczby;
+początek zakresu zachowuje sign-extension dolnego bajtu. Wartości i ich różnice
+mieszczą się w int32. Nie przenoszono funkcji, nie zmieniano protokołu komend
+ani algorytmu slide/duration. Cały moduł skompilowano O2/C11 i podlinkowano
+w osobnych normal/SAN kandydatach z istniejącymi pełnymi obiektami CMake.
+Nie przebudowano zamrożonych katalogów ani użytkowego binarium.
+
+`/tmp/pe-tutorial-audio-fix-v1/cold/proof.json`:2/2 zimne odtworzenia nowego
+normal/SAN PASS, każdy123 checkpointy. Cały JSON,1MiB VRAM i PPM w każdym
+punkcie identyczne między profilami; wszystkie JSON zgodne z oryginalnym
+przebiegiem. Cały końcowy PCM także zgodny z nim i między profilami:
+SHA25645203257216bacc8148e1b37048a9ed0ad5fc578cb244cf73708113753cc49d7.
+Normal11.62s, SAN26.36s, oba exit0 bez raportów sanitizerów. Karty puste.
+To dowód tego przebiegu Tutorial, nie PS1 oracle ani pełna kampania.
+
+Trwająca macierz coverage nadal używa poprzedniego binarium. Jej voice_bank.c
+zachowano oddzielnie w `source-before-tutorial-fix/` wraz z hashem: kolejne
+profile muszą wskazywać to źródło, a nie nową poprawkę. Pełne macierze nowego
+kandydata i trwała rejestracja regresji Tutorial pozostają do wykonania.
+
 ### Powtarzalny audyt resident script dispatch
 
 Rozszerzono istniejący `tests/verify_akao_catalog.py`, bez nowych plików,

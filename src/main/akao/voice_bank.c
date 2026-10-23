@@ -1672,7 +1672,8 @@ void Akao_SetGlobalD2D0Immediate(void *message) {
     int value = cmd->value;
 
     g_AkaoGlobalD2D0SlideCounter = 0;
-    g_AkaoTempoScaleAccum = value << 16;
+    /* Signed byte commands may be negative (the Tutorial sends -48). */
+    g_AkaoTempoScaleAccum = value * 65536;
 }
 
 void Akao_SlideGlobalD2D0ToTarget(void *message) {
@@ -1687,7 +1688,7 @@ void Akao_SlideGlobalD2D0ToTarget(void *message) {
         duration = raw_duration;
     }
 
-    step = ((cmd->target << 16) - g_AkaoTempoScaleAccum) / duration;
+    step = ((cmd->target * 65536) - g_AkaoTempoScaleAccum) / duration;
     g_AkaoGlobalD2D0SlideCounter = duration;
     g_AkaoGlobalD2D0SlideStep = step;
 }
@@ -1706,10 +1707,9 @@ void Akao_SlideGlobalD2D0FromStartToTarget(void *message) {
         duration = cmd->duration;
     }
 
-    start <<= 24;
-    start >>= 8;
+    start = (s8)(u8)start * 65536;
     g_AkaoTempoScaleAccum = start;
-    step = ((cmd->target << 16) - start) / duration;
+    step = ((cmd->target * 65536) - start) / duration;
     g_AkaoGlobalD2D0SlideCounter = duration;
     g_AkaoGlobalD2D0SlideStep = step;
 }
@@ -1721,7 +1721,7 @@ void Akao_SetGlobalD2CCImmediate(void *message) {
     int value = cmd->value;
 
     g_AkaoGlobalD2CCSlideCounter = 0;
-    g_AkaoGlobalPitchDepth = value << 16;
+    g_AkaoGlobalPitchDepth = value * 65536;
 }
 
 void Akao_InitVoices(int arg0, AkaoTrack *arg1);
@@ -1738,7 +1738,7 @@ void Akao_SlideGlobalD2CCToTarget(void *message) {
         duration = raw_duration;
     }
 
-    step = ((cmd->target << 16) - g_AkaoGlobalPitchDepth) / duration;
+    step = ((cmd->target * 65536) - g_AkaoGlobalPitchDepth) / duration;
     g_AkaoGlobalD2CCSlideCounter = duration;
     g_AkaoGlobalD2CCSlideStep = step;
 }
@@ -1757,10 +1757,9 @@ void Akao_SlideGlobalD2CCFromStartToTarget(void *message) {
         duration = cmd->duration;
     }
 
-    start <<= 24;
-    start >>= 8;
+    start = (s8)(u8)start * 65536;
     g_AkaoGlobalPitchDepth = start;
-    step = ((cmd->target << 16) - start) / duration;
+    step = ((cmd->target * 65536) - start) / duration;
     g_AkaoGlobalD2CCSlideCounter = duration;
     g_AkaoGlobalD2CCSlideStep = step;
 }

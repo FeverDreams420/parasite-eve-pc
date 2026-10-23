@@ -5,6 +5,16 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
+option(PE_ENABLE_COVERAGE "Measure execution coverage with Clang/LLVM" OFF)
+if(PE_ENABLE_COVERAGE)
+    if(NOT CMAKE_C_COMPILER_ID MATCHES "Clang")
+        message(FATAL_ERROR "PE_ENABLE_COVERAGE requires Clang and its LLVM profile runtime")
+    endif()
+    add_compile_options(-fprofile-instr-generate -fcoverage-mapping -fprofile-update=atomic)
+    add_link_options(-fprofile-instr-generate)
+    add_compile_definitions(PE_NATIVE_COVERAGE=1)
+endif()
+
 option(BUILD_TESTING "Build original game tests" OFF)
 include(CTest)
 
@@ -754,6 +764,10 @@ endif()
 if(BUILD_TESTING)
     get_property(original_tests DIRECTORY PROPERTY TESTS)
     foreach(original_test IN LISTS original_tests)
+        if(PE_ENABLE_COVERAGE)
+            set_property(TEST ${original_test} APPEND PROPERTY ENVIRONMENT
+                "LLVM_PROFILE_FILE=${CMAKE_CURRENT_BINARY_DIR}/profiles/${original_test}/%p.profraw")
+        endif()
         if(original_test MATCHES "^original-game-")
             set_property(TEST ${original_test} APPEND PROPERTY ENVIRONMENT
                 "PSYZ_HEADLESS=1" "SDL_AUDIODRIVER=dummy")

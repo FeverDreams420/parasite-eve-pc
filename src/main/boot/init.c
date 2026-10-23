@@ -36,6 +36,20 @@
 #include "pe1/textbox.h"
 #include "pe1/menu_widget.h"
 
+#ifdef PE_NATIVE_COVERAGE
+extern int __llvm_profile_write_file(void);
+/* The runner intentionally uses _Exit under SDK callback stacks. LLVM's
+ * atexit writer would be bypassed; write once, immediately before success. */
+#define BOOT_WRITE_PROFILE() do { \
+    if(__llvm_profile_write_file()){ \
+        fprintf(stderr,"Cannot write execution profile\n");fflush(stderr);_Exit(2); \
+    } \
+} while(0)
+#else
+#define BOOT_WRITE_PROFILE() ((void)0)
+#endif
+
+
 /* Native backing for the original boot allocator. Overlay workspaces are
  * ordinary persistent memory; native OT/actor pointers need larger arenas. */
 _Alignas(16) u8 g_BootWorkArea[0x20000];
@@ -325,7 +339,7 @@ static void Boot_PollHost(void) {
                     fprintf(stderr,"Cannot read control command: %s\n",strerror(errno?errno:EIO));
                     fflush(stderr);_Exit(2);
                 }
-                if(!length)_Exit(EXIT_SUCCESS);
+                if(!length){BOOT_WRITE_PROFILE();_Exit(EXIT_SUCCESS);}
                 break;
             }
             line[length++]=(char)byte;
@@ -335,7 +349,7 @@ static void Boot_PollHost(void) {
         line[length]=0;
         if(!strchr(line,'\n') && !feof(stdin)){fprintf(stderr,"Control command too long\n");fflush(stderr);_Exit(2);}
         line[strcspn(line,"\r\n")]=0;
-        if(!strcmp(line,"quit"))_Exit(EXIT_SUCCESS);
+        if(!strcmp(line,"quit")){BOOT_WRITE_PROFILE();_Exit(EXIT_SUCCESS);}
         if(strncmp(line,"advance ",8)){fprintf(stderr,"Invalid control command\n");fflush(stderr);_Exit(2);}
         errno=0;unsigned long frames=strtoul(line+8,&end,10);
         if(end==line+8 || !isspace((unsigned char)*end)){fprintf(stderr,"Invalid control duration\n");fflush(stderr);_Exit(2);}
@@ -352,6 +366,7 @@ static void Boot_PollHost(void) {
     }
     /* A diagnostic cap is a forced process boundary, even inside a menu's
      * VSync callback. Do not unwind through the locked SDK callback stack. */
+    BOOT_WRITE_PROFILE();
     _Exit(EXIT_SUCCESS);
 }
 

@@ -141,6 +141,22 @@ test launches the actual original entrypoint with a real CUE/BIN and checks
 bounded headless execution, scheduled START, New Game and Continue input,
 and a deterministic opening VRAM capture.
 
+For optional Clang/LLVM execution coverage, configure a separate build with
+`-DPE_ENABLE_COVERAGE=ON -DBUILD_TESTING=ON`. This is off by default and uses
+atomic counters in the game, PsyZ and SDL. CTest writes separate process profiles
+to `<build>/profiles/<test-name>/<pid>.profraw`. For direct game runs, set
+`LLVM_PROFILE_FILE` to a writable path containing `%p`. The headless runner
+flushes its profile before successful forced exits, including `quit` and EOF;
+a profile write failure exits with status 2.
+
+Merge profiles from the same executable with `llvm-profdata merge -sparse
+<profiles> -o run.profdata`, then inspect `llvm-cov report <executable>
+-instr-profile=run.profdata` or export with `llvm-cov export`. On macOS these
+commands are available through `xcrun`. Keep the matching executable and source
+revision with each measurement. Execution counts identify exercised code;
+they do not prove correctness or account for functions absent from the linked
+binary. Full source and content acceptance remains a separate requirement.
+
 ## Layout
 
 - `src/main/` — game logic to port; `psyq/` holds legacy runtime implementations

@@ -2,6 +2,79 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Opcjonalne pokrycie LLVM — pomiar, nie akceptacja funkcji
+
+Dodano domyślnie wyłączone `PE_ENABLE_COVERAGE` w istniejącym CMake oraz zapis
+profilu przed trzema poprawnymi wymuszonymi zakończeniami oryginalnego runnera.
+Liczniki atomowe obejmują grę, SDK i SDL. Wszystkie90 wpisów CTest mają osobne
+ścieżki profilu test/proces. Użytkowy build pozostaje bez instrumentacji.
+
+`/tmp/pe-native-coverage-v1/parity-proof.json`:4/4 rzeczywiste porównania
+instrumentowanego root buildu z zamrożonym CMake-v2: limit1000, quit, EOF oraz
+advance do1008. Cały JSON, VRAM, PPM i PCM identyczne. Profile odczytane przez
+LLVM, licznik Boot_PollHost równy VBlank. Osobno wymuszony błąd zapisu profilu
+kończy proces kodem2. Kod/dane sekcji boot przy wyłączonej opcji identyczne
+z wcześniejszym obiektem (`off-and-runtime-proof.json`).
+
+`/tmp/pe-native-coverage-v1/function-mapping-catalog.json` łączy bootstrap oraz
+oryginalny fixture M350:3403 klucze mapowania,291 z wejściem,224 pliki definicji.
+Każdy wpis zachowuje źródło/hash, nazwę, zakres i liczniki osobno dla przebiegów;
+status poprawności wszystkich wpisów jest `not_assessed`. To katalog mapowań
+linkowanych funkcji, jeszcze nie pełny katalog źródeł ani dowód poprawności.
+Instancje nagłówków i funkcje nielinkowane wymagają osobnego audytu. Pełnej
+macierzy90 w wariancie coverage jeszcze nie zaliczono; wszystkie targety
+zbudowano, uruchomiono CTest z wymaganymi rzeczywistymi USA CUE/BIN.
+
+Osobny `/tmp/pe-native-coverage-v1/source-inclusion-catalog.json` sprawdza441
+plików C:208 bezpośrednich jednostek kompilacji,233 nieodnalezione w obecnych
+zależnościach.225 z tych233 to legacy Psy-Q; pozostałe8 to draw/error.c,
+cztery moduły mdec_diag i trzy room_lib. Nie uznano ich za zbędne: wymagają
+powiązania z aktualną implementacją/SDK lub przywrócenia. Na przykład tablice
+m358/m384/m387 są już mapowane w room_load.c, ale samo podobieństwo nazw
+nie dowodzi pełnej równoważności. Wszystkie674 polecenia C/ObjC mają flagi
+coverage i atomowych liczników. Nie zmieniano danych użytkowej karty bu00.
+
+### Coverage: rzeczywisty New Game do24000 i pomiar kosztu
+
+`/tmp/pe-native-coverage-v1/scene-parity/proof.json`: instrumentowany root build
+i zamrożony CMake-v2 przeszły te same oryginalne wejścia New Game do24000.
+Pełny JSON,1MiB VRAM, PPM i PCM są identyczne; oba USA CUE, prywatne puste
+karty i zegar audio video. Czas4.74s normal oraz29.55s coverage (6.23×), przy
+równoległej pracy CTest, więc nie jest to izolowany benchmark. Próbka działającej
+gry (`coverage-sample.txt`) pokazuje głównie Software_PushPrim/WritePixel,
+nie oczekiwanie w jednym skrypcie. Nie dowodzi to jeszcze wyniku całego bootstrapu.
+Zakończony timeoutem bootstrap ponowiono osobno bez limitu CTest180s, na tym
+samym binarium, oryginalnych asercjach i domyślnym zegarze jak w macierzy;
+wynik nadal oczekiwany. Pozostała macierz działa bez restartu.
+
+Po dołączeniu tego trzeciego przebiegu katalog ma nadal3403 klucze mapowania,
+ale585 z potwierdzonym wejściem zamiast291. Pozostałe nie mają dowodu
+wykonania w tych przebiegach. Żadnego wpisu nie uznano przez to za poprawny.
+
+### Audyt AST i pierwsza macierz coverage — zakres nadal otwarty
+
+`/tmp/pe-native-coverage-v1/compiled-function-definition-catalog.json`:
+libclang przeanalizował wszystkie219 natywnych poleceń kompilacji z208 plików,
+bez błędów. Zachowano różne warianty makr tego samego źródła:2986 kluczy
+definicji. Wszystkie dają się powiązać z mapowaniem LLVM z dwóch wcześniejszych
+przebiegów, bez niejednoznacznych lub niepowiązanych wpisów. Różnice miejsca
+pochodzące z makr są jawnie oznaczone; hashe źródeł i listy jednostek zachowane.
+To weryfikuje spójność katalogu kompilowanego kodu, nie wykonanie/poprawność
+wszystkich funkcji; pliki niekompilowane nadal są osobną luką.
+
+`/tmp/pe-native-coverage-v1/profile-groups.json` rozdziela profile przez pełny
+zestaw nazwa/hash/kształt liczników. Jest to potrzebne, ponieważ fixture
+bootstrap uruchamia też proces gry: nie wolno bezwarunkowo scalać profilów
+rodzica i dzieci. Bieżący zapis grup jest częściowy, podczas pracy macierzy.
+
+Pierwsza pełna macierz coverage NIE jest zaliczona: bootstrap przekroczył
+limit180s, po31 zaliczonych testach. CTest kontynuuje dalsze przypadki; nie
+restartowano działającej sesji. Normalny ten test trwał16.68s, ale samo to
+nie dowodzi przyczyny timeoutu. Wariant z atomowymi licznikami wymaga analizy
+checkpointów i własnego zmierzonego budżetu czasu, bez osłabiania asercji.
+Wcześniejsze normal90/SAN90 dotyczą buildów bez coverage i pozostają osobnym
+dowodem. Nie aktualizowano binarium użytkowego.
+
 ### CMake-v2: oba90/90 zakończone, użytkowy build zaktualizowany
 
 `/tmp/pe-cmake-native-v2-combined-proof.json`: PASS90/90 normal oraz90/90

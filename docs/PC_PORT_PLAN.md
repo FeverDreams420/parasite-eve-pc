@@ -2,6 +2,26 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Kandydat timeoutM318:64/64regresjefixture PASS, źródła świeże
+
+`/tmp/pe-m318-flash-timeout-v1-fixture-regression-proof.json`: wszystkie
+32przypadki×normal/SAN exit0, bez runtimeerror/ASan/niezwiązanychopcode.
+Obejmuje pełnycore, Melissę przezoryginalnyrunner, ładowanie assets,
+M318data/load/36cykli, efektyChryslera i pozostałe wyszczególnione moduły.
+Nie zastępuje całej kampanii, PCM/pikseliPS1 lub testów pakietów.
+
+`/tmp/pe-m318-flash-timeout-v1-build-proof.json`:438obiektów, wszystkie
+zależnościźródeł i hasheobiektów/binariów/bibliotek zgodne z bieżącym
+worktree. PsyZ/SDL w tym profilu pozostają nieinstrumentowane.
+SHA256 gry normal f2bd57b673e848139dd966183635a1d6ea9bb88e3545c005cf8dedfaa2cafe4a,
+SAN c5bf46367b9be7b420b3a5432474743e06a27c0fb04ea0dffd9f1818243c6deb.
+
+Dodatkowe6oryginalnychreplayów head2/phone/medicine normal/SAN uruchomione
+w sesji43432, wynik pending. N7/30148 i niezależnySAN/16043 do182713
+wciąż rzeczywiście pracują; żaden nie jest jeszcze dowodem przejścia
+miejscaabortu. SourceO i oryginalne źródłowe kartyA/B pozostają wejściami
+testów; nie edytowano ich zawartości.
+
 ### M318: timeout nietrafionego błysku zatrzymywał dziesięć slotówPM
 
 LLDBv4 odtworzył rzeczywistyabort: `failure-proof.json` w

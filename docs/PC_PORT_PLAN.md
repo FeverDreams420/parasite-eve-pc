@@ -36725,3 +36725,22 @@ w PsyZ nadal ma stub; nie uznajemy go za zaimplementowany ani używany
 przez grę. Po porządkach437 plikówC wsrc,210 wcompile_commands,
 227 poza nimi:225 starych Psy-Q, Draw_ReportError i złożona tabela klas.
 Spis /tmp/pe-source-compilation-scope-v2.json; pozostały zakres do rozliczenia.
+
+### Usunięte42 nieużywane trampoliny BIOS MIPS
+
+Dokładny audyt55 prostych pojedynczych PSYQ_BIOS_TRAMPOLINE:
+26 symboli ma definicję w zamrożonym libpsyz.a,16 importuje natywny
+program zbiblioteki systemowej. Te42 niekompilowane pliki usunięto
+(211 linii), bez zmiany aktywnych implementacji.13 pozostałych z tej
+kategorii nie ma rozstrzygnięcia w tym audycie i zachowano je. Nie
+utożsamiać dostępności symbolu z dowodem zgodności zachowania SDK.
+Lista/usuniętehashe/mapowanie: /tmp/pe-bios-veneer-cleanup-proof.json.
+
+Świeży CMake /tmp/pe-bios-cleanup-config-v1 exit0,675 poleceńkompilacji:
+674 ścieżkiźródeł identyczne, wygenerowanyPCH SDL różni tylko prefiksbuilda.
+Żaden z42 usuniętych plików nie był wejściem builda. ContinueE na prywatnej
+kopii normal/SAN ponownie exit0, character/inventory/scene/stage zgodne,
+pełnyJSON/VRAM/PPM międzyprofilami zgodny, E niezmienione, logiczyste:
+/tmp/pe-campaign-replay-v3/continue-E-after-bios-cleanup-proof.json.
+To nie jest świeży pełny build/test95 ani dowód całego SDK. Obecnie395
+plikówC wsrc,210 kompilowanych,185 poza buildem; audytpozostałych otwarty.

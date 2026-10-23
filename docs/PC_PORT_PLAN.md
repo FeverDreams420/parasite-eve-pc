@@ -36783,3 +36783,28 @@ postęp /tmp/pe-clean-source-san-progress.json. Snapshot src/include/tests
 +CMake /tmp/pe-clean-source-v1-snapshot.json. Nie przypisywać dotychczasowych
 95PASS nowym binariom przed zakończeniem i sprawdzeniem wyników.
 User build i bu00 nietknięte; liveE pozostaje przy668602.
+
+### Świeże binaria: ContinueE zgodne ze starym kandydatem
+
+PASS /tmp/pe-campaign-replay-v3/continue-E-clean-source-proof.json:
+ContinueE normal/SAN do15000 na nowych binariach po porządkach. Cały
+character/inventory/scene/stage zgodny z autentycznymE, całyJSON identyczny
+ze starszym kandydatem i międzyprofilami, VRAM/PPM zgodne, plikE
+niezmieniony, native0, czyste logi. Nowy normal binary SHA256
+bd695a91d2d70df42e269dcb039c9b29a3022af61063250e8ccf8862a1d1cb6b,
+SAN7ddb93b6183c6191be7053de4773ee220a7cb5096db12a4113e4493834693687.
+To wąski dowód Continue, nie całej kampanii ani ukończeniaM065.
+
+Manifesty /tmp/pe-clean-source-{normal,san}-manifest.json zapisują
+21 programów,688 istniejących artefaktów każdy, wszystkie źródła z675
+compilecommands i95 oczekiwanych testów.10 poleceń dotyczy opcjonalnych
+obiektów SDL3_test, niebudowanych i nielinkowanych do żadnego z21 programów;
+nie udajemy ich wykonania. Źródła738 plików zgodne ze snapshotem.
+Po zakończeniu95 konieczny ponowny rehash i sprawdzenie wszystkich wyników.
+
+Pełne normal/SAN nadal działają (session5276/94283); nie restartowano ich.
+Uruchomiono przygotowanie coverage /tmp/pe-clean-source-coverage-v1,
+session46441: configure/build, potem czeka na faktyczne końcowe kody obu
+istniejących przebiegów. Testycoverage wystartują tylko po ich exit0.
+Postęp /tmp/pe-clean-source-coverage-progress.json, profile osobno w
+/tmp/pe-clean-source-coverage-profiles. Brak wyniku nowych95/coverage.

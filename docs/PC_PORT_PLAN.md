@@ -36044,3 +36044,13 @@ Checkpoint317252 oraz `/tmp/pe-campaign-replay-v3/station-detention-entry-proof.
 zachowują wynik; commands.jsonl pełne wejścia. To eksploracja kolejnej
 lokacji w bieżącym New Game, bez dowodu wszystkich interakcji M078
 ani niezależnego replay tego odcinka. Dalsza trasa do Torresa nadal otwarta.
+
+
+### Day2: powrót M078 i wejście do szatni M045
+
+Potwierdzono zwykłe wyjście M078→M043 i wejście bocznymi drzwiami
+M043→M045/a80042c8. Przy326194 HP72/72, BP74, bez menu/dialogu.
+Kadr szatni obejrzano; interakcje przy ostatniej szafce nie wydały
+przedmiotu na tym etapie144. Nie uznawać nagród szafek za sprawdzone.
+Checkpoint326194 i `/tmp/pe-campaign-replay-v3/station-locker-entry-proof.json`
+zachowują odcinek; dalsza trasa do zbrojowni nadal nieosiągnięta.

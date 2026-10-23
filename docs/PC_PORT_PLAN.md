@@ -2,6 +2,46 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N5: cold QueenBee PASS, Key6 odłożony i autentyczny zapisO
+
+`/tmp/pe-N5-QueenBee-cold-v1-proof.json`: genuineN→326333 normal/SAN
+oba exit0/czysto, całyJSON/1MiBVRAM równy frozenlive, źródłowyN/karty
+niezmienione. Obejmuje65–69,QueenBee70,Key7 i fieldHeal3 doHP869.
+Nowa gałąź maATK235/TripleCommand,Revive4; bezM4/Revive w samym bossie.
+
+Powrót M418→M304/slot27→M335/26→M292/25. Oryginalny panel otworzył
+M293;69oddzielnych Down wybrało1. Po1200neutral od potwierdzenia
+jazda70→1 zakończona. M290→mapa,Right doNYPD, dwaCross→M046336359.
+Sprawdzony originalpad zL7 przeszedłM043→M051→M048340007,HP869.
+Wayne/StoreItem: Key6 wybrany na filtrowanej liście51/index11;
+Move wymaga wskazania celu w52. Początkowy odczyt poMove bez celu
+nie zmienił inventory; prawa lista zaczęła na zapamiętanym index7,
+więc dodatkoweDown nie trafiły w planowane5. Skorygowano zwykłymUp,
+Cross w index5 przy342855 przeniósł wyłącznie slot16:61→0,
+storage5:0→61. Wszystkie pozostałe pola inventory i character bez zmian,
+Key7 w12 zachowany. `/tmp/pe-N5-store-Key6-after-v1/proof.json` live PASS.
+
+Wayne zamknięty Cancel, powrótM051→M043→M042346967. Kilka chodzonych
+tras do telefonu zatrzymanych na biurkach/krzesłach; nie zmieniano kolizji.
+Oryginalny bieg przeszedł narożnik mebli; podejście do[587,−782],
+jednoklatkoweDown/neutral/Cross dało dialog6 przy355404.
+Save36→37, domyślneN/index13 pozostawiono;Down wybrało pustyO/index14.
+Oryginalny FileSaved menu40 przy356696 utworzył8192B O,
+SHA2569650c41ba992d2973e5a783970e8cece62b584c3b09c5118d060ab81ddc5acac.
+N nadal590cf948e62088c0b7df78e2838efe9dec066a805e796788182a1cc0bde73966.
+`/tmp/pe-N5-save-O-v1-{checkpoint,source}`. Level99,HP869,82BP,
+EXP1045091,pool1584,Key1–6 wWayne,tylkoKey7 niesiony,Revive4.
+
+Pełny cold doFileSavedO normal/SAN uruchomiony:
+`/tmp/pe-N5-save-O-cold-v1.py`,PTY57256; porówna też wszystkie8192B O.
+Niezależny krótki ContinueO jako jedynej karty zakończony PASS:
+`/tmp/pe-N5-Continue-O-v1-proof.json`,normal/SAN exit0/czysto14744,
+M042/menuNULL/enemy0, całyJSON/VRAM równy między profilami.
+Cały inventory/character/512vars identyczne zFileSavedO;8192B O bez zmian.
+Pełny cold doFileSaved nadal pending; krótkieContinue nie zastępuje
+odtworzenia całej trasy i ponownego wygenerowania tego samego O.
+Nie zaliczono pełnego portu,Chryslera77 ani PS1oracle.
+
 ### N5: QueenBee pokonana zTripleCommand, bezM4/Revive; Key7 odebrany
 
 Oryginalny farm−1 pokonał QueenBee: przy325033 mode2/live0,HP660,

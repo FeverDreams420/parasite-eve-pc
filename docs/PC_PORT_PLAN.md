@@ -36473,3 +36473,21 @@ zgodny z checkpointem wejścia, PCM SHA256
 922c1f6daa2289283e64e4a64e7c457647742e0716f84d373c041fb3e29055fc.
 SAN/session59866 nadal działa przy ostatnim odczycie, brak wyniku.
 Bez nowych zmian w kodzie produkcyjnym; pełny port pozostaje otwarty.
+
+### M065: porażka i oryginalny powrót przez Continue C
+
+Live574948: Right1000 z M358 prowadzi do M065/a80062c8 i walki
+z dwoma3:31/3:0 po60HP. WejścieHP49/101; pierwsze dwa strzały
+zmniejszyły HP3:0 do20, Aya18. Próba ruchu i czekania naATB nie
+zapobiegła śmierci575444 (HP0, combat3). To porażka, nie PASS walki.
+Checkpoint575444-death i M065-first-defeat.json zachowują obserwację.
+
+Po1000 bez inputu naturalny powrót do sekwencji tytułowej. Oryginalne
+Continue, karta1 i dwa Down na liście wybrałyC. Przy579088 M064,
+HP92/92, całycharacter/inventory/story_stage/scena zgodne z rzeczywistym
+zapisem551920; A/B/C bitowo niezmienione. Dowód obserwacji
+`/tmp/pe-campaign-replay-v3/M065-defeat-Continue-recovery-proof.json`,
+checkpoint579088-recovery. Niezależny replay porażki/powrotu jeszcze nie
+wykonany. Następna próba wymaga lepszego zarządzania leczeniem przedM065;
+bez edycji stanu gry. Cold-M358 SAN PID52171/session59866 potwierdzony
+R po5min, nadal brak wyniku; nie restartować na podstawie czasu odczytu.

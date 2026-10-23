@@ -111,11 +111,14 @@ static void Boot_PollHost(void) {
     printf("],\"actors\":[");
     unsigned actor_index=0;
     for(FieldActor *actor=g_FieldActorListHead;actor;actor=actor->next){
-        printf("%s{\"type\":%u,\"sub\":%u,\"player\":%s,\"flags\":%u,\"position\":[%d,%d,%d],\"yaw\":%d,\"animation\":{\"mode\":%u,\"frame_raw\":%d,\"previous_raw\":%d,\"step_raw\":%d,\"last_frame\":%u,\"stop_frame\":%u}}",
+        printf("%s{\"type\":%u,\"sub\":%u,\"player\":%s,\"flags\":%u,\"position\":[%d,%d,%d],\"yaw\":%d,\"animation\":{\"mode\":%u,\"frame_raw\":%d,\"previous_raw\":%d,\"step_raw\":%d,\"last_frame\":%u,\"stop_frame\":%u},\"script_locals\":[",
             actor_index++?",":"",actor->type_id,actor->sub_id,actor==g_PlayerEntity?"true":"false",actor->flags,
             actor->pos_x,actor->pos_y,actor->pos_z,actor->rot_y,
             (unsigned)actor->mode,actor->anim.fixed,actor->anim_prev,actor->anim_step,
             (unsigned)actor->action,(unsigned)actor->anim_frame_target);
+        for(unsigned i=0;i<sizeof(actor->pad_0AC)/sizeof(actor->pad_0AC[0]);++i)
+            printf("%s%u",i?",":"",actor->pad_0AC[i]);
+        printf("]}");
     }
     printf("],\"menu\":");
     if(g_MenuWidgetCurrentNode){

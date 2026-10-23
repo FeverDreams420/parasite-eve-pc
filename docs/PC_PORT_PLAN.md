@@ -2,6 +2,50 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N9: rezerwaPE zadziałała; porażka kontaktowa poPowerCharge
+
+`/tmp/pe-m318-flash-N9-live/handoff-proof.json`: normal/SAN do210465,
+pełnyJSON/VRAM zgodny oraz identyczny z historycznymJSONN8,
+sourceO/karty bez zmian. RezerwaPE zadziałała:211121PE1001 i kolejkaPreraise,
+211337ochrona aktywna (PE5). Pilot nie wydał najpierw500 naHeal3.
+
+Przy211537EveMode3,Aya[36,-1984]; pilot znów wybrał stały cel[0,-800].
+211809Aya[36,-814],Eve[687,-2081];211833PowerChargeHP1 i usunięciePreraise,
+Aya[-60,-719],Eve[-65,-617].211881HP0/Mode13, bezRevive. Odejdź-po-zapłonie
+nie wystarczył podczas odrzutu. Eve nadal1005785. Zamrożone
+`/tmp/pe-N9-PowerCharge-touch-v1/proof.json` passed:false.
+Oryginalne1200neutralnychklatek przywróciło213081title; quit exit0.
+To nie potwierdza błędu reguł gry ani zwycięstwa.
+
+Read-onlyLLDB bez funkcji targetu: `pe-N9-powercharge-readonly-v1.log`
+i `pe-N9-powercharge-locals-v1.log`. Potwierdzono rzeczywiste56lokalnych
+słówEve (FieldActor.pad_0AC), pozycję lotu/celu w19/21 i ośmiowierzchołkową
+arenę. Oryginalny skrypt32548..34592 używa lokalnych współrzędnych dla
+PowerCharge; poleganie wyłącznie na bieżącej pozycji renderowanej było
+niewystarczające dla pilota.
+
+### Oryginalny raport headless:56lokalnych rejestrów każdego aktora
+
+W istniejącym `src/main/boot/init.c` dodano do każdego aktoraJSON
+`script_locals` — dokładnie56rawu32 z jego oryginalnego banku.
+Wyłącznie odczyt/printf; bez nowego pliku, warstwy, zmian logiki lub stanu.
+Potrzebne do pełnej obserwacji celuPowerCharge przed utratąHP.
+Świeży `/tmp/pe-script-locals-v1` ma438obiektów i zgodne hashe źródeł,
+obiektów, binariów i bibliotek (`-build-proof.json`). SDK nieinstrumentowane.
+Regresje64fixture/66223 i6replayów/34323 trwają; nativecontrol normal/SAN
+już exit0. Stare polaJSON porównujemy w całości z poprzednim kandydatem,
+a nowe56rejestrów dodatkowo w pełnym normal/SANJSON; nie deklarujemy
+identyczności rozszerzonegoJSON ze starszym schematem bez tego pola.
+
+N10odO do210465 na nowym kandydacie: PTY69228,
+`/tmp/pe-script-locals-N10-live.py`; niezależnySAN91549.
+Przed wejściami wymagany `pe-script-locals-N10-handoff-v1.py`: wszystkie
+stare pola równeN9, pełny nowyJSON/VRAM normal/SAN zgodny, karty i żywy
+native sprawdzone. Wynik pending. Pilot przygotowany do odczytu celu lotu
+wmode3 i ruchu na przeciwną stronę (x±900,z−1100), zamiast do[0,-800];
+wyłącznie oryginalne wejścia. Test tej strategii jeszcze niezaliczony.
+Pełny port, finałEve, sprzętowe piksele/audio i paczki pozostają nieukończone.
+
 ### N8 zakończone porażką; Mayaheal1000 i rezerwaPreraise w pilocie
 
 ColdO→188489 normal/SAN PASS:

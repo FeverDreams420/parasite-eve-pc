@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Dalsze działanie gry po odczytach hi-res: PASS
+
+Ten sam kandydat2cd83653c/PsyZ8f2daf7, świeże binaria z manifestu
+`/tmp/pe-rendered-port-v1-build-manifest.json`. Bez zmian w kodzie gry:
+sprawdzono teraz kolejne zatrzymania i oryginalne wejście pada po zrzutach.
+
+`/tmp/pe-rendered-control-v1/proof.json`: PASS8/8 zimnych przebiegów,
+normal/ASan/UBSan,2×/8×, ze zrzutami i bez, po6 granic26308–26512.
+Triangle przełącza opis przedmiotu, a kierunek obsługuje otwarte menu;
+nie jest to ruch postaci. Cały JSON i1MiB VRAM równe we wszystkich
+przebiegach na każdej granicy, PPM identyczny normal/SAN dla danej skali.
+
+`/tmp/pe-rendered-control-v2/proof.json`: PASS4/4 zimnych przebiegów,
+normal/ASan/UBSan,2×, ze zrzutami i bez, po8 granic26308–26528.
+Oryginalne Cancel8192 (dwa naciśnięcia z rozdzielającym release), następnie
+Up16 przez120 klatek. Menu zamknięte; obejrzany końcowy PPM przedstawia
+Ayę w pomieszczeniu. Pozycja gracza zmienia się z
+[-97320960,-327680,54984704] na[-112366938,-327680,55401680].
+Cały JSON/VRAM identyczne w czterech przebiegach na wszystkich granicach,
+PPM zgodny normal/SAN. Zrzuty z późniejszych granic sprawdzają VRAM po
+wcześniejszych odczytach obrazu; domykają lukę poprzedniej macierzy terminalnej.
+
+Wszystkie procesy zakończyły się exit0, brak raportów ASan/UBSan,
+karty źródłowa i prywatne niezmienione. Proofy zawierają hashe artefaktów
+oraz manifestu kompilacji. Brak nowej logiki/plików produkcyjnych i brak
+modyfikacji stanu/RNG/save do testów. To jeden scenariusz i obsługa runnera,
+nie pełny audyt kampanii ani niezależne porównanie obrazu z PS1.
+
 ### Runner: zrzut skalowanego obrazu z oryginalnej gry
 
 W istniejących boot/main.c, boot/init.c i boot.h dodano `--dump-frame PATH`.

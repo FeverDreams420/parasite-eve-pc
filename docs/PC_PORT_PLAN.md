@@ -24,6 +24,13 @@ nieustalona; nie powiększamy arbitralnie tablic ani nie pomijamy efektu.
 Uruchomiona pełna powtórkaO z wejściami awarii podLLDB:
 `/tmp/pe-N6-Eve-effect97-debug-v1.py`, sesja86387. Breakpointabort,
 odczyt stosu i11nagłówkówPM; bez wywołań funkcji targetu lub zapisówRAM.
+PierwszyLLDB/86387 zatrzymał się w hostowymSetInputString/write przy
+bardzo długiej liście argumentów (potwierdzone sample), bez uruchomienia
+gry; zakończono goSIGTERM. Wariantv2 odrzucił opcje target.run-args.
+Wariantv3 podaje argumenty przez źródłowy plikpoleceń z separatorem--:
+`/tmp/pe-N6-Eve-effect97-debug-v3.py`, sesja12145. Zweryfikowany proces
+natywny85517/debugserver85519 rzeczywiście wykonuje pełną powtórkę.
+To diagnostyka tylko do odczytu, nie dowód naprawy awarii.
 O→173161 normal/SAN nadal pending w sesji58377. KodC/PsyZ bez zmian.
 
 ### N6: diagnoza kontaktowego ciosu poPowerCharge; korekta pilota

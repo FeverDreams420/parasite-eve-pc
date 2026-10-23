@@ -2,6 +2,22 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N8: rzeczywisty handoff PASS; FullRecover przez oryginalne menu
+
+`/tmp/pe-m318-flash-N8-live/handoff-proof.json`: O→182713,
+żywy native w pauzie kontrolnej, pełnyJSON/VRAM identyczny z zakończonym
+SAN, kartyO bez zmian, właściwe hashe tego samego timeoutM318.
+Tym razem PTY67466 pozostał otwarty; nie ma błęduEOF zN7.
+
+Oryginalne PE/FullRecover (packed13), dwa pominięcia pozostałych komend
+TripleCommand przezSquare:183361HP1→869/869, Preraise nadal aktywne,
+PE83794675raw (~1278), Revive0, bez przedmiotów i strzałów.
+Ten dalszy odcinek jest live, nie nowy coldPASS.
+Uruchomiona seria maksymalnie6okien z automatycznym doczekaniem wyłącznie
+potwierdzonegoPreraise; granica całkowitego25%HP wymaga zatrzymania przed
+następną nową kolejką i analizy. Wynik tej serii pending.
+Eve nadal ma11218HP ponad znacznik; zwycięstwo i pełny port niezaliczone.
+
 ### N8 w odtwarzaniu: przygotowanie kontroli końcowej fazyEve
 
 Sesja67466/native27934 nadal wykonuje tę samą trasęO→182713;

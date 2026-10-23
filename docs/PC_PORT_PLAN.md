@@ -36035,22 +36035,39 @@ Całe wejście zachowane w commands.jsonl, checkpoint311420 oraz
 nieosiągnięta w tej próbie; odcinek po291736 nie ma jeszcze cold SAN.
 
 
-### Day2: boczna trasa komisariatu do M078
+### Day2: boczna trasa komisariatu do M056
 
-Zwykły ruch w M043 doprowadził do przejścia M078/a8005348 przy316046.
+Zwykły ruch w M043 doprowadził do przejścia M056/a8005348 przy316046.
 Obejrzano kadr części aresztowej z zamkniętą kratą i policjantem; nie jest
 to zbrojownia. Przy317252 HP72/72, brak menu/dialogu i przeciwników.
 Checkpoint317252 oraz `/tmp/pe-campaign-replay-v3/station-detention-entry-proof.json`
 zachowują wynik; commands.jsonl pełne wejścia. To eksploracja kolejnej
-lokacji w bieżącym New Game, bez dowodu wszystkich interakcji M078
+lokacji w bieżącym New Game, bez dowodu wszystkich interakcji M056
 ani niezależnego replay tego odcinka. Dalsza trasa do Torresa nadal otwarta.
 
 
-### Day2: powrót M078 i wejście do szatni M045
+### Day2: powrót M056 i wejście do szatni M045
 
-Potwierdzono zwykłe wyjście M078→M043 i wejście bocznymi drzwiami
+Potwierdzono zwykłe wyjście M056→M043 i wejście bocznymi drzwiami
 M043→M045/a80042c8. Przy326194 HP72/72, BP74, bez menu/dialogu.
 Kadr szatni obejrzano; interakcje przy ostatniej szafce nie wydały
 przedmiotu na tym etapie144. Nie uznawać nagród szafek za sprawdzone.
 Checkpoint326194 i `/tmp/pe-campaign-replay-v3/station-locker-entry-proof.json`
 zachowują odcinek; dalsza trasa do zbrojowni nadal nieosiągnięta.
+
+
+### Korekta dekodowania nazw map i dalsza eksploracja
+
+Nazwy map koduje Text_ParseBase32Id, nie liniowy numer pomieszczenia.
+W poprzednich dwóch notatkach błędnie opisano a8005348 jako M078;
+to M056. Poprawiono notatki i scope dowodów, zachowując surowe tokeny
+i checkpointy bez zmian. Właściwe M051 ma token a80050c8. Odczyt
+oryginalnego M043 potwierdza jego wystąpienie, więc wcześniejsze założenie
+o braku bezpośredniego przejścia do M051 było błędne.
+
+Bieżąca próba wyszła M045→M043 przy327952, następnie weszła
+M046/a8004348 (recepcja) przy339110 i wróciła do M043 przy339398.
+To zwykłe przejścia pada, bez zmian kodu/flag. Przy341786 ponownie
+M056, HP72/72. Zbrojownia nadal nieosiągnięta. Audyt oryginalnych tokenów
+`/tmp/pe-campaign-replay-v3/M043-destination-token-audit.json` zachowuje
+pozycje wystąpień; same wystąpienia nie dowodzą warunków przejścia.

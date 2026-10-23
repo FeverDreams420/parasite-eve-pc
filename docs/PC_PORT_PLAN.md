@@ -2,6 +2,29 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Wspólne widoki pamięci: kontrakt kompilacji gry, nowa regresja92
+
+Root CMake ustawia -fno-strict-aliasing dla oryginalnych modułów i fixture
+GCC/Clang: odrębne tagi struktur widzą tę samą pamięć aktorów/zadań. Nie jest
+to obejście tylko dla testera/coverage ani wyłączenie asercji; kontrakt obejmuje
+także właściwy kod gry i zachowuje oryginalne widoki bez nowych warstw.
+Header fieldfx_task_pool.h i CODE_ORGANIZATION dokumentują wymaganie.
+Opcja dodana po konfiguracji SDK: jego własne flagi nie zmieniają się.
+
+`/tmp/pe-shared-views-v1-config-proof.json`: świeże normal/SAN/coverage,
+każdy674 polecenia;239 oryginalnej gry/testów z kontraktem,435 SDK/SDL/PCH
+z tą samą polityką aliasowania co wcześniejszy build (SDL już częściowo używa
+tej opcji). Każdy rejestr ma92 testy. Dodano focused callback-storage, korzystając
+z istniejącego --callback-list-storage i niezmienionych asercji.
+
+Instrumentowany wariant zachowuje asercje i dostaje4× istniejące timeouty,
+na podstawie zmierzonego kosztu atomowych liczników. Bootstrap720s zamiast180s;
+normal/SAN zachowują180s. Nie uznano nowej konfiguracji za zaliczone testy.
+Nowe katalogi /tmp/pe-shared-views-v1-{normal,san,coverage} są oddzielne od
+zamrożonych wcześniejszych wyników. Stara SAN91 nadal kończy swoje testy;
+weryfikator porównuje źródła jej manifestu z zamrożonym commitemc10f06af6,
+a nie zmieniającym się następnym worktree. Binariów nie przebudowywano.
+
 ### c10f06af6: normal91/91, EX i hi-res PASS; coverage87/90 z rozpoznaną luką
 
 `/tmp/pe-tutorial-audio-fix-v1/full-normal-matrix-proof.json`: pełna macierz

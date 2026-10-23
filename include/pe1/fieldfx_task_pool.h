@@ -34,7 +34,8 @@ extern FieldFxObjectPrefix *g_FieldFxOwner;
  * the record; the cast is free (a pointer copy). The argument names the
  * view the caller reads, so a call site never casts the result again;
  * code that needs only the common prefix (the owner's actor) reads
- * g_FieldFxOwner directly. */
+ * g_FieldFxOwner directly. Original modules and fixtures are compiled without
+ * type-based strict-alias assumptions: these views share the same storage. */
 #define ANIM_POOL_AS(type) ((type *)g_FieldFxActiveTaskSlot)
 #define ANIM_OWNER_AS(type) ((type *)g_FieldFxOwner)
 /* The same for the running task context, which effects read as their own

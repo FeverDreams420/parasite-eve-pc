@@ -23,6 +23,13 @@ set(PSYZ_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/psyz)
 add_subdirectory(${PSYZ_DIR}/psyz ${CMAKE_CURRENT_BINARY_DIR}/psyz)
 target_compile_definitions(psyz PRIVATE __psyz)
 
+# The original actor/task workspaces are shared by distinct layout views.
+# Preserve those accesses instead of assuming different struct tags cannot alias.
+# Set this after configuring PsyZ: its SDK/SDL targets retain their own options.
+if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    add_compile_options("$<$<COMPILE_LANGUAGE:C>:-fno-strict-aliasing>")
+endif()
+
 # Whole original modules may contain entry points not yet called by each test.
 # Keep function-level linking instead of splitting source files for test targets.
 if(APPLE)
@@ -508,6 +515,8 @@ if(BUILD_TESTING)
     set_tests_properties(original-game-texture-pages PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "game-assets;gpu")
     add_test(NAME original-game-headless-control COMMAND test-original-actor-animation --native-control $<TARGET_FILE:parasite-eve-pc>)
     set_tests_properties(original-game-headless-control PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120 LABELS "game-assets")
+    add_test(NAME original-game-callback-storage COMMAND test-original-actor-animation --callback-list-storage)
+    set_tests_properties(original-game-callback-storage PROPERTIES TIMEOUT 30 LABELS "fieldfx")
     add_test(NAME original-game-tutorial COMMAND test-original-actor-animation --native-tutorial $<TARGET_FILE:parasite-eve-pc>)
     set_tests_properties(original-game-tutorial PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 240 LABELS "game-assets;gpu;audio")
     add_test(NAME original-game-diagnostic-hp-arguments COMMAND test-original-actor-animation --native-diagnostic-hp-arguments $<TARGET_FILE:parasite-eve-pc>)
@@ -769,6 +778,13 @@ if(BUILD_TESTING)
         if(PE_ENABLE_COVERAGE)
             set_property(TEST ${original_test} APPEND PROPERTY ENVIRONMENT
                 "LLVM_PROFILE_FILE=${CMAKE_CURRENT_BINARY_DIR}/profiles/${original_test}/%p.profraw")
+            # Atomic pixel-loop counters are substantially slower than normal
+            # execution; keep the same assertions with an instrumented budget.
+            get_property(original_timeout TEST ${original_test} PROPERTY TIMEOUT)
+            if(original_timeout)
+                math(EXPR coverage_timeout "${original_timeout} * 4")
+                set_property(TEST ${original_test} PROPERTY TIMEOUT ${coverage_timeout})
+            endif()
         endif()
         if(original_test MATCHES "^original-game-")
             set_property(TEST ${original_test} APPEND PROPERTY ENVIRONMENT

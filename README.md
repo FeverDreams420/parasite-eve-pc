@@ -16,8 +16,10 @@ This is an incomplete port. Ordinary-input play has defeated Truebred Eve,
 completed the authored EX ending and returned to the title. Cold replays from
 a genuine late-EX save compare full reported state, native VRAM, the rendered
 title and playback PCM between optimized normal and sanitized builds. The
-current macOS CMake candidate passes all 91 registered tests in the normal
-build with the required USA assets; its full sanitizer matrix is still running.
+latest tested macOS CMake candidate passes all 91 registered tests in the
+normal build with the required USA assets; its full sanitizer matrix is still
+running. The next 92-case candidate adds the shared-memory aliasing compiler
+contract and a focused callback-storage regression.
 Tutorial, the late-EX route and a hidden Metal 2× replay already pass in both
 builds. Full New Game-to-campaign-to-EX coverage on one
 candidate, all content and platform/release validation remain open.
@@ -123,6 +125,11 @@ logged as JSON, and the final record includes `coverage_only: true`,
 `ordinary_campaign_proof: false`, and scheduled/applied counts. Use private
 memory-card copies for these fixtures. Such runs cannot establish an ordinary
 campaign playthrough. The normal game path has no scheduled health changes.
+
+Root CMake preserves the original engine's shared actor/effect layout views
+with `-fno-strict-aliasing` for game modules and fixtures on GCC/Clang. Keep
+that option in manual compiler invocations. PsyZ and SDL retain their own
+build policies.
 
 Enable `BUILD_TESTING=ON` for tests of the original modules, CPU reference
 results, real assets and headless startup. Tests that depended on the abandoned

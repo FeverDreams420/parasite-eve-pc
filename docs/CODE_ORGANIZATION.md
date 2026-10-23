@@ -22,6 +22,12 @@ AKAO still needs equivalent audio behavior. Use the maintained
 `khasinski/parasite-eve-psyz` source fork for needed generic runtime features.
 Do not link legacy SDK implementations wholesale alongside PsyZ.
 
+The original actor and effect workspaces have multiple typed layout views of
+the same storage. GCC/Clang builds of the original modules and their fixtures
+must preserve that aliasing (`-fno-strict-aliasing`, set by root CMake after
+configuring PsyZ). Keep this contract for manual builds too. The SDK and SDL
+retain their own compiler policies. Do not hide view failures by weakening tests.
+
 Keep original translation units intact; do not move functions into new files.
 There is no binary-layout or original compiler requirement to preserve.
 Use subsystem headers for cross-module declarations and ordinary definitions

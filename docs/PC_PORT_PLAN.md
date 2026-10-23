@@ -36089,3 +36089,21 @@ Checkpoint355930, pełne wejścia i
 `/tmp/pe-campaign-replay-v3/armory-receipt-proof.json` zachowane.
 To aktualne zwykłe przejście; samouczek, magazyn, założenie broni i cold
 SAN odcinka po291736 nadal wymagają wykonania.
+
+
+### Day2: M16A1 założone; rozszerzone cold replay uruchomione
+
+Po dialogach Wayne/Torres otwarto menu magazynu (50/51). Wybranie
+Move w kontekście nie przeniosło M16A1 do storage: rekord260 pozostał
+w slocie8, storage puste. Nie zaliczać tej próby jako transferu magazynu.
+Cancel w dialogu56 wrócił do pola. Oryginalne Triangle→Weapon→lista7
+→M16A1→Cross założyło broń: weapon_slot8, rekord260, ekran16 nabojów,
+ATK35+1, range112+0. Przy358826 M052, HP72/72, BP74, panel broni5.
+Checkpoint358826 i `/tmp/pe-campaign-replay-v3/armory-equip-proof.json`.
+Samouczek w osobnej scenie i transfer magazynu nadal niesprawdzone.
+
+Nowe niezależne cold normal i SAN od pustych kart powtarzają cały New Game
+do358826 i porównują pełny stan/VRAM/PPM. Skrypt
+`/tmp/pe-campaign-replay-v3/cold-armory.py`, normal session50902/PID16843,
+SAN session1913/PID16954. Procesy uruchomione; wyniki jeszcze nieznane.
+Bieżąca session37796 pozostaje na358826, aby zachować punkt porównania.

@@ -36260,3 +36260,18 @@ Nowe niezależne cold normal/SAN od pustych kart do456327:
 `/tmp/pe-campaign-replay-v3/cold-klamp.py`, normal session59280/PID45358,
 SAN session84283/PID45440. Wyniki jeszcze nieznane. Bieżąca session37796
 pozostaje na456327; całość wejść w commands.jsonl.
+
+
+### Po Klampie: autentyczny powrót do NYPD i etap218
+
+Wyjście przed muzeum otworzyło mapę; Left→NYPD→Cross uruchomiło
+przejazd a80033c8/dialog26, następnie M046. Zwykły powrót do M042
+i gabinetu M041 wykazał etap218 i pusty gabinet Bakera. Wyjście
+z gabinetu działa; oryginalny skrypt drzwi ma punkt X−448/Z1302.
+Przy470905 M042, HP72/72, BP74, bez menu/dialogu. Checkpoint470905
+i `/tmp/pe-campaign-replay-v3/post-klamp-nypd-proof.json`. Kolejny cel
+na mapie jeszcze niesprawdzony.
+
+Cold normal do456327 (cała scena Klampa) zakończył się0 z pełnym
+stanem/VRAM/PPM zgodnym z checkpointem. Dowód cold-klamp-normal/proof.json.
+SAN session84283 przy ostatnim sprawdzeniu nadal pracował; wynik nieznany.

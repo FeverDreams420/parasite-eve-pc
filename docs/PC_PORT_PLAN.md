@@ -2,6 +2,17 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Draw_ReportError: oryginalne ciało i brak bezpośrednich odwołań
+
+`/tmp/pe-seeker-original-v1/error-original-audit.json`: historyczny main.yaml
+wskazuje file offset29154, po potwierdzeniu instrukcji entry80038954.
+Oryginał wypisuje dwa komunikaty i zapętla się przy severity1. Skan całych
+USA EXE i PE.IMG: zero wyrównanych pointer/JAL/J do tego wejścia; obecne
+źródła C również bez wywołań. Nie dowodzi to braku obliczanych adresów
+pośrednich, więc nie uznano funkcji za w pełni wyłączoną z audytu ani native
+fatal handling za sprawdzone. Zachowano SHA256 ciała i komplet wyników skanu.
+Nie zmieniono produkcyjnych źródeł; macierze94 nadal pracują na b6cdcbf26.
+
 ### b6cdcbf26: EX2/2 oraz audyt pozostałych źródeł/MDEC
 
 Nowy EX normal/SAN2/2 zakończony: ContinueO, Truebred Eve, authored dialogi,

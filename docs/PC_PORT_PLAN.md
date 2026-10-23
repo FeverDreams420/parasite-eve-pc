@@ -36307,3 +36307,19 @@ obejmujące drugą odprawę, film i intro parku:
 `/tmp/pe-campaign-replay-v3/cold-park-intro.py`, normal session2330/PID89861,
 SAN session58873/PID89944. Wyniki nieznane; bieżąca session37796
 pozostaje na510342.
+
+
+### Park: wejście M059 i autentyczna skrzynia Ammo+6
+
+Zwykłe obejście Daniela i podejście zachodnią bramą doprowadziło
+M374→M059/a80054c8 przy514982. Ruch alejką wymaga obejścia samochodu.
+Przy521646 skrzynia wyświetliła Ammo+6; po potwierdzeniu przy521754
+menu zamknięte, rezerwa nabojów w special_records+10 wzrosła dokładnie6,
+HP72/72, BP74. To faktyczny łup tej próby, nie wcześniej opisane nagrody
+z innych przejść. Checkpoint521754 i
+`/tmp/pe-campaign-replay-v3/park-ammo-chest-proof.json`. Pierwsza walka
+jeszcze nieuruchomiona; dalszy park nadal otwarty.
+
+Cold normal do510342 przeszedł z pełnym JSON/VRAM/PPM zgodnym
+z checkpointem, exit0. Proof cold-park-intro-normal/proof.json.
+SAN session58873 nadal pracował przy ostatnim sprawdzeniu; wynik nieznany.

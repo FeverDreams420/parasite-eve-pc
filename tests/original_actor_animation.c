@@ -8467,6 +8467,36 @@ done:
     return ok;
 }
 
+/* Frozen pre-integration native corpus; no independent PS1 CPU claim. */
+static int original_seeker_particle_lifetimes(void)
+{
+    const int velocities[]={-32768,-32767,-63,-1,0,1,63,32766,32767};
+    uint64_t hash=UINT64_C(14695981039346656037);
+    unsigned count=0;
+    s16 saved_floor=g_RoomFloorY->y;
+    g_RoomFloorY->y=0;
+    for(int state=1;state<=2;++state)for(unsigned timer=0;timer<65536;++timer)
+    for(unsigned v=0;v<9;++v)for(unsigned above=0;above<2;++above){
+        RoomDampedSpark particle={.x=-32760,.y=above?32760:-32760,.z=32760,
+            .vx=velocities[v],.vy=velocities[(v+3)%9],.vz=velocities[8-v],
+            .state=state,.timer=timer};
+        int result=RoomEffect_SeekerSparkCallback(1,&particle,0);
+        for(unsigned i=0;i<sizeof(particle);++i)
+            hash=(hash^((unsigned char *)&particle)[i])*UINT64_C(1099511628211);
+        for(unsigned i=0;i<4;++i)
+            hash=(hash^(((unsigned)result>>(i*8))&255))*UINT64_C(1099511628211);
+        ++count;
+    }
+    g_RoomFloorY->y=saved_floor;
+    if(count!=2359296 || hash!=UINT64_C(0x596df89ba7c17665)){
+        fprintf(stderr,"Original seeker lifetime corpus: %u %016llx\n",
+                count,(unsigned long long)hash);
+        return 0;
+    }
+    puts("Original seeker: 2359296 lifetime states, all timers and signed velocity/floor boundaries passed");
+    return 1;
+}
+
 static int original_motion_program(void)
 {
     struct { _Alignas(16) u8 packets[32768]; u8 guard[32]; } arena;
@@ -18639,6 +18669,7 @@ int main(int argc, char **argv)
         PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;
         int result=original_fx_scene_init(&disc);pe_disc_close(&disc);return result?0:149;
     }
+    if(argc==2 && !strcmp(argv[1],"--seeker-particles"))return original_seeker_particle_lifetimes()?0:123;
     if(argc==2 && !strcmp(argv[1],"--motion-program"))return original_motion_program()?0:123;
     if(argc==2 && !strcmp(argv[1],"--fx-motion")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
@@ -18659,7 +18690,7 @@ int main(int argc, char **argv)
         Script_RunQueue();return 99;
     }
     if(argc==2 && !strcmp(argv[1],"--glint"))return original_positional_audio_projection() && original_glint_lifecycle()?0:141;
-    if(!original_m123_pulse_contact() || !original_paired_glow_states() || !original_paired_glow_program_flow() || !original_line_burst_states() || !original_dropped_flare_states() || !original_m089_states() || !original_m086_states() || !original_motion_states() || !original_motion_program() || !original_window_lifecycle() || !original_window_motion() || !original_room_e_init() || !original_room_e_update() || !original_effect_sequence_updates() || !original_effect_sequence_initializers() || !room_callback_context() || !native_room_actor_class_table() || !original_room_arc_offsets() || !original_contact_action_callback() || !original_room_d_update() || !original_room_d_motion() || !original_m023_drift_states() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
+    if(!original_seeker_particle_lifetimes() || !original_m123_pulse_contact() || !original_paired_glow_states() || !original_paired_glow_program_flow() || !original_line_burst_states() || !original_dropped_flare_states() || !original_m089_states() || !original_m086_states() || !original_motion_states() || !original_motion_program() || !original_window_lifecycle() || !original_window_motion() || !original_room_e_init() || !original_room_e_update() || !original_effect_sequence_updates() || !original_effect_sequence_initializers() || !room_callback_context() || !native_room_actor_class_table() || !original_room_arc_offsets() || !original_contact_action_callback() || !original_room_d_update() || !original_room_d_motion() || !original_m023_drift_states() || !room_actor_view() || !room_owner_state() || !callback_list_storage() || !native_task_cycle() || !canonical_render_buffers() || !native_effect_packet_links() || !native_screen_tint_packets() || !native_effect_model_packets() || !native_oriented_sprite_packets() || !native_ring_packets() || !native_effect_collision_coordinates() || !original_glow_resident_constants() || !native_glow_layer_packets() || !native_object_script_cycle() || !authored_glow_script_cycle() || !authored_m005_effect_cycle() || !authored_orbit_flare_cycle() || !original_actor_render_opcodes() || !original_actor_camera_opcodes() || !original_mode_wait_opcode() || !original_tracking_angle_opcode() || !original_absolute_movement_opcode() || !original_resident_script_program() || !original_actor_audio_state() || !original_burst_target_selection() || !native_effect_spawn_arguments() || !native_object_slot_bounds() || !process_static_task_programs() || !process_texture_bank_failures() || !native_actor_effect_gates()) return 123;
     (void)argv;
     if (!original_combat_timers() || !original_combat_angles() || !original_player_turn() || !original_enemy_damage() || !original_enemy_facing() || !original_enemy_death()) return 141;
     if (!original_startup_fade()) return 126;

@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Seeker: trwała regresja lifetime, rejestr94
+
+Istniejący tests/original_actor_animation.c ma original_seeker_particle_lifetimes,
+wywoływany także przez core fixture i --seeker-particles; CMake rejestruje
+original-game-seeker-particles (fieldfx). Korpus2 359 296 stanów obejmuje
+stany1/2, wszystkie16-bitowe timery, dziewięć wzorców signed velocity i obie
+strony podłogi. FNV596df89ba7c17665 zapisano z zachowanego callbacku sprzed
+podmiany i potwierdzono przez obie implementacje we wszystkich3 profilach.
+To regresja natywna, nie niezależny oracle CPU PS1.
+
+Pełny normal build integracji seeker zakończył się exit0, następnie przed
+zamrożeniem przebudowano fixture/rejestr94 i nowy CTest przeszedł w0,23s.
+Logi full-normal-regression-* w /tmp/pe-seeker-original-v1. Pełne94 macierze
+oraz nowe SAN/coverage tej wersji nadal wymagane, nie są zaliczone.
+Poprzedni d22826cb0 coverage93 zakończony i zweryfikowany93/93, bez SKIP,
+z niezmienionymi21 programami (root-coverage-matrix-proof.json).
+Nie przypisujemy tego wyniku późniejszym zmianom motion/seeker.
+
 ### Oryginalny seeker podłączony, duplikat callbacku usunięty
 
 Kontroler JointSpray używa teraz RoomEffect_SeekerSparkCallback z istniejącego

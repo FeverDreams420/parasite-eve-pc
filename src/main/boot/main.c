@@ -31,9 +31,10 @@ int main(int argc,char **argv) {
     int resolution_argument=0,headless_argument=0;
     for(int arg=1;arg<argc;++arg){
         if(!strcmp(argv[arg],"--help")){
-            printf("Usage: %s --disc <USA Disc 1 CUE/BIN> [--disc2 <USA Disc 2 CUE/BIN>] [--headless | --headless-gpu] [--internal-resolution 1..8] [--frame-limit N] [--control-at N] [--dump-vram PATH] [--dump-frame PATH] [--pad-at VBLANK:BUTTON_MASK ...]\n",argv[0]);
+            printf("Usage: %s --disc <USA Disc 1 CUE/BIN> [--disc2 <USA Disc 2 CUE/BIN>] [--headless | --headless-gpu] [--internal-resolution 1..8] [--frame-limit N] [--control-at N] [--dump-vram PATH] [--dump-frame PATH] [--dump-audio PATH] [--pad-at VBLANK:BUTTON_MASK ...]\n",argv[0]);
             printf("--headless uses native-resolution software rendering; --headless-gpu keeps the actual GPU window hidden and supports internal scaling.\n");
             printf("--dump-frame writes the rendered display as RGB888 PPM at each control/terminal boundary.\n");
+            printf("--dump-audio writes stereo 44100 Hz signed-16-bit little-endian PCM; requires headless and PSYZ_AUDIO_CLOCK=video.\n");
             printf("Headless control: --control-at N pauses for stdin commands: advance FRAMES BUTTON_MASK or quit (requires --frame-limit).\n");
             printf("Headless fixtures only: --diagnostic-hp-at VBLANK:EXPECTED_HP:VALUE (requires --frame-limit; output is marked coverage-only)\n");
             return EXIT_SUCCESS;
@@ -65,6 +66,9 @@ int main(int argc,char **argv) {
         }else if(!strcmp(argv[arg],"--dump-frame")){
             if(arg+1>=argc || g_BootHostFramePath){fprintf(stderr,"Missing or duplicate rendered capture path\n");return EXIT_FAILURE;}
             g_BootHostFramePath=argv[++arg];
+        }else if(!strcmp(argv[arg],"--dump-audio")){
+            if(arg+1>=argc || g_BootHostAudioPath){fprintf(stderr,"Missing or duplicate audio capture path\n");return EXIT_FAILURE;}
+            g_BootHostAudioPath=argv[++arg];
         }else if(!strcmp(argv[arg],"--pad-at")){
             if(arg+1>=argc){fprintf(stderr,"Invalid input schedule\n");return EXIT_FAILURE;}
             char *end,*mask_end;errno=0;unsigned long tick=strtoul(argv[++arg],&end,10);
@@ -113,6 +117,16 @@ int main(int argc,char **argv) {
     if(g_BootHostVramPath && !g_BootHostVBlankLimit){fprintf(stderr,"VRAM capture requires --frame-limit\n");return EXIT_FAILURE;}
     if(g_BootHostFramePath && !g_BootHostVBlankLimit){fprintf(stderr,"Rendered capture requires --frame-limit\n");return EXIT_FAILURE;}
     if(g_BootHostFramePath && g_BootHostVramPath && !strcmp(g_BootHostFramePath,g_BootHostVramPath)){fprintf(stderr,"Capture paths must differ\n");return EXIT_FAILURE;}
+    if(g_BootHostAudioPath){
+        const char *clock=SDL_GetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_AUDIO_CLOCK");
+        if(!g_BootHostVBlankLimit || !headless_mode || (strcmp(headless_mode,"1") && strcmp(headless_mode,"gpu")) || !clock || strcmp(clock,"video")){
+            fprintf(stderr,"Audio capture requires headless mode, --frame-limit and PSYZ_AUDIO_CLOCK=video\n");return EXIT_FAILURE;
+        }
+        if((g_BootHostVramPath && !strcmp(g_BootHostAudioPath,g_BootHostVramPath)) ||
+           (g_BootHostFramePath && !strcmp(g_BootHostAudioPath,g_BootHostFramePath))){
+            fprintf(stderr,"Capture paths must differ\n");return EXIT_FAILURE;
+        }
+    }
     if(g_BootHostControlAt){
         const char *headless=SDL_GetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_HEADLESS");
         if(!headless || (strcmp(headless,"1") && strcmp(headless,"gpu")) || !g_BootHostVBlankLimit || g_BootHostControlAt>=g_BootHostVBlankLimit){

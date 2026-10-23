@@ -19,6 +19,7 @@ extern u32 g_BootHostVBlankLimit,g_BootHostVBlankCount;
 extern u32 g_BootHostControlAt;
 extern const char *g_BootHostVramPath;
 extern const char *g_BootHostFramePath;
+extern const char *g_BootHostAudioPath;
 extern BootHostPadEvent *g_BootHostPadEvents;
 extern unsigned g_BootHostPadEventCount;
 

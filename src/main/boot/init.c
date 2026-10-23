@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <psyz/system.h>
 #include <psyz/video.h>
+#include <psyz/audio.h>
 #include "common.h"
 #include "pe1/aya.h"
 #include "pe1/battle_runtime.h"
@@ -63,12 +64,36 @@ int g_BootHostActive;
 u32 g_BootHostVBlankLimit,g_BootHostVBlankCount,g_BootHostControlAt;
 const char *g_BootHostVramPath;
 const char *g_BootHostFramePath;
+const char *g_BootHostAudioPath;
+static FILE *hostAudioFile;
 BootHostPadEvent *g_BootHostPadEvents;
 unsigned g_BootHostPadEventCount;
 BootHostHealthEvent *g_BootHostHealthEvents;
 unsigned g_BootHostHealthEventCount,g_BootHostHealthApplied;
 static unsigned hostPadEvent;
 static u16 hostButtons;
+
+/* Observe the existing playback mix; this never requests additional samples. */
+static void Boot_CaptureHostAudio(const short *samples,int frames,void *userdata) {
+    FILE *out=userdata;
+    while(frames>0){
+        unsigned batch=frames>1024?1024:(unsigned)frames;
+        u8 bytes[1024*4];
+        for(unsigned i=0;i<batch*2;++i){
+            u16 value=(u16)samples[i];bytes[i*2]=(u8)value;bytes[i*2+1]=(u8)(value>>8);
+        }
+        if(fwrite(bytes,4,batch,out)!=batch){fprintf(stderr,"Cannot write audio capture\n");fflush(stderr);_Exit(2);}
+        samples+=batch*2;frames-=(int)batch;
+    }
+}
+
+static void Boot_CloseHostAudioCapture(void) {
+    Psyz_AudioSetCaptureCallback(NULL,NULL);
+    if(hostAudioFile){
+        int closed=fclose(hostAudioFile);hostAudioFile=NULL;
+        if(closed){fprintf(stderr,"Cannot finish audio capture\n");fflush(stderr);_Exit(2);}
+    }
+}
 
 static void Boot_PollHost(void) {
     ++g_BootHostVBlankCount;
@@ -93,6 +118,9 @@ static void Boot_PollHost(void) {
     if(Psyz_QuitRequested())exit(EXIT_SUCCESS);
     int terminal=g_BootHostVBlankLimit && g_BootHostVBlankCount>=g_BootHostVBlankLimit;
     if(!terminal && (!g_BootHostControlAt || g_BootHostVBlankCount<g_BootHostControlAt))return;
+    if(hostAudioFile && fflush(hostAudioFile)){
+        fprintf(stderr,"Cannot flush audio capture\n");fflush(stderr);_Exit(2);
+    }
     if(g_BootHostVramPath){
         static _Alignas(8) u16 vram[1024*512];RECT all={0,0,1024,512};
         StoreImage(&all,vram);DrawSync(0);
@@ -328,10 +356,17 @@ static void Boot_PollHost(void) {
 }
 
 void Boot_InitSystem(void) {
+    if(g_BootHostActive && g_BootHostAudioPath){
+        hostAudioFile=fopen(g_BootHostAudioPath,"wb");
+        if(!hostAudioFile){fprintf(stderr,"Cannot open audio capture\n");fflush(stderr);_Exit(2);}
+        if(atexit(Boot_CloseHostAudioCapture)){fclose(hostAudioFile);hostAudioFile=NULL;fprintf(stderr,"Cannot register audio capture cleanup\n");fflush(stderr);_Exit(2);}
+        Psyz_AudioSetCaptureCallback(Boot_CaptureHostAudio,hostAudioFile);
+    }
     ResetCallback();
     if(g_BootHostActive)VSyncCallbacks(0,Boot_PollHost);
     Render_ResetScene(0x140, 0xE0);
     SpuInit();
+    if(g_BootHostActive && Psyz_AudioInit()<0){fprintf(stderr,"Cannot initialize host audio\n");fflush(stderr);_Exit(2);}
     InitGeom();
     SetGeomOffset(0xA0, 0x70);
     SetGeomScreen(0xF0);

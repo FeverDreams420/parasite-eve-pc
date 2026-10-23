@@ -1,4 +1,5 @@
 #include "common.h"
+#include <psyz/audio.h>
 #include "pe1/akao/bgm.h"
 #include "pe1/akao/commands.h"
 #include "pe1/akao/queue.h"
@@ -377,7 +378,8 @@ int CdRom_SeekToTrack(int key, int mode, int group, int *slot, int blocking)
                 /* The stop queued for bank 0 must run before its bytes are
                  * reused. File-image reads can finish before the next AKAO
                  * interrupt, while the old tracks still point into this bank.
-                 * Poll the real timer without advancing the game VBlank. */
+                 * Service the timer without advancing the game VBlank,
+                 * including the sample-driven offline clock. */
                 if (!bankIndex) {
                     for (;;) {
                         int pending;
@@ -385,7 +387,7 @@ int CdRom_SeekToTrack(int key, int mode, int group, int *slot, int blocking)
                         pending = g_AkaoMessageQueueCount;
                         ExitCriticalSection();
                         if (!pending) break;
-                        VSync(1);
+                        if(!Psyz_AudioWaitForTimer())VSync(1);
                     }
                 }
                 memcpy(destination,

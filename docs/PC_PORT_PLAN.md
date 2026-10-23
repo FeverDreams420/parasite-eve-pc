@@ -2,6 +2,55 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Audio: rzeczywisty backend, deterministyczny PCM i timer AKAO
+
+Naprawiono start w istniejącym boot/init.c: po oryginalnym SpuInit uruchamiany
+jest `Psyz_AudioInit`, z jawnym błędem przy niedostępnym urządzeniu. Sam SpuInit
+nie uruchamiał backendu; pierwsza próba nagrania dawała0 bajtów. Nie należy
+interpretować wcześniejszych zgodnych stanów/VRAM jako dowodu działającego audio.
+W boot/main.c/init.c/boot.h dodano `--dump-audio PATH`: obserwuje istniejący mix,
+streamuje44100Hz stereo s16le, flushuje przed raportem control/frame-limit.
+Wymaga headless, limitu klatek i `PSYZ_AUDIO_CLOCK=video`; nie pobiera dodatkowych
+próbek w celu nagrania. Brak nowych plików produkcyjnych lub przenoszenia funkcji.
+
+Fork PsyZ68ed2fe dodaje odbiór PCM po miksowaniu. PsyZ6e08856 dodatkowo wiąże
+root counters z zegarem próbek w trybie offline: zamiast wątku czasu ściennego
+zdarzenia timera rozdzielają porcje miksowania. Zapytania i opóźnienia hosta nie
+posuwają emulowanego czasu. W istniejącym cdrom/track_read.c oczekiwanie na stop
+banku0 obsługuje teraz najbliższy tick audio bez przesuwania VBlank; real-time
+zachowuje dotychczasowe poll VSync(1). To konieczne dla ukończenia oryginalnej
+kolejki przed nadpisaniem danych banku, nie pominięcie kolejki/zmiana utworu.
+
+`/tmp/pe-audio-port-v4-replay/proof.json`:4/4 pełne zimne ContinueB/menu/Medicine
+do26308 normal/ASan/UBSan, nagrywanie on/off. Cały JSON i1MiBVRAM identyczne
+między czterema przebiegami i ze wcześniejszą referencją. PCM normal/SAN identyczny:
+19355892 klatki stereo (438.9091s), SHA256
+f9a8f386a1c6d526cd46926d68f53bfb507181db97b16fe9c78cb2859b8b1055.
+9427090 niezerowych próbek, peak21328. Karty źródłowa/prywatneB niezmienione.
+Świeże438 obiektów gry/fixture, ponownie sprawdzone wszystkie hashe zależności,
+bibliotek i binariów: `/tmp/pe-audio-port-v4-build-manifest.json`.
+
+`/tmp/pe-audio-clock-v8-proof.json`:115/115 GPU/dither/grid/audio/SPU testów
+na ukrytym Metal, osobno normal/SAN. Testy obejmują zgodność odebranych próbek,
+dalszy stan SPU, pauzę, odłączenie, callback SDL dummy, ticki240Hz, niezależność
+od wall-time, przełączanie głośności wewnątrz klatki i wait bez VBlank.
+Real-time5/5 oraz sztuczny zegar20/20 w obu profilach. Fixture events wymaga
+inicjalizacji trybu wyświetlania przed timerem; pierwsze izolowane próby bez
+tego dawały4/5. Nie jest to pełna macierz SDK/platform; PSP niekompilowany.
+`/tmp/pe-audio-port-v4-fixture-regression-proof.json`:64/64 oryginalnych regresji
+normal/SAN (rzeczywiste wymagane assety, m.in. AKAO kolejka/bank, Melissa,
+sceny i efekty). Head2/phone nieodtwarzane na tym nowym kandydacie.
+`/tmp/pe-audio-port-v4-errors/proof.json`:9/9 błędów opcji, otwarcia, krótkiego
+zapisu przez RLIMIT_FSIZE4096 i niedostępnego sterownika audio.
+
+Zachowano nieudane dowody: audio-port-v1 (pusty PCM), v2 (PCM normal/SAN różny,
+wall-time ticki), v3 (potwierdzony spin w bank0 wait; zakończono własne procesy).
+Nie traktuje się ich jako PASS ani nie zastępuje wzorców ich wyjściem.
+Aktualne nagranie pochodzi z emulatora SPU; nie jest niezależnym oracle PS1,
+dowodem wszystkich utworów/SFX/XA/FMVs lub pełnej kampanii. Trzeba jeszcze
+zweryfikować pozostałe scenariusze na tym kandydacie i pełny zakres planu.
+Prywatne binaria testowe nie zostały zainstalowane do użytkowego build/.
+
 ### Hi-res w walce M123: świeże software/GPU normal/SAN PASS
 
 `/tmp/pe-rendered-boss-v1-combined-proof.json`:6/6 zimnych przebiegów tego

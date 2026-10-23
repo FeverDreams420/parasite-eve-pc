@@ -80,6 +80,14 @@ scaling. RGB24 movies remain native resolution. It requires `--frame-limit`;
 use a different path from `--dump-vram`. Captures overwrite their previous
 boundary output, so copy them before advancing when retaining a sequence.
 
+`PSYZ_AUDIO_CLOCK=video` runs audio and root-counter timers from generated
+samples for deterministic offline playback. `--dump-audio PATH` records those
+existing mixed samples as headerless 44100 Hz stereo signed-16-bit little-endian
+PCM. It requires headless mode, that clock setting, and `--frame-limit`.
+Audio is streamed continuously and flushed before each control/terminal report;
+use distinct capture paths. No extra samples are pulled for recording. The
+original bank loader services sample-clock timer waits without advancing VBlank.
+
 Repeat `--pad-at VBLANK:BUTTON_MASK` for deterministic digital input, using
 pressed PS1 button bits (for example `10000:8` holds START; `10010:0` releases it).
 Input enters the original pad packet before the original mapping/repeat logic.

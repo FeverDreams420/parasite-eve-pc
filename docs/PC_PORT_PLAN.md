@@ -2,6 +2,22 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### b6cdcbf26: pełne buildy94 i niezależny oracle CPU seeker
+
+Normal/SAN/coverage pełne buildy zakończone exit0,675 kompilacji,21 programów,
+94 testy. Manifesty /tmp/pe-seeker-original-v1-full-*-build-proof.json zachowują
+hashe źródeł i programów. Pełne macierze94 działają w sesjach61181/74090/70018;
+stan /tmp/pe-seeker-original-v1/full-progress.json wymaga rewalidacji uchwytów.
+
+CPU oracle: /tmp/pe-seeker-original-v1/cpu/{normal,san,coverage}-proof.json.
+Każdy dokładny cały obiekt seeker z pełnego builda zgadza się z132 152
+wykonaniami oryginalnego callbacku USA. Ciało instrukcji bez hooków, stany1/2,
+wszystkie65536 timery na jednym wzorcu signed velocity/floor oraz1080
+kombinacji granicznych prędkości, wysokości i timerów. Porównano pełne20 bajtów
+cząstki i wynik. Blob SHA256402d39e184031f97c7d294a6c220b2ed0172e7ef4cb18c8ae0f884840cd2ac26.
+Bez niezależnego dowodu CPU stan0/render; wcześniejsze porównania natywne mają
+węższą siłę dowodową. Nie oznacza to ukończenia callbacku ani całego portu.
+
 ### Seeker: trwała regresja lifetime, rejestr94
 
 Istniejący tests/original_actor_animation.c ma original_seeker_particle_lifetimes,

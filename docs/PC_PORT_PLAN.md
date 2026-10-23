@@ -2,6 +2,40 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### e3163d071: normal92/92, EX/hi-res/CPU PASS; nowy błąd realtime SPU
+
+`/tmp/pe-shared-views-v1-normal-matrix-proof.json`:92/92, exit0,514.03s,
+bez pominięć. Sprawdzono wszystkie92 nazwy/ID, kompletne LastTest,21 programów
+oraz źródła z zamrożonego e3163d071. To pełna zarejestrowana normal macierz,
+nie akceptacja całej gry ani wariantu SAN/coverage.
+
+`/tmp/pe-shared-views-v1-EX-ending-cold-proof.json`:2/2 właściwe nowe normal/SAN,
+ContinueO→Truebred Eve→EX dialogi/credits→tytuł332629, pełne JSON/VRAM zgodne
+z zachowanym inputem, PPM i PCM identyczne. PCM244727451 klatek, SHA256
+c387b45c52822183dc003117acc8a2610079d3e04e4b7dbe2d048015da3455c0. KartyO bez zmian.
+`/tmp/pe-shared-views-v1-gpu-replay/proof.json`:2/2 ContinueB/menu/Medicine,
+ukryty Metal2×,26308, JSON/VRAM zgodne z software, PPM640×448 i PCM zgodne
+normal/SAN i wcześniejszymi referencjami. PCM19355892 klatek, SHA256
+f9a8f386a1c6d526cd46926d68f53bfb507181db97b16fe9c78cb2859b8b1055. KartyB bez zmian.
+
+`/tmp/pe-shared-views-v1-cpu-oracle/proof.json`: sześć naprawionych komend
+AKAO,29696 stanów oryginalnego CPU każdy normal/SAN/coverage, wszystkie zgodne.
+Użyto dokładnych voice_bank.o z pełnych buildów i ich własnych flag.
+`/tmp/pe-shared-views-v1-catalog/function-evidence-catalog.json`: nowy AST219
+wariantów/2986 definicji bez błędów, sześć ma dowód w jawnie ograniczonej
+domenie; pełny katalog źródeł/akceptacja wszystkich funkcji nadal nieukończone.
+
+SAN92 NIE jest zaliczony: alligator-entry60 przerwał child SIGABRT po77.81s.
+UBSan: PsyZ spu_voice.h:165, index28 poza short[28]. Pełny log w
+`/tmp/pe-shared-views-v1-san-ctest.log`. SDK nadal6e08856, bez nowych zmian.
+Dekoder sprawdza i zeruje indeks na granicy bloku, a key-on ustawia28.
+Callback SDL trzyma AudioLock podczas renderowania, lecz Psyz_SpuWrite nie
+bierze tej blokady przed zmianą stanu głosu. Podejrzenie przeplotu wątków
+wymaga deterministycznej regresji i naprawy w naszym forku; nie uznano go
+za naprawione ani za zwykły problem timeoutu. Macierz kontynuuje dalsze testy.
+Coverage92 także nadal działa; bootstrap przeszedł130.03s. Użytkowy build
+bez zmian, żaden wynik nie jest zakończeniem pełnego celu portu.
+
 ### e3163d071: pełne buildy gotowe, coverage4/4; poprzedni SAN91/91 domknięty
 
 `/tmp/pe-tutorial-audio-fix-v1/full-san-matrix-proof.json`: poprzedni c10f06af6

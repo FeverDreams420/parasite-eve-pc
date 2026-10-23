@@ -20,17 +20,26 @@ Enemy reports include their actual ATB charge and increment; the legacy enemy
 member named `curHP` is the charge, while `hpAlive` holds their HP. These are
 read-only observations, not alternate implementations of battle rules.
 
-Headless play now includes original phone saves and Continue, progression
-through both discs, and Chrysler Building exploration. A complete cold replay
-from an authentic save through the floor 70 Queen Bee victory has identical
-final state and VRAM in normal and sanitized builds after repairing an arm-glow
-buffer overread. The diagnostic playthrough has entered the floor 77 battle;
-Truebred Eve remains unbeaten. Input timing around Maya's healing is still
-under test. The candidate adding enemy ATB observations is being replayed
-independently before continuing that fight. Current candidate hashes, test
-scope and outstanding gates are recorded in [PC_PORT_PLAN.md](PC_PORT_PLAN.md).
-These individual results do not establish complete campaign coverage,
-PS1 pixel equivalence, complete audio or release readiness.
+Ordinary-input play includes phone saves/Continue, both discs, Chrysler
+Building, the Truebred Eve victory, the authored EX ending, credits and return
+to title. Independent normal/sanitized cold replays from the authentic late-EX
+save agree on full state, VRAM and rendered output. The ending audio replay
+compares 244,727,451 stereo PCM frames exactly. GPU reference tests cover scales
+1–8, including executed Metal shaders. The current Day 2 replay is additional
+regression work, not the achieved gameplay boundary. These results do not by
+themselves close the remaining release-candidate/platform/package audit. See
+[PC_PORT_PLAN.md](PC_PORT_PLAN.md) for evidence and outstanding gates.
+
+Desktop image selection, TOML preferences and the Escape settings panel live
+in the original `src/main/boot/main.c`. The native SDL file dialog accepts both
+CUE/BIN images at once; the original archive loader identifies their roles and
+switches volumes. Settings use a blocking modal SDL window: the original game
+stack remains suspended and audio is paused, with its prior pause state restored
+on return. Graphics and input/output settings use our PsyZ fork; no gameplay
+rules or replacement game loop are introduced. The consuming SDL event filter
+prevents Escape from also invoking the SDK quit shortcut. Headless startup
+bypasses preferences and dialogs. User-path hierarchy and controls are described
+in the README.
 
 The memory map and overlay addresses below describe the original game for
 asset decoding and porting research. They are not host addresses, build

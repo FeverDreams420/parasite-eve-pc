@@ -17,9 +17,324 @@
 #include "pe1/psyq_gpu.h"
 #include "pe1/scene_dispatch.h"
 
+/* Desktop preferences belong to the original boot module. The modal loop
+ * never ticks the game, PS1 timers, scripts, or audio. */
+#include <ctype.h>
+#include <psyz/overlay_sdl3.h>
+
+static struct {
+    unsigned scale, volume;
+    int aspect, dither, fullscreen;
+    int keys[16], buttons[16];
+    char discs[2][4096];
+    char user_file[4096];
+    int enabled;
+} host_options;
+static const char *const host_button_names[16] = {
+    "L2", "R2", "L1", "R1", "Triangle", "Circle", "Cross", "Square",
+    "Select", "L3", "R3", "Start", "Up", "Right", "Down", "Left"
+};
+
+static char *Host_Trim(char *s) {
+    while (isspace((unsigned char)*s)) ++s;
+    char *end=s+strlen(s);
+    while (end>s && isspace((unsigned char)end[-1])) --end;
+    *end=0;return s;
+}
+/* Preferences use TOML tables, integers, booleans and single-line strings.
+ * Unknown keys remain harmless; malformed supported values are diagnosed. */
+static int Host_String(char *text,char *out,size_t size) {
+    char quote=*text++;
+    if(quote!='"' && quote!='\'')return 0;
+    size_t n=0;
+    while(*text && *text!=quote){
+        unsigned char c=(unsigned char)*text++;
+        if(c<32)return 0;
+        if(quote=='"' && c=='\\'){
+            c=(unsigned char)*text++;
+            if(c=='n')c='\n';else if(c=='r')c='\r';else if(c=='t')c='\t';
+            else if(c!='"' && c!='\\')return 0;
+        }
+        if(n+1>=size)return 0;
+        out[n++]=(char)c;
+    }
+    if(*text++!=quote)return 0;
+    while(isspace((unsigned char)*text))++text;
+    if(*text && *text!='#')return 0;
+    out[n]=0;return 1;
+}
+static void Host_LoadOptions(const char *path) {
+    FILE *file=fopen(path,"r");
+    if(!file)return;
+    char line[9000],section[64]="";unsigned number=0;
+    while(fgets(line,sizeof(line),file)){
+        ++number;char *s=Host_Trim(line),*end;
+        if(!*s || *s=='#')continue;
+        if(*s=='['){
+            end=strchr(s,']');
+            if(!end || (size_t)(end-s-1)>=sizeof(section))goto invalid;
+            *end=0;snprintf(section,sizeof(section),"%s",Host_Trim(s+1));continue;
+        }
+        end=strchr(s,'=');if(!end)goto invalid;
+        *end=0;char *key=Host_Trim(s),*value=Host_Trim(end+1);
+        if(!strcmp(section,"discs")){
+            int slot=!strcmp(key,"disc1")?0:!strcmp(key,"disc2")?1:-1;
+            if(slot>=0){char decoded[4096];
+                if(!Host_String(value,decoded,sizeof(decoded)))goto invalid;
+                memcpy(host_options.discs[slot],decoded,strlen(decoded)+1);
+            }
+            continue;
+        }
+        int v;
+        if(!strncmp(value,"true",4) && (!value[4] || isspace((unsigned char)value[4]) || value[4]=='#'))v=1;
+        else if(!strncmp(value,"false",5) && (!value[5] || isspace((unsigned char)value[5]) || value[5]=='#'))v=0;
+        else {errno=0;long parsed=strtol(value,&end,10);end=Host_Trim(end);
+            if(errno || end==value || (*end && *end!='#') || parsed<0 || parsed>INT_MAX)goto invalid;
+            v=(int)parsed;}
+        if(!strcmp(section,"graphics")){
+            if(!strcmp(key,"internal_resolution")){if(v<1 || v>8)goto invalid;host_options.scale=(unsigned)v;}
+            else if(!strcmp(key,"fullscreen")){if(v>1)goto invalid;host_options.fullscreen=v;}
+            else if(!strcmp(key,"square_pixels")){if(v>1)goto invalid;host_options.aspect=v;}
+            else if(!strcmp(key,"disable_dithering")){if(v>1)goto invalid;host_options.dither=v;}
+        }else if(!strcmp(section,"audio") && !strcmp(key,"volume")){
+            if(v>100)goto invalid;host_options.volume=(unsigned)v;
+        }else if(!strcmp(section,"keyboard") || !strcmp(section,"controller")){
+            for(unsigned i=0;i<16;++i)if(!strcmp(key,host_button_names[i])){
+                if(!strcmp(section,"keyboard")){
+                    if(v<=SDL_SCANCODE_UNKNOWN || v>=SDL_SCANCODE_COUNT || v==SDL_SCANCODE_ESCAPE)goto invalid;
+                    host_options.keys[i]=v;
+                }else {if(v>SDL_GAMEPAD_BUTTON_COUNT+1)goto invalid;host_options.buttons[i]=v;}
+            }
+        }
+        continue;
+invalid:
+        fprintf(stderr,"%s:%u: invalid preference\n",path,number);
+    }
+    fclose(file);
+}
+static void Host_WriteString(FILE *file,const char *value) {
+    fputc('"',file);
+    for(const unsigned char *s=(const unsigned char *)value;*s;++s){
+        if(*s=='\\' || *s=='"')fputc('\\',file);
+        if(*s=='\n')fputs("\\n",file);else if(*s=='\r')fputs("\\r",file);
+        else if(*s=='\t')fputs("\\t",file);else fputc(*s,file);
+    }
+    fputc('"',file);
+}
+static int Host_SaveOptions(void) {
+    if(!host_options.enabled || !*host_options.user_file)return 0;
+    char temporary[4120];snprintf(temporary,sizeof(temporary),"%s.tmp",host_options.user_file);
+    FILE *file=fopen(temporary,"w");if(!file)return 0;
+    fprintf(file,"# Parasite Eve desktop preferences\n[graphics]\ninternal_resolution = %u\nfullscreen = %s\nsquare_pixels = %s\ndisable_dithering = %s\n\n[audio]\nvolume = %u\n\n[discs]\ndisc1 = ",host_options.scale,host_options.fullscreen?"true":"false",host_options.aspect?"true":"false",host_options.dither?"true":"false",host_options.volume);
+    Host_WriteString(file,host_options.discs[0]);fputs("\ndisc2 = ",file);Host_WriteString(file,host_options.discs[1]);
+    fputs("\n\n[keyboard]\n",file);
+    for(unsigned i=0;i<16;++i)fprintf(file,"%s = %d\n",host_button_names[i],host_options.keys[i]);
+    fputs("\n[controller]\n",file);
+    for(unsigned i=0;i<16;++i)fprintf(file,"%s = %d\n",host_button_names[i],host_options.buttons[i]);
+    int failed=ferror(file);if(fclose(file))failed=1;
+    if(failed || !SDL_RenamePath(temporary,host_options.user_file)){SDL_RemovePath(temporary);return 0;}
+    return 1;
+}
+static void Host_InitOptions(int enabled) {
+    host_options.enabled=enabled;host_options.scale=1;host_options.volume=100;
+    static const SDL_Scancode defaults[16]={
+        SDL_SCANCODE_1,SDL_SCANCODE_2,SDL_SCANCODE_Q,SDL_SCANCODE_E,
+        SDL_SCANCODE_C,SDL_SCANCODE_Z,SDL_SCANCODE_X,SDL_SCANCODE_V,
+        SDL_SCANCODE_TAB,SDL_SCANCODE_F1,SDL_SCANCODE_F2,SDL_SCANCODE_RETURN,
+        SDL_SCANCODE_UP,SDL_SCANCODE_RIGHT,SDL_SCANCODE_DOWN,SDL_SCANCODE_LEFT};
+    for(unsigned i=0;i<16;++i){
+        host_options.keys[i]=defaults[i];Psyz_SetKeyboardBinding_SDL3(i,defaults[i]);
+        host_options.buttons[i]=Psyz_GetGamepadBinding_SDL3(i);
+    }
+    if(!enabled)return;
+    const char *base=SDL_GetBasePath();char path[4096];
+    if(base){
+        snprintf(path,sizeof(path),"%sparasite-eve.toml",base);Host_LoadOptions(path);
+#ifdef __APPLE__
+        /* SDL returns Contents/Resources for a bundled macOS executable. */
+        if(strstr(base,".app/Contents/Resources/")){
+            snprintf(path,sizeof(path),"%s../../../parasite-eve.toml",base);Host_LoadOptions(path);
+        }
+#endif
+    }
+    /* Development/portable launches may keep the file in the working directory. */
+    if(!base || strcmp(base,"./"))Host_LoadOptions("parasite-eve.toml");
+    const char *override=SDL_GetEnvironmentVariable(SDL_GetEnvironment(),"PE_CONFIG_HOME");
+    if(override && *override){
+        SDL_CreateDirectory(override);
+        snprintf(host_options.user_file,sizeof(host_options.user_file),"%s/parasite-eve.toml",override);
+    }else{
+#if defined(__linux__) && !defined(__ANDROID__)
+        const char *root=SDL_GetEnvironmentVariable(SDL_GetEnvironment(),"XDG_CONFIG_HOME");
+        if(root && *root)snprintf(path,sizeof(path),"%s/parasite-eve",root);
+        else {root=SDL_GetEnvironmentVariable(SDL_GetEnvironment(),"HOME");if(root)snprintf(path,sizeof(path),"%s/.config/parasite-eve",root);}
+        if(root){SDL_CreateDirectory(path);snprintf(host_options.user_file,sizeof(host_options.user_file),"%s/parasite-eve.toml",path);}
+#else
+        char *pref=SDL_GetPrefPath("", "Parasite Eve");
+        if(pref){snprintf(host_options.user_file,sizeof(host_options.user_file),"%sparasite-eve.toml",pref);SDL_free(pref);}
+#endif
+    }
+    if(*host_options.user_file)Host_LoadOptions(host_options.user_file);
+}
+static void Host_ApplyOptions(SDL_Window *window) {
+    Psyz_VideoSetInternalResolution(host_options.scale);
+    Psyz_VideoSetAspectMode((PsyzAspectMode)host_options.aspect);
+    Psyz_VideoSetDitheringMode((PsyzDitherMode)host_options.dither);
+    Psyz_AudioSetOutputVolume(host_options.volume);
+    for(unsigned i=0;i<16;++i){Psyz_SetKeyboardBinding_SDL3(i,(SDL_Scancode)host_options.keys[i]);Psyz_SetGamepadBinding_SDL3(i,host_options.buttons[i]);}
+    if(window)Psyz_SetFullscreen_SDL3(host_options.fullscreen!=0);
+}
+
+typedef struct {SDL_AtomicInt done;char *paths[2];int failed;} HostDiscDialog;
+static void SDLCALL Host_DiscChosen(void *userdata,const char *const *files,int filter) {
+    HostDiscDialog *dialog=userdata;(void)filter;
+    if(!files)dialog->failed=1;
+    else for(unsigned i=0;files[i];++i){
+        if(i>=2){dialog->failed=1;break;}
+        if(strlen(files[i])>=sizeof(host_options.discs[i])){dialog->failed=1;break;}
+        dialog->paths[i]=SDL_strdup(files[i]);if(!dialog->paths[i])dialog->failed=1;
+    }
+    SDL_SetAtomicInt(&dialog->done,1);
+}
+static int Host_ChooseDiscs(const char **paths) {
+    static const SDL_DialogFileFilter filters[]={{"Parasite Eve - select both Disc 1 and Disc 2 CUE images","cue;bin"}};
+    HostDiscDialog dialog={0};
+    if(!SDL_InitSubSystem(SDL_INIT_VIDEO))return -1;
+    SDL_ShowOpenFileDialog(Host_DiscChosen,&dialog,NULL,filters,1,NULL,true);
+    while(!SDL_GetAtomicInt(&dialog.done)){SDL_PumpEvents();SDL_Delay(10);}
+    int result=dialog.failed?-1:dialog.paths[0]?1:0;
+    if(result==1){
+        for(unsigned i=0;i<2;++i){
+            snprintf(host_options.discs[i],sizeof(host_options.discs[i]),"%s",dialog.paths[i]?dialog.paths[i]:"");
+            paths[i]=*host_options.discs[i]?host_options.discs[i]:NULL;
+        }
+    }
+    for(unsigned i=0;i<2;++i)SDL_free(dialog.paths[i]);
+    return result;
+}
+
+static void Host_Text(SDL_Renderer *renderer,float x,float y,const char *text) {
+    SDL_SetRenderDrawColor(renderer,225,230,240,255);SDL_RenderDebugText(renderer,x,y,text);
+}
+static void Host_Settings(SDL_Window *game) {
+    if(game)host_options.fullscreen=(SDL_GetWindowFlags(game)&SDL_WINDOW_FULLSCREEN)!=0;
+    SDL_Window *window=SDL_CreateWindow("Parasite Eve - Settings",800,760,SDL_WINDOW_HIGH_PIXEL_DENSITY);
+    if(!window)return;
+    if(game){SDL_SetWindowParent(window,game);SDL_SetWindowModal(window,true);}
+    SDL_Renderer *renderer=SDL_CreateRenderer(window,NULL);
+    if(!renderer){SDL_DestroyWindow(window);return;}
+    SDL_SetRenderLogicalPresentation(renderer,400,380,SDL_LOGICAL_PRESENTATION_LETTERBOX);
+    int paused=Psyz_AudioIsPaused();Psyz_AudioPause();
+    int open=1,page=0,row=0,capture=0,quit=0;
+    const char *status="Changes are applied immediately.";
+    while(open){
+        SDL_SetRenderDrawColor(renderer,17,21,30,255);SDL_RenderClear(renderer);
+        Host_Text(renderer,16,14,"PARASITE EVE / SETTINGS");
+        static const char *tabs[]={"GRAPHICS","CONTROLS","AUDIO"};
+        for(int i=0;i<3;++i){
+            SDL_FRect rect={12.0f+i*128.0f,36,120,24};SDL_SetRenderDrawColor(renderer,i==page?57:30,47,65,255);SDL_RenderFillRect(renderer,&rect);Host_Text(renderer,rect.x+8,44,tabs[i]);
+        }
+        int count=page==0?4:page==1?17:1;
+        for(int i=0;i<count;++i){
+            char label[100];
+            if(page==0){
+                if(i==0)snprintf(label,sizeof(label),"Internal resolution        %ux",host_options.scale);
+                if(i==1)snprintf(label,sizeof(label),"Fullscreen                 %s",host_options.fullscreen?"On":"Off");
+                if(i==2)snprintf(label,sizeof(label),"Aspect ratio               %s",host_options.aspect?"Square pixels":"Original");
+                if(i==3)snprintf(label,sizeof(label),"Dithering                  %s",host_options.dither?"Off":"Original");
+            }else if(page==2)snprintf(label,sizeof(label),"Master volume              %u%%",host_options.volume);
+            else if(i==0)snprintf(label,sizeof(label),"Binding device             %s",capture<0?"Controller":"Keyboard");
+            else {
+                int index=i-1;
+                const char *name=capture<0?(host_options.buttons[index]==SDL_GAMEPAD_BUTTON_COUNT?"Left trigger":host_options.buttons[index]==SDL_GAMEPAD_BUTTON_COUNT+1?"Right trigger":SDL_GetGamepadStringForButton((SDL_GamepadButton)host_options.buttons[index])):SDL_GetScancodeName((SDL_Scancode)host_options.keys[index]);
+                snprintf(label,sizeof(label),"%-12s %s",host_button_names[index],name?name:"Unknown");
+            }
+            float y=70.0f+i*15.0f;
+            if(i==row){SDL_FRect rect={12,y-2,376,14};SDL_SetRenderDrawColor(renderer,48,65,85,255);SDL_RenderFillRect(renderer,&rect);}
+            Host_Text(renderer,18,y,label);
+        }
+        Host_Text(renderer,16,334,abs(capture)==2?"Press a key/button; ESC cancels binding.":"Up/Down: select  Left/Right: change");
+        Host_Text(renderer,16,348,"Tab: next page  Enter: rebind  ESC: return");
+        Host_Text(renderer,16,365,status);SDL_RenderPresent(renderer);
+        SDL_Event event;
+        if(!SDL_WaitEventTimeout(&event,20))continue;
+        if(event.type==SDL_EVENT_QUIT){quit=1;open=0;continue;}
+        if(event.type==SDL_EVENT_WINDOW_CLOSE_REQUESTED){if(event.window.windowID==SDL_GetWindowID(window))open=0;else{quit=1;open=0;}continue;}
+        if(abs(capture)==2){
+            if(event.type==SDL_EVENT_KEY_DOWN && event.key.scancode==SDL_SCANCODE_ESCAPE){capture=capture<0?-1:0;continue;}
+            int binding=-1;
+            if(capture==2 && event.type==SDL_EVENT_KEY_DOWN && !event.key.repeat)binding=event.key.scancode;
+            if(capture==-2 && event.type==SDL_EVENT_GAMEPAD_BUTTON_DOWN)binding=event.gbutton.button;
+            if(capture==-2 && event.type==SDL_EVENT_GAMEPAD_AXIS_MOTION && event.gaxis.value>16000){
+                if(event.gaxis.axis==SDL_GAMEPAD_AXIS_LEFT_TRIGGER)binding=SDL_GAMEPAD_BUTTON_COUNT;
+                if(event.gaxis.axis==SDL_GAMEPAD_AXIS_RIGHT_TRIGGER)binding=SDL_GAMEPAD_BUTTON_COUNT+1;
+            }
+            if(binding>=0 && (capture<0 || binding>SDL_SCANCODE_UNKNOWN)){
+                int *bindings=capture==2?host_options.keys:host_options.buttons;
+                /* Swap duplicates, keeping every original button reachable. */
+                for(int i=0;i<16;++i)if(i!=row-1 && bindings[i]==binding)bindings[i]=bindings[row-1];
+                bindings[row-1]=binding;capture=capture<0?-1:0;Host_ApplyOptions(game);
+            }
+            continue;
+        }
+        int action=0;
+        if(event.type==SDL_EVENT_KEY_DOWN && !event.key.repeat){
+            switch(event.key.scancode){
+            case SDL_SCANCODE_ESCAPE:open=0;break;
+            case SDL_SCANCODE_TAB:page=(page+1)%3;row=0;capture=0;break;
+            case SDL_SCANCODE_UP:row=(row+count-1)%count;break;
+            case SDL_SCANCODE_DOWN:row=(row+1)%count;break;
+            case SDL_SCANCODE_LEFT:action=-1;break;
+            case SDL_SCANCODE_RIGHT:case SDL_SCANCODE_RETURN:action=1;break;
+            default:break;
+            }
+        }else if(event.type==SDL_EVENT_GAMEPAD_BUTTON_DOWN){
+            switch(event.gbutton.button){
+            case SDL_GAMEPAD_BUTTON_EAST:open=0;break;
+            case SDL_GAMEPAD_BUTTON_LEFT_SHOULDER:page=(page+2)%3;row=0;capture=0;break;
+            case SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER:page=(page+1)%3;row=0;capture=0;break;
+            case SDL_GAMEPAD_BUTTON_DPAD_UP:row=(row+count-1)%count;break;
+            case SDL_GAMEPAD_BUTTON_DPAD_DOWN:row=(row+1)%count;break;
+            case SDL_GAMEPAD_BUTTON_DPAD_LEFT:action=-1;break;
+            case SDL_GAMEPAD_BUTTON_DPAD_RIGHT:case SDL_GAMEPAD_BUTTON_SOUTH:action=1;break;
+            default:break;
+            }
+        }else if(event.type==SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button==SDL_BUTTON_LEFT){
+            float x,y;SDL_RenderCoordinatesFromWindow(renderer,event.button.x,event.button.y,&x,&y);
+            if(y>=36 && y<60 && x>=12 && x<396){page=(int)((x-12)/128);row=0;capture=0;}
+            else if(y>=68 && y<70+count*15 && x>=12 && x<388){row=(int)((y-68)/15);action=1;}
+        }
+        if(action){
+            if(page==0){
+                if(row==0)host_options.scale=(unsigned)(((int)host_options.scale-1+action+8)%8+1);
+                if(row==1)host_options.fullscreen^=1;
+                if(row==2)host_options.aspect^=1;
+                if(row==3)host_options.dither^=1;
+            }else if(page==2){int v=(int)host_options.volume+action*5;host_options.volume=(unsigned)(v<0?0:v>100?100:v);}
+            else if(row==0)capture=capture<0?0:-1;
+            else capture=capture<0?-2:2;
+            Host_ApplyOptions(game);
+        }
+    }
+    if(!Host_SaveOptions())SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Parasite Eve","Could not save preferences. Changes apply for this session.",window);
+    SDL_DestroyRenderer(renderer);SDL_DestroyWindow(window);
+    /* Avoid a held menu key leaking into the resumed original pad poll. */
+    SDL_ResetKeyboard();
+    if(!paused)Psyz_AudioUnpause();
+    if(quit){SDL_Event event={0};event.type=SDL_EVENT_QUIT;SDL_PushEvent(&event);}
+}
+static bool Host_SettingsEvent(const SDL_Event *event) {
+    if(event->type==SDL_EVENT_KEY_DOWN && event->key.scancode==SDL_SCANCODE_ESCAPE){
+        if(!event->key.repeat)Host_Settings(Psyz_GetWindow_SDL3());
+        return true;
+    }
+    return false;
+}
+
 #define STATE_FLAG_IMAGE_BUSY 0x00100000U
 #define STATE_FLAG_READY 0x00000100U
 
+#ifndef PE_HOST_SETTINGS_TEST
 int main(int argc,char **argv) {
     int mode;
     u32 token;
@@ -27,11 +342,17 @@ int main(int argc,char **argv) {
     PeDisc images[2]={{0}};
     const char *paths[2]={NULL,NULL};
     int result=EXIT_FAILURE;
-    unsigned internal_resolution=1;
+    int interactive=1,choose_discs=0;
+    const char *environment_headless=SDL_GetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_HEADLESS");
+    if(environment_headless && *environment_headless)interactive=0;
+    for(int i=1;i<argc;++i)if(!strcmp(argv[i],"--headless") || !strcmp(argv[i],"--headless-gpu") || !strcmp(argv[i],"--help"))interactive=0;
+    Host_InitOptions(interactive);
+    unsigned internal_resolution=host_options.scale;
     int resolution_argument=0,headless_argument=0;
     for(int arg=1;arg<argc;++arg){
         if(!strcmp(argv[arg],"--help")){
-            printf("Usage: %s --disc <USA Disc 1 CUE/BIN> [--disc2 <USA Disc 2 CUE/BIN>] [--headless | --headless-gpu] [--internal-resolution 1..8] [--frame-limit N] [--control-at N] [--dump-vram PATH] [--dump-frame PATH] [--dump-audio PATH] [--pad-at VBLANK:BUTTON_MASK ...]\n",argv[0]);
+            printf("Usage: %s [--disc <USA Disc 1 CUE/BIN>] [--disc2 <USA Disc 2 CUE/BIN>] [--choose-discs] [--headless | --headless-gpu] [--internal-resolution 1..8] [--frame-limit N] [--control-at N] [--dump-vram PATH] [--dump-frame PATH] [--dump-audio PATH] [--pad-at VBLANK:BUTTON_MASK ...]\n",argv[0]);
+            printf("Without --disc, opens a native multi-select CUE/BIN dialog. --choose-discs selects new images. ESC opens desktop settings.\n");
             printf("--headless uses native-resolution software rendering; --headless-gpu keeps the actual GPU window hidden and supports internal scaling.\n");
             printf("--dump-frame writes the rendered display as RGB888 PPM at each control/terminal boundary.\n");
             printf("--dump-audio writes stereo 44100 Hz signed-16-bit little-endian PCM; requires headless and PSYZ_AUDIO_CLOCK=video.\n");
@@ -39,7 +360,9 @@ int main(int argc,char **argv) {
             printf("Headless fixtures only: --diagnostic-hp-at VBLANK:EXPECTED_HP:VALUE (requires --frame-limit; output is marked coverage-only)\n");
             return EXIT_SUCCESS;
         }
-        if(!strcmp(argv[arg],"--headless") || !strcmp(argv[arg],"--headless-gpu")){
+        if(!strcmp(argv[arg],"--choose-discs")){
+            choose_discs=1;
+        }else if(!strcmp(argv[arg],"--headless") || !strcmp(argv[arg],"--headless-gpu")){
             if(headless_argument++){fprintf(stderr,"Duplicate or conflicting headless mode\n");return EXIT_FAILURE;}
             const char *backend=!strcmp(argv[arg],"--headless-gpu")?"gpu":"1";
             if(!SDL_SetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_HEADLESS",backend,true))return EXIT_FAILURE;
@@ -109,6 +432,13 @@ int main(int argc,char **argv) {
             paths[slot]=argv[++arg];
         }else{fprintf(stderr,"Unknown argument: %s\n",argv[arg]);return EXIT_FAILURE;}
     }
+    if(interactive){
+        if(!paths[0] && !paths[1])for(unsigned i=0;i<2;++i)if(*host_options.discs[i])paths[i]=host_options.discs[i];
+        if(choose_discs || !paths[0]){
+            int selected=Host_ChooseDiscs(paths);
+            if(selected<=0)return selected<0?EXIT_FAILURE:EXIT_SUCCESS;
+        }
+    }
     if(!paths[0]){fprintf(stderr,"Supply --disc with a USA CUE/BIN image\n");return EXIT_FAILURE;}
     const char *headless_mode=SDL_GetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_HEADLESS");
     if(internal_resolution>1 && headless_mode && !strcmp(headless_mode,"1")){
@@ -143,26 +473,57 @@ int main(int argc,char **argv) {
             fprintf(stderr,"Diagnostic HP schedule requires headless mode and a frame limit covering every event\n");return EXIT_FAILURE;
         }
     }
+mount_images:
     for(unsigned slot=0;slot<2;++slot){
         if(!paths[slot])continue;
         if(!pe_disc_open(&images[slot],paths[slot])){
-            fprintf(stderr,"Cannot open image: %s\n",images[slot].error);goto shutdown;
+            fprintf(stderr,"Cannot open image: %s\n",images[slot].error);goto image_error;
         }
         CdRom_BindImage(&images[slot],NULL);
         int mounted=Asset_OpenPeImage();
         unsigned identity=g_PeImageMountFlags;
         if(mounted || (identity!=1 && identity!=2) || g_CdImageVolumes[identity-1]){
-            fprintf(stderr,"Invalid or duplicate USA disc image (status %d)\n",mounted);goto shutdown;
+            fprintf(stderr,"Invalid or duplicate USA disc image (status %d)\n",mounted);goto image_error;
         }
         g_CdImageVolumes[identity-1]=&images[slot];
     }
-    if(!g_CdImageVolumes[0]){fprintf(stderr,"USA Disc 1 is required for startup\n");goto shutdown;}
+    if(!g_CdImageVolumes[0]){fprintf(stderr,"USA Disc 1 is required for startup\n");goto image_error;}
     CdRom_BindImage(g_CdImageVolumes[0],NULL);
+    goto images_ready;
+image_error:
+    CdRom_BindImage(NULL,NULL);g_CdImageVolumes[0]=g_CdImageVolumes[1]=NULL;
+    pe_disc_close(&images[0]);pe_disc_close(&images[1]);
+    if(!interactive)goto shutdown;
+    SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,"Parasite Eve",
+        "Cannot mount these images. Select the USA Disc 1 and Disc 2 CUE files together. Cancel to quit.",NULL);
+    {int selected=Host_ChooseDiscs(paths);
+        if(selected>0)goto mount_images;
+        if(!selected)result=EXIT_SUCCESS;
+        goto shutdown;
+    }
+images_ready:;
 
+    if(interactive){
+        /* Copy both before replacing picker storage: selection can be reversed. */
+        char ordered[2][4096]={{0}};
+        for(unsigned i=0;i<2;++i){
+            const char *path=NULL;
+            for(unsigned j=0;j<2;++j)if(g_CdImageVolumes[i]==&images[j])path=paths[j];
+            snprintf(ordered[i],sizeof(ordered[i]),"%s",path?path:"");
+        }
+        memcpy(host_options.discs,ordered,sizeof(ordered));
+        host_options.scale=internal_resolution;Host_ApplyOptions(NULL);
+        Psyz_SetOverlayEventFilter_SDL3(Host_SettingsEvent);
+        Host_SaveOptions();
+    }
     g_BootHostActive=1;
     if(Psyz_VideoSetInternalResolution(internal_resolution)<0){fprintf(stderr,"Cannot select internal resolution\n");goto shutdown;}
     Boot_InitSystem();
     if(Psyz_VideoGetInternalResolution()!=internal_resolution){fprintf(stderr,"Requested internal resolution unavailable\n");goto shutdown;}
+    if(interactive){
+        SDL_Window *window=Psyz_GetWindow_SDL3();
+        Host_ApplyOptions(window);
+    }
     mode = 0;
 
     for (;;) {
@@ -274,3 +635,5 @@ shutdown:
     free(g_BootHostPadEvents);g_BootHostPadEvents=NULL;g_BootHostPadEventCount=0;
     return result;
 }
+
+#endif

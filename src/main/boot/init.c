@@ -7,6 +7,10 @@
 #include <psyz/system.h>
 #include <psyz/video.h>
 #include <psyz/audio.h>
+#include <psyz/input.h>
+#include <psyz/overlay_sdl3.h>
+/* Public LIBETC endpoint: initialize native gamepad discovery. */
+void PadInit(int mode);
 #include "common.h"
 #include "pe1/aya.h"
 #include "pe1/battle_runtime.h"
@@ -662,7 +666,10 @@ void Boot_StoreTableEntry(u32 mask, int value) {
 
 u32 g_PadComboProgress;
 
+static void Boot_PollConfiguredPad(void);
+static bool native_pad_poll;
 void Field_HandleStateTransition(void) {
+    if(g_BootHostActive && native_pad_poll)Boot_PollConfiguredPad();
     /* Apply scheduled host input after SDK polling, before the unchanged
      * original button mapping and repeat/combo handling below. */
     if(g_BootHostActive && g_BootHostPadEventCount){
@@ -851,28 +858,45 @@ static bool focused;
 static void publish(void) {
     unsigned buttons=0;
     if (focused) {
-        if(held[SDL_SCANCODE_UP] || held[SDL_SCANCODE_W])buttons|=0x10;
-        if(held[SDL_SCANCODE_RIGHT] || held[SDL_SCANCODE_D])buttons|=0x20;
-        if(held[SDL_SCANCODE_DOWN] || held[SDL_SCANCODE_S])buttons|=0x40;
-        if(held[SDL_SCANCODE_LEFT] || held[SDL_SCANCODE_A])buttons|=0x80;
-        if(held[SDL_SCANCODE_LSHIFT] || held[SDL_SCANCODE_RSHIFT] || held[SDL_SCANCODE_Z])buttons|=0x2000;
-        if(held[SDL_SCANCODE_X] || held[SDL_SCANCODE_SPACE])buttons|=0x4000;
-        if(held[SDL_SCANCODE_C])buttons|=0x1000;
-        if(held[SDL_SCANCODE_V])buttons|=0x8000;
-        if(held[SDL_SCANCODE_RETURN] || held[SDL_SCANCODE_KP_ENTER] || held[SDL_SCANCODE_ESCAPE])buttons|=8;
-        if(held[SDL_SCANCODE_TAB])buttons|=1;
-        if(held[SDL_SCANCODE_Q])buttons|=0x400;
-        if(held[SDL_SCANCODE_E])buttons|=0x800;
+        for(unsigned i=0;i<16;++i){
+            int key=Psyz_GetKeyboardBinding_SDL3(i);
+            if(key>SDL_SCANCODE_UNKNOWN && key<SDL_SCANCODE_COUNT && held[key])
+                buttons|=1u<<((i+8)&15); /* SDK PAD bits -> wire packet bytes */
+        }
+        /* Preserve the desktop movement/action aliases only while their
+         * canonical action is unchanged and the alias is not explicitly bound. */
+        static const struct {unsigned button;SDL_Scancode canonical,alias;} aliases[]={
+            {12,SDL_SCANCODE_UP,SDL_SCANCODE_W},{13,SDL_SCANCODE_RIGHT,SDL_SCANCODE_D},
+            {14,SDL_SCANCODE_DOWN,SDL_SCANCODE_S},{15,SDL_SCANCODE_LEFT,SDL_SCANCODE_A},
+            {5,SDL_SCANCODE_Z,SDL_SCANCODE_LSHIFT},{5,SDL_SCANCODE_Z,SDL_SCANCODE_RSHIFT},
+            {6,SDL_SCANCODE_X,SDL_SCANCODE_SPACE},{11,SDL_SCANCODE_RETURN,SDL_SCANCODE_KP_ENTER}};
+        for(unsigned i=0;i<sizeof(aliases)/sizeof(aliases[0]);++i){
+            if(!held[aliases[i].alias] || Psyz_GetKeyboardBinding_SDL3(aliases[i].button)!=aliases[i].canonical)continue;
+            int assigned=0;
+            for(unsigned j=0;j<16;++j)if(Psyz_GetKeyboardBinding_SDL3(j)==aliases[i].alias)assigned=1;
+            if(!assigned)buttons|=1u<<((aliases[i].button+8)&15);
+        }
     }
     g_PadPackets[0].header=0x4100;
     g_PadPackets[0].buttons=(u16)~buttons;
     g_PadPackets[0].leftX=g_PadPackets[0].leftY=128;
     g_PadPackets[0].rightX=g_PadPackets[0].rightY=128;
 }
+static void Boot_PollConfiguredPad(void) {
+    publish();
+    if(!focused)return;
+    unsigned char packet[PSYZ_PAD_BUF_LEN];
+    Psyz_PadsGet(0,(char *)packet,sizeof(packet));
+    if(packet[0]==0 && packet[1]==PSYZ_CTRL_DIGITAL_PAD)
+        g_PadPackets[0].buttons&=(u16)(packet[2]|((u16)packet[3]<<8));
+}
 static bool Boot_WatchPadEvent(void *userdata, SDL_Event *event) {
     (void)userdata;Boot_HandlePadEvent(event);return true;
 }
 void Boot_ResetPadInput(void) {
+    const char *headless=SDL_GetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_HEADLESS");
+    native_pad_poll=!headless || !*headless;
+    if(g_BootHostActive && native_pad_poll)PadInit(0);
     SDL_RemoveEventWatch(Boot_WatchPadEvent,NULL);
     SDL_AddEventWatch(Boot_WatchPadEvent,NULL);
     memset(held,0,sizeof(held));focused=true;

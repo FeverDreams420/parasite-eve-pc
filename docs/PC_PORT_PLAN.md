@@ -2,11 +2,55 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
-### Kandydat po porządkach fc1c1a6fc: świeże testy jeszcze trwają
+### Korekta zakresu i ustawienia desktopowe
 
-Nowe buildy normal/SAN zakończone0, pełne95 CTest w toku (sesje5276/94283).
-Ich wyniki nie są jeszcze potwierdzone. Kodsrc/include/tests/CMake zgodny
-ze snapshotem /tmp/pe-clean-source-v1-snapshot.json (738 plików).
+Grę wcześniej przeszedłem zwykłym inputem aż do Truebred Eve, EX ending,
+credits i powrotu do title. Day2 poniżej to dodatkowa powtórka regresyjna, nie
+aktualna granica działania gry. Dowody: `/tmp/pe-N11-EX-ending-return-v1/proof.json`
+i `/tmp/pe-N11-EX-ending-return-cold-v1-proof.json` (PASS), GPU
+`/tmp/pe-gpu-grad12-v1-proof/proof.json` (118 wyników normal/SAN, skale1–8,
+wykonany Metal), audio `/tmp/pe-audio-port-v4-EX-ending-cold-proof.json`
+(244727451 stereo frames, 5549.375306 s, całe PCM identyczne normal/SAN).
+To istniejące osiągnięcia; brakami wydania pozostają domknięcie konkretnego
+kandydata i audyt platform/pakietów, a nie napisanie GPU/audio lub przejście
+całej gry od zera.
+
+Nowe ustawienia desktopowe są w oryginalnym boot/main.c: natywny wielokrotny
+wybór obrazów, przypisanie obu płyt przez ich USA identity, pamiętane ścieżki,
+TOML przy grze / w katalogu użytkownika i modalny panel ESC (grafika, kontrola,
+głośność wyjścia). Bez nowych plików produkcyjnych. Prywatny PE_CONFIG_HOME
+izoluje testy, headless pomija preferencje i dialogi. Test host-settings w
+istniejącym original_input_rules.c pokrywa zapis/odczyt, błędne wartości,
+ESC, zmianę grafiki/inputu/audio i callback dwóch obrazów. Weryfikacja natywna
+macOS: wybrano oba CUE, start gry, ESC, 2×, głośność95, powrót do gry i zapis
+obu ścieżek w prywatnym TOML. Końcowy SDK pin ec33b9f41c2f6308e8ce8bbdc18d4dca6085e363
+opublikowany we własnym forku. Oryginalny boot/init.c odczytuje przypisania
+klawiatury i pakiety kontrolera przed niezmienionym dekoderem gry; headless
+zachowuje deterministyczny input. Test potwierdza rzeczywisty START po remapie,
+usunięcie starego klawisza i pakiet Cross z kontrolera. Dwa testy przechodzą
+normal i ASan/UBSan: `/tmp/pe-desktop-ui-{san-,}input-final-tests.log`.
+Panel wstrzymuje również offline audio; testuje powrót do poprzedniego stanu
+pauzy. `/tmp/pe-desktop-ui-regression/final-input-proof.json`: końcowy binarny
+build/parasite-eve-pc, 15000 klatek headless, pełny JSON/VRAM/PPM/PCM identyczny
+przed/po zmianie, osobisty TOML2×/volume95 pominięty zgodnie z kontraktem.
+Ponowny start bez argumentów montuje zapamiętane obrazy i inicjalizuje Metal2×;
+ten osobny smoke zatrzymany świadomie, bez twierdzenia o pełnym przebiegu limitu.
+
+Poprzedni kandydat po porządkach zakończył obie pełne macierze kodem8:
+88 testów PASS, siedem zatrzymanych przez brak PE_TEST_DISC2 w konfiguracji
+harnessu. Poprawione uruchomienia dokładnie tych siedmiu testów przeszły normal
+oraz SAN. Obie macierze indywidualne95 zaakceptowane po rehashu688 artefaktów:
+`/tmp/pe-clean-source-{normal,san}-individual-matrix-proof.json`. Nie są to
+pojedyncze pełne zielone uruchomienia. Pipeline coverage zakończony1 na zależności
+z tym błędem konfiguracji; nie uruchomił testów coverage. Nowe zmiany desktopowe
+mają odrębne buildy i nie należą do zamrożonego snapshotu porządków.
+
+### Kandydat po porządkach fc1c1a6fc: zamknięte wyniki indywidualne
+
+Buildy normal/SAN zakończone0. Macierze95 indywidualnych wyników zaakceptowane
+jako88+7 po poprawieniu PE_TEST_DISC2; szczegóły powyżej. Ich zbudowane źródła
+odpowiadały snapshotowi /tmp/pe-clean-source-v1-snapshot.json (738 plików),
+sprzed obecnych zmian ustawień desktopowych.
 Nowy katalog AST obejmuje wszystkie210 plikówC wsrc,220 instancji TU,
 2986 definicji, zero błędów parsera. Zestaw(file,name) definicji identyczny
 z katalogiem sprzed porządków: nie usunięto aktywnych definicji funkcji.

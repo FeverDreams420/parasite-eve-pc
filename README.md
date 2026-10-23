@@ -12,17 +12,14 @@ compiler output, fixed code addresses and PS1 binary builds are no longer
 acceptance requirements. Changes are evaluated by behavior, portability,
 readability and native builds.
 
-This is an incomplete port. Ordinary-input play has defeated Truebred Eve,
-completed the authored EX ending and returned to the title. Cold replays from
-a genuine late-EX save compare full reported state, native VRAM, the rendered
-title and playback PCM between optimized normal and sanitized builds. The
-previous shared-view candidate passes 92 normal and coverage tests; its
-sanitizer run exposed an SPU concurrency defect. Current sources serialize
-SPU access in PsyZ and the original AKAO register setters. Focused normal/SAN
-audio tests, repeated alligator entry and the complete Tutorial replay pass;
-full acceptance of the new 93-case candidate is pending. Recorded late-EX
-and hidden Metal 2× replays also have normal/SAN evidence on the prior candidate. Full New Game-to-campaign-to-EX coverage on one
-candidate, all content and platform/release validation remain open.
+Ordinary-input play has defeated Truebred Eve, completed the authored EX ending
+and returned to the title. Independent normal/sanitized cold replays confirm
+that ending, full state, VRAM, rendered output and playback PCM. GPU tests cover
+PS1 reference attributes at internal scales 1–8 and execute the Metal shaders;
+a late-EX audio replay compares 244,727,451 stereo PCM frames exactly. The later
+Day 2 playthrough is an additional regression replay, not the playable limit.
+The complete port still needs release-candidate coverage and platform/package
+validation; existing campaign, EX, GPU and audio achievements remain valid.
 See [the port plan](docs/PC_PORT_PLAN.md) for checkpoints, reproducible inputs,
 verification results and remaining work.
 
@@ -62,6 +59,53 @@ git -C third_party/psyz submodule update --init external/SDL
 cmake -S . -B build -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build build --parallel
 ./build/parasite-eve-pc --disc "/path/to/Parasite Eve (Disc 1).bin"
+```
+
+Run `./build/parasite-eve-pc` without image arguments to open the native file
+picker. Select **both USA CUE files together** (Command-click on macOS,
+Control-click on Windows/Linux). Selection order does not matter. Their paths
+are remembered; later launches mount both automatically. `--choose-discs`
+opens the picker again. Cancel exits cleanly; invalid images return to selection.
+A single Disc 1 image can start the game, but both images are needed for the
+complete game. Select CUE files rather than selecting a CUE and its matching BIN.
+
+**Escape** opens a modal desktop settings panel and freezes game progression
+and audio until it closes. Graphics include internal resolution 1–8×, fullscreen,
+original/square-pixel aspect and dithering. Controls allow keyboard and controller
+remapping, including triggers. Duplicate assignments swap bindings. Audio has
+master output volume; it leaves the original SPU and diagnostic PCM unchanged.
+Use Tab or shoulder buttons to switch pages, arrows/D-pad to navigate, Enter/A
+to change or capture a binding, and Escape/B to return. Tabs and rows also accept
+mouse clicks. Escape is reserved for settings.
+
+Preferences are stored as `parasite-eve.toml`. Values are read in this order,
+with later values taking precedence: beside the executable (or beside the macOS
+`.app`), in the working directory, then in the per-user configuration directory.
+GUI changes and remembered disc paths are written atomically to the user file:
+
+- macOS: `~/Library/Application Support/Parasite Eve/parasite-eve.toml`
+- Windows: `%APPDATA%/Parasite Eve/parasite-eve.toml`
+- Linux: `$XDG_CONFIG_HOME/parasite-eve/parasite-eve.toml`, defaulting to
+  `~/.config/parasite-eve/parasite-eve.toml`
+
+`PE_CONFIG_HOME` overrides the user directory for portable installs and isolated
+tests. Explicit CLI options override loaded preferences. Headless runs read no
+personal preferences and show no dialogs. The file uses TOML tables and scalar
+values; for example:
+
+```toml
+[graphics]
+internal_resolution = 2
+fullscreen = false
+square_pixels = false
+disable_dithering = false
+
+[audio]
+volume = 80
+
+[discs]
+disc1 = '/path/to/Parasite Eve (Disc 1).cue'
+disc2 = '/path/to/Parasite Eve (Disc 2).cue'
 ```
 
 Pass `--disc2 "/path/to/Disc 2.cue"` to keep both sources open. Images
@@ -112,8 +156,9 @@ audio device and advances its mixer with video VBlanks, so pausing input also
 pauses the emulated audio clock. This is the clock mode used by the recent
 controlled replays; it does not prove audio fidelity by itself.
 
-Interactive keyboard events feed the original pad packets; Enter, keypad Enter
-and Escape map to START, including movie skipping. The SDL GPU and OpenGL
+Interactive keyboard and gamepad input feed the original pad packets. By
+default Enter and keypad Enter map to START, including movie skipping; Escape
+opens desktop settings. Remapping START also removes its old keyboard alias. The SDL GPU and OpenGL
 backends present movie RGB24 as three packed VRAM bytes per pixel. Full campaign
 acceptance and complete visual/audio verification remain pending.
 

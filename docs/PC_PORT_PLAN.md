@@ -36394,3 +36394,20 @@ SHA2564e18dd48e80b603436de87402b8eb522beaa86cd47417da9e1a6d6f33963682f.
 Dowód `cold-park-first-pair-proof.json`. Obejmuje pierwszą walkę, nagrody
 i Heal1. Cold normal do540368 również zgodny, ale tylko odtwarza wcześniejszy
 punkt obserwacji narożnika; wynik SAN tego drugiego punktu jeszcze nieznany.
+
+
+### Park: druga wygrana, przejście do telefonu i prawdziwy zapis C
+
+Zachodnie obejście M061 uruchomiło walkę z dwoma ptakami5:31/5:0
+po35HP. M16A1 pokonało obu przy545660 (HP64/92, ekran nagród),
+nagrody odebrano. Oryginalne Heal1 przywróciło64→92. M061→M063
+przy547100, następnie M064/a8006248 przy549074. Telefon: podejście
+około[754,−219], zwrot na zachód, Cross otworzyło zapis.
+
+Pierwsza próba wybrała END na ekranie wyboru karty (nie powstał plik);
+po poprawnym wyborze karty i trzeciego pustego slotu przy551920
+komunikat File saved. Nowy C ma8192B, Level7, HP92/92, Day2/CentralPark.
+A/B bajtowo niezmienione. Checkpoint551920 i
+`/tmp/pe-campaign-replay-v3/park-phone-save-proof.json` zachowują pliki
+i hashe. Continue C, niezależny replay drugiej walki i zapisu oraz dalsze
+zoo nadal wymagają weryfikacji. Bez zmian kodu/RAM/RNG.

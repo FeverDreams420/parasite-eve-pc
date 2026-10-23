@@ -2,6 +2,41 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Pełny odcinek ContinueO→Truebred Eve→EX credits→tytuł z audio
+
+`/tmp/pe-audio-port-v4-EX-ending-cold-proof.json`: PASS2/2 świeżych cold replayów
+kandydataa609eeed3/PsyZ6e08856 (prywatne normal/ASan/UBSan binaria audio-port-v4).
+Oryginalny zapisO i zachowany kompletny input do332629VBlank: Truebred Eve,
+oryginalne dialogi EX, pełne napisy i powrót do tytułu. Cały JSON i1MiBVRAM
+identyczne normal/SAN oraz z zamrożonym rzeczywistym przebiegiem sprzed zmian
+audio. Końcowe PPM również identyczne; obejrzano ekran Parasite Eve/Press Start.
+
+PCM:244727451 klatek stereo, SHA256
+c387b45c52822183dc003117acc8a2610079d3e04e4b7dbe2d048015da3455c0,
+identyczny bitowo normal/SAN. Oba procesy exit0, brak raportów sanitizerów,
+źródłowe/prywatneO niezmienione i bu10 puste. Nagranie obejmuje przebieg walki,
+napisy i powrót; nie jest niezależnym oracle sprzętowego PCM ani obrazów wszystkich
+klatek. Proof zawiera hashe argumentów, logów, stanu, VRAM, PPM, PCM i kart.
+Nie oznacza pełnego NewGame→EX77 na jednym obecnym kandydacie ani pełnego portu.
+
+Równolegle przygotowano dwa świeże buildy całego głównego projektu przez jego
+CMake (bez ręcznego linkowania z SDK-test archive):
+`/tmp/pe-cmake-native-v1-{normal,san}`, RelWithDebInfo/O2. Każdy kompiluje219
+oryginalnych jednostek src jakoC11, łącznie650 poleceńC i24ObjC; w wariancieSAN
+wszystkie teC/ObjC mają ASan/UBSan/function. Oba kompletne buildy exit0 i poprawny
+PSYZ_TITLE="Parasite Eve". `/tmp/pe-cmake-native-v1-build-proof.json` zawiera
+hashe programu, fixture, bibliotek, konfiguracji i compile_commands.
+
+To nowe binaria o innych flagach: powyższy pełny replay audio-port-v4 nie jest
+ich dowodem. Uruchomiono po90 wszystkich zarejestrowanych CTest, z wymaganymi
+assetami obu USA płyt, software headless i dummy audio; w chwili tego wpisu
+obie macierze nadal działają. Nie oznaczono ich PASS. Uchwyty15776(normal)
+i74487(SAN), PIDs24890/25833 potwierdzone żywe; metadane w
+`/tmp/pe-cmake-native-v1-progress.json`. Przy wznowieniu odpytać te uchwyty/
+aktualny stan procesów, nie uruchamiać ponownie z powodu timeout obserwacji.
+Logi `/tmp/pe-cmake-native-v1-{normal,san}-ctest.log`; zakres tej macierzy
+nie zastępuje pełnego audytu zawartości, audio, platform i paczek.
+
 ### Audio-enabled kandydat: walka, zapis telefonu i użytkowy build
 
 `/tmp/pe-audio-port-v4-additional-proof.json`: PASS4/4 świeżych replayów

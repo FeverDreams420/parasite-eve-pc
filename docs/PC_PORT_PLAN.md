@@ -2,6 +2,27 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N6: diagnoza kontaktowego ciosu poPowerCharge; korekta pilota
+
+173161→173801 oryginalneHeal3 dałoHP714, bez obrażeńEve.
+Preraise wybrane174161 i aktywne174793. PowerCharge175489 sprowadziłoHP
+714→1 i usunęłoPreraise; 175537HP0 bezPreraise, Eve nadal1012388.
+OryginalnyRevive przy175873 dałHP434, pozostał1. To nie jest zwycięstwo
+ani dowód błędu produkcyjnej walki.
+
+Obserwacja pozycji wyjaśnia śmierć: Aya zatrzymała się na[-24,-854];
+Eve przemieściła się z[686,-2081] do[40,-967] podczasHP1, następnie
+[-144,-648]. Hostpilot trzymał cel[0,-800] przez cały mode13, przez co
+nie oddalał się po teleportacji. W tymczasowymhelperze ruch do środka
+ograniczono do mode3/12; w mode13 pilot oddala się od bieżącej pozycjiEve.
+PriorytetPreraise od1000PE zachowany; przed jego uzyskaniem nie wydaje
+PE naHeal3 przyHP≥250 bez ochrony. Brak zmian C/PsyZ/RAM/RNG/save.
+
+Uruchomiona ograniczona seria6okien; wolno automatycznie doczekać wyłącznie
+HP0 z aktywnymPreraise, kontrolując niezmienną liczbęRevive. HP0 bez tej
+flagi zatrzymuje pilota do osobnej analizy. Powtórka O→173161 wciąż
+pending w sesji58377; nie zaliczamy późniejszych działań jako cold.
+
 ### N6: cold O→157785 PASS; dalsze dziewięć strzałów poPowerCharge
 
 `/tmp/pe-N6-Eve-postcharge-cold-v1-proof.json`: normal/SAN exit0,

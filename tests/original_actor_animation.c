@@ -15636,6 +15636,98 @@ static int native_diagnostic_hp_arguments(const char *executable)
     return valid;
 }
 
+static int original_native_tutorial(const char *executable)
+{
+    const char *disc=getenv("PE_TEST_DISC"),*disc2=getenv("PE_TEST_DISC2");
+    if(!disc || !*disc || !disc2 || !*disc2)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+    if(!SDL_Init(SDL_INIT_EVENTS))return 1;
+    char resolved[3][2048];const char *paths[]={executable,disc,disc2};
+    char *cwd=SDL_GetCurrentDirectory();if(!cwd)return 1;
+    for(unsigned i=0;i<3;++i){
+        bool absolute=paths[i][0]=='/' || paths[i][0]=='\\' || (paths[i][0] && paths[i][1]==':');
+        int n=snprintf(resolved[i],sizeof(resolved[i]),"%s%s",absolute?"":cwd,paths[i]);
+        if(n<0 || (size_t)n>=sizeof(resolved[i])){SDL_free(cwd);return 1;}
+    }
+    SDL_free(cwd);
+    char directory[2048],path[3][2080],card[2080];
+    int n=snprintf(directory,sizeof(directory),"%spe-tutorial-%llx",SDL_GetBasePath(),(unsigned long long)SDL_GetPerformanceCounter());
+    if(n<0 || (size_t)n>=sizeof(directory) || !SDL_CreateDirectory(directory))return 1;
+    for(unsigned slot=0;slot<2;++slot){snprintf(card,sizeof(card),"%s/bu%u0",directory,slot);if(!SDL_CreateDirectory(card))return 1;}
+    const char *names[]={"frame.vram","frame.ppm","audio.s16le"};
+    for(unsigned i=0;i<3;++i)snprintf(path[i],sizeof(path[i]),"%s/%s",directory,names[i]);
+    const char *args[]={resolved[0],"--disc",resolved[1],"--disc2",resolved[2],"--headless",
+        "--control-at","20000","--frame-limit","200000","--dump-vram",path[0],"--dump-frame",path[1],"--dump-audio",path[2],
+        "--pad-at","10000:8","--pad-at","10010:0","--pad-at","11000:0x40","--pad-at","11010:0",
+        "--pad-at","11500:0x4000","--pad-at","11510:0",NULL};
+    /* Original pad route: both controllers, icons, battle, save, return/title.
+     * Captured from actual UI input, never from edited game or save state. */
+    const char *commands=
+        "advance 10 16384\nadvance 1200 0\nadvance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\n"
+        "advance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\n"
+        "advance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\n"
+        "advance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\n"
+        "advance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\n"
+        "advance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\n"
+        "advance 10 8192\nadvance 600 0\nadvance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\n"
+        "advance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\n"
+        "advance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\n"
+        "advance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\n"
+        "advance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\n"
+        "advance 300 0\nadvance 10 64\nadvance 120 0\nadvance 10 16384\nadvance 600 0\nadvance 10 16384\n"
+        "advance 120 0\nadvance 10 16384\nadvance 120 0\nadvance 10 16384\nadvance 120 0\nadvance 10 16384\n"
+        "advance 120 0\nadvance 600 0\nadvance 10 16384\nadvance 180 0\nadvance 10 16384\nadvance 180 0\n"
+        "advance 10 16384\nadvance 180 0\nadvance 10 16384\nadvance 180 0\nadvance 300 0\nadvance 10 16384\n"
+        "advance 600 0\nadvance 10 64\nadvance 120 0\nadvance 10 16384\nadvance 600 0\nadvance 10 16384\n"
+        "advance 180 0\nadvance 10 16384\nadvance 180 0\nadvance 10 16384\nadvance 180 0\nadvance 10 16384\n"
+        "advance 180 0\nadvance 300 0\nadvance 10 16384\nadvance 600 0\nadvance 10 16384\nadvance 600 0\n"
+        "advance 10 64\nadvance 120 0\nadvance 10 16384\nadvance 600 0\nadvance 10 16384\nadvance 600 0\n"
+        "advance 10 64\nadvance 120 0\nadvance 10 16384\nadvance 1800 0\nadvance 10 8\nadvance 900 0\nadvance 10 8\n"
+        "advance 600 0\nquit\n";
+    SDL_Environment *environment=SDL_CreateEnvironment(true);
+    if(!environment || !SDL_SetEnvironmentVariable(environment,"PSYZ_AUDIO_CLOCK","video",true) ||
+       !SDL_SetEnvironmentVariable(environment,"SDL_AUDIODRIVER","dummy",true)){SDL_DestroyEnvironment(environment);return 1;}
+    SDL_PropertiesID props=SDL_CreateProperties();
+    SDL_SetPointerProperty(props,SDL_PROP_PROCESS_CREATE_ARGS_POINTER,(void *)args);
+    SDL_SetPointerProperty(props,SDL_PROP_PROCESS_CREATE_ENVIRONMENT_POINTER,environment);
+    SDL_SetStringProperty(props,SDL_PROP_PROCESS_CREATE_WORKING_DIRECTORY_STRING,directory);
+    SDL_SetNumberProperty(props,SDL_PROP_PROCESS_CREATE_STDIN_NUMBER,SDL_PROCESS_STDIO_APP);
+    SDL_SetNumberProperty(props,SDL_PROP_PROCESS_CREATE_STDOUT_NUMBER,SDL_PROCESS_STDIO_APP);
+    SDL_SetBooleanProperty(props,SDL_PROP_PROCESS_CREATE_STDERR_TO_STDOUT_BOOLEAN,true);
+    SDL_Process *child=SDL_CreateProcessWithProperties(props);SDL_DestroyProperties(props);SDL_DestroyEnvironment(environment);
+    if(!child)return 1;
+    SDL_IOStream *input=SDL_GetProcessInput(child);size_t length=strlen(commands);
+    int wrote=input && SDL_WriteIO(input,commands,length)==length;if(input)SDL_CloseIO(input);
+    int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);SDL_DestroyProcess(child);
+    uint64_t state_hash=UINT64_C(14695981039346656037);unsigned checkpoints=0;
+    for(const char *line=output;line && *line;){
+        const char *end=strchr(line,'\n');if(!end)end=line+strlen(line);
+        if(!strncmp(line,"{\"event\":\"control\",\"vblanks\":",29)){
+            ++checkpoints;
+            for(const char *p=line;p<end;++p)if(*p!='\r')state_hash=(state_hash^(unsigned char)*p)*UINT64_C(1099511628211);
+            state_hash=(state_hash^'\n')*UINT64_C(1099511628211);
+        }
+        line=*end?end+1:NULL;
+    }
+    int valid=wrote && output && status==0 && checkpoints==123 && state_hash==UINT64_C(0x8d2f71e7d6a00792);
+    char log_path[2080];snprintf(log_path,sizeof(log_path),"%s/game.log",directory);
+    FILE *log=fopen(log_path,"wb");
+    if(!log)valid=0;
+    else{int error=output && fwrite(output,1,bytes,log)!=bytes;if(fclose(log))error=1;if(error)valid=0;}
+    if(output && (strstr(output,"runtime error:") || strstr(output,"ERROR: AddressSanitizer") || strstr(output,"Unbound original")))valid=0;
+    const uint64_t expected[]={UINT64_C(0xd5b236a1a9e02c16),UINT64_C(0x937c09a8e0d595c3),UINT64_C(0x1f8dd1ac409a906b)};
+    for(unsigned i=0;i<3;++i){
+        FILE *file=fopen(path[i],"rb");if(!file){valid=0;continue;}
+        uint64_t hash=UINT64_C(14695981039346656037);unsigned char buffer[65536];size_t count;
+        while((count=fread(buffer,1,sizeof(buffer),file)))for(size_t j=0;j<count;++j)hash=(hash^buffer[j])*UINT64_C(1099511628211);
+        int error=ferror(file);if(fclose(file))error=1;
+        if(error || hash!=expected[i]){fprintf(stderr,"Tutorial %s hash %016llx\n",names[i],(unsigned long long)hash);valid=0;}
+    }
+    if(!valid)fprintf(stderr,"Tutorial status%d checkpoints%u state%016llx (artifacts %s)\n",status,checkpoints,(unsigned long long)state_hash,directory);
+    SDL_free(output);
+    if(valid)puts("Original Tutorial: four sections/both controllers, 123 full-state checkpoints, final VRAM/rendered image/complete PCM and return to title passed");
+    return valid?0:1;
+}
+
 static int original_native_bootstrap(const char *executable,int field_control)
 {
     const char *disc=getenv("PE_TEST_DISC");
@@ -18433,6 +18525,7 @@ int main(int argc, char **argv)
     if(argc==3 && !strcmp(argv[1],"--native-backstage"))return original_native_bootstrap(argv[2],5);
     if(argc==3 && !strcmp(argv[1],"--native-melissa"))return original_native_bootstrap(argv[2],4);
     if(argc==3 && !strcmp(argv[1],"--native-field-control"))return original_native_bootstrap(argv[2],1);
+    if(argc==3 && !strcmp(argv[1],"--native-tutorial"))return original_native_tutorial(argv[2]);
     if(argc==3 && !strcmp(argv[1],"--native-bootstrap"))return original_native_bootstrap(argv[2],0);
     if(argc==2 && !strcmp(argv[1],"--credits-video-clock")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

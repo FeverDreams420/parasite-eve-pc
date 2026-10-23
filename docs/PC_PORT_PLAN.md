@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Trwała regresja Tutorial zarejestrowana jako test91
+
+W istniejącym tests/original_actor_animation.c dodano `--native-tutorial`,
+z tym samym zapisanym inputem oryginalnego pada. Bez nowego pliku i bez
+modyfikowania RAM/save. Test porównuje hash123 kompletnych JSON checkpointów
+z potwierdzonym normal/SAN przebiegiem, końcowe1MiB VRAM, PPM i całe110390376
+bajtów PCM. Używa obu CUE, prywatnych pustych kart i zegara video; zachowuje
+pełny log procesu w katalogu artefaktów. To nadal nie niezależny PS1 oracle.
+CMake rejestruje `original-game-tutorial` z240s i etykietami game-assets/gpu/audio;
+świeża konfiguracja potwierdza91 testów. Brak wymaganych danych nie jest PASS.
+
+`/tmp/pe-tutorial-audio-fix-v1/permanent-regression-proof.json`: ta sama nowa
+regresja PASS na poprawionych normal/SAN i FAIL na starym SAN (child SIGABRT,
+voice_bank.c:1675, przesunięcie -48). Zachowany pełny log starego błędu.
+Dowodzi to, że stały test wykrywa rzeczywistą usterkę, a nie tylko kończy
+uruchomienie. Poprzednia macierz coverage90 nadal działa na swoim kandydacie;
+nie obejmuje nowej poprawki ani dodatkowego testu91. Nowe pełne buildy/macierz
+są osobnym następnym krokiem; użytkowego pliku jeszcze nie aktualizowano.
+
 ### Tutorial: pełny przebieg ujawnił UB w oryginalnych komendach AKAO
 
 Oryginalnym padem z pustych prywatnych kart wybrano Tutorial, przeszło obie

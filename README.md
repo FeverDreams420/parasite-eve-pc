@@ -131,7 +131,8 @@ claimed by the remaining suite. Full campaign acceptance is still pending.
 cmake -S . -B build -DBUILD_TESTING=ON
 cmake --build build --parallel
 PSYZ_HEADLESS=1 SDL_AUDIODRIVER=dummy \
-PE_TEST_DISC="/path/to/Parasite Eve (Disc 1).cue" PE_REQUIRE_GAME_ASSETS=1 \
+PE_TEST_DISC="/path/to/Parasite Eve (Disc 1).cue" \
+PE_TEST_DISC2="/path/to/Parasite Eve (USA) (Disc 2).cue" PE_REQUIRE_GAME_ASSETS=1 \
 ctest --test-dir build --output-on-failure --no-tests=error
 ```
 
@@ -140,6 +141,12 @@ and its `--smoke-test` option are no longer built. The `original-game-bootstrap`
 test launches the actual original entrypoint with a real CUE/BIN and checks
 bounded headless execution, scheduled START, New Game and Continue input,
 and a deterministic opening VRAM capture.
+
+The `original-game-tutorial` test navigates all four Tutorial sections using
+original pad input, checks 123 complete state checkpoints, and verifies the
+final VRAM, rendered image and entire captured PCM before returning to title.
+It uses private empty cards and the deterministic video audio clock. Both
+`PE_TEST_DISC` and `PE_TEST_DISC2` are required when assets are mandatory.
 
 With an extracted USA `SLUS_006.62`, run `python3 tests/verify_akao_catalog.py
 /path/to/SLUS_006.62` to check the AKAO and resident script catalogs against

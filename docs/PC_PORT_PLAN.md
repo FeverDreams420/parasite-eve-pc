@@ -2,6 +2,18 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### e8ff03f56: pełne buildy gotowe, trzy macierze93 uruchomione
+
+Nowe normal/SAN/coverage zakończone exit0. Manifesty
+`/tmp/pe-motion-gate-v1-{normal,san,coverage}-build-proof.json` zachowują hashe
+21 programów, zmienionych źródeł z e8ff03f56 i SDK33153a4;674 kompilacje,
+93 testy. Zweryfikowano obecność Gated oraz brak zwykłej procedury w obiekcie
+motion; flagi aliasowania, SAN C/ObjC oraz atomowy coverage sprawdzone.
+Pełne macierze uruchomione sesjami36709/50467/80659; normal zaliczył core
+fixture z regresją zamkniętej/otwartej bramki. Żadna cała macierz tej wersji
+nie jest jeszcze zatwierdzona. Skrypt run.py i stan w
+/tmp/pe-motion-gate-v1-progress.json; poprzedni coverage pozostaje niezależny.
+
 ### e8ff03f56: nowe pełne buildy; d22826cb0 SAN93 zaliczone
 
 Poprzedni zamrożony kandydat SPU d22826cb0 zakończył SAN93 exit0 w1479,75 s.

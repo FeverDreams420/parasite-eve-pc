@@ -2,6 +2,45 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### c10f06af6: normal91/91, EX i hi-res PASS; coverage87/90 z rozpoznaną luką
+
+`/tmp/pe-tutorial-audio-fix-v1/full-normal-matrix-proof.json`: pełna macierz
+normal91/91, exit0,515.29s, bez pominięć i raportów błędów. Weryfikator
+sprawdza91 nazw/ID z rejestrem, Tutorial, kompletne LastTest oraz niezmienione
+hashe wszystkich21 programów i źródeł z manifestu. Pełna SAN91 nadal trwa.
+
+`/tmp/pe-tutorial-cmake-v1-EX-ending-cold-proof.json`: oba rzeczywiste nowe
+root CMake normal/SAN przeszły ContinueO→Truebred Eve→EX dialogi→pełne napisy
+→tytuł przy332629. Cały JSON i VRAM zgodne z zamrożonym oryginalnym inputem,
+PPM tytułu zgodny między profilami i wcześniejszym przebiegiem. PCM244727451
+klatek identyczny: SHA256c387b45c52822183dc003117acc8a2610079d3e04e4b7dbe2d048015da3455c0.
+Prywatne i źródłoweO niezmienione, wejścia bez diagnostic-hp. Nie jest to pełne
+New Game→kampania ani niezależny PS1 oracle.
+
+`/tmp/pe-tutorial-cmake-v1-gpu-replay/proof.json`:2/2 ContinueB/menu/Medicine,
+ukryty Metal2×,26308, pełny JSON i VRAM zgodne z software. PPM640×448 zgodny
+normal/SAN i wcześniejszym poprawnym GPU. PCM19355892 klatek zgodny, SHA256
+f9a8f386a1c6d526cd46926d68f53bfb507181db97b16fe9c78cb2859b8b1055. KartyB bez zmian.
+
+Oracle29696 stanów sześciu komend AKAO powtórzono na dokładnych całych
+voice_bank.o z nowych pełnych buildów, nie tylko wcześniejszych kandydatach
+z pojedynczo podmienionym modułem. Oba PASS, hashe obiektów/EXE w tym samym
+signed-global-comparison-proof.json. Nowy osobny function-evidence-catalog.json
+obejmuje2986 definicji bieżącego źródła; sześć ma dowód w przetestowanej domenie,
+pozostałe2980 nie ma przez ten katalog akceptacji semantycznej.
+
+Stara coverage90 zakończyła się exit8,87/90 po2691.77s: core15 i assets85 FAIL,
+bootstrap32 timeout. Nie zaliczono tej macierzy. Sam bootstrap później przeszedł
+bez limitu180s, co nie usuwa pozostałych błędów. LLVM branch counters wskazują
+callback_list_storage:894; odczyt pola active nie widzi zapisu flags=0x5a.
+Readonly LLDB potwierdził rzeczywiste0 w pamięci, nie tylko wartość debug info.
+`/tmp/pe-native-coverage-v1/alias-experiment/results.json`: ten sam cały moduł
+fixture i te same obiekty gry, default exit123, dodanie tylko
+-fno-strict-aliasing do kompilacji fixture daje exit0. Nie zmieniono asercji.
+To wskazuje problem wspólnych widoków pamięci/aliasowania; nie naprawiono go
+jeszcze w bieżącym kandydacie i nie uznano, że dotyczy wyłącznie testera.
+Wyniki i pliki starej macierzy pozostają zachowane. Użytkowy build bez zmian.
+
 ### Kandydat c10f06af6: pełne buildy i niezależny oracle sześciu komend AKAO
 
 Świeże root CMake normal `/tmp/pe-tutorial-registry-v1` oraz SAN

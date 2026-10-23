@@ -16,8 +16,10 @@ This is an incomplete port. Ordinary-input play has defeated Truebred Eve,
 completed the authored EX ending and returned to the title. Cold replays from
 a genuine late-EX save compare full reported state, native VRAM, the rendered
 title and playback PCM between optimized normal and sanitized builds. The
-current macOS CMake candidate passes all 90 registered tests in both builds
-with the required USA assets. Full New Game-to-campaign-to-EX coverage on one
+current macOS CMake candidate passes all 91 registered tests in the normal
+build with the required USA assets; its full sanitizer matrix is still running.
+Tutorial, the late-EX route and a hidden Metal 2× replay already pass in both
+builds. Full New Game-to-campaign-to-EX coverage on one
 candidate, all content and platform/release validation remain open.
 See [the port plan](docs/PC_PORT_PLAN.md) for checkpoints, reproducible inputs,
 verification results and remaining work.

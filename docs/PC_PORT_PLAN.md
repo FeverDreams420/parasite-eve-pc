@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### PsyZ 8f2daf7: odczyt rzeczywistego obrazu hi-res
+
+W istniejących backendach i nagłówku dodano `Psyz_VideoAllocRenderedFrame`:
+RGB888 z obszaru wyświetlania przed skalowaniem okna, z detalem wewnętrznej
+rozdzielczości. Dotychczasowe capture/StoreImage zachowują natywne wymiary.
+Filmy RGB24 i software pozostają natywne. Odczyt GPU używa osobnego bufora
+transferowego, czeka na zakończenie i odrzuca błąd transferu; nie zapisuje VRAM.
+
+`/tmp/pe-rendered-capture-v3-proof/proof.json`: 62/62 testy gpu/dither/grid
+na ukrytym Metal w zwykłym oraz ASan/UBSan buildzie, osobne katalogi pracy.
+Nowy test obejmuje 1×/2×/3×/8×, przesunięty obszar ekranu, detal krawędzi
+różny od nearest-neighbor, powtarzalność i zachowanie natywnego VRAM,
+RGB24 oraz błędne argumenty/obszar. Software: 1/1. OpenGL: tylko kontrola
+składni; PSP bez kompilacji i uruchomienia. Brak nowych plików produkcyjnych.
+Nie jest to dowód poprawnego obrazu scen gry: runner nie zapisuje jeszcze
+skalowanego framebufferu. Integracja i wizualna weryfikacja scen pozostają
+następnym krokiem; pełny zakres portu nadal nieukończony.
+
 ### PsyZ 3e7f1b8: mieszanie RGB555 i granice interpolacji
 
 W istniejącym SDL_GPU poprawiono mieszanie półprzezroczystości: shader

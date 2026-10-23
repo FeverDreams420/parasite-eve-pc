@@ -2,6 +2,31 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Hi-res w walce M123: świeże software/GPU normal/SAN PASS
+
+`/tmp/pe-rendered-boss-v1-combined-proof.json`:6/6 zimnych przebiegów tego
+samego kandydata2cd83653c/PsyZ8f2daf7. Autentyczne ContinueA, oryginalny
+ślad pada obejmujący uniki, Heal2, przeładowanie i Energy Shot, do67791
+w M123/scene0xa80221c8. Software1× oraz ukryty Metal2×/8×, każdy normal
+i ASan/UBSan; wszystkie zakończone exit0, bez raportów sanitizerów.
+
+Cały JSON oraz całe1MiB natywnego VRAM identyczne między sześcioma
+świeżymi przebiegami i z zachowanym software checkpointem. Stan końcowy
+HP76/195 i PE0; pokonana jedna z głów, walka nadal trwa. To nie dowód
+pokonania całego bossa. Zrzuty PPM320×224/640×448/2560×1792 poprawne;
+normal/SAN identyczne przy każdej rozdzielczości. Obejrzano GPU2×/8×:
+model bossa, Aya, tło i HUD. Względem nearest-neighbor software różni się
+55233 piksele przy2× i910656 przy8×; potwierdza to odczyt skalowanego
+renderera, nie zgodność obrazu z niezależnym PS1 oracle.
+
+Źródłowa i prywatne kartyA niezmienione, brak nowych plików/logiki gry.
+Ponownie zweryfikowano wszystkie zależności438 obiektów, hashe bibliotek
+oraz binariów z manifestu `/tmp/pe-rendered-port-v1-build-manifest.json`.
+Łączny proof zawiera hashe logów, stanu, VRAM, PPM, argumentów i manifestu.
+Zakres obejmuje jeden terminalny punkt starcia; nie wszystkie klatki/efekty,
+pozostałe walki, pełną kampanię ani audio. Odczyt VRAM przed capture na
+tej samej granicy; testy kontynuacji opisane niżej są osobnym scenariuszem.
+
 ### Dalsze działanie gry po odczytach hi-res: PASS
 
 Ten sam kandydat2cd83653c/PsyZ8f2daf7, świeże binaria z manifestu

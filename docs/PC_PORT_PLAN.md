@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### seeker_spark: naprawa istniejącego pliku i porównanie stanów1/2
+
+Oryginalny seeker_spark.c dostosowano w miejscu: deklaracja geom_state,
+jednolita sygnatura callbacku, kanoniczne wskaźniki kontekstu task/owner/player
+zamiast dawnych layout views i mnożenie zamiast przesunięć ujemnych liczb.
+Pozostają oryginalne gałęzie, równania i rysowanie; bez nowych produkcyjnych plików.
+Jeszcze nie podłączono go w CMake ani kontrolerze — stare callbacki zachowane
+na czas porównania, więc kandydat e8ff03f56 pozostaje odrębny.
+
+`/tmp/pe-seeker-original-v1/state-comparison-proof.json`: normal/SAN/coverage
+po2 359 296 porównań pełnego RoomDampedSpark i wyniku z dotychczasowym callbackiem.
+Stany1/2, wszystkie65536 timerów, dziewięć skrajnych/wartości znakowanych
+velocity i dwie strony podłogi. Zero różnic/diagnostyk. To porównanie dwóch
+natywnych implementacji tej domeny, nie oracle PS1. Przed podłączeniem trzeba
+sprawdzić stan0, kontakt/spawn i pakiety renderowania oraz oryginalną semantykę.
+Skrypty/harness/logi zachowane w /tmp/pe-seeker-original-v1.
+
 ### seeker_spark: potwierdzony konsument task135, osobna implementacja natywna
 
 `/tmp/pe-motion-gate-v1-seeker-consumer-proof.json`: rzeczywista tabela USA

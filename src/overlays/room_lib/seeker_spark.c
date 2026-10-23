@@ -5,16 +5,11 @@
 
 #include "common.h"
 #include "pe1/gte.h"
+#include "pe1/geom_state.h"
+#include "pe1/fieldfx_task.h"
+#include "pe1/field_actor.h"
+#include "pe1/battle.h"
 #include "pe1/room_spark.h"
-
-/* First object of the primary channel's pool: its packet flags. */
-typedef struct RoomSeekerObject {
-    u32 flags;
-} RoomSeekerObject;
-
-typedef struct RoomSeekerPool {
-    RoomSeekerObject *object;
-} RoomSeekerPool;
 
 /* Seeker spawner parameters: the step length along the heading. */
 typedef struct RoomSeekerSparkParams {
@@ -25,8 +20,9 @@ typedef struct RoomSeekerSparkParams {
 /* Seeker spark: flies along its heading dropping trail sparks, bursts on
  * the player (flagging the battle actor) and dies off the walkable floor;
  * trail sparks drift, slow and bounce on the floor for eight frames. */
-int RoomEffect_SeekerSparkCallback(int mode, RoomDampedSpark *spark,
-                                   RoomSeekerSparkParams *params) {
+int RoomEffect_SeekerSparkCallback(int mode, void *data, intptr_t argument) {
+    RoomDampedSpark *spark = data;
+    const RoomSeekerSparkParams *params = (const RoomSeekerSparkParams *)argument;
     GteShortVector delta;
     RenderColor color = {0xC8, 0x64, 0x00, 0x00};
     RenderColor glow = {0xC8, 0xC8, 0x96, 0x00};
@@ -46,7 +42,7 @@ int RoomEffect_SeekerSparkCallback(int mode, RoomDampedSpark *spark,
             spark->y += delta.y;
             spark->z += delta.z;
             if ((spark->timer & 3) == 0) {
-                child = FieldFx_AcquireCallbackSlot(ANIM_POOL_AS(RoomSparkChannel)->pool);
+                child = FieldFx_AcquireCallbackSlot(g_FieldFxActiveTaskSlot->end);
                 if (child != 0) {
                     child->x = spark->x;
                     child->y = spark->y;
@@ -63,15 +59,12 @@ int RoomEffect_SeekerSparkCallback(int mode, RoomDampedSpark *spark,
             delta.y += spark->y;
             delta.z += spark->z;
             if (FieldFx_IsPlayerWithinRadius(&delta, 0x32)) {
-                if (FX_TASK_AS(RoomSparkEventState)->active) {
-                    RoomSparkChannel *channel = ANIM_OWNER_AS(RoomSparkChannel);
-                    if ((((RoomSeekerPool *)channel->pool)->object->flags & 0x3F000000) ==
-                        0x01000000) {
-                        ((RoomSparkBattleEntity *)D_8009D254)->actor->flags |= 0x4000;
-                        ((RoomSeekerPool *)channel->pool)->object->flags =
-                            (((RoomSeekerPool *)channel->pool)->object->flags & 0xC0FFFFFF) |
-                            0x19000000;
-                        ((RoomSeekerPool *)channel->pool)->object->flags |= 0x80000000;
+                if (g_FieldFxTaskContext->flags) {
+                    FieldActorState *owner = g_FieldFxOwner->actor->state;
+                    if ((owner->core_flags & 0x3F000000u) == 0x01000000u) {
+                        ((Combatant *)g_PlayerEntity->state)->stateFlags |= 0x4000;
+                        owner->core_flags = (owner->core_flags & 0xC0FFFFFFu) | 0x19000000u;
+                        owner->core_flags |= 0x80000000u;
                     }
                 }
                 spark->x = delta.x;
@@ -80,7 +73,7 @@ int RoomEffect_SeekerSparkCallback(int mode, RoomDampedSpark *spark,
                 spark->state = 2;
                 spark->timer = 0;
             }
-            if (Geo_PointInPoly(spark->x << 16, spark->z << 16, g_FloorPolygonVertices, g_FloorPolygonVertexCount) == 0) {
+            if (Geo_PointInPoly(spark->x * 65536, spark->z * 65536, g_FloorPolygonVertices, g_FloorPolygonVertexCount) == 0) {
                 return 1;
             }
             break;
@@ -149,8 +142,8 @@ int RoomEffect_SeekerSparkCallback(int mode, RoomDampedSpark *spark,
             int kind;
             int palette;
 
-            scale = rcos((s16)spark->timer << 7) * 2 / 3;
-            intensity = rsin((s16)spark->timer << 7) / 64 + 0x40;
+            scale = rcos((s16)spark->timer * 128) * 2 / 3;
+            intensity = rsin((s16)spark->timer * 128) / 64 + 0x40;
             g_FieldFxSpriteParams.tpage = g_FieldFxTpageTable[g_FieldFxTpageSlots[2]];
             g_FieldFxSpriteParams.palette = 2;
             g_FieldFxSpriteParams.parameter06 = 0;

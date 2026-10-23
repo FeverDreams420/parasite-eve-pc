@@ -1,4 +1,5 @@
 #include "common.h"
+#include <psyz/audio.h>
 #include "pe1/akao.h"
 #include "pe1/akao/commands.h"
 #include "pe1/akao/globals.h"
@@ -652,6 +653,7 @@ void Spu_WriteFmEnable(u32 value) {
 }
 
 void AkaoSpuVoice_SetVolume(u32 index, u32 left, u32 right) {
+    Psyz_AudioLock();
     volatile u16 *ptr;
     u32 mask;
 
@@ -660,30 +662,38 @@ void AkaoSpuVoice_SetVolume(u32 index, u32 left, u32 right) {
     ptr[0] = left & mask;
     ptr++;
     *ptr = right & 0x7FFF;
+    Psyz_AudioUnlock();
 }
 
 void AkaoSpuVoice_SetPitch(u32 index, u32 value) {
+    Psyz_AudioLock();
     volatile u16 *ptr;
 
     ptr = &_spu_RXX->voice[index].volume_left;
     ptr[2] = value;
+    Psyz_AudioUnlock();
 }
 
 void AkaoSpuVoice_SetStartAddress(u32 index, u32 value) {
+    Psyz_AudioLock();
     volatile u16 *ptr;
 
     ptr = &_spu_RXX->voice[index].volume_left;
     ptr[3] = value >> 3;
+    Psyz_AudioUnlock();
 }
 
 void AkaoSpuVoice_SetRepeatAddress(u32 index, u32 value) {
+    Psyz_AudioLock();
     volatile u16 *ptr;
 
     ptr = &_spu_RXX->voice[index].volume_left;
     ptr[7] = value >> 3;
+    Psyz_AudioUnlock();
 }
 
 void AkaoSpuVoice_SetAdsrAttack(u32 index, u32 left, u32 right) {
+    Psyz_AudioLock();
     volatile u16 *ptr;
     u32 current;
     u32 value;
@@ -694,9 +704,11 @@ void AkaoSpuVoice_SetAdsrAttack(u32 index, u32 left, u32 right) {
     current = *ptr & 0xFF;
     value = right | left;
     *ptr = current | value;
+    Psyz_AudioUnlock();
 }
 
 void AkaoSpuVoice_SetAdsrDecayRate(u32 index, u32 value) {
+    Psyz_AudioLock();
     volatile u16 *ptr;
     u32 current;
 
@@ -705,9 +717,11 @@ void AkaoSpuVoice_SetAdsrDecayRate(u32 index, u32 value) {
     value <<= 4;
     current &= 0xFF0F;
     *ptr = current | value;
+    Psyz_AudioUnlock();
 }
 
 void AkaoSpuVoice_SetAdsrSustainLevel(u32 index, u32 value) {
+    Psyz_AudioLock();
     volatile u16 *ptr;
     u32 current;
 
@@ -715,9 +729,11 @@ void AkaoSpuVoice_SetAdsrSustainLevel(u32 index, u32 value) {
     current = *ptr;
     current &= 0xFFF0;
     *ptr = current | value;
+    Psyz_AudioUnlock();
 }
 
 void AkaoSpuVoice_SetAdsrSustainRate(u32 index, u32 left, u32 right) {
+    Psyz_AudioLock();
     volatile u16 *ptr;
     u32 current;
     u32 value;
@@ -729,9 +745,11 @@ void AkaoSpuVoice_SetAdsrSustainRate(u32 index, u32 left, u32 right) {
     value = right | left;
     current &= 0x3F;
     *ptr = current | value;
+    Psyz_AudioUnlock();
 }
 
 void AkaoSpuVoice_SetAdsrReleaseRate(u32 index, u32 left, u32 right) {
+    Psyz_AudioLock();
     volatile u16 *ptr;
     u32 current;
     u32 value;
@@ -742,6 +760,7 @@ void AkaoSpuVoice_SetAdsrReleaseRate(u32 index, u32 left, u32 right) {
     value = right | left;
     current &= 0xFFC0;
     *ptr = current | value;
+    Psyz_AudioUnlock();
 }
 
 /* All callers use the two values consumed by the original procedure. */

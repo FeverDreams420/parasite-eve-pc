@@ -15528,6 +15528,59 @@ static int script_movie_error_exit(const char *executable)
     puts("Original script error: movie failure terminates dispatcher instead of retrying or continuing the scene");return 1;
 }
 
+typedef struct OriginalSpuRegisterAccess {
+    unsigned operation;
+    SDL_Semaphore *entered;
+    SDL_AtomicInt done;
+} OriginalSpuRegisterAccess;
+
+static int SDLCALL original_spu_register_worker(void *userdata)
+{
+    OriginalSpuRegisterAccess *access=userdata;
+    SDL_SignalSemaphore(access->entered);
+    switch(access->operation){
+    case 0:AkaoSpuVoice_SetVolume(0,0x1234,0x5678);break;
+    case 1:AkaoSpuVoice_SetPitch(0,0x3456);break;
+    case 2:AkaoSpuVoice_SetStartAddress(0,0x3000);break;
+    case 3:AkaoSpuVoice_SetRepeatAddress(0,0x3800);break;
+    case 4:AkaoSpuVoice_SetAdsrAttack(0,17,4);break;
+    case 5:AkaoSpuVoice_SetAdsrDecayRate(0,8);break;
+    case 6:AkaoSpuVoice_SetAdsrSustainLevel(0,11);break;
+    case 7:AkaoSpuVoice_SetAdsrSustainRate(0,32,6);break;
+    case 8:AkaoSpuVoice_SetAdsrReleaseRate(0,31,4);break;
+    }
+    SDL_SetAtomicInt(&access->done,1);return 0;
+}
+
+static int original_spu_register_serialization(void)
+{
+    if(!SDL_Init(SDL_INIT_EVENTS))return 0;
+    const char *clock=getenv("PSYZ_AUDIO_CLOCK");char *saved=clock?SDL_strdup(clock):NULL;
+    SDL_SetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_AUDIO_CLOCK","video",true);
+    if(Psyz_AudioInit()!=0){SDL_free(saved);return 0;}
+    unsigned started=0,completed=0,early=0;
+    for(unsigned operation=0;operation<9;++operation){
+        OriginalSpuRegisterAccess access={.operation=operation};access.entered=SDL_CreateSemaphore(0);
+        if(!access.entered)continue;
+        Psyz_AudioLock();
+        SDL_Thread *thread=SDL_CreateThread(original_spu_register_worker,"Original SPU register probe",&access);
+        if(thread && SDL_WaitSemaphoreTimeout(access.entered,2000)){
+            started|=1u<<operation;SDL_Delay(20);
+            if(SDL_GetAtomicInt(&access.done))early|=1u<<operation;
+        }
+        Psyz_AudioUnlock();
+        if(thread){int status=-1;SDL_WaitThread(thread,&status);if(status==0 && SDL_GetAtomicInt(&access.done))completed|=1u<<operation;}
+        SDL_DestroySemaphore(access.entered);
+    }
+    Psyz_AudioDestroy();
+    if(saved){SDL_SetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_AUDIO_CLOCK",saved,true);SDL_free(saved);}
+    else SDL_UnsetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_AUDIO_CLOCK");
+    int valid=started==0x1FF && completed==0x1FF && early==0;
+    if(valid)puts("Original SPU register access: all nine original setters serialize with mixer transactions, without changing their register operations");
+    else fprintf(stderr,"Original SPU serialization started=%x completed=%x early=%x\n",started,completed,early);
+    return valid;
+}
+
 static int original_native_control(const char *executable)
 {
     const char *disc=getenv("PE_TEST_DISC");if(!disc || !*disc)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
@@ -18525,6 +18578,7 @@ int main(int argc, char **argv)
     if(argc==3 && !strcmp(argv[1],"--native-backstage"))return original_native_bootstrap(argv[2],5);
     if(argc==3 && !strcmp(argv[1],"--native-melissa"))return original_native_bootstrap(argv[2],4);
     if(argc==3 && !strcmp(argv[1],"--native-field-control"))return original_native_bootstrap(argv[2],1);
+    if(argc==2 && !strcmp(argv[1],"--spu-register-serialization"))return original_spu_register_serialization()?0:1;
     if(argc==3 && !strcmp(argv[1],"--native-tutorial"))return original_native_tutorial(argv[2]);
     if(argc==3 && !strcmp(argv[1],"--native-bootstrap"))return original_native_bootstrap(argv[2],0);
     if(argc==2 && !strcmp(argv[1],"--credits-video-clock")){

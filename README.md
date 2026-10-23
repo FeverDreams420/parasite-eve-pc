@@ -16,11 +16,12 @@ This is an incomplete port. Ordinary-input play has defeated Truebred Eve,
 completed the authored EX ending and returned to the title. Cold replays from
 a genuine late-EX save compare full reported state, native VRAM, the rendered
 title and playback PCM between optimized normal and sanitized builds. The
-current shared-view candidate passes all 92 registered tests in the normal
-build with the required USA assets. Its sanitizer matrix found an SPU state
-access failure during the alligator route; full coverage testing is still
-running. Recorded Tutorial, late-EX and hidden Metal 2× replays pass in both
-normal and sanitizer builds. Full New Game-to-campaign-to-EX coverage on one
+previous shared-view candidate passes 92 normal and coverage tests; its
+sanitizer run exposed an SPU concurrency defect. Current sources serialize
+SPU access in PsyZ and the original AKAO register setters. Focused normal/SAN
+audio tests, repeated alligator entry and the complete Tutorial replay pass;
+full acceptance of the new 93-case candidate is pending. Recorded late-EX
+and hidden Metal 2× replays also have normal/SAN evidence on the prior candidate. Full New Game-to-campaign-to-EX coverage on one
 candidate, all content and platform/release validation remain open.
 See [the port plan](docs/PC_PORT_PLAN.md) for checkpoints, reproducible inputs,
 verification results and remaining work.

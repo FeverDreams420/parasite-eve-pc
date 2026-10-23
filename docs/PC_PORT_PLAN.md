@@ -2,6 +2,45 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Synchronizacja SPU: fork33153a4, dziewięć oryginalnych setterów i regresja93
+
+Psyz_SpuWrite mógł zmieniać decoder cursor przez key-on w trakcie odtwarzania.
+Zachowano dekoder/gauss/ADSR/mikser, dodając wspólną rekurencyjną AudioLock
+do publicznych odczytów/zapisów/resetu/RAM/FIFO/pobierania próbek w istniejącym
+psyz_spu.c. Również dziewięć oryginalnych setterów rejestrów w voice_driver.c
+ma tę blokadę wokół niezmienionych operacji na rejestrach. Bez nowych plików,
+bez nowych warstw ani zmiany logiki AKAO. Raw GetRam wymaga blokady u wywołującego;
+lifecycle AudioInit/Destroy serializuje host, zgodnie z opisem API.
+
+Own fork khasinski/parasite-eve-psyz, commit33153a4, wypchnięty na origin/main.
+Istniejący test_libspu.c dostał test transakcji12 API oraz20k re-key/reset/RAM
+przy rzeczywistym callbacku urządzenia dummy. Stary SDK: FAIL, early0x7ff.
+Nowy:55/55 audio/SPU normal i55/55 ASan/UBSan/function, bez SKIP i raportów.
+Nowa stała regresja oryginalnych dziewięciu setterów jest w istniejącym
+original_actor_animation.c i rejestrze CMake (łącznie93). Ta sama regresja
+normal/SAN PASS; stary voice_driver przy nowym SDK FAIL early0x1ff, więc sama
+naprawa SDK nie zastępuje ochrony bezpośrednich zapisów gry.
+
+`/tmp/pe-spu-sync-v1/focused-proof.json`: pełne moduły SDK SPU i voice_driver
+przebudowane i podlinkowane z zamrożonymi pozostałymi obiektami e316.
+Alligator input23 SAN3/3: dwa powtórzenia real-device clock/dummy i jedno video,
+wszystkie oryginalne asercje/VRAM PASS, bez błędów. Cały Tutorial normal/SAN2/2,
+123 pełne checkpointy stanu/VRAM/PPM zgodne z live i między profilami, cały
+PCM110390376 bajtów zgodny, SHA25645203257216bacc8148e1b37048a9ed0ad5fc578cb244cf73708113753cc49d7.
+To celowane kandydaty; pełne nowe root buildy/macierz93 nadal do wykonania.
+
+Przy audycie poprawiono opis zakresu dwóch artefaktów Tutorial: stary tekst
+scope wymieniał coverage, choć lista wykonanych profili miała tylko normal/SAN.
+Oryginały zachowano, companion proof.scope-corrected.json jawnie opisuje2 profile
+i korektę metadanych w pe-tutorial-audio-fix-v1/cold oraz pe-spu-sync-v1/cold.
+Wyniki i asercje nie zmienione. Nie jest to dowód trzeciego profilu.
+
+Poprzedni e316 coverage zamknął92/92, exit0,2698.97s bez pominięć i z kontrolą
+21 niezmienionych programów: /tmp/pe-shared-views-v1-coverage-matrix-proof.json.
+Jego SAN miał91/92 z rzeczywistym SPU failure; zielone normal/coverage nie
+unieważniają błędu. Wszystkie stare macierze zakończone, ich programów nie
+przebudowywano. Użytkowy build nadal bez podmiany, cały cel portu otwarty.
+
 ### e3163d071: normal92/92, EX/hi-res/CPU PASS; nowy błąd realtime SPU
 
 `/tmp/pe-shared-views-v1-normal-matrix-proof.json`:92/92, exit0,514.03s,

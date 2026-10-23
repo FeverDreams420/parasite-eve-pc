@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### d22826cb0: świeże dowody CPU AKAO i ukrytego Metal2×
+
+`/tmp/pe-spu-sync-v1/full-cpu-oracle/proof.json`: normal, SAN i coverage
+przeszły po 29 696 porównań sześciu signed-global handlerów AKAO z wykonaniem
+niepodmienionych instrukcji USA. Helpery linkują dokładne pełne obiekty
+voice_bank.c kandydata, a dowód zachowuje ich hashe i hashe programów gry.
+Zakres obejmuje zapisane domeny arytmetyczne; nie cały sequencer ani audio.
+
+`/tmp/pe-spu-sync-v1/full-gpu-replay/proof.json`: 2/2 pełne programy normal/SAN,
+ContinueB/menu/Medicine w ukrytym Metal2×, klatka26308. Pełny JSON i VRAM
+zgodne z zachowanym software reference; obraz640×448 zgodny między profilami
+i wcześniejszym poprawnym GPU capture. PCM19 355 892 klatki zgodne, SHA256
+f9a8f386a1c6d526cd46926d68f53bfb507181db97b16fe9c78cb2859b8b1055.
+Hashe programów zgodne z manifestami pełnego builda. Prywatne karty bez zmian.
+To nie jest niezależny sprzętowy wzorzec PS1 ani test wszystkich scen hi-res.
+EX oraz pełne macierze SAN/coverage pozostają w toku.
+
 ### d22826cb0/SDK33153a4: normal 93/93 zweryfikowane
 
 Pełna macierz normal zakończyła się exit0: 93/93 w 480,88 s.

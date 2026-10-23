@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### seeker_spark: potwierdzony konsument task135, osobna implementacja natywna
+
+`/tmp/pe-motion-gate-v1-seeker-consumer-proof.json`: rzeczywista tabela USA
+map413/416/417/437 wskazuje task135 descriptor801931b8, controller80192d74.
+Kontroler buduje adres callbacku80192500 przez addiu a3,a3,0x2500 pod80192ea8;
+dlatego brak surowego wskaźnika/JAL w dawnym skanie nie oznacza nieużywania.
+Historyczne wycinki8 sektorów kończą się przed kontrolerem i nie obejmują całego
+payloadu (rzeczywiste rozmiary78/77/77/155 sektorów). Zachowano hashe pełnych pokoi.
+
+Obecny room_load mapuje task135 tych scen na g_RoomJointSprayProgram,
+RoomEffect_JointSprayController tworzy RoomEffect_JointSprayParticle w
+spark_attacks.c. To osobna implementacja podobna do oryginalnego seeker_spark,
+nie dowód równoważności ani nieużywany kod. Następny krok to CPU/stan/obraz
+porównanie obu callbacków i integracja oryginalnego pliku w miejscu ewentualnego
+zastępstwa, zgodnie z wymaganiem użytkownika. Nie przyjmować automatycznie
+zielonych testów tasku za dowód każdej gałęzi callbacku.
+
 ### Otwarty audyt seeker_spark: błędy kompilacji i banki E03/E06/E07/E27
 
 Celowana próba kompilacji całego pominiętego seeker_spark.c z aktualnymi

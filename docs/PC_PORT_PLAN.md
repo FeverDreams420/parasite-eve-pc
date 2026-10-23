@@ -2,6 +2,30 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### PsyZ: naprawa koloruClearImage przed mieszaniemGPU
+
+Własnyfork `06ffbcd` zmienia istniejący `Draw_ClearImage` GPU:
+każdy kanał redukuje8→5bit i rozszerza do formatu tekstury przed zapisem.
+Poprzedni backend zapisywał surowe8bit; późniejsze odejmowanie półprzezroczystej
+figury korzystało z koloru, którego oryginalnyRGB555 nie przechowuje.
+Istniejący test czterechABR teraz przechodzi bez zmiany referencji/tolerancji.
+
+Dodany w istniejącym `test_libgpu.c` test sprawdza wszystkie256wartości
+każdego kanału, dodatkowy mieszanyRGB i ramkę ochronną:1024fill,1548słów
+readback. Te same nowe obiektytestów z zamrożoną poprzedniąbiblioteką
+odtwarzająFAIL; z poprawionąbibliotekąPASS. Software:2/2 (nowytest iABR).
+UkrytyMetal:42PASS/2FAIL/0SKIP dla całegogpu, dodatkowo14/14 dither/grid.
+`/tmp/pe-hidden-gpu-v1-tests/clear5-proof.json` zachowuje passed:false
+dla całegorenderera: rotated_triangle_samples_signed_affine_uv i
+ps1_polygon_attribute_gradients nadalFAIL. Nie zaktualizowano ichgoldenów.
+
+ZamrożoneSDK `/tmp/pe-gpu-clear5-v1-sdk/libpsyz.a`, SHA256
+6db0d4755fc26dea415153e542140ea0f7fce2cb631b21ee3eb7b4e3ad9e7230.
+Zmiana obejmuje SDL_GPU, nie nieprzetestowanybackendGL. Nie relinkowano
+gry, a coldO do281505 nadal bada niezmienionyscript-locals-v1.
+Fork wypchnięty do khasinski/parasite-eve-psyz. Pełnyrenderer/hi-res,
+porównanieaudio i całyport nadal niezaliczone.
+
 ### PsyZ: rzeczywisty GPU bez widocznego okna; ujawnione3 błędy renderera
 
 Własnyfork `b22a768` dodaje `PSYZ_HEADLESS=gpu` w istniejącym

@@ -17379,8 +17379,10 @@ static int original_all_room_loads(void)
     if(!first || !second)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
     if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,first))return 1;
     if(!pe_disc_open(&disc2,second)){pe_disc_close(&disc);return 1;}
-    ResetGraph(0);CdRom_BindImage(&disc,&disc2);
+    ResetGraph(0);g_CdImageVolumes[0]=&disc;g_CdImageVolumes[1]=&disc2;
     int result=1;
+    for(unsigned volume=0;volume<2;++volume){
+    CdRom_BindImage(volume?&disc2:&disc,NULL);
     if(Asset_OpenPeImage()!=0)goto done;
     Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
     unsigned loaded=0,empty=0;
@@ -17400,10 +17402,12 @@ static int original_all_room_loads(void)
         ++loaded;
     }
     if(loaded!=414 || empty!=36){fprintf(stderr,"Room catalog counts %u/%u\n",loaded,empty);goto done;}
-    puts("Original room catalog: all 450 entries, 414 nonempty loads, 36 empty records, including all seven HomingFlash bindings and resets passed");
+    printf("Original disc%u room catalog: all 450 entries, 414 nonempty loads, 36 empty records, including all seven HomingFlash bindings and resets passed\n",volume+1);
+    }
     result=0;
 done:
-    fx_image_io=0;CdRom_BindImage(NULL,NULL);pe_disc_close(&disc);pe_disc_close(&disc2);
+    fx_image_io=0;CdRom_BindImage(NULL,NULL);g_CdImageVolumes[0]=g_CdImageVolumes[1]=NULL;
+    pe_disc_close(&disc);pe_disc_close(&disc2);
     return result;
 }
 

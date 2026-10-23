@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Korekta montowania w fixture katalogu, oba obrazy sprawdzane osobno
+
+W nowym fixture błędnie przekazano PeDisc* jako drugi argument CdRom_BindImage,
+który jest PeDiscFile* archiwum. Asset_OpenPeImage nadpisywał go prawidłowym
+archiwum, więc wcześniejsze414 ładowań dotyczyło Disc1, nie danych obu płyt.
+Nie zmienia to znalezionego błędu M434/M435, lecz zawęża dawny dowód. Poprawiono
+fixture: g_CdImageVolumes[0/1] i BindImage(volume,NULL), a następnie osobne
+Asset_OpenPeImage/Boot_InitGameState i450 wpisów dla każdego obrazu.
+Prywatny normal dual audit: Disc1 i Disc2 po414 loaded/36 empty/0 failed.
+Nowy trwały test obu obrazów normal przeszedł; SAN/coverage w sesji79702,
+wymagają sprawdzenia wyniku. Rejestr nadal95. Wcześniejsze pełne buildy95
+powstały przed korektą fixture i wymagają przebudowy przed zamrożeniem.
+
+`/tmp/pe-room-catalog-v1-fuzz/proof.json`: normal/SAN/coverage po milionie
+deterministycznych tokenów roomId z pustą tabelą sektorów: bezpieczne -1,
+zero I/O i brak zmian całego g_GameState. To nie fuzz uszkodzonych payloadów
+niepustych pokojów ani dowód rollbacku aktywnej sceny. Całe oryginalne moduły
+zlinkowane celowanie; nie zmieniano zachowania gry ani kopii użytkowej.
+
 ### 1bb5b16e7: nowe osobne buildy pełnego katalogu95
 
 Rozpoczęto normal/SAN/coverage w /tmp/pe-room-catalog-v1-*, sesje48042/53701/18512.

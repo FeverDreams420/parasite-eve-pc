@@ -2,6 +2,52 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N10: pełny raport PASS; zły cel ruchu — granica zamiast środka
+
+`/tmp/pe-script-locals-N10-live/handoff-proof.json`: normal/SAN do210465,
+pełny nowyJSON/VRAM zgodny; wszystkie stare pola równeN9, karty bez zmian.
+Read-onlylicznik w czasie odtwarzania134198/210465 potwierdził postęp,
+bez wywołańfunkcji targetu (`pe-N10-progress-readonly-v1.log`).
+
+Ruch w czasiePowerCharge:211537 odczytana narożna pozycja lotu[687,-2080],
+pilot wybrał[-900,-1100].211809Aya[-855,-1093], docelowe lądowanieEve
+[-930.173,-1045.469], tylko89.2jednostkiodAyi.211833HP1/usunięciePreraise,
+211881HP0/Mode13. `pe-N10-PowerCharge-touch-v1/failure.json` passed:false.
+Neutral1200→213081title, oryginalnequit exit0. Eve nadal5785HP.
+
+### Oryginalna geometriaPowerCharge: dokładne odtworzenie złego lądowania
+
+`Script_GetCos/Sin` zwracają rcos/rsin przesunięte o4 (skala65536).
+Promień16384 w skrypcie jest więc w jednostkach świata, nie1024.
+Algorytm zmniejsza go o128 do pierwszego punktu wewnątrz oryginalnego
+wielokąta8wierzchołków (taskblockoffset37372), czyli przy granicy areny.
+Ruch na przeciwną krawędź nadal ustawiałAyę blisko punktulądowania.
+
+`/tmp/pe-M318-landing-probe-v1-proof.json`: prywatny driver używa
+oryginalnych ratan2/rcos/rsin i Geo_PointInPoly oraz rzeczywistych danych
+wielokąta. Na rawrejestrachN10 odtwarza x/z lądowania dokładnie, co do
+wartości32bit. Normal/SAN wyniki identyczne. Dla użytego w skrypciepunktu
+[-40,-1320] wszystkie4autorskienarożniki dają odstęp879.9–1001.0,
+zamiast89.2 w nieudanej próbie. To dowód planowania geometrii, nie jeszcze
+udany uniklive ani niezależny oracleCPU/pikseliPS1. Żaden plik produkcyjny
+nie został zmieniony przy tym probe.
+
+Pilot wraca do tego rzeczywistego środka podczasmode3/12, drukuje
+przewidywane lądowanie i zatrzymuje przy odstępie<400 przed rozładowaniem.
+Dodatkowo wymaga64pozostałychklatek animacji18 przed nową ofensywną turą;
+zmierzona tura3strzałów zajmowała112vblank, a próbki animacji miały3/4
+klatki na8vblank. Hipoteza dokładnie4 w każdej próbce była błędna;
+pozostawiono konserwatywny margines, jeszcze niezaliczonylive.
+OchronaPreraise i jej rezerwa1000PE pozostają przed leczeniem.
+
+N11odO odtwarza wejścia do211537, początkuPowerCharge z dodatnimHP434
+oraz aktywnymPreraise; nie odtwarzaRAM. PTY28559,
+`/tmp/pe-script-locals-N11-live.py`; niezależnySAN50310.
+Przed wejściem ruchu wymagany `pe-script-locals-N11-handoff-v1.py`:
+pełnyJSON zgodny z historycznymN10/211537, nowyJSON/VRAM normal/SAN,
+żywy native i karty. Wynik pending. Sam środek/unik i zwycięstwoEve
+pozostają nieudowodnione; całyport nadal nieukończony.
+
 ### script-locals-v1:70/70regresji PASS, pełne nowe obserwacje powtarzalne
 
 `/tmp/pe-script-locals-v1-fixture-regression-proof.json`:64/64exit0/czysto,

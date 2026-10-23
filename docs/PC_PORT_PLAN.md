@@ -2,6 +2,34 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Przenośność desktop i przygotowanie 0.1-alpha — 24 października 2026
+
+Worktree desktop-platform-portability naprawia całe istniejące moduły na miejscu:
+zgodne typy wskaźników i natywnych tagów GPU, 64-bitowe słowo PsyZ na Win64,
+pełny backing macierzy drop-field oraz jedno miejsce przechowywania 79 wspólnych
+symboli zamiast 222 powielonych definicji tentative. Zachowano rozmiar największej
+oryginalnej deklaracji jak przy dawnym COMMON. Uzupełniono rzeczywiste dane USA
+licznika renderera i wektora up-axis; trzeci wskaźnik zasobu aliasuje właściwe
+pole stanu gry. DsLastPos korzysta z istniejącego kursora obrazu/XA.
+
+MinGW GCC zbudował grę PE32+ x86-64 oraz wszystkie cele testowe. BFD wymaga
+kopii całych oryginalnych modułów tylko dla fixture'ów bez unwind, aby usuwać
+nieużywane funkcje z cienkich zestawów zależności; obiekty produkcyjne zachowują
+unwind. Nie wydzielono funkcji do nowych plików. Dowód kompilacji:
+`/tmp/pe-platform-v4-windows-build-proof.json`; nie jest dowodem runtime Windows.
+
+Pełny normal macOS: 96/96, zero SKIP, źródła niezmienione:
+`/tmp/pe-platform-v4-macos-normal-proof.json`, JUnit
+`/tmp/pe-desktop-macos-v4-all.xml`. AST ma 220 TU, 3010 definicji, zero błędów,
+zero dodanych/usuniętych definicji względem desktop30a:
+`/tmp/pe-platform-v4-catalog/definition-delta-proof.json`.
+Linux ARM64 (Ubuntu 24.04 container), SAN i coverage pozostają w toku;
+nie przypisujemy im wyniku PASS przed zakończeniem. Źródła tych przebiegów są
+przypięte haszami w `/tmp/pe-platform-v4-acceptance/source-snapshot.json`,
+a lokalne patche i baza w `candidate-source-state.json` tego katalogu.
+Nie obejmują późniejszej poprawki kart pamięci w paczce macOS ani jej metadanych.
+
+
 ### Pauza focusu, resztki XA i incydent automatyzacji pulpitu
 
 Natywny smoke ujawnił dalszy rozjazd po przełączaniu aplikacji. Main obsługuje

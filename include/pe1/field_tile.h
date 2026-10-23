@@ -23,7 +23,7 @@ typedef union FieldTileAddress {
 /* Entry `depth` of the table held in `base`: retail adds the scaled depth
  * to the table address as an integer, index first. */
 #define TILE_OT_ENTRY(entry, base, table, depth) \
-    ((base).bytes = (table), (entry).word = (depth) * sizeof(RenderGpuTag) + (base).word)
+    ((base).word = (uintptr_t)(table), (entry).word = (depth) * sizeof(RenderGpuTag) + (base).word)
 
 /* PSY-Q addPrim: link `packet` (with a RenderGpuTag tag) in front of the
  * chain at `entry`, storing full native addresses in each tag. */

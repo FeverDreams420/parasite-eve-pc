@@ -34,8 +34,7 @@
 #include "pe1/script_state.h"
 #include "pe1/textbox.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* Shared native state; external variables have one storage definition. */
 
 int Script_EncodeBarcode(int **arg0) {
     char tmp[8];

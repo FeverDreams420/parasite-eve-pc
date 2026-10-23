@@ -31,16 +31,16 @@ int g_InvSelectedItemIndex;
 int g_InvSwapSourceList;
 int g_InvSwapTargetIndex;
 int g_InvAmmoSpendActiveList;
-int g_InvSelectedItemIndex;
-int g_InvSwapSourceList;
-int g_InvSwapTargetIndex;
-int g_MenuActionSubmenuOpen;
-int g_MenuActiveItemList;
-int g_MenuActiveItemSlot;
-int g_MenuEquipMode;
+extern int g_InvSelectedItemIndex;
+extern int g_InvSwapSourceList;
+extern int g_InvSwapTargetIndex;
+extern int g_MenuActionSubmenuOpen;
+extern int g_MenuActiveItemList;
+extern int g_MenuActiveItemSlot;
+extern int g_MenuEquipMode;
 int g_MenuEquipSwapSource;
-int g_MenuItemActionContext;
-int g_MenuItemActionDisabled;
+extern int g_MenuItemActionContext;
+extern int g_MenuItemActionDisabled;
 
 void Menu_CreateEquipScreen(MenuWidgetNode *arg0) {
     s32 entryIndex;

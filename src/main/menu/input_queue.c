@@ -112,8 +112,7 @@ void Queue_DequeueByMask(int mask, MenuQueueEntry *out_arg) {
 
 typedef MenuWidgetNode MenuInputWidget;
 
-/* COMMON supplies small-data metadata to MASPSX for the words this unit
- * reaches through $gp; the other extern words stay absolute. */
+/* Shared native state; external variables have one storage definition. */
 int g_MenuDrawPhase;
 int g_MenuInputRepeatTimer;
 
@@ -315,7 +314,7 @@ void Draw_SetPresentEnabled(int arg0) {
 
 extern int g_TextCursorX;
 extern int g_TextCursorY;
-int g_DrawGradientBlendColor;
+extern int g_DrawGradientBlendColor;
 extern int *g_TextCursorStackPtr;
 DrawFrameBuffer *g_DrawCurrentFrameBuffer;
 DrawFrameBuffer g_DrawFrameBuffers[2];
@@ -383,7 +382,7 @@ void Draw_SelectBuffer(void) {
     g_DrawOrderingTableEntry = (u32 *)(ordering + 1);
 
     if (g_DrawPresentEnabled != 0) {
-        ClearOTagR((u32 *)ordering, 0x1000);
+        ClearOTagR(ordering, 0x1000);
     }
 }
 

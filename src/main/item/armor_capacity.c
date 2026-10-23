@@ -11,7 +11,7 @@
 #include "pe1/psyq_libc.h"
 
 /* Shared inventory sort and selection state. */
-s32 g_InvPackedListCount;
+extern s32 g_InvPackedListCount;
 u8 *D_8009D084;
 s32 D_8009D088;
 s32 D_8009D08C;
@@ -746,7 +746,7 @@ void Inv_SortInventoryItems(int arg0, int arg1) {
     Inv_TransferItemAlt2(0x3803FE);
 }
 
-int g_MenuBattleEquipMode;
+extern int g_MenuBattleEquipMode;
 
 void Menu_SetBattleEquipMode(int value) {
     g_MenuBattleEquipMode = value;

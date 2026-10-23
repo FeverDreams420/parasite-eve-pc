@@ -18,8 +18,7 @@
 #include "pe1/psyq_nop.h"
 #include "pe1/text.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* Shared native state; external variables have one storage definition. */
 int g_BonusPointSpendCurrentValue;
 int g_MenuItemPrimListHandles[2];
 int g_MenuSourceItemSlot;
@@ -29,20 +28,20 @@ int g_BonusPointBarAnimStep;
 int g_BonusPointBarAnimProgress;
 int g_BonusPointSpendStat;
 int g_BonusPointSpendWorkingValue;
-int g_InvSelectedItemIndex;
-int g_InvSwapTargetIndex;
-int g_MenuActionSubmenuOpen;
-int g_MenuActiveItemList;
-int g_MenuBattleStatusOverlayActive;
+extern int g_InvSelectedItemIndex;
+extern int g_InvSwapTargetIndex;
+extern int g_MenuActionSubmenuOpen;
+extern int g_MenuActiveItemList;
+extern int g_MenuBattleStatusOverlayActive;
 int g_MenuBonusPointBarAnimActive;
 MenuConfirmCallback g_MenuConfirmCallback;
-int g_MenuItemUseMode;
-int g_MenuItemRenameMode;
-int g_MenuItemDiscardMode;
-int g_MenuEquipMode;
-int g_MenuSelectionLocked;
-int g_MenuLayoutLocked;
-int g_MenuSpendArrowDirection;
+extern int g_MenuItemUseMode;
+extern int g_MenuItemRenameMode;
+extern int g_MenuItemDiscardMode;
+extern int g_MenuEquipMode;
+extern int g_MenuSelectionLocked;
+extern int g_MenuLayoutLocked;
+extern int g_MenuSpendArrowDirection;
 
 void Menu_CreateItemDetailView(MenuWidgetNode *arg0);
 void Menu_CreateEquipStatsPanel(MenuWidgetNode *arg0);
@@ -101,7 +100,7 @@ int D_8009CFBC;
 void Menu_CreateItemActionSubmenu(void);
 void Menu_CreateItemList(void);
 int g_MenuActionTextBase;
-int g_InvItemUsableFlag;
+extern int g_InvItemUsableFlag;
 int g_MenuSelectedItemList;
 int g_MenuSelectedItemSlot;
 void Menu_DrawActiveListSlot(int arg0);
@@ -132,7 +131,7 @@ void Menu_StepInventoryRoot(s32 arg0, s32 arg1, s32 arg2);
 void Menu_DrawItemListHeader(MenuWidgetNode *unused);
 int g_MenuItemListHeaderGlyph;
 
-int g_MenuEquipMode;
+extern int g_MenuEquipMode;
 
 void Draw_FlushPrimList(int arg0);
 void Draw_SetColor(int arg0);
@@ -227,7 +226,7 @@ void Menu_DrawItemActionSubmenu(MenuWidgetNode *unused) {
     Draw_StatePush();
 
     if (g_MenuSelectedItemSlot >= 0) {
-        entry = Inv_LookupActiveListData(selected);
+        entry = (u8 *)Inv_LookupActiveListData(selected);
         entry += g_MenuSelectedItemSlot;
         icon = entry[0x15] & 0x1F;
         if (g_InvItemUsableFlag != 0) {
@@ -851,7 +850,7 @@ void Menu_SetEquipPanelsCursorY(void) {
     MenuWidget_SetCursorY(MenuWidget_FindByModeAndSelectedBase(1, 0x2F));
 }
 
-int g_MenuItemUseMode;
+extern int g_MenuItemUseMode;
 int g_BonusPointDisplayValue;
 
 void Menu_DrawBonusPointSlotValue(MenuWidgetNode *unused) {
@@ -904,7 +903,7 @@ void Menu_ExitBonusPointAllocation(void) {
     }
 }
 
-int g_MenuItemUseMode;
+extern int g_MenuItemUseMode;
 
 int Menu_StatSlotInputHandler(MenuWidgetNode *node, unsigned int flags) {
     MenuWidgetNode *current = MenuWidget_GetChild(node, 0);

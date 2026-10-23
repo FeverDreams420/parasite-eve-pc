@@ -153,7 +153,7 @@ static int menu_fade_parameters(void)
     return 0;
 }
 
-DRAWENV g_RenderDrawEnvArray[2];
+extern DRAWENV g_RenderDrawEnvArray[2];
 
 static int menu_fade_pixels(void)
 {

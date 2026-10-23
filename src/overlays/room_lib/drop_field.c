@@ -287,7 +287,7 @@ int RoomEffect_DrawSpinSprite(void *arg0, void *arg1, void *data2) {
     FieldFx_SetSpriteCellSize(0x20, 0x20);
     FieldFx_SetSpriteColorMode(0x100);
     FieldFx_SetSpriteBlendMode(2);
-    RotMatrix(&sprite->rotation, &stack.sp10);
+    RotMatrix(&sprite->rotation, &stack.matrix);
     memset(&stack.sp40, 0, 0x10);
 
     {
@@ -300,14 +300,14 @@ int RoomEffect_DrawSpinSprite(void *arg0, void *arg1, void *data2) {
         stack.sp40.y = y;
     }
     stack.sp30 = stack.sp40;
-    ScaleMatrix(&stack.sp10, &stack.sp30);
+    ScaleMatrix(&stack.matrix, &stack.sp30);
 
     ptr = &g_RoomDropFieldSpinSprite.depth;
     *ptr = sprite->depth;
     stack.sp24[0] = sprite->x;
     stack.sp24[1] = sprite->y;
     stack.sp24[2] = sprite->z;
-    FieldFx_DrawGlowSprite((FieldGlowSprite *)(ptr - 5), (GteMatrix *)&stack.sp10, 1);
+    FieldFx_DrawGlowSprite((FieldGlowSprite *)(ptr - 5), &stack.matrix, 1);
     return 0;
 }
 
@@ -369,7 +369,7 @@ int RoomEffect_DrawDoubleSprite(void *arg0, void *arg1, void *data2) {
     FieldFx_SetSpriteCellSize(0x20, 0x20);
     FieldFx_SetSpriteColorMode(0x10);
     FieldFx_SetSpriteBlendMode(2);
-    RotMatrix(&fx->seed, &matrix);
+    RotMatrix(&fx->seed.vector, &matrix);
 
     memset(&scale, 0, 0x10);
     scale.x = fx->scale;
@@ -386,7 +386,7 @@ int RoomEffect_DrawDoubleSprite(void *arg0, void *arg1, void *data2) {
     matrix.t[2] = fx->z;
     FieldFx_DrawGlowSprite((FieldGlowSprite *)((char *)depth_slot - 0xA), &matrix, 1);
 
-    RotMatrix(&seed, &matrix);
+    RotMatrix(&seed.vector, &matrix);
     memset(&second_scale, 0, 0x10);
     second_scale.x = fx->scale;
     second_scale.y = fx->scale;
@@ -504,7 +504,7 @@ int RoomEffect_DrawRingPair(void *unused0, void *unused1, void *data2) {
     depth_slot = &g_RoomDropFieldRings[0].intensity;
     *depth_slot = fx->depth;
     g_RoomDropFieldRings[1].intensity = fx->depth;
-    RotMatrix(&seed1, &matrix);
+    RotMatrix(&seed1.vector, &matrix);
 
     memset(&scale, 0, 0x10);
     scale.x = fx->scale;
@@ -521,7 +521,7 @@ int RoomEffect_DrawRingPair(void *unused0, void *unused1, void *data2) {
     matrix = saved_matrix;
     FieldFx_DrawShadedRing(&g_RoomDropFieldRings[1], &matrix, 0);
 
-    RotMatrix(&seed0, &matrix);
+    RotMatrix(&seed0.vector, &matrix);
     memset(&second_scale, 0, 0x10);
     second_scale.x = fx->scale * 2;
     second_scale.y = fx->scale * 2;
@@ -595,10 +595,13 @@ typedef struct RoomStagedMotionEmitter {
 
 /* Rotation seed for RotMatrix; the halfword at 4 is the per-record
  * spin phase. */
-typedef struct RoomStagedMotionSeed {
-    u8 bytes[4];
-    u16 phase;
-    u16 pad06;
+typedef union RoomStagedMotionSeed {
+    GteShortVector vector;
+    struct {
+        u8 bytes[4];
+        u16 phase;
+        u16 pad06;
+    };
 } RoomStagedMotionSeed;
 
 /* Sprite packet body that follows the 4-byte packet base. */
@@ -650,7 +653,7 @@ int RoomEffect_DrawStagedMotion(void *unused, void *data1, void *data2) {
             if (state->kind[i] == 1) {
                 FieldFx_SetSpriteBlendMode(2);
                 seedA.phase = state->phase[i];
-                RotMatrix(&seedA, &matrix);
+                RotMatrix(&seedA.vector, &matrix);
                 scale = s_DropFieldSpriteScale;
                 ScaleMatrix((GteMatrix *)&matrix, (GteVector *)&scale);
                 /* The int temporary keeps the remainder in full width. */
@@ -663,7 +666,7 @@ int RoomEffect_DrawStagedMotion(void *unused, void *data1, void *data2) {
                 matrix.t[2] = (state->record[i].z >> 16) + state->z;
                 FieldFx_DrawGlowSprite((FieldGlowSprite *)&g_RoomDropFieldMotionSprite, &matrix, 1);
                 packet->mode = 9;
-                RotMatrix(&seedB, &matrix);
+                RotMatrix(&seedB.vector, &matrix);
                 scale2 = s_DropFieldSpriteScale;
                 ScaleMatrix((GteMatrix *)&matrix, (GteVector *)&scale2);
                 packet->depth = (s16)state->size >> 2;
@@ -867,7 +870,7 @@ int RoomEffect_DrawModelSprite(void *arg0, void *arg1, void *data2) {
     FieldFx_SetSpriteCellSize(0x20, 0x20);
     FieldFx_SetSpriteColorMode(0x10);
     FieldFx_SetSpriteBlendMode(2);
-    RotMatrix(&sprite->rotation, &stack.sp10);
+    RotMatrix(&sprite->rotation, &stack.matrix);
     memset(&stack.sp40, 0, 0x10);
 
     {
@@ -880,14 +883,14 @@ int RoomEffect_DrawModelSprite(void *arg0, void *arg1, void *data2) {
         stack.sp40.y = y;
     }
     stack.sp30 = stack.sp40;
-    ScaleMatrix(&stack.sp10, &stack.sp30);
+    ScaleMatrix(&stack.matrix, &stack.sp30);
 
     ptr = &g_RoomDropFieldModelSprite.depth;
     *ptr = sprite->depth;
     stack.sp24[0] = sprite->x;
     stack.sp24[1] = sprite->y;
     stack.sp24[2] = sprite->z;
-    FieldFx_DrawGlowSprite((FieldGlowSprite *)(ptr - 5), (GteMatrix *)&stack.sp10, 1);
+    FieldFx_DrawGlowSprite((FieldGlowSprite *)(ptr - 5), &stack.matrix, 1);
     return 0;
 }
 
@@ -1353,7 +1356,7 @@ int RoomEffect_DrawQuadSprites(void *unused0, void *unused1, void *data2) {
             gte_swc2_11_8(translation);
         }
 
-        RotMatrix(&stack.seed, matrix);
+        RotMatrix(&stack.seed.vector, matrix);
         memset(&stack.sourceScale, 0, 0x10);
         stack.sourceScale.x = state->scale[i];
         stack.sourceScale.y = state->scale[i];

@@ -12,6 +12,9 @@
 #include "pe1/gte_types.h"
 #include "pe1/psyq_libc.h"
 
+/* USA resident data at 0x800C213C. */
+GteVector g_FieldPlacementUpAxis = {0, -4096, 0, 0};
+
 static FieldTriScratch s_FieldTriWorkspace;
 FieldTriScratch *g_FieldFxTriScratch = &s_FieldTriWorkspace;
 

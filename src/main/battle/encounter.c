@@ -18,8 +18,7 @@
 #include "pe1/inventory_state.h"
 #include "pe1/stat_modifiers.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* Shared native state; external variables have one storage definition. */
 u8 g_BattleSuspendedModeState;
 void *g_BattlePendingEnemySpawn;
 s32 g_BattleFrameCounter;
@@ -54,10 +53,7 @@ void Save_InitSystem(void)
     Save_ResetGlobalFlags();
 }
 
-/* COMMON supplies small-data metadata to MASPSX; the other battle words
- * stay absolute. The story-day flags byte is set through its g_GameState
- * record field: the record is not small data, so its address stays in a
- * for the read-modify-write, as retail has it. */
+/* Shared native state; external variables have one storage definition. */
 u8 g_BattleStepIndex, D_8009CE78, g_BattleSuspendedModeState;
 void *g_BattlePendingEnemySpawn;
 int g_BattleFrameCounter;

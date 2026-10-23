@@ -11,6 +11,9 @@
 
 /* Original USA resident model-rendering data. The historical "identity"
  * name denotes an X-reflecting basis: its first signed halfword is -4096. */
+/* USA 0x8003E60C is a zero-initialized writable counter word. */
+int g_RenderCounter[1] = {0};
+
 s32 g_IdentityMatrixSource[8] = {61440,0,4096,0,4096,0,0,0};
 s16 g_RenderTexturePageDeltas[4][4] = {
     {0,32,64,96},
@@ -950,16 +953,14 @@ void Render_OffsetObjectTextureCoordinates(RenderObjectEntity *object, int du, i
     }
 }
 
-/* The counter word sits in .text right after this routine (main.yaml
- * render/Render_Counter) and the routine works in $a0/$a1, both signs of a
- * hand-written assembler original; the two pins reproduce those registers. */
+/* Increment the original 32-bit resident counter with PS1 wraparound. */
 void Render_IncrementCounter(void) {
     int *ptr;
     int value;
 
     ptr = g_RenderCounter;
     value = *ptr;
-    value++;
+    value = (int)((u32)value + 1u);
     *ptr = value;
 }
 

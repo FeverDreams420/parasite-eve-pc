@@ -47,10 +47,18 @@ int DsSetDebug(int level) {
 }
 
 CdlLOC *DsLastPos(CdlLOC *dst) {
-    if (dst != 0) {
-        *dst = *DS_lastpos();
+    static CdlLOC position;
+    u8 response[8] = {0};
+    /* Query the mounted-image/XA cursor instead of the removed drive state. */
+    if (CdControlB(16, NULL, response) > 0) {
+        position.minute = response[0];
+        position.second = response[1];
+        position.sector = response[2];
+        position.track = response[3];
+    }
+    if (dst) {
+        *dst = position;
         return dst;
     }
-
-    return DS_lastpos();
+    return &position;
 }

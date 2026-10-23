@@ -1966,8 +1966,8 @@ void FxCommon_InitDisplay(void)
     FxCommon_SelectBufferAllocation(&g_FxCommonFrames[1].buffer);
     g_FxCommonFrames[0].buffer.allocation = (RenderNativeTag *)g_OtBufferTable[0];
     g_FxCommonFrames[1].buffer.allocation = (RenderNativeTag *)g_RenderOtBufferBaseAlt[0];
-    ClearOTagR((u_int *)g_FxCommonFrames[0].buffer.allocation, 0x1000);
-    ClearOTagR((u_int *)g_FxCommonFrames[1].buffer.allocation, 0x1000);
+    ClearOTagR(g_FxCommonFrames[0].buffer.allocation, 0x1000);
+    ClearOTagR(g_FxCommonFrames[1].buffer.allocation, 0x1000);
 
     SetDefDrawEnv(&g_FxCommonFrames[0].drawEnv, 0, 0, 0x140, 0xF0);
     SetDefDispEnv(&g_FxCommonFrames[0].dispEnv, 0, 0xF0, 0x140, 0xF0);
@@ -1991,7 +1991,7 @@ void FxCommon_InitDisplay(void)
 
 void FxCommon_ClearActiveOrdering(void)
 {
-    ClearOTagR((u_int *)g_FxCommonActiveBuffer->allocation, 0x1000);
+    ClearOTagR(g_FxCommonActiveBuffer->allocation, 0x1000);
     FxCommon_SelectBufferAllocation(g_FxCommonActiveBuffer);
 }
 

@@ -302,7 +302,8 @@ void FieldFx_DrawShapeQuads(GteShortVector *position, GteRotation *rotation,
     packet = (FieldStripPacket *)(D_800B0E38.packets[g_ActiveDrawSlot] + g_DrawPacketOffset);
     g_DrawPacketOffset += g_FieldFxStripPacketCounts[g_FieldFxSpriteParams.parameter0A] * sizeof(FieldStripPacket);
     bias = (u16)g_FieldFxSpriteParams.depth;
-    RotMatrixYXZ(rotation, &matrix);
+    GteShortVector angles = {rotation->x, rotation->y, rotation->z, rotation->flags};
+    RotMatrixYXZ(&angles, &matrix);
     ScaleMatrix(&matrix, &scale);
     gte_swc2_25_0(matrix.t);
     gte_swc2_26_4(matrix.t);

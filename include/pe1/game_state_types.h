@@ -170,8 +170,13 @@ typedef struct Pe1GameState {
         void *bank_reset_94c[1];
         struct GeomState *volatile geometry_state;
     };
-    void *bank_reset_950[2];
-    Pe1U32 bank_reset_958[1];
+    union {
+        void *field_resource_slots[3]; /* original pointer slots 0x950..0x958 */
+        struct {
+            void *bank_reset_950[2];
+            void *bank_reset_958[1];
+        };
+    };
     /* Original geometry byte range retained beside the expanded mesh table. */
     u32 geometry_disk_bytes;
     s32 geometry_disk_entry_offset;

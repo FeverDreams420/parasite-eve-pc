@@ -21,22 +21,21 @@
 
 SaveRuntimeState g_SaveRuntimeState;
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
-s32 g_InvPackedListCount;
-s32 g_InvPackedListCursor;
+/* Shared native state; external variables have one storage definition. */
+extern s32 g_InvPackedListCount;
+extern s32 g_InvPackedListCursor;
 s32 g_InvRebuildFilterMode;
 s32 g_InvRebuildMinFirstStat;
-int g_MenuBattleEquipMode;
+extern int g_MenuBattleEquipMode;
 u8 *g_SaveMetadataCursor;
 ItemDataRecord *g_SaveMetadataSourceRecord;
-int g_SaveMetadataWindowIndex;
+extern int g_SaveMetadataWindowIndex;
 int g_SaveMetadataWindowLength;
 int D_8009CDAC;
-int g_MemCardDialogState;
+extern int g_MemCardDialogState;
 int g_MenuScrollStep;
 
-int g_SaveMetadataWindowIndex;
+extern int g_SaveMetadataWindowIndex;
 
 void Save_ResetMetadataWindow(void) {
     g_SaveMetadataWindowIndex = 1;
@@ -203,7 +202,7 @@ unsigned int Save_GetMetadataRemainingChars(void) {
     return remaining;
 }
 
-SavedMenuMode g_SavedMenuMode;
+extern SavedMenuMode g_SavedMenuMode;
 
 /* Equips the inventory item whose equipment record has this ID: weapons
  * (kinds 1..8) and armor (kind 9). Returns nonzero when nothing was equipped. */
@@ -387,7 +386,7 @@ void Save_RestoreHeader(void) {
     Menu_CopyPromptCodes(prompt);
 }
 
-u32 g_MenuErrorSoundPending;
+extern u32 g_MenuErrorSoundPending;
 
 /* Queued by frontend commands, consumed by either frame entry point. */
 void Menu_RequestErrorSound(void) {

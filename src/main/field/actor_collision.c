@@ -627,10 +627,7 @@ void Entity_UpdateAndRender(BattleEntity *actor)
     actor->collisionFace = face;
 }
 
-/* Tentative COMMON declarations preserve small-data metadata for stock
- * maspsx: with MASPSX_FORCE_G0 only these words are $gp-relative and the
- * other extern words stay absolute. Storage remains at the existing
- * data/linker addresses. */
+/* Shared native state; external variables have one storage definition. */
 FloorEdgePoint g_FloorBlockedEdges[2];
 u32 g_FloorEdgeVisitedBitmap[2048];
 FloorNeighbours g_FloorNeighboursInit = {{-1, -1, -1}};

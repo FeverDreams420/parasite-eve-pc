@@ -8,8 +8,7 @@
 #include "pe1/script_node.h"
 #include "pe1/script_state.h"
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
+/* Shared native state; external variables have one storage definition. */
 ScriptNode *g_ScriptNodeFreeListHead;
 unsigned short g_ScriptNodeSeqCounter[1];
 RelocBlock *g_SceneDataTable1;

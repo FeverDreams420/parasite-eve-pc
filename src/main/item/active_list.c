@@ -26,12 +26,11 @@
 /* Shared original item-name/status message (USA A1B50..A1B6F). */
 u8 g_InvItemMessageBuffer[32];
 
-/* COMMON supplies small-data metadata to MASPSX: these words are reached
- * through $gp, every other extern stays absolute. */
-s32 g_ItemDropRngIndex;
-s32 g_InvPackedListCount;
-s32 g_InvPackedListCursor;
-s32 g_InvPendingCompactCount;
+/* Shared native state; external variables have one storage definition. */
+extern s32 g_ItemDropRngIndex;
+extern s32 g_InvPackedListCount;
+extern s32 g_InvPackedListCursor;
+extern s32 g_InvPendingCompactCount;
 int g_SaveMetadataWindowIndex;
 int g_AkaoPendingBgmVolumeFade;
 int g_MemCardDialogState;
@@ -664,9 +663,9 @@ int Inv_CountByValue(int arg0) {
 /* The equipped-slot bytes live at 0x800C0E20/0x800C0E22, outside the gp
  * window; incomplete array types keep -G8 from making them small data. */
 
-int g_InvPackedListCount;
+extern int g_InvPackedListCount;
 
-int g_InvPackedListCursor;
+extern int g_InvPackedListCursor;
 
 int Inv_CountByCategory(int arg0) {
     int index;
@@ -1077,7 +1076,7 @@ void Inv_CompactActiveListSlots(void) {
 }
 
 
-int g_InvCategoryBaseItemId;
+extern int g_InvCategoryBaseItemId;
 
 void Inv_BuildItemGridFromCategory(void)
 {
@@ -1346,7 +1345,7 @@ ItemDataRecord *Inv_LookupActiveListData(int index) {
 
 
 
-u32 *g_InvSelectionBits;
+extern u32 *g_InvSelectionBits;
 s32 g_InvSelectionBitWords;
 s16 *g_InvActiveListOverride;
 s32 g_InvOverrideSlotLimit;

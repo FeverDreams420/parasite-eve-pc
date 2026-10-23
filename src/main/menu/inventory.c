@@ -21,8 +21,8 @@
 
 int g_MenuInventoryViewMode;
 int g_MenuEquipSwapItem;
-int g_InvSelectedItemIndex;
-int g_InvSwapTargetIndex;
+extern int g_InvSelectedItemIndex;
+extern int g_InvSwapTargetIndex;
 ItemDataRecord *g_MenuActionItemData;
 int g_MenuEquipSwapSkipRestore;
 
@@ -392,7 +392,7 @@ void Menu_DrawSkillSelectionList(MenuWidgetNode *arg0) {
 /* Equipment swap: picking the Aya inventory item to exchange records the
  * swap source; returning from the equip screen reopens the inventory. */
 
-int g_MenuEquipSwapSource;
+extern int g_MenuEquipSwapSource;
 int g_MenuEquipSwapSkipRestore;
 
 s32 Menu_HandleAyaInventorySelectionInput(MenuWidgetNode *arg0, unsigned int arg1)
@@ -541,13 +541,13 @@ void Menu_DrawEquipItemName(void) {
     Draw_PrintRawText(Text_LookupTableC(g_MenuSelectedItemData->itemId - 1));
 }
 
-int g_MenuSelectionLocked;
-int g_MenuActionSubmenuOpen;
-int g_MenuEquipMode;
-int g_MenuLayoutLocked;
-int g_MenuItemUseMode;
+extern int g_MenuSelectionLocked;
+extern int g_MenuActionSubmenuOpen;
+extern int g_MenuEquipMode;
+extern int g_MenuLayoutLocked;
+extern int g_MenuItemUseMode;
 int g_MenuItemRenameMode;
-int g_MenuItemDiscardMode;
+extern int g_MenuItemDiscardMode;
 int g_MenuItemSelectFlag;
 int g_MenuInputPausePending;
 int g_MenuMemCardConfirmPending;
@@ -576,8 +576,8 @@ void Menu_ResetStateFlags(void) {
 
 MenuWidgetNode *g_MenuActiveWidget;
 int g_MenuBattleStatusOverlayActive;
-int g_MenuActiveItemList;
-int g_InvItemUsableFlag;
+extern int g_MenuActiveItemList;
+extern int g_InvItemUsableFlag;
 
 void Menu_DrawItemSlot(int index);
 void Menu_DrawSelectableEquipSlotRow(int index);
@@ -717,7 +717,7 @@ void Menu_DrawEquipSelectionList(MenuWidgetNode *node) {
 /* Item-slot availability, modifier, armor and memory-card port list draw
  * callbacks, and the port and save-slot selectability filters. */
 
-MenuWidgetNode *g_MenuActiveWidget;
+extern MenuWidgetNode *g_MenuActiveWidget;
 int g_McDialogMode;
 
 void Draw_AllocColorQuad(int arg0, int arg1);

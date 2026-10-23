@@ -210,6 +210,67 @@ static int Host_ChooseDiscs(const char **paths) {
     return result;
 }
 
+/* Main owns the two streams; adding an absent volume never replaces one that
+ * the original asynchronous archive reader might still be using. */
+static PeDisc *host_images;
+static int Host_SelectImage(unsigned identity,char *path,size_t size) {
+    static const SDL_DialogFileFilter filters[]={{"Parasite Eve USA CUE/BIN image","cue;bin"}};
+    HostDiscDialog dialog={0};
+    if(!SDL_InitSubSystem(SDL_INIT_VIDEO))return -1;
+    SDL_PropertiesID props=SDL_CreateProperties();if(!props)return -1;
+    char title[100];snprintf(title,sizeof(title),"Parasite Eve - select USA Disc %u",identity);
+    SDL_SetPointerProperty(props,SDL_PROP_FILE_DIALOG_FILTERS_POINTER,(void *)filters);
+    SDL_SetNumberProperty(props,SDL_PROP_FILE_DIALOG_NFILTERS_NUMBER,1);
+    SDL_SetBooleanProperty(props,SDL_PROP_FILE_DIALOG_MANY_BOOLEAN,false);
+    SDL_SetStringProperty(props,SDL_PROP_FILE_DIALOG_TITLE_STRING,title);
+    SDL_SetPointerProperty(props,SDL_PROP_FILE_DIALOG_WINDOW_POINTER,Psyz_GetWindow_SDL3());
+    SDL_ShowFileDialogWithProperties(SDL_FILEDIALOG_OPENFILE,Host_DiscChosen,&dialog,props);
+    while(!SDL_GetAtomicInt(&dialog.done)){SDL_PumpEvents();SDL_Delay(10);}
+    SDL_DestroyProperties(props);
+    int result=dialog.failed?-1:dialog.paths[0]?1:0;
+    if(result==1){if(strlen(dialog.paths[0])>=size)result=-1;else snprintf(path,size,"%s",dialog.paths[0]);}
+    SDL_free(dialog.paths[0]);SDL_free(dialog.paths[1]);return result;
+}
+static int Host_InstallImage(unsigned identity,const char *path) {
+    if(identity<1 || identity>2 || !host_images || g_CdImageVolumes[identity-1])return 0;
+    unsigned slot=host_images[0].stream?1:0;
+    if(host_images[slot].stream)return 0;
+    PeDisc *image=&host_images[slot];unsigned found=0;
+    if(!pe_disc_open(image,path))return 0;
+    /* Inspection deliberately leaves the bound image and original tables alone. */
+    if(Asset_ValidatePeImage(image,&found) || found!=identity){pe_disc_close(image);return 0;}
+    g_CdImageVolumes[identity-1]=image;
+    snprintf(host_options.discs[identity-1],sizeof(host_options.discs[identity-1]),"%s",path);
+    Host_SaveOptions();return 1;
+}
+static int Host_AddImage(unsigned identity,int required) {
+    if(identity<1 || identity>2 || !host_images)return 0;
+    if(g_CdImageVolumes[identity-1])return 1;
+    Psyz_PauseHostClock_SDL3(true);
+    int paused=Psyz_AudioIsPaused();Psyz_AudioPause();int result=0;
+    char title[80],message[300],path[4096];
+    snprintf(title,sizeof(title),"Parasite Eve - Disc %u required",identity);
+    snprintf(message,sizeof(message),"Select the Parasite Eve (USA) Disc %u CUE or BIN image. The current image will remain mounted.",identity);
+    if(required)SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_INFORMATION,title,message,Psyz_GetWindow_SDL3());
+    for(;;){
+        int selected=Host_SelectImage(identity,path,sizeof(path));
+        if(selected>0 && Host_InstallImage(identity,path)){result=1;break;}
+        if(selected>0){
+            snprintf(message,sizeof(message),"This is not a valid Parasite Eve (USA) Disc %u image. Please select Disc %u.",identity,identity);
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR,title,message,Psyz_GetWindow_SDL3());continue;
+        }
+        if(!required)break;
+        snprintf(message,sizeof(message),"Parasite Eve (USA) Disc %u is needed to continue. Choose its image, or quit the game. Unsaved progress is lost if you quit.",identity);
+        SDL_MessageBoxButtonData buttons[]={{SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT,1,"Choose image"},{SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT,0,"Quit game"}};
+        SDL_MessageBoxData box={.flags=SDL_MESSAGEBOX_WARNING,.window=Psyz_GetWindow_SDL3(),.title=title,.message=message,.numbuttons=2,.buttons=buttons};
+        int choice=0;if(!SDL_ShowMessageBox(&box,&choice) || choice!=1)break;
+    }
+    SDL_ResetKeyboard();
+    Psyz_PauseHostClock_SDL3(false);
+    if(!paused)Psyz_AudioUnpause();return result;
+}
+static int Host_RequestImage(unsigned identity) { return Host_AddImage(identity,1); }
+
 static void Host_Text(SDL_Renderer *renderer,float x,float y,const char *text) {
     SDL_SetRenderDrawColor(renderer,225,230,240,255);SDL_RenderDebugText(renderer,x,y,text);
 }
@@ -221,17 +282,18 @@ static void Host_Settings(SDL_Window *game) {
     SDL_Renderer *renderer=SDL_CreateRenderer(window,NULL);
     if(!renderer){SDL_DestroyWindow(window);return;}
     SDL_SetRenderLogicalPresentation(renderer,400,380,SDL_LOGICAL_PRESENTATION_LETTERBOX);
+    Psyz_PauseHostClock_SDL3(true);
     int paused=Psyz_AudioIsPaused();Psyz_AudioPause();
     int open=1,page=0,row=0,capture=0,quit=0;
     const char *status="Changes are applied immediately.";
     while(open){
         SDL_SetRenderDrawColor(renderer,17,21,30,255);SDL_RenderClear(renderer);
         Host_Text(renderer,16,14,"PARASITE EVE / SETTINGS");
-        static const char *tabs[]={"GRAPHICS","CONTROLS","AUDIO"};
-        for(int i=0;i<3;++i){
-            SDL_FRect rect={12.0f+i*128.0f,36,120,24};SDL_SetRenderDrawColor(renderer,i==page?57:30,47,65,255);SDL_RenderFillRect(renderer,&rect);Host_Text(renderer,rect.x+8,44,tabs[i]);
+        static const char *tabs[]={"GRAPHICS","CONTROLS","AUDIO","IMAGES"};
+        for(int i=0;i<4;++i){
+            SDL_FRect rect={12.0f+i*96.0f,36,92,24};SDL_SetRenderDrawColor(renderer,i==page?57:30,47,65,255);SDL_RenderFillRect(renderer,&rect);Host_Text(renderer,rect.x+8,44,tabs[i]);
         }
-        int count=page==0?4:page==1?17:1;
+        int count=page==0?4:page==1?17:page==2?1:2;
         for(int i=0;i<count;++i){
             char label[100];
             if(page==0){
@@ -239,7 +301,8 @@ static void Host_Settings(SDL_Window *game) {
                 if(i==1)snprintf(label,sizeof(label),"Fullscreen                 %s",host_options.fullscreen?"On":"Off");
                 if(i==2)snprintf(label,sizeof(label),"Aspect ratio               %s",host_options.aspect?"Square pixels":"Original");
                 if(i==3)snprintf(label,sizeof(label),"Dithering                  %s",host_options.dither?"Off":"Original");
-            }else if(page==2)snprintf(label,sizeof(label),"Master volume              %u%%",host_options.volume);
+            }else if(page==3)snprintf(label,sizeof(label),"Disc %d          %s",i+1,g_CdImageVolumes[i]?"Ready":"Missing - add image");
+            else if(page==2)snprintf(label,sizeof(label),"Master volume              %u%%",host_options.volume);
             else if(i==0)snprintf(label,sizeof(label),"Binding device             %s",capture<0?"Controller":"Keyboard");
             else {
                 int index=i-1;
@@ -278,7 +341,7 @@ static void Host_Settings(SDL_Window *game) {
         if(event.type==SDL_EVENT_KEY_DOWN && !event.key.repeat){
             switch(event.key.scancode){
             case SDL_SCANCODE_ESCAPE:open=0;break;
-            case SDL_SCANCODE_TAB:page=(page+1)%3;row=0;capture=0;break;
+            case SDL_SCANCODE_TAB:page=(page+1)%4;row=0;capture=0;break;
             case SDL_SCANCODE_UP:row=(row+count-1)%count;break;
             case SDL_SCANCODE_DOWN:row=(row+1)%count;break;
             case SDL_SCANCODE_LEFT:action=-1;break;
@@ -288,8 +351,8 @@ static void Host_Settings(SDL_Window *game) {
         }else if(event.type==SDL_EVENT_GAMEPAD_BUTTON_DOWN){
             switch(event.gbutton.button){
             case SDL_GAMEPAD_BUTTON_EAST:open=0;break;
-            case SDL_GAMEPAD_BUTTON_LEFT_SHOULDER:page=(page+2)%3;row=0;capture=0;break;
-            case SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER:page=(page+1)%3;row=0;capture=0;break;
+            case SDL_GAMEPAD_BUTTON_LEFT_SHOULDER:page=(page+3)%4;row=0;capture=0;break;
+            case SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER:page=(page+1)%4;row=0;capture=0;break;
             case SDL_GAMEPAD_BUTTON_DPAD_UP:row=(row+count-1)%count;break;
             case SDL_GAMEPAD_BUTTON_DPAD_DOWN:row=(row+1)%count;break;
             case SDL_GAMEPAD_BUTTON_DPAD_LEFT:action=-1;break;
@@ -298,7 +361,7 @@ static void Host_Settings(SDL_Window *game) {
             }
         }else if(event.type==SDL_EVENT_MOUSE_BUTTON_DOWN && event.button.button==SDL_BUTTON_LEFT){
             float x,y;SDL_RenderCoordinatesFromWindow(renderer,event.button.x,event.button.y,&x,&y);
-            if(y>=36 && y<60 && x>=12 && x<396){page=(int)((x-12)/128);row=0;capture=0;}
+            if(y>=36 && y<60 && x>=12 && x<396){page=(int)((x-12)/96);row=0;capture=0;}
             else if(y>=68 && y<70+count*15 && x>=12 && x<388){row=(int)((y-68)/15);action=1;}
         }
         if(action){
@@ -307,6 +370,9 @@ static void Host_Settings(SDL_Window *game) {
                 if(row==1)host_options.fullscreen^=1;
                 if(row==2)host_options.aspect^=1;
                 if(row==3)host_options.dither^=1;
+            }else if(page==3){
+                if(g_CdImageVolumes[row])status="This image is already available.";
+                else status=Host_AddImage((unsigned)row+1,0)?"Image added and remembered.":"No image added.";
             }else if(page==2){int v=(int)host_options.volume+action*5;host_options.volume=(unsigned)(v<0?0:v>100?100:v);}
             else if(row==0)capture=capture<0?0:-1;
             else capture=capture<0?-2:2;
@@ -317,6 +383,7 @@ static void Host_Settings(SDL_Window *game) {
     SDL_DestroyRenderer(renderer);SDL_DestroyWindow(window);
     /* Avoid a held menu key leaking into the resumed original pad poll. */
     SDL_ResetKeyboard();
+    Psyz_PauseHostClock_SDL3(false);
     if(!paused)Psyz_AudioUnpause();
     if(quit){SDL_Event event={0};event.type=SDL_EVENT_QUIT;SDL_PushEvent(&event);}
 }
@@ -431,12 +498,12 @@ int main(int argc,char **argv) {
     }
     if(interactive){
         if(!paths[0] && !paths[1])for(unsigned i=0;i<2;++i)if(*host_options.discs[i])paths[i]=host_options.discs[i];
-        if(choose_discs || !paths[0]){
+        if(choose_discs || (!paths[0] && !paths[1])){
             int selected=Host_ChooseDiscs(paths);
             if(selected<=0)return selected<0?EXIT_FAILURE:EXIT_SUCCESS;
         }
     }
-    if(!paths[0]){fprintf(stderr,"Supply --disc with a USA CUE/BIN image\n");return EXIT_FAILURE;}
+    if(!paths[0] && !paths[1]){fprintf(stderr,"Supply --disc or --disc2 with a USA CUE/BIN image\n");return EXIT_FAILURE;}
     const char *headless_mode=SDL_GetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_HEADLESS");
     if(internal_resolution>1 && headless_mode && !strcmp(headless_mode,"1")){
         fprintf(stderr,"Software headless supports only internal resolution 1; use --headless-gpu\n");return EXIT_FAILURE;
@@ -484,8 +551,7 @@ mount_images:
         }
         g_CdImageVolumes[identity-1]=&images[slot];
     }
-    if(!g_CdImageVolumes[0]){fprintf(stderr,"USA Disc 1 is required for startup\n");goto image_error;}
-    CdRom_BindImage(g_CdImageVolumes[0],NULL);
+    CdRom_BindImage(g_CdImageVolumes[0]?g_CdImageVolumes[0]:g_CdImageVolumes[1],NULL);
     goto images_ready;
 image_error:
     CdRom_BindImage(NULL,NULL);g_CdImageVolumes[0]=g_CdImageVolumes[1]=NULL;
@@ -509,6 +575,8 @@ images_ready:;
             snprintf(ordered[i],sizeof(ordered[i]),"%s",path?path:"");
         }
         memcpy(host_options.discs,ordered,sizeof(ordered));
+        host_images=images;
+        g_CdImageRequest=Host_RequestImage;
         host_options.scale=internal_resolution;Host_ApplyOptions(NULL);
         Psyz_SetOverlayEventFilter_SDL3(Host_SettingsEvent);
         Host_SaveOptions();
@@ -627,6 +695,7 @@ shutdown:
     Psyz_AudioDestroy();
     CdRom_BindImage(NULL,NULL);
     g_CdImageVolumes[0]=g_CdImageVolumes[1]=NULL;
+    g_CdImageRequest=NULL;host_images=NULL;
     pe_disc_close(&images[0]);pe_disc_close(&images[1]);
     free(g_BootHostHealthEvents);g_BootHostHealthEvents=NULL;g_BootHostHealthEventCount=g_BootHostHealthApplied=0;
     free(g_BootHostPadEvents);g_BootHostPadEvents=NULL;g_BootHostPadEventCount=0;

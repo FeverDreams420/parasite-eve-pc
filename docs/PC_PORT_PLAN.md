@@ -36033,3 +36033,14 @@ ustawienia przed środkiem drzwi (ostatni ruch70 Left,40 Up, Cross).
 Całe wejście zachowane w commands.jsonl, checkpoint311420 oraz
 `/tmp/pe-campaign-replay-v3/station-hallway-proof.json`. Zbrojownia jeszcze
 nieosiągnięta w tej próbie; odcinek po291736 nie ma jeszcze cold SAN.
+
+
+### Day2: boczna trasa komisariatu do M078
+
+Zwykły ruch w M043 doprowadził do przejścia M078/a8005348 przy316046.
+Obejrzano kadr części aresztowej z zamkniętą kratą i policjantem; nie jest
+to zbrojownia. Przy317252 HP72/72, brak menu/dialogu i przeciwników.
+Checkpoint317252 oraz `/tmp/pe-campaign-replay-v3/station-detention-entry-proof.json`
+zachowują wynik; commands.jsonl pełne wejścia. To eksploracja kolejnej
+lokacji w bieżącym New Game, bez dowodu wszystkich interakcji M078
+ani niezależnego replay tego odcinka. Dalsza trasa do Torresa nadal otwarta.

@@ -11160,9 +11160,22 @@ static void fx_loop_observe(void)
 
 static int original_fx_frame_loop(PeDisc *disc)
 {
+    /* The original loop produces queued AKAO commands, as it does in-game. */
+    Spu_InitHardware();
+    if(Psyz_AudioInit()<0)return 0;
     PeDiscFile archive,exe;u16 sectors[5];
     if(!pe_disc_find(disc,"PE.IMG",&archive) || !pe_disc_find(disc,"SLUS_006.62",&exe) ||
        !pe_disc_read(disc,&exe,0x930d8-0x10000+0x800+72*2,sectors,sizeof(sectors)))return 0;
+    /* Scene_LoadSceneData loads the common SF0 instrument/sample bank before
+     * any real AKAO consumer can play the authored FX sound sequences. */
+    u16 sound_sectors[2];
+    if(!pe_disc_read(disc,&exe,0x930d8-0x10000+0x800+6*2,sound_sectors,sizeof(sound_sectors)) ||
+       sound_sectors[1]<=sound_sectors[0])return 0;
+    size_t sound_bytes=(size_t)(sound_sectors[1]-sound_sectors[0])*2048;
+    u8 *sound=malloc(sound_bytes);if(!sound)return 0;
+    int loaded=pe_disc_read(disc,&archive,(uint64_t)sound_sectors[0]*2048,sound,sound_bytes) &&
+               Spu_UploadSampleBlockBlocking(sound,1)==0;
+    free(sound);if(!loaded)return 0;
     u8 *textures=malloc(0x80000);if(!textures)return 0;
     unsigned total_frames=0,total_packets=0;
     for(unsigned night=0;night<2;++night)for(unsigned demo=0;demo<2;++demo){
@@ -11184,7 +11197,7 @@ static int original_fx_frame_loop(PeDisc *disc)
            g_FxCommonResetRequested || !g_FxCommonExitRequested){free(textures);return 0;}
         total_frames+=fx_loop_frames;total_packets+=fx_loop_packets;
     }
-    free(textures);
+    free(textures);Spu_Shutdown();Psyz_AudioDestroy();
     printf("Original FX frame loop: %u frames, %u linked packets, day/night original texture banks, original SDL input/playback and complete demo exits, both buffers and headless pixels pass\n",total_frames,total_packets);return 1;
 }
 
@@ -18360,12 +18373,13 @@ int main(int argc, char **argv)
         /* Force both boundary cases before the real timer consumes the queue.
          * Run separately: hardware initialization owns the global driver. */
         Spu_InitHardware();
+        if(Psyz_AudioInit()<0)return 1;
         u32 blanks=g_BootHostVBlankCount;
         for(unsigned i=0;i<128;++i){
             for(;;){
                 EnterCriticalSection();
                 if(!g_AkaoMessageQueueCount)break;
-                ExitCriticalSection();VSync(1);
+                ExitCriticalSection();if(!Psyz_AudioWaitForTimer())VSync(1);
             }
             memset(g_AkaoMessageQueue,0,sizeof(g_AkaoMessageQueue));
             g_AkaoMessageQueueCount=(i&1)?15:16;
@@ -18388,10 +18402,10 @@ int main(int argc, char **argv)
             int pending=g_AkaoMessageQueueCount;
             ExitCriticalSection();
             if(!pending)break;
-            VSync(1);
+            if(!Psyz_AudioWaitForTimer())VSync(1);
         }
         if(g_BootHostVBlankCount!=blanks)return 160;
-        Spu_Shutdown();
+        Spu_Shutdown();Psyz_AudioDestroy();
         puts("Original AKAO queue: 128 full/single and 15-entry/paired boundaries drain through the real timer without advancing VBlank");
         return 0;
     }

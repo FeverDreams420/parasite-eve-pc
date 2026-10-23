@@ -2,6 +2,36 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### AKAO producer wait i rzeczywista inicjalizacja fixture FX
+
+Timeout fx-frames z pierwszych CMake macierzy potwierdzono osobnym procesem
+(`/tmp/pe-fx-frames-v1-probe/sample.txt`): pełna kolejka AKAO, stos
+FxCommon_Apply3dPan→Akao_EnqueueStagedCommand→VSync(1). Samodzielny fixture
+nie uruchamiał oryginalnego timera i banku instrumentów. Po uruchomieniu
+hardware SAN ujawnił brak wspólnego SF0 (pitch denominator0); nie zmieniano
+wzorów sekwencera, tylko uzupełniono rzeczywiste dane w teście.
+
+W istniejącym voice_bank.c producent pełnej kolejki obsługuje teraz tick przez
+Psyz_AudioWaitForTimer w trybie offline, z dotychczasowym poll VSync(1) w real-time.
+Zachowano sekcję krytyczną, pojemność oraz atomową rezerwację pary komend.
+Test FX uruchamia oryginalne Spu_InitHardware i backend, ładuje prawdziwy SF0
+z sektorów6–7 tabeli USA EXE przez Spu_UploadSampleBlockBlocking i zamyka audio
+po pętli. To prerequisite startu gry, nie sztuczna tabela/handler ani wyłączenie
+komend. W istniejącym teście kolejki również zastosowano oba zegary.
+
+`/tmp/pe-akao-wait-v2/test-proof.json`:8/8 O2 normal/SAN, real/video clock,
+128 pełnych/single oraz15-entry/paired granic kolejki, pełny FX dzień/noc,
+demo i oryginalny SDL input,2664 klatki, oba bufory, pakiety i piksele.
+`red-proof.json`: stary producent z nowym tym samym fixture zawiesza się na
+pełnej kolejce offline (potwierdzony timeout, proces zakończony/reaped), poprawiony
+kończy. Osobny stary FX probe po diagnozie zakończono SIGKILL, gdy SIGTERM SDL
+nie opuszczał waitu; nie pozostawiono go uruchomionego. Nie zaliczono nieudanych
+prób v1 z zerowym bankiem jako PASS.
+
+To testy kierowane, nie pełne90/90 po poprawkach. Pierwsze nieudane binaria,
+biblioteki, konfigurację i LastTest zachowano niezmiennie w
+`/tmp/pe-cmake-native-v1-frozen/proof.json` przed ponownym buildem.
+
 ### O2: korekta granicy areny list callbacków
 
 Oba normal-O2 błędy actor-animation/player-input-assets wynikały z odmowy

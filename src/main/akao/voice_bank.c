@@ -1,4 +1,5 @@
 #include "common.h"
+#include <psyz/audio.h>
 #include <string.h>
 #include "pe1/akao.h"
 #include "pe1/akao/commands.h"
@@ -2084,7 +2085,7 @@ int Akao_EnqueueStagedCommand(void) {
             (int)(sizeof(g_AkaoMessageQueue) / sizeof(g_AkaoMessageQueue[0])) - param)
             break;
         ExitCriticalSection();
-        VSync(1);
+        if(!Psyz_AudioWaitForTimer())VSync(1);
     }
     g_AkaoMessageQueueLock = 1;
     switch (opcode) {

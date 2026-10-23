@@ -36243,3 +36243,20 @@ BP74; rozmowa z Klampem jeszcze nieuruchomiona. Checkpoint427053 i
 `museum-notebook-transition-proof.json` zachowane. Wcześniejsze próby
 obejścia bramki bez podpisu nie były błędem portu; oryginalny warunek
 pozostał bez zmian. Ten dalszy odcinek nie ma jeszcze cold SAN.
+
+
+### Bieżący Day2: rozmowa z Klampem i powrót przed muzeum
+
+W M230 trzeba ominąć ławkę ruchem Down (malejące Z), następnie Right
+do Daniela; ruch przy wyjściu wracał do holu i nie był błędem przejścia.
+Prawidłowa trasa doprowadziła do M239/a80434c8 przy433095/dialog57.
+Rozmowa przeszła m.in.71,84,91,103, zmiany kamer i monitor prezentacji.
+Przy456327 oryginalny skrypt wrócił przed muzeum a8029148, stage208,
+HP72/72, BP74, brak menu/dialogu. Checkpoint456327 i dowód
+`/tmp/pe-campaign-replay-v3/klamp-return-proof.json`. Nie jest to jeszcze
+ukończenie Day2 ani dowód zgodności każdej klatki z PS1.
+
+Nowe niezależne cold normal/SAN od pustych kart do456327:
+`/tmp/pe-campaign-replay-v3/cold-klamp.py`, normal session59280/PID45358,
+SAN session84283/PID45440. Wyniki jeszcze nieznane. Bieżąca session37796
+pozostaje na456327; całość wejść w commands.jsonl.

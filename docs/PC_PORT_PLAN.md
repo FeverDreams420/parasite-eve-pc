@@ -35975,3 +35975,20 @@ Po uruchomieniu potwierdzono żywe procesy; wyniki nadal nieznane.
 Normal session15194/PID79153, SAN session24346/PID79518. To nie jest
 PASS ani dowód zgodności audio lub PS1. Bieżąca session37796 pozostaje
 na checkpoint291736 i nie postępuje podczas tego porównania.
+
+
+### Cold normal do komisariatu PASS; Continue Day2 odczytuje zapis
+
+Niezależny cold normal zakończył się przy291736: cały JSON oraz VRAM
+i PPM identyczne z zachowanym żywym przejściem; exit0, brak raportów
+błędów. Dowód `/tmp/pe-campaign-replay-v3/cold-normal/proof.json`.
+SAN session24346/PID79518 nadal żywy przy ostatnim sprawdzeniu.
+
+Osobne Continue otworzyło oryginalny zapis B Day2 na nowej prywatnej
+karcie. Przy15000 cała character/inventory i story_stage128 są identyczne
+z faktycznym punktem File saved288424: Level6, EXP63, HP72/72, BP74.
+Porównanie z późniejszym biurem290456 początkowo odrzuciło story_stage:
+biuro ma już136; właściwy punkt odniesienia to zapis128. Zapis pozostał
+bajtowo niezmieniony; exit0 po EOF na punkcie sterowania. Dowód
+`/tmp/pe-campaign-replay-v3/continue-day2/proof.json`. Potwierdza odczyt,
+jeszcze nie dojście z Continue do biura ani zgodność audio/PS1.

@@ -2,6 +2,25 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### b6cdcbf26: EX2/2 oraz audyt pozostałych źródeł/MDEC
+
+Nowy EX normal/SAN2/2 zakończony: ContinueO, Truebred Eve, authored dialogi,
+pełne napisy i menu332629; pełny JSON/VRAM/PPM zgodny z zachowanymi wynikami,
+PCM244 727 451 klatek SHA256c387b45c52822183dc003117acc8a2610079d3e04e4b7dbe2d048015da3455c0.
+Dowód /tmp/pe-seeker-original-v1-EX-ending-cold-proof.json; brak zmian zapisuO.
+To późny fragment EX, nie pełna kampania od New Game ani hardware oracle.
+
+`/tmp/pe-seeker-original-v1/remaining-source-audit.json`: sześć pozostałych
+niekompilowanych plików poza225 starymi PsyQ. Cztery MDEC to sprzętowe DMA,
+MMIO/busy waits albo stary assembler VLC. Obecne movie/credits wołają oryginalny
+DecDCTvlc2, SDK realizuje DecDCT i software MDEC. Native DecDCTvlc nadal stub,
+nie liczymy go jako implementacji. SDK mdec::* ponownie5/5 normal i SAN,
+bez SKIP/diagnostyk: tryby wyjścia, callbacki/split, ucięte dane, quant/scale,
+generowane strumienie i guards. Nie dowodzi to wszystkich FMV ani sprzętowej
+równoważności. Draw_ReportError nie ma obecnych wywołań C, ale nie uznano go
+za martwy bez audytu oryginalnych referencji i obsługi fatal na PC. Tabela
+actor/window ma osobny dowód49 komórek, nadal nie komplet callback gameplay.
+
 ### b6cdcbf26: normal94/94 i oracle sterowania lotem seeker
 
 Pełny normal CTest zakończony exit0:94/94 w565,17s. Verifier potwierdza

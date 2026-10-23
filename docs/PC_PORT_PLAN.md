@@ -2,6 +2,43 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N8 zakończone porażką; Mayaheal1000 i rezerwaPreraise w pilocie
+
+ColdO→188489 normal/SAN PASS:
+`/tmp/pe-N8-Eve-final-entry-cold-v1-proof.json`, pełnyJSON/VRAM=frozenlive,
+sourceO bez zmian. To nie obejmuje późniejszychEnergyShot/Mayi/śmierci.
+
+PoEnergyShot dwa234trafienia:203417Eve1005721. Potem204801Eve1006721:
+oryginalnaMaya uleczyła1000. `/tmp/pe-N8-Eve-Maya-heal-v1/proof.json`
+ma passed:false. Ostatni pocisk trafił203401 już wEveMode4/przywołaniu,
+choć Maya jeszcze nie była renderowana (widoczna203465). Późniejszy
+heal pojawił się podczas samego ruchu/PE, po opóźnionej sekwencjiMayi.
+Hostguard dopuszczał start kolejnej tury wmode2 do600vblank po18;
+usunięto tę ekstrapolację. Późne ofensywne okno to teraz wyłącznie mode18,
+poza nim pozostaje wcześniejsze zmierzone ATB≤1000. Nie zmieniono leczeniaMayi.
+
+Dalej205905PreraiseHP434,208305Eve1005785/HP869,
+210465PreraiseHP434,Revive0. Pilot znów wydał500PE naHeal3 przy braku
+Preraise, zanim uzbierał1000 na ochronę.211081HP714 nie wystarczyło:
+211681HP0 bezPreraise/Revive, Eve1005785. Oryginalne1200neutralnychklatek
+przywróciło212881title; obraz obejrzany (ParasiteEve/PressStart).
+`/tmp/pe-N8-Eve-death-return-v1/proof.json` ma passed:false dla walki.
+Kontroler i nativeN8 zamknięteoryginalnymquit exit0, kartaO niezmieniona.
+To porażka strategii, nie zaliczone zwycięstwo ani potwierdzony błąd gry.
+
+W tymczasowym pilocie: Preraise przy1000PE wmode2/4/18 ma priorytet przed
+nową kolejką; przy braku ochrony nie wydaje500PE naHeal3 w ścieżcefight.
+wait nie zwraca wczesnego okna ofensywnego bez ochrony lub1000PE.
+Bez zapisówRAM/RNG/save i bez zmian produkcyjnegoC/PsyZ.
+
+NowaN9 od oryginalnejO odtwarza wszystkie wejścia do ostatniego dodatniego
+stanu210465 (HP434/Eve5785), nie przywracaRAM. SesjaPTY55195,
+`/tmp/pe-m318-flash-N9-live.py`; niezależnySAN23673,
+`/tmp/pe-m318-flash-N9-san-v1.py`. Przed wejściem nowej strategii wymagany
+`/tmp/pe-m318-flash-N9-handoff-v1.py`: zgodność z historycznymJSON210465,
+pełny normal/SANJSON/VRAM, żywy native i niezmienne karty. Wynik pending.
+Pełny zakresportu i zwycięstwoEve nadal niezaliczone.
+
 ### N8: końcowa faza w runtime; EnergyShot817, Eve6189HP
 
 Live188489:HP869/Preraise, Eve1010282, cztery234strzały odhandoff,

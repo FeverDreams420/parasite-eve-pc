@@ -36547,3 +36547,19 @@ Heal1 przy626124 dało41→71, Medicine1 przez Item/Use przy626874
 71→92/92. Cure-P zachowane, menuItem1 otwarte. Checkpoint626874 i
 M358-escape-observation.json w /tmp/pe-campaign-replay-v3; to obserwacja
 nowej gałęzi ucieczki, niezależny replay wymagany. M065 nadal niepokonane.
+
+### M358: ponowne spotkanie po ucieczce wygrane
+
+Przejście przez obszar spotkania po ucieczce uruchomiło je ponownie628694;
+ucieczka nie czyści spotkania. Cure-P nie zużyte. Heal1 34→64, pierwszy
+ptak pokonany629722. Kolejne trafienia obniżyłyHP do25; drugie Heal1,
+przy631206HP51. Krótkie odcinki ruchu zCircle po100 VBlank i kontrolaATB:
+przeciwnik4:0 pokonany631602, ostatni6:31 pokonany632138. Do632438
+HP51/92 bez dalszych strat, combat2/menu20 nagród; nagrody jeszcze
+nieodebrane. Checkpoint632438 w /tmp/pe-campaign-replay-v3.
+
+Uruchomione cold-M358-recovery normal PID38389/session58243 i SAN
+PID38505/session45515 do632438 zNew Game i pustych prywatnych kart.
+Obejmują zapisC, porażki/Continue, próbyEscape i ponowne zwycięstwo,
+porównują całykońcowyJSON/VRAM/PPM oraz zapisująPCM. Wyniki nieznane;
+nie uznawać uruchomienia zaPASS. M065/Cure-P pozostają do wykonania.

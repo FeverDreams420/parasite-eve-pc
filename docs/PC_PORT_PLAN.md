@@ -36355,3 +36355,21 @@ pierwszą walkę, rozdzielenie celów, nagrody i leczenie PE:
 `/tmp/pe-campaign-replay-v3/cold-park-first.py`, normal session38123/PID35719,
 SAN session18971/PID35801. Wyniki nieznane; bieżąca session37796
 pozostaje przy532148.
+
+
+### M060 działa; nierozwiązany stan wejścia M061
+
+Bieżące przejście M059→M060 przy536698 zachowało HP92/92 i ekwipunek.
+Przy539408 załadowano M061/a80060c8. Następne450Left/350Up nie
+zmieniają pozycji [45,160,−3111]; przy540368 move_lock0, game_flags
+0x40000040, player animation21/frame0/last0/stop59. Brak abortu i
+aktywnego dialogu, ale nie zaliczać M061 jako sprawnej eksploracji.
+Stan może wynikać z oczekiwania skryptu/ładowania; przyczyna nieustalona.
+Checkpoint540368 i `/tmp/pe-campaign-replay-v3/M061-entry-investigation.json`.
+
+Uruchomiono dwa niezależne replaye do tej obserwacji od New Game:
+`/tmp/pe-campaign-replay-v3/cold-M061.py`, normal session33643/PID51980,
+SAN session55189/PID52071. Porównanie stanu potwierdzi reprodukcję,
+nie poprawność M061. Wcześniejsze cold do532148 (session38123/18971)
+nadal nie miały wyniku przy ostatnim sprawdzeniu; nie restartowano ich.
+Bieżąca session37796 pozostaje na540368 do diagnozy bez zmian RAM.

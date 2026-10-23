@@ -36920,3 +36920,53 @@ session46441: configure/build, potem czeka na faktyczne końcowe kody obu
 istniejących przebiegów. Testycoverage wystartują tylko po ich exit0.
 Postęp /tmp/pe-clean-source-coverage-progress.json, profile osobno w
 /tmp/pe-clean-source-coverage-profiles. Brak wyniku nowych95/coverage.
+
+## Uzupełnienie dowodów — desktop 30a87ef6e, 23 października 2026
+
+Nowy kandydat pozostaje na `desktop-disc-management`, w worktree
+`/tmp/pe-disc-management-v1`, z SDK `ad352ebd71ad3859c3fd8171df94befce4394408`.
+Źródła głównego kandydata 6baf155cf pozostają zamrożone do końca jego macierzy
+oraz bramki EX. Nowe dowody nie zastępują ani nie przemianowują jego wyników.
+
+Niezależny katalog surowych sektorów znalazł wszystkie 47 filmów w obu obrazach
+łącznie; każdy kończy się numerem klatki zgodnym z autorską tabelą. Wszystkie
+używają XA 4-bit stereo 37,8 kHz; nie ma nieobsługiwanych formatów ani błędów
+podwójnego nagłówka sektorów. `FMV034` zawiera wyłącznie zerowe nible ADPCM:
+wyjściowa cisza jest w tym przypadku oczekiwana, a nie pominięta.
+Katalog: `/tmp/pe-fmv-catalog-audit-v2/proof.json`.
+
+Pełny headless replay wykonał oba oryginalne odtwarzacze dla wszystkich 47
+filmów, w RGB15 i RGB24, aż do autorskiego końca: 188 przypadków normal i 188
+ASan/UBSan/function. Na profil: 81512 prezentowanych klatek (oryginalny player
+kończy przy przygotowaniu ostatniej klatki) i 239884832 zmiksowane ramki stereo.
+Hash obejmuje całą wyświetlaną natywną powierzchnię każdej klatki oraz każdą
+próbkę PCM. Odpowiadające sobie odtwarzacze mają identyczne hashe obrazu/PCM;
+normal i SAN dają identyczne rekordy wszystkich 188 przypadków. Audio nie
+zmienia się między RGB15 i RGB24. Sprawdzono 4 VBlank na każdą prezentowaną
+klatkę, audibility zgodne z zawartością skompresowanych sektorów oraz
+niezmienność haszy podlinkowanych bibliotek i programów.
+Dowód: `/tmp/pe-fmv-full-replay-proof-v2/proof.json`; manifest obok.
+
+Pierwsza wersja fixture'a błędnie wymagała niezerowego PCM od każdego filmu.
+Zatrzymała normal przy FMV034; częściowy SAN zakończono jawnie jako zastąpiony
+po odczycie zerowego materiału źródłowego, nie wskutek timeoutu. Poprawiona
+wersja wymaga zgodności z rzeczywistą zawartością również w przypadku ciszy.
+Nie zmieniono produkcyjnego kodu ani danych gry, żeby uzyskać te wyniki.
+Fixture odtwarzania inicjalizuje oryginalny Spu_InitVoiceState, który ustawia
+wejście CD; wcześniejsza próba bez tej inicjalizacji miała zerowy miks.
+
+To dowód offline tego samego natywnego dekodera, nie niezależne porównanie z
+PS1, pomiar latencji słuchawek ani test zmiany focusu rzeczywistego systemu.
+Usługa automatyzacji pulpitu pozostaje wyłączona po potwierdzonym przez
+użytkownika przywróceniu kursora po zakończeniu SkyComputerUseService.
+
+Świeży AST z faktycznych poleceń kompilatora obejmuje 220 jednostek, 210
+unikalnych plików C i 3010 lokalizacji definicji, bez błędów parsowania.
+Względem 6baf155cf jest 10 dodatków i zero usunięć; zapis zawiera również
+listy jednostek dla definicji współdzielonych. To katalog, nie dowód wykonania
+każdej funkcji. `/tmp/pe-desktop-acceptance-v3/catalog/definition-delta-proof.json`.
+
+Nowa pełna macierz normal/SAN/coverage jest zakolejkowana po poprzedniku,
+potem ukryte Metal GPU i replay Continue O → Truebred Eve → EX/credits/title.
+Jej wyniki nie są jeszcze potwierdzone. Procesy mają niski priorytet; nie
+uruchamiamy sterowania pulpitem ani widocznych okien.

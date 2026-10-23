@@ -2,6 +2,23 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### e8ff03f56: Tutorial123 i odświeżony katalog funkcji
+
+`/tmp/pe-motion-gate-v1-tutorial-cold/proof.json`: normal/SAN2/2, wszystkie
+123 punkty pełnego stanu, VRAM i PPM zgodne z original input run i między
+profilami; pełne końcowe PCM SHA25645203257216bacc8148e1b37048a9ed0ad5fc578cb244cf73708113753cc49d7.
+Prywatne karty puste, hashe programów zgodne z pełnymi manifestami.
+
+`/tmp/pe-motion-gate-v1-catalog/function-evidence-catalog.json`:219 wariantów,
+2986 definicji, zero błędów parsera, źródła bajtowo zgodne z e8ff03f56.
+Siedem częściowych dowodów CPU: sześć AKAO po ponownych29 696 porównaniach
+na profil oraz motion Gated36 864. Pozostałe2979 niezatwierdzone w katalogu;
+nie oznacza to braku innych fixture, lecz wymagają przypisania i oceny zakresu.
+Source inclusion:441 plików C,209 bezpośrednio kompilowanych,232 poza kompilacją,
+z czego225 stare PsyQ i7 innych (error, cztery MDEC, actor/window table, seeker).
+Bramka Gated już poza listą braków; zgodność danych actor/window udowodniona
+osobno, zachowanie i mapowania nadal wymagają audytu. Cały zakres nieukończony.
+
 ### e8ff03f56: świeże ukryte Metal2× 2/2
 
 `/tmp/pe-motion-gate-v1-gpu-replay/proof.json`: normal/SAN2/2,

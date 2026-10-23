@@ -33,6 +33,12 @@ mutacji Host_String z buforami ochronnymi i sprawdzaniem niezmienności wejścia
 oraz10000 roundtripów Host_WriteString → Host_String. ASan/UBSan bez błędów,
 seed84591bcd. Dowód dotyczy pamięci i obsługiwanych escape'ów, nie zgodności
 z całą specyfikacją TOML ani fuzzowania payloadów gry.
+Niezależny bieżący dowód GPU: `/tmp/pe-desktop-gpu-v2/normal-proof.json`,59/59
+wybranych testów GPU/dither/horizontal-grid, zero SKIP, prawdziwy ukryty Metal,
+144 referencje atrybutów PS1 przy skalach1–8. Testy połączone dokładnie z
+bibliotekami SDK/SDL z manifestu nowego kandydata, bez przebudowy ani zmiany
+jego artefaktów. Odpowiednik SAN czeka na manifest/build SAN; nie ma jeszcze
+łącznego dowodu118 przypadków dla tej wersji.
 Nie restartowano starego pipeline'u ani nie nadpisano jego nieudanego wyniku.
 
 ### Akceptacja kandydata desktopowego 4c34cd893

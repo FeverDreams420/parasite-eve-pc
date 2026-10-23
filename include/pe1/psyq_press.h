@@ -1,7 +1,7 @@
 #ifndef PE1_PSYQ_PRESS_H
 #define PE1_PSYQ_PRESS_H
 
-/* Psy-Q LIBPRESS entry points linked into the mdec_diag overlay. */
+/* Game-facing LIBPRESS entry points; native MDEC/DMA is provided by PsyZ. */
 
 /* DecDCToutCallback: installs the MDEC-out DMA completion callback. */
 typedef void (*Pe1MdecCallback)(void);

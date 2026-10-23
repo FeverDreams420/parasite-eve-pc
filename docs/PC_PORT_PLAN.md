@@ -36703,3 +36703,25 @@ Dowód /tmp/pe-window-table-v1/proof.json, skryptbuild i logi w tym samym
 katalogu; surowy audyt /tmp/pe-combined-window-class-table-audit.json.
 Pełne95 dotyczą wcześniejszych binariów testów; nie przypisywać ich nowemu
 programowi testowemu. Produkcja bez zmian, M065 i całyport nadal otwarte.
+
+### Usunięte nieużywane jednostki sprzętowego MDEC PS1
+
+Usunięto z repo cztery niekompilowane jednostki mdec_diag/decdct.c,
+mdec_status.c, mdec_wait.c, vlc.c oraz ich prywatne mdec_wait.inc i
+pe1/mdec_diag.h (507 linii). Były to bezpośrednie rejestry/DMA PS1,
+pętle oczekiwania i stary assembler VLC1. Nie było ich w compile_commands
+ani zależnościach obiektów; brak odwołań do usuniętego nagłówka/makra w
+aktywnych źródłach. Natywne MDEC/DMA PsyZ i oryginalne vlc_build.c/vlc_c.c
+pozostają. Nie zastępowano funkcji gry ani nie dodawano nowych plików.
+Historyczne CSV naming_review nadal opisują dawne adresy SDK, nie aktualny build.
+
+Test --assets na świeżych programach testowych z poprzedniego etapu,
+normal/SAN oba exit0, bez diagnostyk runtime: m.in.190 rzeczywistych
+STR frames,21 movie hashes i przyrostowe VLC2 zgodne z istniejącym oracle.
+Dowód i hashe usuniętych plików /tmp/pe-retired-mdec-mmio-v1.json;
+logi /tmp/pe-retired-mdec-{normal,san}-assets.log. To kontrola używanych
+ścieżek, nie dowód wszystkich filmów/SDK. Nieużywany DecDCTvlc (VLC1)
+w PsyZ nadal ma stub; nie uznajemy go za zaimplementowany ani używany
+przez grę. Po porządkach437 plikówC wsrc,210 wcompile_commands,
+227 poza nimi:225 starych Psy-Q, Draw_ReportError i złożona tabela klas.
+Spis /tmp/pe-source-compilation-scope-v2.json; pozostały zakres do rozliczenia.

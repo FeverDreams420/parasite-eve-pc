@@ -36178,3 +36178,19 @@ przy397375 (kadr obejrzano). Cross po oczekiwaniu wybrał domyślne NYPD
 i wrócił do M046 przy398583. Nie dotarto jeszcze do innej lokacji; nie
 uznawać tego za przejście do muzeum. Checkpoint398583 i
 `/tmp/pe-campaign-replay-v3/station-map-return-proof.json` zachowują zakres.
+
+
+### Cold do konferencji PASS normal/SAN; bieżąca kampania przed muzeum
+
+Oba cold replaye do391549 zakończyły się0, bez raportów błędów. Pełny
+stan/VRAM/PPM identyczne z bieżącym checkpointem, całe PCM normal/SAN
+identyczne (SHA256 aceb1bd35884a6533652a457420cfeb551a87bd58e62b634ad567f499d8a486c).
+Obejmuje magazyn M84F, pancerz, Bena/Daniela i konferencję. Dowód
+`/tmp/pe-campaign-replay-v3/cold-conference-pair-proof.json`.
+
+Dalsze zwykłe wyjście na mapę, Right wybrało Museum, Cross uruchomiło
+przejazd radiowozem/a8003448 z dialogami Daniela15–27. Przy406419
+a80290c8, kadr przed muzeum, dialog zamknięty, HP72/72, BP74.
+Checkpoint406419 i `/tmp/pe-campaign-replay-v3/museum-arrival-proof.json`.
+Wnętrze muzeum jeszcze nieodwiedzone w tym przejściu; odcinek po391549
+pozostaje poza niezależnym replay. Pełny cel nadal nieukończony.

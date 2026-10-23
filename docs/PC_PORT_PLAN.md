@@ -2,6 +2,24 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### b6cdcbf26: normal94/94 i oracle sterowania lotem seeker
+
+Pełny normal CTest zakończony exit0:94/94 w565,17s. Verifier potwierdza
+wszystkie identyfikatory/nazwy, brak SKIP/diagnostyk i niezmienione21 programów
+oraz źródła gry/SDK. Dowód /tmp/pe-seeker-original-v1-full-normal-matrix-proof.json.
+Nie oznacza to pełnego katalogu, kampanii ani akceptacji pozostałych profili.
+
+`/tmp/pe-seeker-original-v1/flight-cpu/proof.json`: po1280 przypadków w trzech
+profilach zgodnych z oryginalnym USA state0. Porównano pełne20-bajtowe cząstki
+oraz ślad, flagi owner/player, kolejność helperów i wynik. Timery0..7,
+prędkości-32768/-47/0/47/32767, task flag/owner eligibility/pool availability/
+contact/floor result0/1. Oryginalne instrukcje ciała bez hooków; odpowiedzi
+Angles/Acquire/RNG/Radius/Geo są deterministyczne na granicach zewnętrznych.
+Natywny cały moduł prywatnie kompilowany z podmienionymi wyłącznie nazwami
+tych pięciu helperów. To dowód sterowania callbacku w tej domenie, nie dokładny
+release object ani pełne algorytmy helperów, render czy hardware oracle.
+Źródło callbacku zgodne z b6cdcbf26, produkcyjnego kodu nie zmieniono.
+
 ### b6cdcbf26: częściowy katalog wykonania z36 zakończonych testów
 
 `/tmp/pe-seeker-original-v1/coverage-snapshot/function-execution-catalog.json`:

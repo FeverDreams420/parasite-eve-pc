@@ -2,6 +2,22 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### N6: cold O→173161 PASS; diagnostyka późniejszego abortu nadal trwa
+
+`/tmp/pe-N6-Eve-priority-cold-v1-proof.json`: normal/SAN exit0/czysto,
+pełnyJSON/VRAM równy frozenlive173161; kartyO niezmienione. Obejmuje
+późniejsze mieszane tury PE/TripleCommand, dwaRevive i odrodzeniePreraise.
+To nie zalicza późniejszego abortu182193→182201 ani wygranejEve.
+
+Dla diagnostyki zachowano pełną listę wejść oraz równoważną skróconą:
+15327→5443zdarzenia, sprawdzono identyczny stan pada na każdej granicy,
+więc w każdej klatce. `/tmp/pe-N6-Eve-effect97-compact-v1-proof.json`
+dowodzi wyłącznie równoważności wejść, nie poprawności gry.
+LLDBv3/12145 odtwarza pełną listę; LLDBv4/34292 skróconą i zapisuje
+stdout/stderr inferiora bezpośrednio do plików, omijając terminaldebuggera.
+Oba procesy potwierdzono aktywne. Sanitizowany replay awarii:
+`/tmp/pe-N6-Eve-effect97-san-v1.py`; wynik pending.
+
 ### N6: rzeczywisty abort przy efekciePreraise97 — niezaliczony test
 
 Dalsza gałąź zginęła176577 przed kolejnymPowerCharge. OstatniRevive

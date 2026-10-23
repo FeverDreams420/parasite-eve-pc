@@ -36521,3 +36521,17 @@ i prewencję zatrucia; przedmiot jest dostępny. Następna próba powinna
 użyć oryginalnego Cure-P, zamiast liczyć wyłącznie naHeal1. Szczegółowe
 odczyty w M065-retry-poison-evidence.json w /tmp/pe-campaign-replay-v3.
 Nie zmieniono kodu, stanu, RNG ani zapisów. Proceslive pozostaje przy597326.
+
+### Kolejna próba: porażka M358 i poprawka sterowania testem
+
+PoContinue600970, M063 wygrane i Heal1 do92/92. Próba bezpośredniego
+Right przez M358 uruchomiła tę samą walkę, nie ominęła spotkania.
+Przy610232 HP46, oryginalne Heal1 uruchomione przez menu8/41;
+przy610524 HP55 (leczenie i kolejne trafienia). Bezruch390 do610914
+obniżyłHP do23; atak następnej tury nie zdążył,611174HP0. Cure-P nie
+zużyte; nie osiągnięto jego testu wM065. Kolejne sterowanie wymaga ruchu
+podczas ładowaniaATB i krótszych obserwacji zamiast bezruchu390.
+Oryginalne Continue ponownie przy614818 odtworzyło cały character,
+inventory, scenę i stage zapisuC; retry3-recovery-proof.json w /tmp.
+Brak nowej implementacji lub dowodu zwycięstwa; nie uznawać planowanego
+Cure-P za wykonany test. Proceslive czeka wM064 z92/92.

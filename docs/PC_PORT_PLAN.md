@@ -36208,3 +36208,19 @@ Uruchomiono rozszerzony cold normal/SAN od New Game do414031:
 `/tmp/pe-campaign-replay-v3/cold-museum.py`, normal session59475/PID192,
 SAN session90111/PID269. Obejmuje mapę, przejazd i wejście; wyniki nieznane.
 Bieżąca session37796 pozostaje przy414031.
+
+
+### Muzeum: dalsze dialogi ochrony i cold normal PASS
+
+Cold normal do414031 zakończył się0 z pełnym JSON/VRAM/PPM zgodnym
+z checkpointem. Dowód `cold-museum-normal/proof.json` w
+`/tmp/pe-campaign-replay-v3`; SAN session90111 jeszcze w trakcie przy
+ostatnim sprawdzeniu. Nie zaliczać pary przed uzyskaniem wyniku SAN.
+
+Bieżący dalszy przebieg M a80292c8 przechodzi dodatkową rozmowę
+Daniel42 i Guard44 (notatnik na ladzie). Zamknięcie dialogu działa,
+ruch wokół lady i ogrodzenia schodów zmienia pozycję. Przy421185
+checkpoint zachowany, HP72/72, BP74, stage192; nadal to samo wnętrze,
+rozmowa z Klampem nieuruchomiona. Próby przy ladzie nie otworzyły
+notatnika, więc interakcja nie jest potwierdzona. commands.jsonl zachowuje
+wszystkie wejścia; dalsza trasa pozostaje do rozpoznania.

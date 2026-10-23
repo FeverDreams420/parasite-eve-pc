@@ -14447,6 +14447,24 @@ static int original_movie_uploads(PeDisc *disc)
     if(first)MenuCardFirst_ResetDisplayState();else MenuCard_ResetDisplayState();
     table[0].wide=wide;
     }
+    /* FMV001 contains interleaved XA. Both original players must make it
+     * available to the same CD mixer used by hardware audio callbacks. */
+    int paused=Psyz_AudioIsPaused();Psyz_AudioPause();
+    for(unsigned first=0;first<2;++first){
+        u8 *buffers[]={arena};short samples[2048];unsigned nonzero=0,read_frames=0;
+        g_CdImage=disc;g_DrawEnabled.bits=0;
+        if(!(first?MenuCardFirst_InitVideoBuffers(1,buffers):MenuCard_InitVideoBuffers(1,buffers)) ||
+           !(first?MenuCardFirst_OpenVideo(1):MenuCard_OpenVideo(1))){valid=0;break;}
+        for(unsigned i=0;i<100;++i){
+            size_t got=Psyz_CdPullSamples(samples,1024);read_frames+=(unsigned)got;
+            for(size_t j=0;j<got*2;++j)if(samples[j])++nonzero;
+        }
+        if(read_frames!=102400 || !nonzero){fprintf(stderr,"Movie XA first=%u frames=%u nonzero=%u\n",first,read_frames,nonzero);valid=0;}
+        DecDCToutCallback(NULL);
+        if(first)MenuCardFirst_ResetDisplayState();else MenuCard_ResetDisplayState();
+        if(Psyz_CdPullSamples(samples,1024)!=0){fprintf(stderr,"Movie XA continued after stop\n");valid=0;}
+    }
+    if(!paused)Psyz_AudioUnpause();
     g_MenuSaveBgFadeState=background;
     g_GameStateFlagsWord=flags;g_GameState.scene_audio=audio;g_ActiveDrawSlot=old_slot;
     g_AkaoCdVolume=mix;CdMix(&mix);g_CdImage=old_image;

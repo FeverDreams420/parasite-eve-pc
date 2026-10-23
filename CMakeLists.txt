@@ -696,6 +696,8 @@ endforeach()
 if(BUILD_TESTING)
     target_sources(test-original-actor-animation PRIVATE $<TARGET_OBJECTS:parasite-eve-original-pad>)
     target_sources(test-original-input-rules PRIVATE $<TARGET_OBJECTS:parasite-eve-original-pad>)
+    target_sources(test-host-settings PRIVATE $<TARGET_OBJECTS:parasite-eve-original-pad>
+        $<TARGET_OBJECTS:parasite-eve-original-disc> $<TARGET_OBJECTS:parasite-eve-original-actor-animation>)
 endif()
 
 if(BUILD_TESTING)

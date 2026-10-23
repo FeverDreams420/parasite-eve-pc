@@ -38,6 +38,9 @@ extern PeDisc *g_CdImage;
 /* Borrowed mounted volumes, indexed by the authored disc identity (1/2).
  * NULL entries are unavailable; no ownership transfer or physical swap. */
 extern PeDisc *g_CdImageVolumes[2];
+/* Optional native file chooser, called by the original disc check only for a
+ * missing identity. NULL in headless runs. Success must install that volume. */
+extern int (*g_CdImageRequest)(unsigned identity);
 void CdRom_BindImage(struct PeDisc *disc, const struct PeDiscFile *archive);
 
 struct CdlLOC;

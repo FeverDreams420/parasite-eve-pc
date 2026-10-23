@@ -1,4 +1,6 @@
 #ifdef PE_HOST_SETTINGS_TEST
+extern long SetRCnt(long spec, unsigned short target, long mode);
+extern long GetRCnt(long spec);
 #undef NDEBUG
 #include <SDL3/SDL.h>
 #include <assert.h>
@@ -23,6 +25,53 @@ static bool TestPresent(SDL_Renderer *renderer) {
     return SDL_RenderPresent(renderer);
 }
 static void Key(SDL_Scancode key){SDL_Event e={0};e.type=SDL_EVENT_KEY_DOWN;e.key.scancode=key;assert(SDL_PushEvent(&e));}
+static unsigned requested_image,request_count;
+static const char *request_path;
+static int SupplyImage(unsigned identity){
+    requested_image=identity;++request_count;
+    return request_path?Host_InstallImage(identity,request_path):0;
+}
+static void DiscImages(void){
+    const char *paths[2]={getenv("PE_TEST_DISC"),getenv("PE_TEST_DISC2")};
+    if(!paths[0] || !paths[1]){
+        assert(!getenv("PE_REQUIRE_GAME_ASSETS"));return;
+    }
+    PeDisc images[2]={{0}};host_images=images;
+    assert(pe_disc_open(&images[0],paths[0]));
+    g_CdImageVolumes[0]=&images[0];g_CdImageVolumes[1]=NULL;
+    CdRom_BindImage(&images[0],NULL);assert(!Asset_OpenPeImage());
+    unsigned identity=0;Pe1GameState before=g_GameState;
+    unsigned flags=g_PeImageMountFlags;u32 base=g_PeImageBaseLba;
+    assert(!Asset_ValidatePeImage(&images[0],&identity) && identity==1);
+    assert(!Host_InstallImage(2,paths[0]));
+    assert(!g_CdImageVolumes[1] && !images[1].stream);
+    assert(g_CdImage==&images[0] && g_PeImageMountFlags==flags && g_PeImageBaseLba==base);
+    assert(!memcmp(&before,&g_GameState,sizeof(before)));
+    assert(Host_InstallImage(2,paths[1]));
+    assert(g_CdImageVolumes[1]==&images[1] && !strcmp(host_options.discs[1],paths[1]));
+    assert(g_CdImage==&images[0] && g_PeImageMountFlags==flags && g_PeImageBaseLba==base);
+    assert(!memcmp(&before,&g_GameState,sizeof(before)));
+    pe_disc_close(&images[1]);g_CdImageVolumes[1]=NULL;
+    g_CdImageRequest=SupplyImage;request_path=NULL;request_count=0;
+    assert(Render_InitDisplayLists(2)==-4 && requested_image==2 && request_count==1);
+    assert(g_CdImage==&images[0] && images[0].stream);
+    request_path=paths[0];assert(Render_InitDisplayLists(2)==-4 && !g_CdImageVolumes[1]);
+    assert(SDL_SetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_HEADLESS","1",true));
+    Psyz_VideoSetVsyncMode(PSYZ_VSYNC_LIMITLESS);ResetGraph(0);
+    request_path=paths[1];assert(!Render_InitDisplayLists(2));
+    assert(requested_image==2 && g_CdImage==g_CdImageVolumes[1] && images[0].stream);
+    unsigned requests=request_count;assert(!Render_InitDisplayLists(1) && request_count==requests);
+    CdRom_BindImage(NULL,NULL);g_CdImageVolumes[0]=g_CdImageVolumes[1]=NULL;
+    pe_disc_close(&images[0]);pe_disc_close(&images[1]);
+    /* Starting with Disc 2 is valid; the original check requests Disc 1. */
+    assert(pe_disc_open(&images[0],paths[1]));g_CdImageVolumes[1]=&images[0];
+    CdRom_BindImage(&images[0],NULL);assert(!Asset_OpenPeImage() && g_PeImageMountFlags==2);
+    request_path=paths[0];assert(!Render_InitDisplayLists(1));
+    assert(requested_image==1 && g_CdImage==g_CdImageVolumes[0] && images[0].stream);
+    assert(!strcmp(host_options.discs[0],paths[0]) && !strcmp(host_options.discs[1],paths[1]));
+    CdRom_BindImage(NULL,NULL);g_CdImageVolumes[0]=g_CdImageVolumes[1]=NULL;
+    g_CdImageRequest=NULL;host_images=NULL;pe_disc_close(&images[0]);pe_disc_close(&images[1]);
+}
 static int SDLCALL ClosePanel(void *unused){
     (void)unused;SDL_Delay(100);Key(SDL_SCANCODE_ESCAPE);return 0;
 }
@@ -36,12 +85,32 @@ static int SDLCALL Drive(void *unused){
     Key(SDL_SCANCODE_LEFT); /* 100 -> 95 */
     Key(SDL_SCANCODE_ESCAPE);return 0;
 }
+static int SDLCALL DriveFocus(void *window){
+    SDL_Delay(30);
+    assert(Psyz_AudioIsPaused());
+    unsigned tick=(unsigned)Psyz_VideoVSync(-1);
+    long counter=GetRCnt(0xf2000002);
+    SDL_Delay(90);
+    assert((unsigned)Psyz_VideoVSync(-1)==tick);
+    assert(GetRCnt(0xf2000002)==counter);
+    SDL_Event gained={0};gained.type=SDL_EVENT_WINDOW_FOCUS_GAINED;
+    gained.window.windowID=SDL_GetWindowID(window);
+    assert(SDL_PushEvent(&gained));return 0;
+}
 int main(int argc,char **argv){
     assert(argc==2);test_directory=argv[1];assert(SDL_CreateDirectory(test_directory));
     assert(SDL_SetHint(SDL_HINT_VIDEO_DRIVER,"dummy"));
     assert(SDL_SetHint(SDL_HINT_RENDER_DRIVER,"software"));
     assert(SDL_Init(SDL_INIT_VIDEO));
     Host_InitOptions(0);
+    Psyz_VideoSetVsyncMode(PSYZ_VSYNC_OFF);
+    unsigned frozen=(unsigned)Psyz_VideoVSync(-1);
+    Psyz_PauseHostClock_SDL3(true);SDL_Delay(80);
+    assert((unsigned)Psyz_VideoVSync(-1)==frozen);
+    Psyz_PauseHostClock_SDL3(true);SDL_Delay(40);Psyz_PauseHostClock_SDL3(false);
+    assert((unsigned)Psyz_VideoVSync(-1)==frozen);
+    Psyz_PauseHostClock_SDL3(false);
+    assert((unsigned)Psyz_VideoVSync(-1)-frozen<=1);
     assert(Psyz_SetKeyboardBinding_SDL3(16,SDL_SCANCODE_A)==-1);
     assert(Psyz_SetKeyboardBinding_SDL3(0,SDL_SCANCODE_ESCAPE)==-1);
     assert(Psyz_SetGamepadBinding_SDL3(16,0)==-1);
@@ -63,6 +132,17 @@ int main(int argc,char **argv){
     assert(!strcmp(host_options.discs[0],"/tmp/zażółć # \"quotes\" \\ disc.cue"));
     assert(SDL_SetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_AUDIO_CLOCK","video",true));
     assert(Psyz_AudioInit()==0 && !Psyz_AudioIsPaused());
+    assert(SetRCnt(0xf2000002,65535,0));
+    SDL_Window *focus=SDL_CreateWindow("focus fixture",320,240,SDL_WINDOW_HIDDEN);assert(focus);
+    SDL_Thread *focus_thread=SDL_CreateThread(DriveFocus,"focus pause",focus);assert(focus_thread);
+    Host_PauseForFocus(focus);SDL_WaitThread(focus_thread,NULL);
+    assert(!Psyz_AudioIsPaused());
+    Psyz_AudioPause();
+    focus_thread=SDL_CreateThread(DriveFocus,"already paused focus",focus);assert(focus_thread);
+    Host_PauseForFocus(focus);SDL_WaitThread(focus_thread,NULL);
+    assert(Psyz_AudioIsPaused());Psyz_AudioUnpause();
+    SDL_DestroyWindow(focus);
+
     int original_key=host_options.keys[0];
     SDL_Thread *thread=SDL_CreateThread(Drive,"settings input",NULL);assert(thread);
     SDL_Event open={0};open.type=SDL_EVENT_KEY_DOWN;open.key.scancode=SDL_SCANCODE_ESCAPE;
@@ -93,7 +173,8 @@ int main(int argc,char **argv){
     thread=SDL_CreateThread(ClosePanel,"close paused settings",NULL);assert(thread);
     assert(Host_SettingsEvent(&open));SDL_WaitThread(thread,NULL);
     assert(Psyz_AudioIsPaused());Psyz_AudioDestroy();
-    SDL_Quit();puts("PASS: TOML roundtrip, invalid values, modal graphics/controls/audio, persistence, ESC consumption, multi-disc callback");return 0;
+    DiscImages();
+    SDL_Quit();puts("PASS: both image identities, missing-image checks, additive mounting, TOML roundtrip, invalid values, modal graphics/controls/audio, persistence, ESC consumption, multi-disc callback");return 0;
 }
 
 #else

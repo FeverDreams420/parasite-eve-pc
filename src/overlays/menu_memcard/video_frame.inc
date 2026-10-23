@@ -1,3 +1,50 @@
+#include <psyz/audio.h>
+#include <psyz/cd.h>
+
+/* Both original movie players read image sectors directly. Feed their XA
+ * track to the existing SDK decoder independently of video-frame assembly. */
+static PeDisc *movieAudioImage;
+static PeDiscFile movieAudioFile;
+static int MenuCard_ReadMovieAudio(struct PsyzCdRead *read) {
+    if(!movieAudioImage || !read || read->size!=2352 ||
+       read->sector<movieAudioFile.sector ||
+       read->sector-movieAudioFile.sector>=((u64)movieAudioFile.size+2047)/2048)
+        return -1;
+    return pe_disc_read_raw(movieAudioImage,&movieAudioFile,
+               read->sector-movieAudioFile.sector,read->buffer)?2352:-1;
+}
+static void MenuCard_StopMovieAudio(void) {
+    Psyz_AudioLock();
+    if(movieAudioImage){
+        CdControlB(8,NULL,NULL);
+        Psyz_CdSetReadCB(NULL);
+        movieAudioImage=NULL;
+    }
+    Psyz_AudioUnlock();
+}
+static int MenuCard_StartMovieAudio(PeDisc *image,const PeDiscFile *file) {
+    u8 raw[2352],filter[2],mode=200;
+    u32 count=(u32)(((u64)file->size+2047)/2048),sector;
+    CdlLOC position;
+    MenuCard_StopMovieAudio();
+    for(sector=0;sector<count;sector++){
+        if(!pe_disc_read_raw(image,file,sector,raw))return 0;
+        if((raw[18]&0x44)==0x44)break;
+    }
+    if(sector==count)return 1;
+    filter[0]=raw[16];filter[1]=raw[17];
+    if(Psyz_AudioInit()<0)return 0;
+    Psyz_AudioLock();
+    movieAudioImage=image;movieAudioFile=*file;
+    Psyz_CdSetReadCB(MenuCard_ReadMovieAudio);
+    CdIntToPos(file->sector,&position);
+    int ok=CdControlB(14,&mode,NULL)>0 && CdControlB(13,filter,NULL)>0 &&
+           CdControlB(2,(u8 *)&position,NULL)>0 && CdControlB(27,NULL,NULL)>0;
+    if(!ok)MenuCard_StopMovieAudio();
+    Psyz_AudioUnlock();
+    return ok;
+}
+
 #ifndef MENUCARD_UPDATE_VIDEO_FRAME_NAME
 #define MENUCARD_UPDATE_VIDEO_FRAME_NAME MenuCard_UpdateVideoFrame
 #define MENUCARD_VIDEO_ENTRY g_MenuCardScreenVideoEntry

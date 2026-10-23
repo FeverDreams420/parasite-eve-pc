@@ -2,6 +2,71 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### Pauza focusu, resztki XA i incydent automatyzacji pulpitu
+
+Natywny smoke ujawnił dalszy rozjazd po przełączaniu aplikacji. Main obsługuje
+teraz focus głównego okna blokującym oczekiwaniem na powrót lub zamknięcie;
+jednocześnie zamraża audio, VBlank i czas root counterów. Kernel odejmuje czas
+pauzy od zegara hosta, aby AKAO nie sekwencjonowało w tle. Powrót zachowuje
+wcześniejszy stan pauzy. Headless fixture dwukrotnie czeka 90 ms w pauzie
+(w tym z audio już wstrzymanym), sprawdza niezmienny VBlank i GetRCnt oraz
+właściwy stan audio po powrocie. To test syntetycznych zdarzeń/okna SDL dummy;
+nie jest dowodem wszystkich rzeczywistych zachowań window managerów.
+
+Nowy test istniejącego SDK xa_playback odtworzył resztki prefetcha: po CdStop
+SPU zwracało 2046 zamiast zera. Przy stop/pause/nowym XA czyszczony jest tylko
+ring wejścia CD w SPU, bez resetowania głosów i reverb. Ten sam fixture teraz
+przechodzi. Zachowano czerwony wynik `/tmp/pe-cd-stop-red2/normal/output.log`.
+Zestaw CD/SPU przechodzi 68/68 normal oraz 68/68 ASan/UBSan/function, zero SKIP:
+`/tmp/pe-cd-spu-focus-green/proof.json`. Trzy fixture'y gry/ustawień/inputu
+przechodzą w obu profilach: `/tmp/pe-focus-buffer-normal-tests.log` oraz
+`/tmp/pe-focus-buffer-san-tests.log`. Pełny zestaw nowej wersji pozostaje do
+wykonania; wyników 6baf155cf nie przypisujemy tym poprawkom.
+
+Użytkownik zgłosił blokadę fizycznego kursora również po zamknięciu gry.
+Reset sesji CUA nie pomógł. Zatrzymanie procesu SkyComputerUseService SIGTERM
+przywróciło mysz, co użytkownik potwierdził. Nie uruchamiamy ponownie usługi
+ani sterowania pulpitem; dalsze testy są headless. Dwa pozostałe procesy gry
+miały SDL_AUDIODRIVER=dummy, a widoczna aplikacja była już zamknięta.
+
+### Obrazy płyt, audio FMV i tryb pulpitu — poprawki w desktop-disc-management
+
+Praca pozostaje w osobnym worktree `/tmp/pe-disc-management-v1`; nie zmienia
+zamrożonych źródeł kandydata 6baf155cf ani wyników jego pełnego pipeline'u.
+Start akceptuje dowolną płytę USA. Oryginalne Render_InitDisplayLists prosi
+natywnym dialogiem o brakujący Disc N; Images w ESC pozwala dodać go wcześniej.
+Walidacja dodatku nie modyfikuje aktywnego archiwum/tabel/stanu gry. Testy
+prawdziwych obu obrazów obejmują start z Disc 2, uzupełnienie obu kierunków,
+anulowanie i odrzucenie niewłaściwej płyty. Modalne ustawienia/picker zamrażają
+również zegar hosta, bez nadrabiania czasu po powrocie. Desktop fullscreen
+nie wybiera ekskluzywnego trybu ani innej rozdzielczości/odświeżania monitora.
+
+Zgłoszenie ciszy ujawniło lukę w obu oryginalnych odtwarzaczach FMV:
+video_frame.inc pomijało sektory XA podczas składania obrazu i nie uruchamiało
+ich dekodowania. Istniejące moduły przekazują teraz ograniczony zakresem pliku
+strumień do istniejącego dekodera PsyZ; biorą numer pliku/kanału z nagłówka XA,
+zatrzymują strumień i usuwają callback przy zamknięciu filmu. Nie dodano plików
+produkcyjnych. Trwały test sprawdza dla obu odtwarzaczy 102400 ramek FMV001,
+niezerowy sygnał i brak dalszych próbek CD po resetowaniu odtwarzacza.
+
+Rzeczywisty CoreAudio początkowo otrzymywał zera w FMV, mimo aktywnego streamu,
+głośności 100 i wyjścia AirPods. Po poprawce potwierdzono niezerowy sygnał
+przez rzeczywisty callback, a użytkownik potwierdził odsłuch. To nie jest dowód
+synchronizacji: użytkownik zgłosił rozjazd; odczyt wykazał obraz 926 przy audio
+około 987. Oczekiwanie VSync(n) traciło fazę przy spóźnionych prezentacjach.
+Poprawka SDK zachowuje zaplanowany VBlank jako początek następnego interwału;
+pełny opuszczony interwał nadal synchronizuje się z bieżącym czasem. Ukryty, wyciszony pomiar CoreAudio do klatki 750 daje 10010 ms na każde
+150 klatek, bez narastania rozjazdu. Odczyty kursora XA różnią się od numeru
+klatki o 0,5–1,3 klatki, z blokowym odczytem i prefetch; nie jest to pomiar
+latencji fizycznych słuchawek ani dowód synchronizacji co do próbki.
+Dowód: `/tmp/pe-realtime-audio-check/av-proof.json`.
+
+Trzy ukierunkowane testy (host-settings, actor-animation, player-input-assets)
+po zmianie zegara przeszły normal oraz ASan/UBSan/function: 3/3 w każdym.
+Wyniki: `/tmp/pe-av-cadence-normal-tests.log`,
+`/tmp/pe-av-cadence-san-tests.log`. Stare dowody PCM opisują wyłącznie swoje
+nagrane przypadki; nie pokrywały pominiętego dźwięku wszystkich FMV.
+
 ### Korekta wspólnej inicjalizacji klawiatury — kandydat6baf155cf
 
 Pełny normal kandydata4c34cd893 zakończył się8:94 PASS, dwa FAIL i zero SKIP.

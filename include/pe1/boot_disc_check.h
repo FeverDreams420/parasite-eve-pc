@@ -12,7 +12,7 @@
 
 /* Validate the selected file image and clear the two field display regions.
  * 0 succeeds; -1..-3 are image/archive errors; -4 is invalid/missing disc mode.
- * No physical drive, shell state or insert-disc UI is involved. */
+ * Missing native images may be supplied through g_CdImageRequest; no drive is emulated. */
 
 extern u16 g_PeImageSectorTable[];
 extern s32 g_ActiveDrawSlot;
@@ -21,6 +21,8 @@ extern s32 g_ActiveDrawSlot;
 void Boot_BuildRenderFlagTable(void);
 void Render_SetupFogLayer(void *source);
 void ResetGraph(int mode);
+/* Inspect a candidate without changing the active archive, tables or game. */
+int Asset_ValidatePeImage(PeDisc *disc, unsigned *identity);
 int Asset_OpenPeImage(void);
 int Render_InitDisplayLists(int mode);
 

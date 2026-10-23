@@ -91,6 +91,10 @@ s32 MENUCARD_OPEN_VIDEO_NAME(s32 number) {
         DecDCToutCallback(0);
         return 0;
     }
+    if (!MenuCard_StartMovieAudio(g_CdImage, &MENUCARD_VIDEO_FILE)) {
+        DecDCToutCallback(0);
+        return 0;
+    }
     MENUCARD_VIDEO_FINISHED = 0;
     g_SeqElapsed = 1;
     {

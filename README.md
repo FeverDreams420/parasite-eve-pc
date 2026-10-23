@@ -66,17 +66,18 @@ picker. Select **both USA CUE files together** (Command-click on macOS,
 Control-click on Windows/Linux). Selection order does not matter. Their paths
 are remembered; later launches mount both automatically. `--choose-discs`
 opens the picker again. Cancel exits cleanly; invalid images return to selection.
-A single Disc 1 image can start the game, but both images are needed for the
+Either USA disc can start the game; both images are needed for the
 complete game. Select CUE files rather than selecting a CUE and its matching BIN.
 
 **Escape** opens a modal desktop settings panel and freezes game progression
-and audio until it closes. Graphics include internal resolution 1–8×, fullscreen,
+and audio until it closes. Graphics include internal resolution 1–8×, desktop fullscreen,
 original/square-pixel aspect and dithering. Controls allow keyboard and controller
 remapping, including triggers. Duplicate assignments swap bindings. Audio has
 master output volume; it leaves the original SPU and diagnostic PCM unchanged.
 Use Tab or shoulder buttons to switch pages, arrows/D-pad to navigate, Enter/A
 to change or capture a binding, and Escape/B to return. Tabs and rows also accept
-mouse clicks. Escape is reserved for settings.
+mouse clicks. Escape is reserved for settings. Desktop fullscreen keeps the current monitor
+resolution and refresh rate. The Images page shows both disc identities.
 
 Preferences are stored as `parasite-eve.toml`. Values are read in this order,
 with later values taking precedence: beside the executable (or beside the macOS
@@ -114,7 +115,11 @@ chooses the matching mounted volume without a tray or swap prompt. Both USA
 images are exercised by real-data tests, including Disc 2 rooms; complete
 campaign and image-set/error coverage still require the audit in the port plan.
 CUE support covers one BINARY MODE2/2352 track, relative quoted FILE paths and
-INDEX 01 offsets. Duplicate identities and missing startup Disc 1 fail explicitly.
+INDEX 01 offsets. Duplicate identities fail explicitly. If an original disc check
+needs an unavailable volume, a native dialog names the missing disc and asks for
+its image. Cancel allows choosing again or quitting without pretending the disc
+is present. The Images settings page can add a missing image beforehand; valid
+additions are remembered and leave the currently mounted image intact.
 
 Automated runs use `--headless --frame-limit N`; this is a forced diagnostic
 boundary, not a completed-game result. `--dump-vram PATH` writes all 1024×512

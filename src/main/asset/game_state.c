@@ -28,6 +28,7 @@ char g_PeDisc1MarkerPath[] = "\\FMV1\\PEDISC01.IDF;1";
 char g_PeImagePath[] = "\\PE.IMG;1";
 char g_PeDisc2MarkerPath[] = "\\FMV2\\PEDISC02.IDF;1";
 PeDisc *g_CdImageVolumes[2];
+int (*g_CdImageRequest)(unsigned identity);
 
 /* USA resident records at 0x80094488; boot clears IDs, retaining the
  * authored action/frame pair for the four player footstep triggers. */
@@ -36,24 +37,23 @@ AkaoVoiceBankEntry g_AkaoVoiceBankEntries[20] = {
     {0,0,0x17,0,{1000,1000}}, {0,0,0x17,9,{1001,1001}}
 };
 
-int Asset_OpenPeImage(void)
+static int Asset_ReadPeImage(PeDisc *disc, unsigned *identity, int mount)
 {
     PeDiscFile archive, marker;
     unsigned flags = 0;
-    g_PeImageMountFlags = 0;
-    if (!g_CdImage || !g_CdImage->stream) return -1;
-    if (pe_disc_find(g_CdImage, g_PeDisc1MarkerPath, &marker) && !marker.directory)
+    if (!disc || !disc->stream) return -1;
+    if (pe_disc_find(disc, g_PeDisc1MarkerPath, &marker) && !marker.directory)
         flags |= 1;
-    if (pe_disc_find(g_CdImage, g_PeDisc2MarkerPath, &marker) && !marker.directory)
+    if (pe_disc_find(disc, g_PeDisc2MarkerPath, &marker) && !marker.directory)
         flags |= 2;
-    if (!flags || !pe_disc_find(g_CdImage, g_PeImagePath, &archive) || archive.directory)
+    if (!flags || !pe_disc_find(disc, g_PeImagePath, &archive) || archive.directory)
         return -2;
     /* The executable contributes resident data, never executable host code. */
     PeDiscFile config_file, executable;
     char config[1025], executable_path[128];
-    if (!pe_disc_find(g_CdImage, "SYSTEM.CNF", &config_file) || config_file.directory ||
+    if (!pe_disc_find(disc, "SYSTEM.CNF", &config_file) || config_file.directory ||
         !config_file.size || config_file.size >= sizeof(config) ||
-        !pe_disc_read(g_CdImage, &config_file, 0, config, config_file.size)) return -3;
+        !pe_disc_read(disc, &config_file, 0, config, config_file.size)) return -3;
     config[config_file.size] = 0;
     char *boot = strstr(config, "cdrom:");
     if (!boot) boot = strstr(config, "CDROM:");
@@ -71,17 +71,17 @@ int Asset_OpenPeImage(void)
     SceneRoomSectorRange ranges[SCENE_ROOM_COUNT];u16 sectors[81];
     MenuWidgetSimpleDescriptor simple[0x41];
     MenuWidgetGridDescriptor grid[0x41];
-    if (!path_length || !pe_disc_find(g_CdImage, executable_path, &executable) || executable.directory ||
-        !pe_disc_read(g_CdImage, &executable, 0, header, sizeof(header)) || memcmp(header,"PS-X EXE",8)) return -3;
+    if (!path_length || !pe_disc_find(disc, executable_path, &executable) || executable.directory ||
+        !pe_disc_read(disc, &executable, 0, header, sizeof(header)) || memcmp(header,"PS-X EXE",8)) return -3;
     u32 base=(u32)header[24]|(u32)header[25]<<8|(u32)header[26]<<16|(u32)header[27]<<24;
     u32 bytes=(u32)header[28]|(u32)header[29]<<8|(u32)header[30]<<16|(u32)header[31]<<24;
     if (base>0x800930d8u || bytes<sizeof(room_data) || 0x80093378u-base>bytes-sizeof(room_data) ||
         (u64)bytes+0x800>executable.size ||
-        !pe_disc_read(g_CdImage,&executable,0x800ull+0x80093378u-base,room_data,sizeof(room_data)) ||
-        !pe_disc_read(g_CdImage,&executable,0x800ull+0x800930d8u-base,sector_data,sizeof(sector_data)) ||
-        !pe_disc_read(g_CdImage,&executable,0x800ull+0x8009317cu-base,audio_data,sizeof(audio_data)) ||
-        !pe_disc_read(g_CdImage,&executable,0x800ull+0x80092478u-base,simple,sizeof(simple)) ||
-        !pe_disc_read(g_CdImage,&executable,0x800ull+0x80092888u-base,grid,sizeof(grid))) return -3;
+        !pe_disc_read(disc,&executable,0x800ull+0x80093378u-base,room_data,sizeof(room_data)) ||
+        !pe_disc_read(disc,&executable,0x800ull+0x800930d8u-base,sector_data,sizeof(sector_data)) ||
+        !pe_disc_read(disc,&executable,0x800ull+0x8009317cu-base,audio_data,sizeof(audio_data)) ||
+        !pe_disc_read(disc,&executable,0x800ull+0x80092478u-base,simple,sizeof(simple)) ||
+        !pe_disc_read(disc,&executable,0x800ull+0x80092888u-base,grid,sizeof(grid))) return -3;
     for(unsigned i=0;i<SCENE_ROOM_COUNT;++i) {
         const u8 *p=room_data+i*8;
         ranges[i].start=(u32)p[0]|(u32)p[1]<<8|(u32)p[2]<<16|(u32)p[3]<<24;
@@ -100,15 +100,28 @@ int Asset_OpenPeImage(void)
         if (boundary<previous || ((u64)audio_base+boundary)*2048>archive.size) return -3;
         previous=boundary;
     }
+    if(identity)*identity=flags;
+    if(!mount)return 0;
     memcpy(g_RoomSectorTable,ranges,sizeof(ranges));memcpy(g_PeImageSectorTable,sectors,sizeof(sectors));
     memcpy(g_SceneSectorDirectory,audio_data,sizeof(audio_data));
     memcpy(g_MenuWidgetSimpleDescriptors,simple,sizeof(simple));
     memcpy(g_MenuWidgetGridDescriptors,grid,sizeof(grid));
-    CdRom_BindImage(g_CdImage, &archive);
+    CdRom_BindImage(disc, &archive);
     g_PeImageBaseLba = archive.sector;
     g_PeImageMountFlags = (u8)flags;
-    g_CdImage->error[0] = 0;
+    disc->error[0] = 0;
     return 0;
+}
+
+int Asset_ValidatePeImage(PeDisc *disc, unsigned *identity)
+{
+    if(identity)*identity=0;
+    return Asset_ReadPeImage(disc,identity,0);
+}
+int Asset_OpenPeImage(void)
+{
+    g_PeImageMountFlags=0;
+    return Asset_ReadPeImage(g_CdImage,NULL,1);
 }
 
 /* File images need no tray notice or physical-disc command queue. */
@@ -116,7 +129,8 @@ int Render_InitDisplayLists(int mode)
 {
     if (mode != 1 && mode != 2) return -4;
     if(g_CdImageVolumes[0] || g_CdImageVolumes[1]){
-        if(!g_CdImageVolumes[mode-1])return -4;
+        if(!g_CdImageVolumes[mode-1] &&
+           (!g_CdImageRequest || !g_CdImageRequest((unsigned)mode) || !g_CdImageVolumes[mode-1]))return -4;
         if(g_CdImage!=g_CdImageVolumes[mode-1])CdRom_BindImage(g_CdImageVolumes[mode-1],NULL);
     }
     int status = Asset_OpenPeImage();

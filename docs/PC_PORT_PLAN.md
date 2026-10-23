@@ -2,6 +2,22 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### e8ff03f56: bramka motion — 36 864 porównania USA CPU na profil
+
+`/tmp/pe-motion-gate-v1-oracle/proof.json`: pełne, dokładne obiekty Gated
+z nowych buildów normal/SAN/coverage przeszły po36 864 porównania z oryginalnymi
+instrukcjami procedur M075 i M419 (po18 432). Obejmuje statusy0..5,
+wszystkie256 variant, flagi0/1/255 oraz pary wyników UpdateSlots/RunScript
+(0,0),(-1,0),(0,-1),(1,2). Porównano kolejność zewnętrznych wywołań i wynik;
+natywny harness sprawdza też przekazywane wskaźniki obiektu i właściwych tabel.
+
+Oryginalne ciała funkcji nie są hookowane; deterministyczne odpowiedzi i ślad
+podstawiono na granicach GetStatus/UpdateSlots/RunScript/CloseTarget. Dlatego
+ten oracle dowodzi sterowania bramką w tej domenie, nie algorytmów FieldFx ani
+samych callbacków. Hashe obiektów i blobu wyników zapisane, generator i harness
+w tym samym katalogu. Nie zmieniają żywej gry ani zapisów. Trzy pełne macierze
+CTest nadal mają osobne wyniki i nie są jeszcze zatwierdzone.
+
 ### e8ff03f56: pełne buildy gotowe, trzy macierze93 uruchomione
 
 Nowe normal/SAN/coverage zakończone exit0. Manifesty

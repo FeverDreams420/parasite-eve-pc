@@ -2,6 +2,22 @@
 
 ## Aktualny potwierdzony stan — 23 października 2026
 
+### d22826cb0/SDK33153a4: normal 93/93 zweryfikowane
+
+Pełna macierz normal zakończyła się exit0: 93/93 w 480,88 s.
+`/tmp/pe-spu-sync-v1/root-normal-matrix-proof.json` potwierdza zgodność
+93 identyfikatorów i nazw z rejestrem CTest, brak SKIP i diagnostyk sanitizerów
+w LastTest oraz niezmienione hashe wszystkich 21 programów. Źródła gry
+zweryfikowano względem d22826cb0, źródła SDK względem pełnego commitu33153a4.
+Nie oznacza to ukończenia kampanii ani katalogu funkcji i zawartości.
+
+SAN i coverage nadal pracują; potwierdzono aktywne sesje50851 i82058.
+Na tych samych pełnych programach uruchomiono też nowe przejścia normal/SAN:
+ContinueO przez Truebred Eve, zakończenie EX i napisy do menu oraz ukryty Metal2×
+ContinueB/menu/Medicine. Skrypty i logi: `/tmp/pe-spu-sync-v1/full-EX-ending-cold*`
+i `full-gpu-replay*`. Dopóki procesy i ich asercje nie zakończą się pomyślnie,
+te przejścia pozostają niezaliczone. Kopia użytkowa nadal bez podmiany.
+
 ### d22826cb0/SDK33153a4: pełne trzy buildy93 gotowe, macierze uruchomione
 
 `/tmp/pe-spu-sync-v1/root-{normal,san,coverage}-build-proof.json`: każdy pełny

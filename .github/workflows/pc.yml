@@ -74,30 +74,6 @@ jobs:
           $cases = $report.SelectNodes('//testcase')
           $incomplete = $report.SelectNodes('//testcase/skipped | //testcase/failure | //testcase/error')
           if ($cases.Count -ne 15 -or $incomplete.Count -ne 0) { throw 'Expected 15 executed source-only cases without failures or skips' }
-      - name: Check downloaded release package startup (no retail images)
-        if: always() && github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
-        shell: pwsh
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: ${{ inputs.release_tag }}
-        run: |
-          gh release download $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --pattern 'Parasite-Eve-*-windows-x86_64-experimental.zip' --dir package-smoke
-          if ($LASTEXITCODE -ne 0) { throw 'Release download failed' }
-          $archives = @(Get-ChildItem package-smoke -Filter '*.zip')
-          if ($archives.Count -ne 1) { throw 'Expected one Windows archive' }
-          $release = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$env:RELEASE_TAG" | ConvertFrom-Json
-          if ($LASTEXITCODE -ne 0) { throw 'Release metadata request failed' }
-          $asset = @($release.assets | Where-Object name -EQ $archives[0].Name)
-          if ($asset.Count -ne 1) { throw 'Release asset metadata missing' }
-          $digest = (Get-FileHash $archives[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
-          if ($asset[0].digest -ne "sha256:$digest") { throw 'Downloaded archive digest mismatch' }
-          Expand-Archive $archives[0].FullName package-smoke/unpacked
-          $executables = @(Get-ChildItem package-smoke/unpacked -Recurse -Filter parasite-eve-pc.exe)
-          if ($executables.Count -ne 1) { throw 'Expected one game executable' }
-          $help = & $executables[0].FullName --help 2>&1 | Out-String
-          if ($LASTEXITCODE -ne 0 -or $help -notmatch 'Usage:' -or $help -notmatch '--disc2') { throw 'Packaged Windows executable failed startup smoke' }
-          $help | Set-Content package-smoke/help.txt
-          @{ scope = 'Windows package startup only; no retail gameplay/GPU/audio validation'; asset = $archives[0].Name; archive_sha256 = $digest; executable_sha256 = (Get-FileHash $executables[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant() } | ConvertTo-Json | Set-Content package-smoke/verification.json
       - name: Capture settings thread stacks after a runtime failure
         if: failure()
         run: |
@@ -133,7 +109,48 @@ jobs:
           path: |
             build/windows-source-only.xml
             build/Testing/Temporary/LastTest.log
-            package-smoke/help.txt
-            package-smoke/verification.json
             build/settings-diagnostics/*.log
             build/settings-diagnostics/process.json
+
+  windows-package-startup:
+    if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
+    runs-on: windows-latest
+    timeout-minutes: 5
+    # GitHub draft visibility requires push access. This job has no checkout.
+    permissions:
+      contents: write
+    steps:
+      - name: Check downloaded release package startup (no retail images)
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          gh release download $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --pattern 'Parasite-Eve-*-windows-x86_64-experimental.zip' --dir package-smoke
+          if ($LASTEXITCODE -ne 0) { throw 'Release download failed' }
+          $archives = @(Get-ChildItem package-smoke -Filter '*.zip')
+          if ($archives.Count -ne 1) { throw 'Expected one Windows archive' }
+          $releases = gh api "repos/$env:GITHUB_REPOSITORY/releases?per_page=100" | ConvertFrom-Json
+          $matchingReleases = @($releases | Where-Object tag_name -EQ $env:RELEASE_TAG)
+          if ($matchingReleases.Count -ne 1) { throw 'Expected one matching release or draft' }
+          $release = $matchingReleases[0]
+          if ($LASTEXITCODE -ne 0) { throw 'Release metadata request failed' }
+          $asset = @($release.assets | Where-Object name -EQ $archives[0].Name)
+          if ($asset.Count -ne 1) { throw 'Release asset metadata missing' }
+          $digest = (Get-FileHash $archives[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($asset[0].digest -ne "sha256:$digest") { throw 'Downloaded archive digest mismatch' }
+          Expand-Archive $archives[0].FullName package-smoke/unpacked
+          $executables = @(Get-ChildItem package-smoke/unpacked -Recurse -Filter parasite-eve-pc.exe)
+          if ($executables.Count -ne 1) { throw 'Expected one game executable' }
+          $help = & $executables[0].FullName --help 2>&1 | Out-String
+          if ($LASTEXITCODE -ne 0 -or $help -notmatch 'Usage:' -or $help -notmatch '--disc2') { throw 'Packaged Windows executable failed startup smoke' }
+          $help | Set-Content package-smoke/help.txt
+          @{ scope = 'Windows package startup only; no retail gameplay/GPU/audio validation'; asset = $archives[0].Name; archive_sha256 = $digest; executable_sha256 = (Get-FileHash $executables[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant() } | ConvertTo-Json | Set-Content package-smoke/verification.json
+      - name: Preserve exact package startup evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: windows-package-startup-evidence
+          path: |
+            package-smoke/help.txt
+            package-smoke/verification.json

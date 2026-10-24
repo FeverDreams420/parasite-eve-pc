@@ -15644,6 +15644,153 @@ static int SDLCALL original_spu_register_worker(void *userdata)
     SDL_SetAtomicInt(&access->done,1);return 0;
 }
 
+/* Register-level fixtures isolate the SPU from AKAO and the host mixer. */
+static void spu_modulation_fixture(unsigned fm)
+{
+    static const unsigned char modulator[16] = {0,7,0x31,0x75,0x31,0x75,0x31,0x75,0x31,0x75,0x31,0x75,0x31,0x75,0x31,0x75};
+    static const unsigned char carrier[16] = {2,7,0x10,0x32,0x54,0x76,0x54,0x32,0x10,0xFE,0xDC,0xBA,0x98,0xBA,0xDC,0xFE};
+    Psyz_SpuReset(0);
+    Psyz_SpuMemWrite(0x1000,modulator,sizeof(modulator));
+    Psyz_SpuMemWrite(0x1100,carrier,sizeof(carrier));
+    Psyz_SpuWrite(0x1AA,0xC000);Psyz_SpuWrite(0x180,0x3FFF);Psyz_SpuWrite(0x182,0x3FFF);
+    for(unsigned v=1;v<=2;++v) {
+        unsigned base=v*16, addr=v==1?0x200:0x220;
+        Psyz_SpuWrite(base+0x00,v==2?0x3FFF:0);
+        Psyz_SpuWrite(base+0x02,v==2?0x3FFF:0);
+        Psyz_SpuWrite(base+0x04,0x1000);Psyz_SpuWrite(base+0x06,addr);
+        Psyz_SpuWrite(base+0x08,0x000F);Psyz_SpuWrite(base+0x0A,0x1FC0);
+        Psyz_SpuWrite(base+0x0E,addr);
+    }
+    Psyz_SpuWrite(0x190,fm);Psyz_SpuWrite(0x188,6);
+}
+
+static int original_spu_pitch_modulation(void)
+{
+    enum {FRAMES=256};
+    short reference[FRAMES*2],actual[FRAMES*2],modulator[FRAMES];
+    Psyz_SpuInit();
+    spu_modulation_fixture(0);
+    Psyz_SpuPullSamples(reference,FRAMES);
+    Psyz_SpuMemRead(0x800,modulator,sizeof(modulator));
+    /* Independently program the documented rate from each preceding voice's
+     * post-ADSR sample. Its mixer volume is zero and must not suppress FM. */
+    spu_modulation_fixture(0);
+    for(unsigned frame=0;frame<FRAMES;++frame) {
+        unsigned step=(unsigned)((0x1000*(modulator[frame]+32768))>>15);
+        if(step>0x4000)step=0x4000;
+        Psyz_SpuWrite(0x24,step);
+        Psyz_SpuPullSamples(reference+frame*2,1);
+    }
+    spu_modulation_fixture(4);
+    Psyz_SpuPullSamples(actual,FRAMES);
+    if(memcmp(reference,actual,sizeof(reference))) {
+        fputs("SPU FM does not match per-sample rate programming from muted preceding voice\n",stderr);
+        return 0;
+    }
+    puts("SPU FM: 256 per-sample stereo frames match independent pitch programming; muted modulator remains effective");
+    return 1;
+}
+
+static int original_spu_noise(void)
+{
+    static const unsigned char silence[16]={0,7};
+    int valid=1;
+    Psyz_SpuInit();
+    for(unsigned pass=0;pass<2;++pass) {
+        Psyz_SpuReset(0);Psyz_SpuMemWrite(0x1000,silence,sizeof(silence));
+        Psyz_SpuWrite(0x1AA,0xFF00); /* fastest shared noise clock */
+        Psyz_SpuWrite(0x14,pass?0x800:0x1000);Psyz_SpuWrite(0x16,0x200);
+        Psyz_SpuWrite(0x18,0x000F);Psyz_SpuWrite(0x1A,0x1FC0);
+        Psyz_SpuWrite(0x1E,0x200);Psyz_SpuWrite(0x194,2);Psyz_SpuWrite(0x188,2);
+        unsigned level=0;int timer=0;
+        for(unsigned frame=0;frame<256;++frame) {
+            /* PSX-SPX noise LFSR/timer, independent of ADPCM pitch. */
+            timer-=7;
+            if(timer<0) {
+                unsigned parity=((level>>15)^(level>>12)^(level>>11)^(level>>10)^1)&1;
+                level=((level<<1)|parity)&0xFFFF;
+                timer+=4;if(timer<0)timer+=4;
+            }
+            short pcm[2],sample;
+            Psyz_SpuPullSamples(pcm,1);Psyz_SpuMemRead(0x800+frame*2,&sample,2);
+            int expected=((int)(s16)level*(int)Psyz_SpuRead(0x1C))>>15;
+            if(sample!=expected) {
+                fprintf(stderr,"SPU noise mismatch at frame %u pitch %x: %d != %d\n",frame,pass?0x800:0x1000,sample,expected);
+                valid=0;break;
+            }
+        }
+    }
+    if(valid)puts("SPU noise: 512 captured post-ADSR samples match shared LFSR clock at two independent ADPCM rates");
+    return valid;
+}
+
+static int original_spu_mix_headroom(void)
+{
+    static const unsigned char sample[16]={0,7,0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77,0x77};
+    short pcm[64];
+    Psyz_SpuInit();Psyz_SpuReset(0);Psyz_SpuMemWrite(0x1000,sample,sizeof(sample));
+    Psyz_SpuWrite(0x1AA,0xC000);Psyz_SpuWrite(0x180,0x3FFF);Psyz_SpuWrite(0x182,0x3FFF);
+    for(unsigned v=0;v<24;++v) {
+        unsigned b=v*16;
+        Psyz_SpuWrite(b,0x3FFF);Psyz_SpuWrite(b+2,0x3FFF);
+        Psyz_SpuWrite(b+4,0x1000);Psyz_SpuWrite(b+6,0x200);
+        Psyz_SpuWrite(b+8,0x000F);Psyz_SpuWrite(b+10,0x1FC0);Psyz_SpuWrite(b+14,0x200);
+    }
+    Psyz_SpuWrite(0x188,0xFFFF);Psyz_SpuWrite(0x18A,0xFF);
+    Psyz_SpuPullSamples(pcm,32);
+    if(pcm[62]!=32765 || pcm[63]!=32765) {
+        fprintf(stderr,"SPU positive mix overflow: %d,%d instead of saturated bus scaled by master volume\n",pcm[62],pcm[63]);return 0;
+    }
+    Psyz_SpuWrite(0x180,0x2000);Psyz_SpuWrite(0x182,0x6000);
+    Psyz_SpuPullSamples(pcm,32);
+    if(pcm[62]!=16383 || pcm[63]!=-16384) {
+        fprintf(stderr,"SPU master gain/phase applied before bus saturation: %d,%d\n",pcm[62],pcm[63]);return 0;
+    }
+    puts("SPU 24-voice mix: saturation before master gain, half volume and negative master phase without overflow");return 1;
+}
+
+static int original_spu_live_adsr(void)
+{
+    static const unsigned char sample[16] = {0,7,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11,0x11};
+    short pcm[64];
+    int valid = 1;
+    Psyz_SpuInit();
+    Psyz_SpuReset(0);
+    Psyz_SpuMemWrite(0x1000, sample, sizeof(sample));
+    Psyz_SpuWrite(0x1AA,0xC000);
+    Psyz_SpuWrite(0x000,0x3FFF);Psyz_SpuWrite(0x002,0x3FFF);
+    Psyz_SpuWrite(0x004,0x1000);Psyz_SpuWrite(0x006,0x200);
+    Psyz_SpuWrite(0x008,0x000F);Psyz_SpuWrite(0x00A,0x001F);
+    Psyz_SpuWrite(0x00E,0x200);Psyz_SpuWrite(0x188,1);
+    Psyz_SpuPullSamples(pcm,32);
+    unsigned before = Psyz_SpuRead(0x00C);
+    AkaoSpuVoice_SetAdsrReleaseRate(0,0,0);
+    Spu_WriteKeyOff(1);
+    Psyz_SpuPullSamples(pcm,32);
+    unsigned released = Psyz_SpuRead(0x00C);
+    if (before < 30000 || released != 0) {
+        fprintf(stderr,"Live ADSR release ignored: before=%u after=%u (expected zero after rate 0)\n",before,released);
+        valid=0;
+    }
+    Psyz_SpuReset(0);
+    Psyz_SpuMemWrite(0x1000,sample,sizeof(sample));
+    Psyz_SpuWrite(0x1AA,0xC000);
+    Psyz_SpuWrite(0x004,0x1000);Psyz_SpuWrite(0x006,0x200);
+    Psyz_SpuWrite(0x008,0x7F0F);Psyz_SpuWrite(0x00A,0x001F);
+    Psyz_SpuWrite(0x00E,0x200);Psyz_SpuWrite(0x188,1);
+    Psyz_SpuPullSamples(pcm,32);
+    unsigned slow = Psyz_SpuRead(0x00C);
+    AkaoSpuVoice_SetAdsrAttack(0,0,0);
+    Psyz_SpuPullSamples(pcm,32);
+    unsigned fast = Psyz_SpuRead(0x00C);
+    if (slow != 0 || fast < 30000) {
+        fprintf(stderr,"Live ADSR attack ignored: slow=%u fast=%u\n",slow,fast);
+        valid=0;
+    }
+    if(valid)puts("Original AKAO setters: live attack and release rates affect active SPU voices without a new key-on");
+    return valid;
+}
+
 static int original_spu_register_serialization(void)
 {
     if(!SDL_Init(SDL_INIT_EVENTS))return 0;
@@ -18741,6 +18888,10 @@ int main(int argc, char **argv)
     if(argc==3 && !strcmp(argv[1],"--native-backstage"))return original_native_bootstrap(argv[2],5);
     if(argc==3 && !strcmp(argv[1],"--native-melissa"))return original_native_bootstrap(argv[2],4);
     if(argc==3 && !strcmp(argv[1],"--native-field-control"))return original_native_bootstrap(argv[2],1);
+    if(argc==2 && !strcmp(argv[1],"--spu-pitch-modulation"))return original_spu_pitch_modulation()?0:1;
+    if(argc==2 && !strcmp(argv[1],"--spu-noise"))return original_spu_noise()?0:1;
+    if(argc==2 && !strcmp(argv[1],"--spu-mix-headroom"))return original_spu_mix_headroom()?0:1;
+    if(argc==2 && !strcmp(argv[1],"--spu-live-adsr"))return original_spu_live_adsr()?0:1;
     if(argc==2 && !strcmp(argv[1],"--spu-register-serialization"))return original_spu_register_serialization()?0:1;
     if(argc==3 && !strcmp(argv[1],"--native-tutorial"))return original_native_tutorial(argv[2]);
     if(argc==3 && !strcmp(argv[1],"--native-bootstrap"))return original_native_bootstrap(argv[2],0);

@@ -6,16 +6,34 @@ extern long GetRCnt(long spec);
 #include <assert.h>
 #include <stdio.h>
 static bool TestPresent(SDL_Renderer *renderer);
+static bool TestWait(SDL_Event *event,Sint32 timeout);
+static bool TestRename(const char *from,const char *to);
 #define SDL_RenderPresent TestPresent
+#define SDL_WaitEventTimeout TestWait
+#define SDL_RenamePath TestRename
 #define main original_game_main
 #include "../src/main/boot/main.c"
 #undef main
 #undef SDL_RenderPresent
+#undef SDL_WaitEventTimeout
+#undef SDL_RenamePath
 static int presents;
 static SDL_AtomicInt panel_ready;
 static const char *test_directory;
+static bool TestRename(const char *from,const char *to){
+    bool result=SDL_RenamePath(from,to);
+    fprintf(stderr,"host-settings: preferences rename=%d error=%s\n",result,result?"":SDL_GetError());
+    return result;
+}
+static bool TestWait(SDL_Event *event,Sint32 timeout){
+    static unsigned reported;
+    bool result=SDL_WaitEventTimeout(event,timeout);
+    if(result && reported++<32)fprintf(stderr,"host-settings: event=%u scancode=%d\n",event->type,event->type==SDL_EVENT_KEY_DOWN?event->key.scancode:0);
+    return result;
+}
 static bool TestPresent(SDL_Renderer *renderer) {
     ++presents;
+    if(presents==1)fprintf(stderr,"host-settings: first panel render\n");
     assert(Psyz_AudioIsPaused());
     assert(Psyz_AudioWaitForTimer()==0);
     if(presents==1 || presents==4 || presents==7){
@@ -31,6 +49,7 @@ static void WaitPanel(void){
     Uint64 deadline=SDL_GetTicks()+5000;
     while(!SDL_GetAtomicInt(&panel_ready) && SDL_GetTicks()<deadline)SDL_Delay(1);
     assert(SDL_GetAtomicInt(&panel_ready));
+    fprintf(stderr,"host-settings: input producer sees ready panel\n");
 }
 static void Key(SDL_Scancode key){SDL_Event e={0};e.type=SDL_EVENT_KEY_DOWN;e.key.scancode=key;assert(SDL_PushEvent(&e));}
 static unsigned requested_image,request_count;

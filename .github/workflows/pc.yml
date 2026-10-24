@@ -31,6 +31,65 @@ jobs:
           cmake --build build --parallel
           ctest --test-dir build --output-on-failure --no-tests=error
 
+  linux-x86_64:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      PSYZ_HEADLESS: '1'
+      SDL_AUDIODRIVER: dummy
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Install Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ninja-build pkg-config libx11-dev libxext-dev libxrandr-dev libxcursor-dev libxi-dev libxfixes-dev libxss-dev libwayland-dev libxkbcommon-dev libegl1-mesa-dev libgl1-mesa-dev libasound2-dev libpulse-dev libudev-dev libdbus-1-dev libdecor-0-dev libvulkan-dev libxtst-dev libxinerama-dev wayland-protocols libdrm-dev libgbm-dev libgles2-mesa-dev
+      - name: Fetch PsyZ and SDL
+        run: |
+          git submodule update --init third_party/psyz
+          git -C third_party/psyz submodule update --init external/SDL
+      - name: Build and verify Linux x86-64
+        run: |
+          cmake -S . -B build -G Ninja -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          cmake --build build --parallel 4
+          ./build/parasite-eve-pc --help
+          ctest --test-dir build --output-on-failure --no-tests=error --output-junit linux-source-only.xml -R '^(original-game-(akao-layout|math|gte|animation|transforms|projection|hierarchy|input-rules|pools|nodes|queue|expression|contact|movement)|host-settings)$'
+          python3 - <<'PYTEST'
+          import xml.etree.ElementTree as E
+          r = E.parse('build/linux-source-only.xml')
+          assert len(r.findall('.//testcase')) == 15
+          assert not any(r.findall('.//' + tag) for tag in ['skipped', 'failure', 'error'])
+          PYTEST
+      - name: Package Linux x86-64
+        run: |
+          stage=package/Parasite-Eve-linux-x86_64
+          mkdir -p "$stage/docs/images" "$stage/licenses"
+          cp build/parasite-eve-pc README.md LICENSE.md THIRD_PARTY_NOTICES.md "$stage/"
+          cp docs/CODE_ORGANIZATION.md "$stage/docs/"
+          cp docs/images/gameplay.png "$stage/docs/images/"
+          python3 - <<'PYLICENSE'
+          from pathlib import Path
+          import shutil
+          dest = Path('package/Parasite-Eve-linux-x86_64/licenses')
+          for path in Path('third_party/psyz').rglob('*'):
+              if path.is_file() and path.name.lower().startswith(('license', 'copying', 'notice', 'copyright')) and '.git' not in path.parts:
+                  target = dest / path
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  shutil.copy2(path, target)
+          PYLICENSE
+          ldd build/parasite-eve-pc > "$stage/runtime-dependencies.txt"
+          git rev-parse HEAD > "$stage/source-commit.txt"
+          tar -czf Parasite-Eve-0.1-alpha-linux-x86_64.tar.gz -C package Parasite-Eve-linux-x86_64
+          sha256sum Parasite-Eve-0.1-alpha-linux-x86_64.tar.gz > linux-x86_64-sha256.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: linux-x86_64-package
+          path: |
+            Parasite-Eve-0.1-alpha-linux-x86_64.tar.gz
+            linux-x86_64-sha256.txt
+            build/linux-source-only.xml
+
   windows-source-only:
     runs-on: windows-latest
     timeout-minutes: 30

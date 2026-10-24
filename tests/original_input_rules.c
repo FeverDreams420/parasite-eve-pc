@@ -150,21 +150,25 @@ int main(int argc,char **argv){
     assert(!strcmp(host_options.discs[0],"/tmp/zażółć # \"quotes\" \\ disc.cue"));
     assert(SDL_SetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_AUDIO_CLOCK","video",true));
     assert(Psyz_AudioInit()==0 && !Psyz_AudioIsPaused());
+    fprintf(stderr,"host-settings: audio initialized; testing focus pause\n");
     assert(SetRCnt(0xf2000002,65535,0));
     SDL_Window *focus=SDL_CreateWindow("focus fixture",320,240,SDL_WINDOW_HIDDEN);assert(focus);
     SDL_Thread *focus_thread=SDL_CreateThread(DriveFocus,"focus pause",focus);assert(focus_thread);
     Host_PauseForFocus(focus);SDL_WaitThread(focus_thread,NULL);
+    fprintf(stderr,"host-settings: active audio focus pause passed\n");
     assert(!Psyz_AudioIsPaused());
     Psyz_AudioPause();
     focus_thread=SDL_CreateThread(DriveFocus,"already paused focus",focus);assert(focus_thread);
     Host_PauseForFocus(focus);SDL_WaitThread(focus_thread,NULL);
     assert(Psyz_AudioIsPaused());Psyz_AudioUnpause();
     SDL_DestroyWindow(focus);
+    fprintf(stderr,"host-settings: paused audio focus pause passed; opening settings\n");
 
     int original_key=host_options.keys[0];
     SDL_Thread *thread=SDL_CreateThread(Drive,"settings input",NULL);assert(thread);
     SDL_Event open={0};open.type=SDL_EVENT_KEY_DOWN;open.key.scancode=SDL_SCANCODE_ESCAPE;
     assert(Host_SettingsEvent(&open));SDL_WaitThread(thread,NULL);
+    fprintf(stderr,"host-settings: settings input completed\n");
     assert(!Psyz_AudioIsPaused());
     assert(host_options.scale==2 && host_options.volume==95);
     assert(host_options.keys[0]==SDL_SCANCODE_F && original_key!=SDL_SCANCODE_F);
@@ -191,6 +195,7 @@ int main(int argc,char **argv){
     thread=SDL_CreateThread(ClosePanel,"close paused settings",NULL);assert(thread);
     assert(Host_SettingsEvent(&open));SDL_WaitThread(thread,NULL);
     assert(Psyz_AudioIsPaused());Psyz_AudioDestroy();
+    fprintf(stderr,"host-settings: paused settings completed; checking disc images\n");
     DiscImages();
     SDL_Quit();puts("PASS: both image identities, missing-image checks, additive mounting, TOML roundtrip, invalid values, modal graphics/controls/audio, persistence, ESC consumption, multi-disc callback");return 0;
 }

@@ -20,7 +20,9 @@ extern volatile int g_SpuTransferStatus;
 
 /* Stream instrument relocation. */
 /* Stream instrument scratch table; bank selection advances by 0x400 bytes. */
-extern AkaoInstrument g_AkaoStreamInstrumentCacheB[];
+/* USA 0x800B4900 is index 128 of the table at 0x800B2900.
+ * Sequencer opcodes address these streamed effects as instruments 0x80..0xFF. */
+#define g_AkaoStreamInstrumentCacheB (g_AkaoInstrumentTable + 128)
 /* An instrument record address as the word retail adds a byte offset to
  * (table slots, cache slots copied word by word). */
 typedef union AkaoInstrumentAddress {

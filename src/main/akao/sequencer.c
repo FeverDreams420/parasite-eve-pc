@@ -2468,8 +2468,7 @@ volatile int g_AkaoSeqBusyFlags;
 volatile int g_SpuTransferStatus;
 unsigned g_AkaoStreamUploadMode, g_AkaoInstrumentUploadAddress, g_AkaoInstrumentUploadRemaining;
 
-/* Original 0x2000-byte stream instrument cache (USA 0x800B4900). */
-AkaoInstrument g_AkaoStreamInstrumentCacheB[128];
+/* Streamed instruments occupy the upper half of g_AkaoInstrumentTable. */
 unsigned g_AkaoStreamAAddress, g_AkaoStreamARemaining;
 
 /* Original USA dispatch order; each entry calls the original procedure.

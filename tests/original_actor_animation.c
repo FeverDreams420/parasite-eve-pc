@@ -170,6 +170,7 @@ int Inv_ScrambleGrid(void);
 #include "pe1/draw_level_bar.h"
 #include "pe1/gpu_image.h"
 #include "pe1/akao.h"
+#include "pe1/akao/stream.h"
 #include "pe1/memcard_save_state.h"
 #include "pe1/save_tail_state.h"
 #include "pe1/menu_dialog.h"
@@ -14003,6 +14004,30 @@ static int original_akao_bank_lifetime(void)
     SceneTrackRecord record={0};
     AkaoMessageHandler saved=Akao_MessageHandlers[0];
     Spu_InitHardware();
+    /* Retail's cache at B4900 aliases instrument indices 80..FF in the
+     * table at B2900. Stream uploads must be visible to the note opcodes. */
+    AkaoInstrument resident[128];memcpy(resident,g_AkaoInstrumentTable,sizeof(resident));
+    for(unsigned stream_bank=0;stream_bank<2;++stream_bank) {
+        _Alignas(16) u8 file[0x40+2*sizeof(AkaoInstrument)+32]={0};
+        u32 magic=0x4f414b41,size=32,end=2;
+        memcpy(file,&magic,4);memcpy(file+0x14,&size,4);memcpy(file+0x1c,&end,4);
+        AkaoInstrument *instruments=(AkaoInstrument *)(file+0x40);
+        for(unsigned i=0;i<2;++i) {
+            instruments[i].start_address=i*16;instruments[i].loop_address=i*16;
+            for(unsigned note=0;note<12;++note)instruments[i].pitch[note]=4096+i*1024+note;
+        }
+        if(Spu_UploadStreamBlockB(stream_bank,file))return 0;
+        for(unsigned i=0;i<2;++i) {
+            unsigned index=128+stream_bank*16+i;u8 note=(u8)index;
+            AkaoTrack track={.pc=&note,.note_pitch=0xff,.parent_track_id=1};
+            Akao_PlayNote(&track,1);
+            if(track.sample_header!=0x68000+(stream_bank<<13)+i*16 ||
+               track.sample_data!=track.sample_header ||
+               Akao_LookupPitchPeriod(index,72,0)!=4096+i*1024 ||
+               memcmp(&g_AkaoInstrumentTable[index],&instruments[i],sizeof(AkaoInstrument)))return 0;
+        }
+    }
+    if(memcmp(resident,g_AkaoInstrumentTable,sizeof(resident)))return 0;
     u32 blanks=g_BootHostVBlankCount;
     scene.header.directoryOffset=offsetof(struct AkaoReplacementFixture,directory);
     memset(scene.program,0x91,sizeof(scene.program));
@@ -16008,9 +16033,10 @@ static int original_native_tutorial(const char *executable)
     if(!log)valid=0;
     else{int error=output && fwrite(output,1,bytes,log)!=bytes;if(fclose(log))error=1;if(error)valid=0;}
     if(output && (strstr(output,"runtime error:") || strstr(output,"ERROR: AddressSanitizer") || strstr(output,"Unbound original")))valid=0;
-    /* FMV XA is now audible. The old golden omitted movie audio; all nonmovie
-     * PCM and 131 recorded JSON events remain byte-identical to that replay. */
-    const uint64_t expected[]={UINT64_C(0xd5b236a1a9e02c16),UINT64_C(0x937c09a8e0d595c3),UINT64_C(0x00b168c6a806a32d)};
+    /* Port-generated regression capture, including audible FMV XA and the
+     * independently checked SPU gain/envelope timing. State and image hashes
+     * are unchanged; independent SPU/retail comparisons verify fidelity. */
+    const uint64_t expected[]={UINT64_C(0xd5b236a1a9e02c16),UINT64_C(0x937c09a8e0d595c3),UINT64_C(0x7314664de6b6b4fc)};
     for(unsigned i=0;i<3;++i){
         FILE *file=fopen(path[i],"rb");if(!file){valid=0;continue;}
         uint64_t hash=UINT64_C(14695981039346656037);unsigned char buffer[65536];size_t count;

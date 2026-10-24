@@ -460,7 +460,7 @@ if(BUILD_TESTING)
     target_include_directories(test-psyz-spu-reference PRIVATE ${PSYZ_DIR}/ztest)
     target_link_libraries(test-psyz-spu-reference PRIVATE psyz)
     add_test(NAME original-game-spu-hardware-reference COMMAND test-psyz-spu-reference
-        --filter=spu::GaussianHardwareImpulse,spu::GaussianKeyOnPitchPhase,spu::ReverbHardwareFirImpulse
+        --filter=spu::GaussianHardwareImpulse,spu::GaussianKeyOnPitchPhase,spu::GaussianFmReference,spu::AdpcmOneShotEndPipeline,spu::VoiceGainLatchReference,spu::ReverbHardwareFirImpulse
         --output=plain)
     set_tests_properties(original-game-spu-hardware-reference PROPERTIES TIMEOUT 60
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy;SDL_VIDEODRIVER=dummy"

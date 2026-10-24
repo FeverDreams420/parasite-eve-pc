@@ -15677,7 +15677,7 @@ static int original_spu_pitch_modulation(void)
     spu_modulation_fixture(0);
     for(unsigned frame=0;frame<FRAMES;++frame) {
         unsigned step=(unsigned)((0x1000*(modulator[frame]+32768))>>15);
-        if(step>0x4000)step=0x4000;
+        if(step>0x3FFF)step=0x3FFF;
         Psyz_SpuWrite(0x24,step);
         Psyz_SpuPullSamples(reference+frame*2,1);
     }
@@ -15712,8 +15712,10 @@ static int original_spu_noise(void)
                 timer+=4;if(timer<0)timer+=4;
             }
             short pcm[2],sample;
+            /* ENVX after a clock supplies the following output sample. */
+            int envelope=Psyz_SpuRead(0x1C);
             Psyz_SpuPullSamples(pcm,1);Psyz_SpuMemRead(0x800+frame*2,&sample,2);
-            int expected=((int)(s16)level*(int)Psyz_SpuRead(0x1C))>>15;
+            int expected=((int)(s16)level*envelope)>>15;
             if(sample!=expected) {
                 fprintf(stderr,"SPU noise mismatch at frame %u pitch %x: %d != %d\n",frame,pass?0x800:0x1000,sample,expected);
                 valid=0;break;

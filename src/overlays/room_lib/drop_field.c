@@ -58,7 +58,7 @@ int RoomEffect_DropFieldClose(PmSlotHeader *slot) {
     if((unsigned)FieldFx_GetStatus(slot)>=2) {
         FieldActor *actor=((FieldFxObjectPrefix *)slot)->actor;
         actor->state->core_flags &= 0xC0FFFFFFu;
-        *actor->state->action_state=4;
+        if(actor->state->action_state) *actor->state->action_state=4;
     }
     return 0;
 }

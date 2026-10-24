@@ -15,7 +15,10 @@ int RoomLib_CloseTarget(PmSlotHeader *slot)
     if ((unsigned int)FieldFx_GetStatus(slot) >= 2) {
         FieldActor *actor = ((FieldFxObjectPrefix *)slot)->actor;
         actor->state->core_flags &= 0xC0FFFFFFu;
-        *actor->state->action_state = 4;
+        /* Animation events can finish while their effect slots remain live. */
+        if (actor->state->action_state) {
+            *actor->state->action_state = 4;
+        }
     }
     return 0;
 }

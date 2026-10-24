@@ -2503,6 +2503,19 @@ static int original_room_effect_core_flags(void)
     g_PlayerEntity=old_player;g_FieldFxScriptState=old_state;g_FieldFxScriptObject=old_object;
     g_FieldFxSlotTable=old_slots;g_FieldFxScriptData=old_data;g_FieldFxCommandTable=old_commands;
     if(cases!=192 || hash!=UINT64_C(0x15ee6173ba0071b5)){fprintf(stderr,"Room effect core flags %u %016llx\n",cases,(unsigned long long)hash);return 0;}
+    /* The actor outlives its animation event while E08 effect slots drain. */
+    int (*close_handlers[])(PmSlotHeader *)={RoomLib_CloseTarget,RoomEffect_DropFieldClose,SceneE08_OrbClose,SceneE08_SlotsClose,SceneE08_LayeredSpriteClose};
+    for(unsigned method=0;method<5;++method)for(unsigned active=0;active<2;++active){
+        FieldActorState core={0};FieldActor actor={0};FieldFxObject object={0};u8 phase=1;
+        core.core_flags=0xffffffffu;core.control10.command_value=1;
+        core.action_state=active?&phase:NULL;actor.state=&core;object.prefix.actor=&actor;
+        FieldActor other={0};g_PlayerEntity=&other;
+        if(close_handlers[method]((PmSlotHeader *)&object)!=0 ||
+           ((PmSlotHeader *)&object)->state!=4 || core.core_flags!=0xc0ffffffu ||
+           phase!=(active?4:1) || core.action_state!=(active?&phase:NULL))return 0;
+    }
+    g_PlayerEntity=old_player;
+    puts("Original effect closure: five handlers preserve teardown with active or expired animation events passed");
     puts("Original room effect closure/registration: 192 unhooked USA CPU states, native owner/player/dead/null modes and every adjacent event byte preserved passed");
     return 1;
 }

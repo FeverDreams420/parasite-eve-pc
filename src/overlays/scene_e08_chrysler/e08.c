@@ -540,7 +540,7 @@ int SceneE08_OrbClose(PmSlotHeader *slot) {
     if ((unsigned int)FieldFx_GetStatus(slot) >= 2) {
         FieldActor *actor = ((FieldFxObjectPrefix *)slot)->actor;
         actor->state->core_flags &= 0xC0FFFFFFu;
-        *actor->state->action_state = 4;
+        if (actor->state->action_state) *actor->state->action_state = 4;
     }
     return 0;
 }
@@ -1111,7 +1111,7 @@ int SceneE08_SlotsClose(PmSlotHeader *slot) {
     if ((unsigned int)FieldFx_GetStatus(slot) >= 2) {
         FieldActor *actor = ((FieldFxObjectPrefix *)slot)->actor;
         actor->state->core_flags &= 0xC0FFFFFFu;
-        *actor->state->action_state = 4;
+        if (actor->state->action_state) *actor->state->action_state = 4;
     }
     return 0;
 }
@@ -2213,7 +2213,7 @@ int SceneE08_LayeredSpriteClose(PmSlotHeader *slot) {
     if ((unsigned int)FieldFx_GetStatus(slot) >= 2) {
         FieldActor *actor = ((FieldFxObjectPrefix *)slot)->actor;
         actor->state->core_flags &= 0xC0FFFFFFu;
-        *actor->state->action_state = 4;
+        if (actor->state->action_state) *actor->state->action_state = 4;
     }
     return 0;
 }

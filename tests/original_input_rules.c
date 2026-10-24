@@ -106,6 +106,11 @@ static int SDLCALL DriveFocus(void *window){
     assert(SDL_PushEvent(&gained));return 0;
 }
 int main(int argc,char **argv){
+#ifdef _WIN32
+    /* CI must report assertions instead of waiting for a CRT dialog. */
+    _set_error_mode(_OUT_TO_STDERR);
+    _set_abort_behavior(0,_WRITE_ABORT_MSG|_CALL_REPORTFAULT);
+#endif
     assert(argc==2);test_directory=argv[1];assert(SDL_CreateDirectory(test_directory));
     assert(SDL_SetHint(SDL_HINT_VIDEO_DRIVER,"dummy"));
     assert(SDL_SetHint(SDL_HINT_RENDER_DRIVER,"software"));

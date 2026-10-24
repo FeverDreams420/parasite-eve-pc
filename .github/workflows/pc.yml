@@ -53,6 +53,8 @@ jobs:
             mingw-w64-ucrt-x86_64-gcc
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-gdb
+            mingw-w64-ucrt-x86_64-python
       - name: Fetch PsyZ and SDL
         run: |
           git submodule update --init third_party/psyz
@@ -73,7 +75,7 @@ jobs:
           $incomplete = $report.SelectNodes('//testcase/skipped | //testcase/failure | //testcase/error')
           if ($cases.Count -ne 15 -or $incomplete.Count -ne 0) { throw 'Expected 15 executed source-only cases without failures or skips' }
       - name: Check downloaded release package startup (no retail images)
-        if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
+        if: always() && github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}
@@ -96,6 +98,33 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or $help -notmatch 'Usage:' -or $help -notmatch '--disc2') { throw 'Packaged Windows executable failed startup smoke' }
           $help | Set-Content package-smoke/help.txt
           @{ scope = 'Windows package startup only; no retail gameplay/GPU/audio validation'; asset = $archives[0].Name; archive_sha256 = $digest; executable_sha256 = (Get-FileHash $executables[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant() } | ConvertTo-Json | Set-Content package-smoke/verification.json
+      - name: Capture settings thread stacks after a runtime failure
+        if: failure()
+        run: |
+          export PE_TEST_GDB="$(cygpath -w "$(command -v gdb)")"
+          python - <<'PY'
+          from pathlib import Path
+          import json, os, subprocess, time
+          executable = Path('build/test-host-settings.exe').resolve()
+          if not executable.exists():
+              raise SystemExit(0)
+          out = Path('build/settings-diagnostics')
+          out.mkdir(exist_ok=True)
+          with (out / 'run.log').open('w') as log:
+              process = subprocess.Popen([str(executable), str((out / 'evidence').resolve())], stdout=log, stderr=subprocess.STDOUT)
+              try:
+                  deadline = time.monotonic() + 8
+                  while process.poll() is None and time.monotonic() < deadline:
+                      time.sleep(0.2)
+                  if process.poll() is None:
+                      with (out / 'threads.log').open('w') as trace:
+                          subprocess.run([os.environ['PE_TEST_GDB'], '--batch', '-q', str(executable), '-p', str(process.pid), '-ex', 'set pagination off', '-ex', 'set print frame-arguments none', '-ex', 'thread apply all bt 20', '-ex', 'detach'], stdout=trace, stderr=subprocess.STDOUT, timeout=20, check=True)
+              finally:
+                  if process.poll() is None:
+                      process.kill()
+                  process.wait(timeout=5)
+                  (out / 'process.json').write_text(json.dumps({'pid': process.pid, 'exit': process.returncode, 'scope': 'Synthetic settings diagnostics only; does not override the failed CTest result.'}, indent=2))
+          PY
       - name: Preserve source-only diagnostics
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -106,3 +135,5 @@ jobs:
             build/Testing/Temporary/LastTest.log
             package-smoke/help.txt
             package-smoke/verification.json
+            build/settings-diagnostics/*.log
+            build/settings-diagnostics/process.json

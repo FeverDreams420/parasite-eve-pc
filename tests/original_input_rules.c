@@ -8,18 +8,27 @@ extern long GetRCnt(long spec);
 static bool TestPresent(SDL_Renderer *renderer);
 static bool TestWait(SDL_Event *event,Sint32 timeout);
 static bool TestRename(const char *from,const char *to);
+static bool TestMessageBox(SDL_MessageBoxFlags flags,const char *title,const char *message,SDL_Window *window);
 #define SDL_RenderPresent TestPresent
 #define SDL_WaitEventTimeout TestWait
 #define SDL_RenamePath TestRename
+#define SDL_ShowSimpleMessageBox TestMessageBox
 #define main original_game_main
 #include "../src/main/boot/main.c"
 #undef main
 #undef SDL_RenderPresent
 #undef SDL_WaitEventTimeout
 #undef SDL_RenamePath
+#undef SDL_ShowSimpleMessageBox
 static int presents;
 static SDL_AtomicInt panel_ready;
 static const char *test_directory;
+static bool TestMessageBox(SDL_MessageBoxFlags flags,const char *title,const char *message,SDL_Window *window){
+    (void)flags;(void)window;
+    fprintf(stderr,"host-settings: unexpected message box: %s: %s\n",title,message);
+    assert(!"Unexpected message box in automated settings test");
+    return false;
+}
 static bool TestRename(const char *from,const char *to){
     bool result=SDL_RenamePath(from,to);
     fprintf(stderr,"host-settings: preferences rename=%d error=%s\n",result,result?"":SDL_GetError());

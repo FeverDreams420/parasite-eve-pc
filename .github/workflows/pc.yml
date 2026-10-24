@@ -118,7 +118,7 @@ jobs:
                       time.sleep(0.2)
                   if process.poll() is None:
                       with (out / 'threads.log').open('w') as trace:
-                          subprocess.run([os.environ['PE_TEST_GDB'], '--batch', '-q', str(executable), '-p', str(process.pid), '-ex', 'set pagination off', '-ex', 'set print frame-arguments none', '-ex', 'thread apply all bt 20', '-ex', 'detach'], stdout=trace, stderr=subprocess.STDOUT, timeout=20, check=True)
+                          subprocess.run([os.environ['PE_TEST_GDB'], '--batch', '-q', str(executable), '-p', str(process.pid), '-ex', 'set pagination off', '-ex', 'set print frame-arguments none', '-ex', 'thread apply all bt 20', '-ex', 'thread 1', '-ex', 'frame apply all -c info locals', '-ex', 'detach'], stdout=trace, stderr=subprocess.STDOUT, timeout=20, check=True)
               finally:
                   if process.poll() is None:
                       process.kill()

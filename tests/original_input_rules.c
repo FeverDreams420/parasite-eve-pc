@@ -37,7 +37,7 @@ static bool TestRename(const char *from,const char *to){
 static bool TestWait(SDL_Event *event,Sint32 timeout){
     static unsigned reported;
     bool result=SDL_WaitEventTimeout(event,timeout);
-    if(result && reported++<32)fprintf(stderr,"host-settings: event=%u scancode=%d\n",event->type,event->type==SDL_EVENT_KEY_DOWN?event->key.scancode:0);
+    if(result && reported++<32)fprintf(stderr,"host-settings: event=%u scancode=%d repeat=%d\n",event->type,event->type==SDL_EVENT_KEY_DOWN?event->key.scancode:0,event->type==SDL_EVENT_KEY_DOWN?event->key.repeat:0);
     return result;
 }
 static bool TestPresent(SDL_Renderer *renderer) {

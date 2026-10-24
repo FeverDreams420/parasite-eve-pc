@@ -12,6 +12,7 @@ static bool TestPresent(SDL_Renderer *renderer);
 #undef main
 #undef SDL_RenderPresent
 static int presents;
+static SDL_AtomicInt panel_ready;
 static const char *test_directory;
 static bool TestPresent(SDL_Renderer *renderer) {
     ++presents;
@@ -22,7 +23,14 @@ static bool TestPresent(SDL_Renderer *renderer) {
         char path[4096];snprintf(path,sizeof(path),"%s/settings-%d.bmp",test_directory,presents);
         assert(SDL_SaveBMP(surface,path));SDL_DestroySurface(surface);
     }
-    return SDL_RenderPresent(renderer);
+    bool result=SDL_RenderPresent(renderer);
+    if(result)SDL_SetAtomicInt(&panel_ready,1);
+    return result;
+}
+static void WaitPanel(void){
+    Uint64 deadline=SDL_GetTicks()+5000;
+    while(!SDL_GetAtomicInt(&panel_ready) && SDL_GetTicks()<deadline)SDL_Delay(1);
+    assert(SDL_GetAtomicInt(&panel_ready));
 }
 static void Key(SDL_Scancode key){SDL_Event e={0};e.type=SDL_EVENT_KEY_DOWN;e.key.scancode=key;assert(SDL_PushEvent(&e));}
 static unsigned requested_image,request_count;
@@ -73,10 +81,10 @@ static void DiscImages(void){
     g_CdImageRequest=NULL;host_images=NULL;pe_disc_close(&images[0]);pe_disc_close(&images[1]);
 }
 static int SDLCALL ClosePanel(void *unused){
-    (void)unused;SDL_Delay(100);Key(SDL_SCANCODE_ESCAPE);return 0;
+    (void)unused;WaitPanel();Key(SDL_SCANCODE_ESCAPE);return 0;
 }
 static int SDLCALL Drive(void *unused){
-    (void)unused;SDL_Delay(150);
+    (void)unused;WaitPanel();
     Key(SDL_SCANCODE_RIGHT); /* graphics scale 1 -> 2 */
     Key(SDL_SCANCODE_TAB); /* controls */
     Key(SDL_SCANCODE_DOWN); /* L2 */
@@ -165,6 +173,7 @@ int main(int argc,char **argv){
     fprintf(stderr,"host-settings: paused audio focus pause passed; opening settings\n");
 
     int original_key=host_options.keys[0];
+    SDL_SetAtomicInt(&panel_ready,0);
     SDL_Thread *thread=SDL_CreateThread(Drive,"settings input",NULL);assert(thread);
     SDL_Event open={0};open.type=SDL_EVENT_KEY_DOWN;open.key.scancode=SDL_SCANCODE_ESCAPE;
     assert(Host_SettingsEvent(&open));SDL_WaitThread(thread,NULL);
@@ -192,6 +201,7 @@ int main(int argc,char **argv){
     Host_DiscChosen(&dialog,cancel,0);assert(!dialog.failed && !dialog.paths[0]);
     Host_DiscChosen(&dialog,NULL,0);assert(dialog.failed);
     Psyz_AudioPause();
+    SDL_SetAtomicInt(&panel_ready,0);
     thread=SDL_CreateThread(ClosePanel,"close paused settings",NULL);assert(thread);
     assert(Host_SettingsEvent(&open));SDL_WaitThread(thread,NULL);
     assert(Psyz_AudioIsPaused());Psyz_AudioDestroy();

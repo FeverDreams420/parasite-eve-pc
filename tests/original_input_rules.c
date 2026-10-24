@@ -60,7 +60,7 @@ static void WaitPanel(void){
     assert(SDL_GetAtomicInt(&panel_ready));
     fprintf(stderr,"host-settings: input producer sees ready panel\n");
 }
-static void Key(SDL_Scancode key){SDL_Event e={0};e.type=SDL_EVENT_KEY_DOWN;e.key.scancode=key;assert(SDL_PushEvent(&e));}
+static void Key(SDL_Scancode key){SDL_Event e;SDL_zero(e);e.type=SDL_EVENT_KEY_DOWN;e.key.scancode=key;e.key.down=true;assert(SDL_PushEvent(&e));}
 static unsigned requested_image,request_count;
 static const char *request_path;
 static int SupplyImage(unsigned identity){
@@ -129,7 +129,7 @@ static int SDLCALL DriveFocus(void *window){
     SDL_Delay(90);
     assert((unsigned)Psyz_VideoVSync(-1)==tick);
     assert(GetRCnt(0xf2000002)==counter);
-    SDL_Event gained={0};gained.type=SDL_EVENT_WINDOW_FOCUS_GAINED;
+    SDL_Event gained;SDL_zero(gained);gained.type=SDL_EVENT_WINDOW_FOCUS_GAINED;
     gained.window.windowID=SDL_GetWindowID(window);
     assert(SDL_PushEvent(&gained));return 0;
 }
@@ -208,7 +208,7 @@ int main(int argc,char **argv){
     int original_key=host_options.keys[0];
     SDL_SetAtomicInt(&panel_ready,0);
     SDL_Thread *thread=SDL_CreateThread(Drive,"settings input",NULL);assert(thread);
-    SDL_Event open={0};open.type=SDL_EVENT_KEY_DOWN;open.key.scancode=SDL_SCANCODE_ESCAPE;
+    SDL_Event open;SDL_zero(open);open.type=SDL_EVENT_KEY_DOWN;open.key.scancode=SDL_SCANCODE_ESCAPE;open.key.down=true;
     assert(Host_SettingsEvent(&open));SDL_WaitThread(thread,NULL);
     fprintf(stderr,"host-settings: settings input completed\n");
     assert(!Psyz_AudioIsPaused());
@@ -219,7 +219,7 @@ int main(int argc,char **argv){
     host_options.scale=1;host_options.volume=100;host_options.keys[0]=original_key;
     Host_LoadOptions(host_options.user_file);
     assert(host_options.scale==2 && host_options.volume==95 && host_options.keys[0]==SDL_SCANCODE_F);
-    SDL_Event ignored={0};ignored.type=SDL_EVENT_KEY_UP;assert(!Host_SettingsEvent(&ignored));
+    SDL_Event ignored;SDL_zero(ignored);ignored.type=SDL_EVENT_KEY_UP;assert(!Host_SettingsEvent(&ignored));
     assert(Psyz_SetOverlayEventFilter_SDL3(Host_SettingsEvent)==NULL);
     assert(Psyz_SetOverlayEventFilter_SDL3(NULL)==Host_SettingsEvent);
     /* Multi-selection callback owns paths and rejects a third image. */
@@ -261,7 +261,7 @@ int main(void)
     Boot_ResetPadInput();Boot_ResetPadInput();
     const SDL_Scancode keys[]={SDL_SCANCODE_RETURN,SDL_SCANCODE_KP_ENTER};
     for(unsigned i=0;i<2;++i){
-        SDL_Event event={.type=SDL_EVENT_KEY_DOWN};event.key.scancode=keys[i];
+        SDL_Event event;SDL_zero(event);event.type=SDL_EVENT_KEY_DOWN;event.key.scancode=keys[i];event.key.down=true;
         if(!SDL_PushEvent(&event) || (g_PadPackets[0].buttons&8))return 11;
         if((g_PadPackets[0].header&0xf0ff)!=0x4000)return 12;
         event.type=SDL_EVENT_KEY_UP;
@@ -271,15 +271,15 @@ int main(void)
     if(Psyz_SetKeyboardBinding_SDL3(11,SDL_SCANCODE_F))return 40;
     Boot_ResetPadInput(); /* Reset must not undo an explicit rebind. */
     if(Psyz_GetKeyboardBinding_SDL3(11)!=SDL_SCANCODE_F)return 45;
-    SDL_Event remapped={.type=SDL_EVENT_KEY_DOWN};remapped.key.scancode=SDL_SCANCODE_RETURN;
+    SDL_Event remapped;SDL_zero(remapped);remapped.type=SDL_EVENT_KEY_DOWN;remapped.key.scancode=SDL_SCANCODE_RETURN;remapped.key.down=true;
     SDL_PushEvent(&remapped);if(!(g_PadPackets[0].buttons&8))return 41;
     remapped.type=SDL_EVENT_KEY_UP;SDL_PushEvent(&remapped);
     remapped.type=SDL_EVENT_KEY_DOWN;remapped.key.scancode=SDL_SCANCODE_F;
     SDL_PushEvent(&remapped);if(g_PadPackets[0].buttons&8)return 42;
     remapped.type=SDL_EVENT_KEY_UP;SDL_PushEvent(&remapped);
     if(Psyz_SetKeyboardBinding_SDL3(11,SDL_SCANCODE_RETURN))return 43;
-    SDL_Event focus={.type=SDL_EVENT_WINDOW_FOCUS_LOST};SDL_PushEvent(&focus);
-    SDL_Event key={.type=SDL_EVENT_KEY_DOWN};key.key.scancode=SDL_SCANCODE_RETURN;SDL_PushEvent(&key);
+    SDL_Event focus;SDL_zero(focus);focus.type=SDL_EVENT_WINDOW_FOCUS_LOST;SDL_PushEvent(&focus);
+    SDL_Event key;SDL_zero(key);key.type=SDL_EVENT_KEY_DOWN;key.key.scancode=SDL_SCANCODE_RETURN;key.key.down=true;SDL_PushEvent(&key);
     if(!(g_PadPackets[0].buttons&8))return 15;
     focus.type=SDL_EVENT_WINDOW_FOCUS_GAINED;SDL_PushEvent(&focus);SDL_PushEvent(&key);
     if(g_PadPackets[0].buttons&8)return 16;

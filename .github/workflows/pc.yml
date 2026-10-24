@@ -146,6 +146,30 @@ jobs:
           if ($LASTEXITCODE -ne 0 -or $help -notmatch 'Usage:' -or $help -notmatch '--disc2') { throw 'Packaged Windows executable failed startup smoke' }
           $help | Set-Content package-smoke/help.txt
           @{ scope = 'Windows package startup only; no retail gameplay/GPU/audio validation'; asset = $archives[0].Name; archive_sha256 = $digest; executable_sha256 = (Get-FileHash $executables[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant() } | ConvertTo-Json | Set-Content package-smoke/verification.json
+      - name: Check downloaded save editor startup
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          gh release download $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --pattern 'Parasite-Eve-Save-Editor-*-windows-x86_64.zip' --dir editor-smoke
+          if ($LASTEXITCODE -ne 0) { throw 'Editor download failed' }
+          $archives = @(Get-ChildItem editor-smoke -Filter '*.zip')
+          if ($archives.Count -ne 1) { throw 'Expected one editor archive' }
+          $releases = gh api "repos/$env:GITHUB_REPOSITORY/releases?per_page=100" | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw 'Editor release metadata request failed' }
+          $release = @($releases | Where-Object tag_name -EQ $env:RELEASE_TAG)
+          if ($release.Count -ne 1) { throw 'Expected one editor release' }
+          $asset = @($release[0].assets | Where-Object name -EQ $archives[0].Name)
+          $digest = (Get-FileHash $archives[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($asset.Count -ne 1 -or $asset[0].digest -ne "sha256:$digest") { throw 'Editor archive digest mismatch' }
+          Expand-Archive $archives[0].FullName editor-smoke/unpacked
+          $executables = @(Get-ChildItem editor-smoke/unpacked -Recurse -Filter pe-save-editor.exe)
+          if ($executables.Count -ne 1) { throw 'Expected one editor executable' }
+          $help = & $executables[0].FullName --help 2>&1 | Out-String
+          if ($LASTEXITCODE -ne 0 -or $help -notmatch 'Usage:' -or $help -notmatch 'inspect') { throw 'Editor CLI startup failed' }
+          $help | Set-Content editor-smoke/help.txt
+          @{ scope = 'Windows editor CLI startup only; GUI and editing unverified'; archive_sha256 = $digest; executable_sha256 = (Get-FileHash $executables[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant() } | ConvertTo-Json | Set-Content editor-smoke/verification.json
       - name: Preserve exact package startup evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -154,3 +178,5 @@ jobs:
           path: |
             package-smoke/help.txt
             package-smoke/verification.json
+            editor-smoke/help.txt
+            editor-smoke/verification.json

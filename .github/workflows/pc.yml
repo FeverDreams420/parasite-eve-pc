@@ -40,7 +40,6 @@ jobs:
     env:
       PSYZ_HEADLESS: '1'
       SDL_AUDIODRIVER: dummy
-      SDL_VIDEODRIVER: dummy
     steps:
       - uses: actions/checkout@v4
         with:

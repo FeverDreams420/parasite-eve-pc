@@ -54,18 +54,18 @@ jobs:
           cmake -S . -B build -G Ninja -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo
           cmake --build build --parallel 4
           ./build/parasite-eve-pc --help
-          ctest --test-dir build --output-on-failure --no-tests=error --output-junit linux-source-only.xml -R '^(original-game-(akao-layout|math|gte|animation|transforms|projection|hierarchy|input-rules|pools|nodes|queue|expression|contact|movement|spu-(mix-headroom|pitch-modulation|noise|live-adsr|register-serialization))|host-settings)$'
+          ctest --test-dir build --output-on-failure --no-tests=error --output-junit linux-source-only.xml -R '^(original-game-(akao-layout|math|gte|animation|transforms|projection|hierarchy|input-rules|pools|nodes|queue|expression|contact|movement|spu-(mix-headroom|pitch-modulation|noise|live-adsr|register-serialization|hardware-reference))|host-settings)$'
           python3 - <<'PYTEST'
           import xml.etree.ElementTree as E
           r = E.parse('build/linux-source-only.xml')
-          assert len(r.findall('.//testcase')) == 20
+          assert len(r.findall('.//testcase')) == 21
           assert not any(r.findall('.//' + tag) for tag in ['skipped', 'failure', 'error'])
           PYTEST
       - name: Package Linux x86-64
         run: |
           stage=package/Parasite-Eve-linux-x86_64
           mkdir -p "$stage/docs/images" "$stage/licenses"
-          cp build/parasite-eve-pc README.md LICENSE.md THIRD_PARTY_NOTICES.md "$stage/"
+          cp build/parasite-eve-pc README.md CHANGELOG.md LICENSE.md THIRD_PARTY_NOTICES.md "$stage/"
           cp docs/CODE_ORGANIZATION.md "$stage/docs/"
           cp docs/images/gameplay.png "$stage/docs/images/"
           python3 - <<'PYLICENSE'
@@ -80,13 +80,13 @@ jobs:
           PYLICENSE
           ldd build/parasite-eve-pc > "$stage/runtime-dependencies.txt"
           git rev-parse HEAD > "$stage/source-commit.txt"
-          tar -czf Parasite-Eve-0.2-linux-x86_64.tar.gz -C package Parasite-Eve-linux-x86_64
-          sha256sum Parasite-Eve-0.2-linux-x86_64.tar.gz > linux-x86_64-sha256.txt
+          tar -czf Parasite-Eve-0.2-alpha-linux-x86_64.tar.gz -C package Parasite-Eve-linux-x86_64
+          sha256sum Parasite-Eve-0.2-alpha-linux-x86_64.tar.gz > linux-x86_64-sha256.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: linux-x86_64-package
           path: |
-            Parasite-Eve-0.2-linux-x86_64.tar.gz
+            Parasite-Eve-0.2-alpha-linux-x86_64.tar.gz
             linux-x86_64-sha256.txt
             build/linux-source-only.xml
 
@@ -125,14 +125,14 @@ jobs:
       - name: Run source-only Windows runtime checks (no retail images)
         run: |
           ./build/parasite-eve-pc.exe --help
-          ctest --test-dir build --output-on-failure --no-tests=error --output-junit windows-source-only.xml -R '^(original-game-(akao-layout|math|gte|animation|transforms|projection|hierarchy|input-rules|pools|nodes|queue|expression|contact|movement|spu-(mix-headroom|pitch-modulation|noise|live-adsr|register-serialization))|host-settings)$'
+          ctest --test-dir build --output-on-failure --no-tests=error --output-junit windows-source-only.xml -R '^(original-game-(akao-layout|math|gte|animation|transforms|projection|hierarchy|input-rules|pools|nodes|queue|expression|contact|movement|spu-(mix-headroom|pitch-modulation|noise|live-adsr|register-serialization|hardware-reference))|host-settings)$'
       - name: Require all selected source-only cases to execute
         shell: pwsh
         run: |
           [xml]$report = Get-Content build/windows-source-only.xml
           $cases = $report.SelectNodes('//testcase')
           $incomplete = $report.SelectNodes('//testcase/skipped | //testcase/failure | //testcase/error')
-          if ($cases.Count -ne 20 -or $incomplete.Count -ne 0) { throw 'Expected 20 executed source-only cases without failures or skips' }
+          if ($cases.Count -ne 21 -or $incomplete.Count -ne 0) { throw 'Expected 21 executed source-only cases without failures or skips' }
       - name: Capture settings thread stacks after a runtime failure
         if: failure()
         run: |

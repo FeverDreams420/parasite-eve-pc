@@ -9,7 +9,7 @@
 	<key>CFBundleExecutable</key>
 	<string>Parasite Eve</string>
 	<key>CFBundleGetInfoString</key>
-	<string>Parasite Eve 0.2</string>
+	<string>Parasite Eve 0.2-alpha</string>
 	<key>CFBundleIconFile</key>
 	<string>ParasiteEve</string>
 	<key>CFBundleIdentifier</key>

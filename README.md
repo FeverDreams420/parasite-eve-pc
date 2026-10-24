@@ -9,6 +9,7 @@ A native PC port of Parasite Eve, built from the original game code with
 
 Download the game from [GitHub Releases](https://github.com/khasinski/parasite-eve-pc/releases).
 This is an early alpha; see the release notes for available platforms and known issues.
+See the [changelog](CHANGELOG.md) for changes.
 
 You need your own **North American CUE/BIN images**. Game data is not included.
 Keep each CUE file next to its BIN file.

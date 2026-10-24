@@ -72,7 +72,7 @@ if(APPLE AND PE_MACOS_BUNDLE)
     target_sources(parasite-eve-pc PRIVATE packaging/macos/ParasiteEve.icns)
     set_source_files_properties(packaging/macos/ParasiteEve.icns PROPERTIES
         MACOSX_PACKAGE_LOCATION Resources)
-    foreach(notice README.md LICENSE.md THIRD_PARTY_NOTICES.md)
+    foreach(notice README.md CHANGELOG.md LICENSE.md THIRD_PARTY_NOTICES.md)
         target_sources(parasite-eve-pc PRIVATE ${notice})
         set_source_files_properties(${notice} PROPERTIES MACOSX_PACKAGE_LOCATION Resources)
     endforeach()
@@ -449,6 +449,22 @@ if(BUILD_TESTING)
     target_include_directories(test-original-hierarchy PRIVATE include)
     target_link_libraries(test-original-hierarchy PRIVATE psyz)
     add_test(NAME original-game-hierarchy COMMAND test-original-hierarchy)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(test-psyz-spu-reference
+        ${PSYZ_DIR}/psyz/tests/test_main.c
+        ${PSYZ_DIR}/psyz/tests/test_libspu.c
+        ${PSYZ_DIR}/ztest/ztest.c)
+    target_compile_definitions(test-psyz-spu-reference PRIVATE __psyz)
+    target_include_directories(test-psyz-spu-reference PRIVATE ${PSYZ_DIR}/ztest)
+    target_link_libraries(test-psyz-spu-reference PRIVATE psyz)
+    add_test(NAME original-game-spu-hardware-reference COMMAND test-psyz-spu-reference
+        --filter=spu::GaussianHardwareImpulse,spu::GaussianKeyOnPitchPhase,spu::ReverbHardwareFirImpulse
+        --output=plain)
+    set_tests_properties(original-game-spu-hardware-reference PROPERTIES TIMEOUT 60
+        ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy;SDL_VIDEODRIVER=dummy"
+        LABELS "audio")
 endif()
 
 if(BUILD_TESTING)

@@ -4,6 +4,15 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Optional release or draft tag for Windows package startup smoke
+        required: false
+        type: string
+
+permissions:
+  contents: read
 
 jobs:
   macos:
@@ -21,3 +30,80 @@ jobs:
           cmake -S . -B build -DBUILD_TESTING=ON
           cmake --build build --parallel
           ctest --test-dir build --output-on-failure --no-tests=error
+
+  windows-source-only:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: msys2 {0}
+    env:
+      PSYZ_HEADLESS: '1'
+      SDL_AUDIODRIVER: dummy
+      SDL_VIDEODRIVER: dummy
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - uses: msys2/setup-msys2@ec48f7c5447b3140e2b088413ae3a55687bccb6e # v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            git
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+      - name: Fetch PsyZ and SDL
+        run: |
+          git submodule update --init third_party/psyz
+          git -C third_party/psyz submodule update --init external/SDL
+      - name: Build the native Windows game and test executables
+        run: |
+          cmake -S . -B build -G Ninja -DBUILD_TESTING=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          cmake --build build --parallel 2
+      - name: Run source-only Windows runtime checks (no retail images)
+        run: |
+          ./build/parasite-eve-pc.exe --help
+          ctest --test-dir build --output-on-failure --no-tests=error --output-junit windows-source-only.xml -R '^(original-game-(akao-layout|math|gte|animation|transforms|projection|hierarchy|input-rules|pools|nodes|queue|expression|contact|movement)|host-settings)$'
+      - name: Require all selected source-only cases to execute
+        shell: pwsh
+        run: |
+          [xml]$report = Get-Content build/windows-source-only.xml
+          $cases = $report.SelectNodes('//testcase')
+          $incomplete = $report.SelectNodes('//testcase/skipped | //testcase/failure | //testcase/error')
+          if ($cases.Count -ne 15 -or $incomplete.Count -ne 0) { throw 'Expected 15 executed source-only cases without failures or skips' }
+      - name: Check downloaded release package startup (no retail images)
+        if: github.event_name == 'workflow_dispatch' && inputs.release_tag != ''
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.release_tag }}
+        run: |
+          gh release download $env:RELEASE_TAG --repo $env:GITHUB_REPOSITORY --pattern 'Parasite-Eve-*-windows-x86_64-experimental.zip' --dir package-smoke
+          if ($LASTEXITCODE -ne 0) { throw 'Release download failed' }
+          $archives = @(Get-ChildItem package-smoke -Filter '*.zip')
+          if ($archives.Count -ne 1) { throw 'Expected one Windows archive' }
+          $release = gh api "repos/$env:GITHUB_REPOSITORY/releases/tags/$env:RELEASE_TAG" | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) { throw 'Release metadata request failed' }
+          $asset = @($release.assets | Where-Object name -EQ $archives[0].Name)
+          if ($asset.Count -ne 1) { throw 'Release asset metadata missing' }
+          $digest = (Get-FileHash $archives[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          if ($asset[0].digest -ne "sha256:$digest") { throw 'Downloaded archive digest mismatch' }
+          Expand-Archive $archives[0].FullName package-smoke/unpacked
+          $executables = @(Get-ChildItem package-smoke/unpacked -Recurse -Filter parasite-eve-pc.exe)
+          if ($executables.Count -ne 1) { throw 'Expected one game executable' }
+          $help = & $executables[0].FullName --help 2>&1 | Out-String
+          if ($LASTEXITCODE -ne 0 -or $help -notmatch 'Usage:' -or $help -notmatch '--disc2') { throw 'Packaged Windows executable failed startup smoke' }
+          $help | Set-Content package-smoke/help.txt
+          @{ scope = 'Windows package startup only; no retail gameplay/GPU/audio validation'; asset = $archives[0].Name; archive_sha256 = $digest; executable_sha256 = (Get-FileHash $executables[0].FullName -Algorithm SHA256).Hash.ToLowerInvariant() } | ConvertTo-Json | Set-Content package-smoke/verification.json
+      - name: Preserve source-only diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: windows-source-only-evidence
+          path: |
+            build/windows-source-only.xml
+            build/Testing/Temporary/LastTest.log
+            package-smoke/help.txt
+            package-smoke/verification.json

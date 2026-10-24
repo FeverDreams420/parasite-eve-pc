@@ -409,7 +409,7 @@ static void Host_Settings(SDL_Window *game) {
     SDL_ResetKeyboard();
     Psyz_PauseHostClock_SDL3(false);
     if(!paused)Psyz_AudioUnpause();
-    if(quit){SDL_Event event={0};event.type=SDL_EVENT_QUIT;SDL_PushEvent(&event);}
+    if(quit){SDL_Event event;SDL_zero(event);event.type=SDL_EVENT_QUIT;SDL_PushEvent(&event);}
 }
 static void Host_PauseForFocus(SDL_Window *game) {
     int paused=Psyz_AudioIsPaused();

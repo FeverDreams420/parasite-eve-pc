@@ -111,6 +111,10 @@ static void DiscImages(void){
 static int SDLCALL ClosePanel(void *unused){
     (void)unused;WaitPanel();Key(SDL_SCANCODE_ESCAPE);return 0;
 }
+static int SDLCALL QuitPanel(void *unused){
+    (void)unused;WaitPanel();SDL_Event event;SDL_zero(event);
+    event.type=SDL_EVENT_QUIT;assert(SDL_PushEvent(&event));return 0;
+}
 static int SDLCALL Drive(void *unused){
     (void)unused;WaitPanel();
     Key(SDL_SCANCODE_RIGHT); /* graphics scale 1 -> 2 */
@@ -237,7 +241,20 @@ int main(int argc,char **argv){
     SDL_SetAtomicInt(&panel_ready,0);
     thread=SDL_CreateThread(ClosePanel,"close paused settings",NULL);assert(thread);
     assert(Host_SettingsEvent(&open));SDL_WaitThread(thread,NULL);
-    assert(Psyz_AudioIsPaused());Psyz_AudioDestroy();
+    assert(Psyz_AudioIsPaused());
+    SDL_SetAtomicInt(&panel_ready,0);
+    thread=SDL_CreateThread(QuitPanel,"quit settings",NULL);assert(thread);
+    Uint64 quit_started=SDL_GetTicksNS();
+    assert(Host_SettingsEvent(&open));SDL_WaitThread(thread,NULL);
+    assert(Psyz_AudioIsPaused());
+    SDL_Event returned;unsigned quits=0;Uint64 quit_deadline=SDL_GetTicks()+1000;
+    while(!quits && SDL_GetTicks()<quit_deadline){
+        if(SDL_WaitEventTimeout(&returned,20) && returned.type==SDL_EVENT_QUIT){
+            ++quits;assert(returned.quit.timestamp>=quit_started && returned.quit.timestamp<=SDL_GetTicksNS());
+        }
+    }
+    assert(quits==1 && !SDL_HasEvent(SDL_EVENT_QUIT));
+    Psyz_AudioDestroy();
     fprintf(stderr,"host-settings: paused settings completed; checking disc images\n");
     DiscImages();
     SDL_Quit();puts("PASS: both image identities, missing-image checks, additive mounting, TOML roundtrip, invalid values, modal graphics/controls/audio, persistence, ESC consumption, multi-disc callback");return 0;

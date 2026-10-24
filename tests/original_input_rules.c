@@ -269,11 +269,37 @@ int main(int argc,char **argv){
 #include <stdio.h>
 #include <SDL3/SDL.h>
 #include "pe1/battle.h"
+#include "pe1/menu_widget.h"
+
+static int menu_cell_indices(void) {
+    MenuWidgetNode node = {0};
+    node.grid_width = 1;
+    node.cell_mask = -1;
+    node.cursor_x = -1;
+    if (MenuWidget_GetCellIndex(&node) != -1) return 0;
+    node.cursor_x = 0;
+    node.cursor_y = -1;
+    if (MenuWidget_GetCellIndex(&node) != -1) return 0;
+    if (MenuWidget_GetCellIndex(NULL) != -1) return 0;
+    const unsigned masks[] = {0, 1, 0x80000000u, 0x55555555u, 0xffffffffu};
+    for (unsigned mask = 0; mask < sizeof(masks)/sizeof(masks[0]); ++mask) {
+        node.cell_mask = (int)masks[mask];
+        for (int index = 0; index < 96; ++index) {
+            node.cursor_y = index;
+            int expected = (masks[mask] & (1u << (index & 31))) ? index : -1;
+            if (MenuWidget_GetCellIndex(&node) != expected) return 0;
+        }
+    }
+    puts("Menu cell selection: absent node/cursor and 480 MIPS-masked index/mask cases passed");
+    return 1;
+}
+
 static unsigned calls;
 static void trigger(struct BattleEntity *ctx, int *index) { ++calls; ctx->motionX+=1; *index=1; }
 static void fallback(struct BattleEntity *ctx, int *index) { (void)index; ++calls; ctx->motionX+=10; }
 int main(void)
 {
+    if (!menu_cell_indices()) return 45;
     if(!SDL_Init(SDL_INIT_EVENTS))return 10;
     Boot_ResetPadInput();Boot_ResetPadInput();
     const SDL_Scancode keys[]={SDL_SCANCODE_RETURN,SDL_SCANCODE_KP_ENTER};

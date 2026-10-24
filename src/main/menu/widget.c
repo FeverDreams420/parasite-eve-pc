@@ -706,6 +706,8 @@ int MenuWidget_GetCellIndex(MenuWidgetNode *ptr) {
     int x;
     int y;
 
+    if (ptr == NULL) return -1;
+
     idx = -1;
     if (ptr != 0) {
         x = ptr->cursor_x;
@@ -721,7 +723,8 @@ int MenuWidget_GetCellIndex(MenuWidgetNode *ptr) {
     }
 
     ret = -1;
-    if (((ptr->cell_mask >> idx) & 1) != 0) {
+    /* MIPS variable shifts use only the low five bits of the index. */
+    if ((((u32)ptr->cell_mask >> ((u32)idx & 31u)) & 1u) != 0) {
         ret = idx;
     }
     return ret;

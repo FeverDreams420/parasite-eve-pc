@@ -389,7 +389,7 @@ int FieldFx_IsPlayerWithinRadius(s16 *pos, int extraRadius) {
 }
 
 
-int func_800C6C18(void *obj) {
+int FieldFx_TriggerActorHit(void *obj) {
     int enabled;
 
     if (FieldFx_GetStatus(obj) == 3) {

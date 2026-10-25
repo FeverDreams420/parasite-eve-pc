@@ -1,6 +1,76 @@
 #include "pe1/gte.h"
 #include "pe1/render_object.h"
+#include <math.h>
 #include <stdio.h>
+
+void Psyz_PgxpSetActive(int active);
+int Psyz_PgxpLookupVertex(const void *packet_sxy_addr, unsigned int sxy, float *x, float *y, float *w);
+
+static int pgxp_subpixel_checks(void)
+{
+    RenderMatrix out_matrices[2] = {
+        /* ~0.5 deg yaw: sin = 36 / 4096, cos = 4096 / 4096 */
+        {{{4096, 0, 36}, {0, 4096, 0}, {-36, 0, 4096}}, 0, {0, 0, 0}},
+        {{{4096, 0, 0}, {0, 4096, 0}, {0, 0, 4096}}, 0, {0, 0, 0}}
+    };
+    RenderObjectHeader header = {0};
+    RenderObjectPart parts[2] = {
+        {0, 1, 0, {0}, 0},
+        /* Child bone offset Z=80 -> 80 * 36 / 4096 = 0.703125 world X (truncates to 0 in integer GTE!) */
+        {0, 3, 1, {0}, 80}
+    };
+    s8 commands[2] = {0, 1};
+    RenderVec3s bounds[4] = {0};
+    RenderAnimationLookupEntry entries[2] = {0};
+    RenderVec3s vertices[3] = {{1, 3, 500, 0}, {2, 5, 500, 0}, {3, 7, 500, 0}};
+    RenderObjectEntity actor = {0};
+    GteMatrix view = {{{4096, 0, 0}, {0, 4096, 0}, {0, 0, 4096}}, {0, 0, 0}};
+    float pos[3] = {0};
+    u32 packet_sxy = 0;
+
+    header.matrix_command_bytes = 2;
+    header.part_count = 2;
+    actor.header = &header;
+    actor.parts = parts;
+    actor.matrix_commands = commands;
+    /* Match Anim_DecodeBoneRotations*: active_matrix aliases matrices in-place! */
+    actor.active_matrix = out_matrices;
+    actor.matrices = out_matrices;
+    actor.bounds_vertices = bounds;
+    actor.animation_entries = entries;
+    actor.vertices = vertices;
+    actor.model_matrix = out_matrices[1];
+
+    Psyz_PgxpSetActive(1);
+    gte_SetGeomOffset(160, 112);
+    gte_ctc2_26(256);
+    gte_lddqa(0);
+    gte_lddqb(0);
+
+    Render_TransformVertices(&actor);
+    /* Integer GTE bone translation truncates 0.703125 to 0, preserving exact PS1 gameplay logic */
+    if (out_matrices[1].translation[0] != 0) {
+        Psyz_PgxpSetActive(0);
+        return 10;
+    }
+
+    Render_TransformMorphVertices(&actor, (u32 *)&view);
+    packet_sxy = g_RenderClutLookupTable[3];
+    Psyz_GteCopyPgxpSxy(&g_RenderClutLookupTable[3], &packet_sxy, packet_sxy);
+    if (!Psyz_PgxpLookupVertex(&packet_sxy, packet_sxy, &pos[0], &pos[1], &pos[2])) {
+        Psyz_PgxpSetActive(0);
+        return 11;
+    }
+    Psyz_PgxpSetActive(0);
+
+    /* Subpixel PGXP retains both the un-truncated child bone translation and fractional screen projection */
+    if (!(pos[0] > 162.5f && pos[0] < 163.0f &&
+          pos[1] > 113.2f && pos[1] < 113.4f &&
+          pos[2] > 579.0f && pos[2] < 581.0f)) {
+        return 12;
+    }
+    return 0;
+}
 
 static int skinned_checks(void)
 {
@@ -83,6 +153,7 @@ int main(void)
     Render_TransformMorphVertices(&object,(u32 *)&view);
     if (g_RenderClutLookupTable[0] != 123) return 3;
     { int error=skinned_checks(); if (error) return error; }
+    { int error=pgxp_subpixel_checks(); if (error) return error; }
     puts("Original RTPT part tails, overlapping stores and hidden parts passed");
     return 0;
 }

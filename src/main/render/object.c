@@ -1,4 +1,5 @@
 #include "common.h"
+#include <math.h>
 #include "pe1/entity_frame_update.h"
 #include "pe1/field_actor.h"
 #include "pe1/gte.h"
@@ -1394,17 +1395,23 @@ void Render_DrawTexturedQuads(RenderObjectEntity *entity) {
         packet.bytes = (u8 *)((RenderPacket34 *)packets + slot);
         d = record->lookup_indices[3];
         gte_stmac0(area);
-        if (*area > 0) {
+        if (Psyz_GtePgxpNclip4(&xy[a], xy0, &xy[b], xy1, &xy[c], xy2, &xy[d], xy[d], *area) > 0) {
             int depth = z[a] + z[b];
             depth += z[c];
             depth += z[d];
             depth >>= 4;
             if (depth < 0x1000) {
+                RenderPacket34 *pkt = (RenderPacket34 *)packet.bytes;
+                u32 xy3 = xy[d];
                 RENDER_ADDPRIM(&ordering[depth], packet);
-                ((RenderPacket34 *)packet.bytes)->sxy0 = xy0;
-                ((RenderPacket34 *)packet.bytes)->sxy1 = xy1;
-                ((RenderPacket34 *)packet.bytes)->sxy2 = xy2;
-                ((RenderPacket34 *)packet.bytes)->sxy3 = xy[d];
+                pkt->sxy0 = xy0;
+                pkt->sxy1 = xy1;
+                pkt->sxy2 = xy2;
+                pkt->sxy3 = xy3;
+                Psyz_GteCopyPgxpSxy(&xy[a], &pkt->sxy0, xy0);
+                Psyz_GteCopyPgxpSxy(&xy[b], &pkt->sxy1, xy1);
+                Psyz_GteCopyPgxpSxy(&xy[c], &pkt->sxy2, xy2);
+                Psyz_GteCopyPgxpSxy(&xy[d], &pkt->sxy3, xy3);
             }
         } else {
             RENDER_TAG(packet.bytes)->address = 0;
@@ -1430,14 +1437,18 @@ void Render_DrawTexturedQuads(RenderObjectEntity *entity) {
         gte_nclip_now();
         packet.bytes = (u8 *)((RenderPacket28 *)packets + slot);
         gte_stmac0(area);
-        if (*area > 0) {
+        if (Psyz_GtePgxpNclip3(&xy[a], xy0, &xy[b], xy1, &xy[c], xy2, *area) > 0) {
             int depth = z[a] + z[b] + z[c];
             depth = depth / 3 >> 2;
             if (depth < 0x1000) {
+                RenderPacket28 *pkt = (RenderPacket28 *)packet.bytes;
                 RENDER_ADDPRIM(&ordering[depth], packet);
-                ((RenderPacket28 *)packet.bytes)->sxy0 = xy0;
-                ((RenderPacket28 *)packet.bytes)->sxy1 = xy1;
-                ((RenderPacket28 *)packet.bytes)->sxy2 = xy2;
+                pkt->sxy0 = xy0;
+                pkt->sxy1 = xy1;
+                pkt->sxy2 = xy2;
+                Psyz_GteCopyPgxpSxy(&xy[a], &pkt->sxy0, xy0);
+                Psyz_GteCopyPgxpSxy(&xy[b], &pkt->sxy1, xy1);
+                Psyz_GteCopyPgxpSxy(&xy[c], &pkt->sxy2, xy2);
             }
         } else {
             RENDER_TAG(packet.bytes)->address = 0;
@@ -1464,17 +1475,23 @@ void Render_DrawTexturedQuads(RenderObjectEntity *entity) {
         packet.bytes = (u8 *)((RenderPacket24 *)packets + slot);
         d = record->lookup_indices[3];
         gte_stmac0(area);
-        if (*area > 0) {
+        if (Psyz_GtePgxpNclip4(&xy[a], xy0, &xy[b], xy1, &xy[c], xy2, &xy[d], xy[d], *area) > 0) {
             int depth = z[a] + z[b];
             depth += z[c];
             depth += z[d];
             depth >>= 4;
             if (depth < 0x1000) {
+                RenderPacket24 *pkt = (RenderPacket24 *)packet.bytes;
+                u32 xy3 = xy[d];
                 RENDER_ADDPRIM(&ordering[depth], packet);
-                ((RenderPacket24 *)packet.bytes)->sxy0 = xy0;
-                ((RenderPacket24 *)packet.bytes)->sxy1 = xy1;
-                ((RenderPacket24 *)packet.bytes)->sxy2 = xy2;
-                ((RenderPacket24 *)packet.bytes)->sxy3 = xy[d];
+                pkt->sxy0 = xy0;
+                pkt->sxy1 = xy1;
+                pkt->sxy2 = xy2;
+                pkt->sxy3 = xy3;
+                Psyz_GteCopyPgxpSxy(&xy[a], &pkt->sxy0, xy0);
+                Psyz_GteCopyPgxpSxy(&xy[b], &pkt->sxy1, xy1);
+                Psyz_GteCopyPgxpSxy(&xy[c], &pkt->sxy2, xy2);
+                Psyz_GteCopyPgxpSxy(&xy[d], &pkt->sxy3, xy3);
             }
         } else {
             RENDER_TAG(packet.bytes)->address = 0;
@@ -1500,14 +1517,18 @@ void Render_DrawTexturedQuads(RenderObjectEntity *entity) {
         gte_nclip_now();
         packet.bytes = (u8 *)((RenderPacket1C *)packets + slot);
         gte_stmac0(area);
-        if (*area > 0) {
+        if (Psyz_GtePgxpNclip3(&xy[a], xy0, &xy[b], xy1, &xy[c], xy2, *area) > 0) {
             int depth = z[a] + z[b] + z[c];
             depth = depth / 3 >> 2;
             if (depth < 0x1000) {
+                RenderPacket1C *pkt = (RenderPacket1C *)packet.bytes;
                 RENDER_ADDPRIM(&ordering[depth], packet);
-                ((RenderPacket1C *)packet.bytes)->sxy0 = xy0;
-                ((RenderPacket1C *)packet.bytes)->sxy1 = xy1;
-                ((RenderPacket1C *)packet.bytes)->sxy2 = xy2;
+                pkt->sxy0 = xy0;
+                pkt->sxy1 = xy1;
+                pkt->sxy2 = xy2;
+                Psyz_GteCopyPgxpSxy(&xy[a], &pkt->sxy0, xy0);
+                Psyz_GteCopyPgxpSxy(&xy[b], &pkt->sxy1, xy1);
+                Psyz_GteCopyPgxpSxy(&xy[c], &pkt->sxy2, xy2);
             }
         } else {
             RENDER_TAG(packet.bytes)->address = 0;
@@ -1705,6 +1726,150 @@ int Render_InitRoomPrimState(void *objectArg)
  * replaces the shared PS1 scratchpad stack for every possible valid depth. */
 static RenderMatrix g_RenderTransformStack[65536];
 
+typedef struct {
+    double rot[3][3];
+    double trans[3];
+} PgxpBoneMatrix;
+
+typedef struct {
+    const RenderMatrix *addr;
+    RenderMatrix int_copy;
+    PgxpBoneMatrix mat;
+} PgxpBoneCacheEntry;
+
+#define PGXP_BONE_CACHE_SETS 1024u
+#define PGXP_BONE_CACHE_WAYS 4u
+static PgxpBoneCacheEntry g_PgxpBoneCache[PGXP_BONE_CACHE_SETS][PGXP_BONE_CACHE_WAYS];
+static PgxpBoneMatrix g_PgxpTransformStack[65536];
+
+static void Pgxp_InitFromRenderMatrix(const RenderMatrix *src, PgxpBoneMatrix *dst) {
+    int r, c;
+    for (r = 0; r < 3; ++r) {
+        for (c = 0; c < 3; ++c) {
+            dst->rot[r][c] = (double)src->rotation[r][c];
+        }
+        dst->trans[r] = (double)src->translation[r];
+    }
+}
+
+static unsigned Pgxp_HashMatrixAddr(const RenderMatrix *addr) {
+    uintptr_t v = (uintptr_t)addr;
+    return (unsigned)(((v >> 5) ^ (v >> 15)) & (PGXP_BONE_CACHE_SETS - 1u));
+}
+
+static void Pgxp_StoreBoneMatrix(const RenderMatrix *addr, const PgxpBoneMatrix *mat) {
+    PgxpBoneCacheEntry *set = g_PgxpBoneCache[Pgxp_HashMatrixAddr(addr)];
+    unsigned w, replace = PGXP_BONE_CACHE_WAYS - 1u;
+    for (w = 0; w < PGXP_BONE_CACHE_WAYS; ++w) {
+        if (set[w].addr == addr || set[w].addr == NULL) {
+            replace = w;
+            break;
+        }
+    }
+    for (w = replace; w > 0; --w) {
+        set[w] = set[w - 1u];
+    }
+    set[0].addr = addr;
+    set[0].int_copy = *addr;
+    set[0].mat = *mat;
+}
+
+static void Pgxp_LoadBoneMatrix(const RenderMatrix *addr, PgxpBoneMatrix *out) {
+    const PgxpBoneCacheEntry *set = g_PgxpBoneCache[Pgxp_HashMatrixAddr(addr)];
+    unsigned w;
+    for (w = 0; w < PGXP_BONE_CACHE_WAYS; ++w) {
+        if (set[w].addr == addr &&
+            memcmp(&set[w].int_copy, addr, sizeof(RenderMatrix)) == 0) {
+            *out = set[w].mat;
+            return;
+        }
+    }
+    Pgxp_InitFromRenderMatrix(addr, out);
+}
+
+static void Pgxp_CopyBoneMatrix(const RenderMatrix *dst, const RenderMatrix *src) {
+    PgxpBoneMatrix mat;
+    Pgxp_LoadBoneMatrix(src, &mat);
+    Pgxp_StoreBoneMatrix(dst, &mat);
+}
+
+void Pgxp_StoreBoneRotYXZ(const RenderMatrix *matrix, s16 rx, s16 ry, s16 rz) {
+    const double k = 6.28318530717958647692 / 4096.0;
+    double ax = (double)rx * k;
+    double ay = (double)ry * k;
+    double az = (double)rz * k;
+    double sx = sin(ax), cx = cos(ax);
+    double sy = sin(ay), cy = cos(ay);
+    double sz = sin(az), cz = cos(az);
+    double sysx = sy * sx;
+    double cysx = cy * sx;
+    PgxpBoneMatrix mat;
+
+    mat.rot[0][0] = (cy * cz + sysx * sz) * 4096.0;
+    mat.rot[0][1] = (sysx * cz - cy * sz) * 4096.0;
+    mat.rot[0][2] = (sy * cx) * 4096.0;
+    mat.rot[1][0] = (cx * sz) * 4096.0;
+    mat.rot[1][1] = (cx * cz) * 4096.0;
+    mat.rot[1][2] = (-sx) * 4096.0;
+    mat.rot[2][0] = (cysx * sz - sy * cz) * 4096.0;
+    mat.rot[2][1] = (sy * sz + cysx * cz) * 4096.0;
+    mat.rot[2][2] = (cy * cx) * 4096.0;
+    mat.trans[0] = (double)(s16)matrix->translation[0];
+    mat.trans[1] = (double)(s16)matrix->translation[1];
+    mat.trans[2] = (double)matrix->translation[2];
+    Pgxp_StoreBoneMatrix(matrix, &mat);
+}
+
+void Pgxp_StoreModelMatrix(const RenderMatrix *matrix, s16 rx, s16 ry, s16 rz, s16 scale) {
+    const double k = 6.28318530717958647692 / 4096.0;
+    double s = (double)scale;
+    double ax = (double)rx * k;
+    double ay = (double)ry * k;
+    double az = (double)rz * k;
+    double sx = sin(ax), cx = cos(ax);
+    double sy = sin(ay), cy = cos(ay);
+    double sz = sin(az), cz = cos(az);
+    double nsy = -sy;
+    double t0 = cz * nsy;
+    double t1 = sz * nsy;
+    PgxpBoneMatrix mat;
+
+    mat.rot[0][0] = (cz * cy) * s;
+    mat.rot[0][1] = (-sz * cy) * s;
+    mat.rot[0][2] = (sy) * s;
+    mat.rot[1][0] = (sz * cx - t0 * sx) * s;
+    mat.rot[1][1] = (cz * cx + t1 * sx) * s;
+    mat.rot[1][2] = (-cy * sx) * s;
+    mat.rot[2][0] = (sz * sx + t0 * cx) * s;
+    mat.rot[2][1] = (cz * sx - t1 * cx) * s;
+    mat.rot[2][2] = (cy * cx) * s;
+    mat.trans[0] = (double)(s16)matrix->translation[0];
+    mat.trans[1] = (double)(s16)matrix->translation[1];
+    mat.trans[2] = (double)matrix->translation[2];
+    Pgxp_StoreBoneMatrix(matrix, &mat);
+}
+
+static void Pgxp_ComposeBoneMatrix(const PgxpBoneMatrix *parent,
+                                   const PgxpBoneMatrix *source,
+                                   double tx, double ty, double tz,
+                                   PgxpBoneMatrix *out) {
+    int r, c;
+    PgxpBoneMatrix next;
+    for (r = 0; r < 3; ++r) {
+        next.trans[r] = parent->trans[r] +
+            (parent->rot[r][0] * tx +
+             parent->rot[r][1] * ty +
+             parent->rot[r][2] * tz) / 4096.0;
+        for (c = 0; c < 3; ++c) {
+            next.rot[r][c] =
+                (parent->rot[r][0] * source->rot[0][c] +
+                 parent->rot[r][1] * source->rot[1][c] +
+                 parent->rot[r][2] * source->rot[2][c]) / 4096.0;
+        }
+    }
+    *out = next;
+}
+
 void Render_TransformVertices(RenderObjectEntity *actor) {
     /* An actor without an animation bank can reach opcode155 before any
      * decoder supplies active_matrix (notably after Continue). Use the
@@ -1715,6 +1880,8 @@ void Render_TransformVertices(RenderObjectEntity *actor) {
     s32 *originY = &origin[1];
     s32 *originZ = &origin[2];
     RenderMatrix *stack = g_RenderTransformStack;
+    PgxpBoneMatrix *f_stack = g_PgxpTransformStack;
+    PgxpBoneMatrix f_cur;
     s8 *commands;
     RenderMatrix *out;
     RenderAnimationLookupEntry *centres;
@@ -1740,18 +1907,29 @@ void Render_TransformVertices(RenderObjectEntity *actor) {
             actor->matrices[1].translation[0] = actor->model_matrix.translation[0];
             actor->matrices[1].translation[1] = actor->model_matrix.translation[1];
             actor->matrices[1].translation[2] = actor->model_matrix.translation[2];
+            Pgxp_CopyBoneMatrix(&actor->matrices[1], &actor->model_matrix);
         } else {
             Render_CopyFrameDataDouble(actor, actor->animation_source, actor->animation_id);
         }
         return;
     } else {
         if (mode == 4) {
-            gte_CompMatrix(&actor->animation_source->matrices[actor->animation_id],
+            const RenderMatrix *parent_mat =
+                &actor->animation_source->matrices[actor->animation_id];
+            PgxpBoneMatrix f_parent, f_self;
+            Pgxp_LoadBoneMatrix(parent_mat, &f_parent);
+            Pgxp_LoadBoneMatrix(&actor->model_matrix, &f_self);
+            Pgxp_ComposeBoneMatrix(&f_parent, &f_self,
+                                   f_self.trans[0], f_self.trans[1], f_self.trans[2],
+                                   &f_cur);
+            gte_CompMatrix(parent_mat,
                            &actor->model_matrix, &actor->model_matrix);
+            Pgxp_StoreBoneMatrix(&actor->model_matrix, &f_cur);
         }
         current = &actor->model_matrix;
     }
 
+    Pgxp_LoadBoneMatrix(current, &f_cur);
     *origin = 0;
     *originY = 0;
     out = actor->matrices;
@@ -1766,18 +1944,33 @@ void Render_TransformVertices(RenderObjectEntity *actor) {
         if (command == -1) {
             gte_ReadMatrix(stack);
             stack++;
+            *f_stack++ = f_cur;
             continue;
         }
         if (command == -2) {
             stack--;
+            f_cur = *--f_stack;
             gte_ldrotmatrix(stack);
             gte_ldtransmatrix(stack);
             continue;
         }
         source = actor->active_matrix ? &actor->active_matrix[command] : &rest;
+        *originZ = actor->parts[command].translation_z;
+        {
+            PgxpBoneMatrix f_src;
+            Pgxp_LoadBoneMatrix(source, &f_src);
+            if (*commands == 0) {
+                Pgxp_ComposeBoneMatrix(&f_cur, &f_src,
+                                       f_src.trans[0], f_src.trans[1], f_src.trans[2],
+                                       &f_cur);
+            } else {
+                Pgxp_ComposeBoneMatrix(&f_cur, &f_src,
+                                       0.0, 0.0, (double)*originZ,
+                                       &f_cur);
+            }
+        }
         gte_ldclmv(source);
         gte_rtir();
-        *originZ = actor->parts[command].translation_z;
         gte_stclmv(out);
         gte_ldclmv((u16 *)source + 1);
         gte_rtir();
@@ -1791,6 +1984,7 @@ void Render_TransformVertices(RenderObjectEntity *actor) {
             gte_ldlv0(origin);
         gte_rt();
         gte_stlvnl(out->translation);
+        Pgxp_StoreBoneMatrix(out, &f_cur);
         gte_ldrotmatrix(out);
         gte_ldtransmatrix(out);
         out++;
@@ -1819,6 +2013,7 @@ void Render_CopyFrameData(RenderObjectEntity *dst, RenderObjectEntity *src, s32 
     dst->model_matrix.translation[0] = src->matrices[index].translation[0];
     dst->model_matrix.translation[1] = src->matrices[index].translation[1];
     dst->model_matrix.translation[2] = src->matrices[index].translation[2];
+    Pgxp_CopyBoneMatrix(&dst->model_matrix, &src->matrices[index]);
 }
 
 void Render_CopyFrameDataDouble(RenderObjectEntity *dst, RenderObjectEntity *src, s32 frame) {
@@ -1849,6 +2044,8 @@ void Render_CopyFrameDataDouble(RenderObjectEntity *dst, RenderObjectEntity *src
     dst->matrices[1].translation[0] = src->matrices[index].translation[0];
     dst->matrices[1].translation[1] = src->matrices[index].translation[1];
     dst->matrices[1].translation[2] = src->matrices[index].translation[2];
+    Pgxp_CopyBoneMatrix(&dst->matrices[0], &src->matrices[index]);
+    Pgxp_CopyBoneMatrix(&dst->matrices[1], &src->matrices[index]);
 }
 
 /* Shared original render work buffers. Vertex indices/counts are u16;
@@ -1861,10 +2058,12 @@ void Render_TransformMorphVertices(RenderObjectEntity *entity, u32 *view) {
     GteMatrix workspace;
     GteMatrix *scratch = &workspace;
     RenderMatrix *matrix = entity->matrices;
+    const GteMatrix *view_mat = (const GteMatrix *)view;
     int i;
 
     for (i = 0; i < entity->header->part_count; i++) {
         RenderObjectPart *part = &entity->parts[i];
+        const RenderMatrix *part_mat = matrix;
 
         gte_CompMatrixMac(view, matrix, scratch);
         gte_ldrotmatrix(scratch);
@@ -1874,7 +2073,26 @@ void Render_TransformMorphVertices(RenderObjectEntity *entity, u32 *view) {
             RenderVec3s *vertices = &entity->vertices[part->vertex_start];
             u32 *screen = &g_RenderClutLookupTable[part->vertex_start];
             u32 *depth = &g_RenderVertexWorkWords[part->vertex_start];
-            int j;
+            PgxpBoneMatrix f_bone;
+            double eye_rot[3][3];
+            double eye_trans[3];
+            int r, c, j;
+
+            Pgxp_LoadBoneMatrix(part_mat, &f_bone);
+            for (r = 0; r < 3; ++r) {
+                eye_trans[r] = (double)view_mat->t[r] +
+                    ((double)view_mat->m[r][0] * f_bone.trans[0] +
+                     (double)view_mat->m[r][1] * f_bone.trans[1] +
+                     (double)view_mat->m[r][2] * f_bone.trans[2]) / 4096.0;
+                for (c = 0; c < 3; ++c) {
+                    eye_rot[r][c] =
+                        ((double)view_mat->m[r][0] * f_bone.rot[0][c] +
+                         (double)view_mat->m[r][1] * f_bone.rot[1][c] +
+                         (double)view_mat->m[r][2] * f_bone.rot[2][c]) /
+                        (4096.0 * 4096.0);
+                }
+            }
+            Psyz_GteSetPgxpMatrix(eye_rot, eye_trans);
 
             for (j = 0; j < part->vertex_count; ) {
                 gte_ldv3c(vertices);
@@ -1886,6 +2104,7 @@ void Render_TransformMorphVertices(RenderObjectEntity *entity, u32 *view) {
                 gte_stsxy3c(screen);
                 gte_stsz3c(depth);
             }
+            Psyz_GteClearPgxpMatrix();
         }
     }
 }

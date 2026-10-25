@@ -86,7 +86,7 @@ int RoomLib_UpdateTwelveElementTimer(void *arg0, void *control, void *data) {
         state->hit = 0;
         if (timer == 0) {
             state->cooldown = state->reload;
-            func_800C6C18(arg0);
+            FieldFx_TriggerActorHit(arg0);
         }
     }
 

@@ -298,6 +298,9 @@ void Entity_FrameUpdate(void) {
                     scale.m[0][2] = 0;
                     scale.m[0][1] = 0;
                     gte_CompMatrix(matrix, &scale, matrix);
+                    Pgxp_StoreModelMatrix(&entity->render_object.model_matrix,
+                                          entity->rot_x, entity->rot_y, entity->rot_z,
+                                          entity->move_speed);
                 }
             }
         }

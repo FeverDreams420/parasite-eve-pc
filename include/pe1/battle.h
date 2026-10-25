@@ -210,10 +210,16 @@ typedef struct Combatant {
 /* 0x00 */ u32  coreFlags;     /* bitfield; &0x6000 / &0xC0000 facing, >>13&3 weapon-cat (battle/context.c:302,318,329) */
 /* 0x04 */ CombatantIdentity field04;
 /* 0x06 */ s16  fieldId06;     /* SetContextField case2 (Battle_SetContextField.c:24) */
-/* 0x08 */ s32  exp_or_acc;    /* damage-derived accumulator, clamped to maxAtk@0x28 / 0x10000 (battle/attack.c:537,541) */
+/* 0x08 */ union {
+               s32 exp_or_acc; /* damage-derived PE accumulator, clamped to maxAtk@0x28 / 0x10000 (battle/attack.c:537,541) */
+               s32 currentPe;
+           };
 /* 0x0C */ u16  curHP;         /* CURRENT HP -- damage & heal land here; clamped to maxHP@0x1C (battle/attack.c:518-530) */
 /* 0x0E */ u16  hpMirror;      /* current-HP MIRROR; re-synced from curHP each reset (Battle_ResetEnemyStats.c:42) */
-/* 0x10 */ u16  hpAlive;       /* authoritative ">0 == alive" HP (target tests); on player doubles as EXP/level gauge clamped 0x2328 (battle/setup.c:436; battle/encounter.c:373). TENTATIVE width: some reads s32 */
+/* 0x10 */ union {
+               u16 hpAlive;    /* on player doubles as ATB gauge clamped 0x2328 (battle/setup.c:436; battle/encounter.c:373) */
+               u16 atb;
+           };
 /* 0x12 */ u8   actionMode12;  /* action-mode id table [0x12..0x19], filled per enemy by facing (battle/enemy_actions.c:38-46): 4 idle, 0xD special */
 /* 0x13 */ s8   actionMode13;
 /* 0x14 */ u8   targetAngleActionModes[3]; /* selected by the relative target angle in Battle_AdvancePhase */
@@ -229,10 +235,22 @@ typedef struct Combatant {
 /* 0x22 */ u16  stat22;        /* base for scaled-offense calc (battle/enemy_actions.c:39) */
 /* 0x24 */ u16  scaledOffense; /* = stat22 * tbl[anim] / 10 (battle/enemy_actions.c:39) */
 /* 0x26 */ s16  stat26;        /* SetContextField case18 (Battle_SetContextField.c:50) */
-/* 0x28 */ s32  maxAtk;        /* cap for exp_or_acc@0x08 (battle/attack.c:533,540; Battle_StartEncounter.c:116) */
-/* 0x2C */ s32  atbStep;       /* per-update PE recovery increment for exp_or_acc */
-/* 0x30 */ s32  atbRate;       /* PE recovery divisor, decreases toward 1 */
-/* 0x34 */ s32  atbGauge;      /* PE-full protection timer: 240 updates on reaching maxAtk; halves incoming damage while positive */
+/* 0x28 */ union {
+               s32 maxAtk;     /* cap for exp_or_acc@0x08 (battle/attack.c:533,540; Battle_StartEncounter.c:116) */
+               s32 maxPe;
+           };
+/* 0x2C */ union {
+               s32 atbStep;    /* per-update PE recovery increment for exp_or_acc */
+               s32 peRecoveryStep;
+           };
+/* 0x30 */ union {
+               s32 atbRate;    /* PE recovery divisor, decreases toward 1 */
+               s32 peRecoveryDivisor;
+           };
+/* 0x34 */ union {
+               s32 atbGauge;   /* PE-full protection timer: 240 updates on reaching maxAtk; halves incoming damage while positive */
+               s32 peFullGuardFrames;
+           };
 /* 0x38 */ u16  subActionStep;
 /* 0x3A */ u8   subActionCounter;
 /* 0x3B */ u8   subActionPeriod;
@@ -290,9 +308,18 @@ typedef struct EnemyCombatant {
                struct { u8 low; u8 entityId; } bytes;
            } lowAndEntityId;
 /* 0x08 */ s32 slotBit; /* 1 << allocated enemy slot */
-/* 0x0C */ u16 curHP;
-/* 0x0E */ u16 hpMirror;
-/* 0x10 */ s32 hpAlive;
+/* 0x0C */ union {
+               u16 curHP; /* enemy ATB charge counter */
+               u16 atbCharge;
+           };
+/* 0x0E */ union {
+               u16 hpMirror; /* enemy ATB charge threshold */
+               u16 atbChargeLimit;
+           };
+/* 0x10 */ union {
+               s32 hpAlive; /* authoritative enemy HP */
+               s32 hp;
+           };
 /* 0x14 */ s32 previousHP; /* previous update snapshot for the floating damage panel */
 /* 0x18 */ EnemyActionEffect *effect;
 /* Six inline events share scalar enemy-state storage, not the player's
@@ -306,7 +333,10 @@ typedef struct EnemyCombatant {
         };
     };
 /* 0x7C */ s8  contactActionIds[0x0C]; /* four ids per facing group (coreFlags >> 21), -1 ends a group (Entity_CheckActionIdMatch) */
-/* 0x88 */ s32 hpAliveCap; /* caps hpAlive when smaller */
+/* 0x88 */ union {
+               s32 hpAliveCap; /* caps hpAlive when smaller */
+               s32 maxHp;
+           };
 /* 0x8C */ u16 defense; /* subtracted from attack power */
 /* 0x8E */ u16 chargeStep;
 /* 0x90 */ u8  effectChance;

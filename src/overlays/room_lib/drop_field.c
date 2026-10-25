@@ -186,7 +186,7 @@ int RoomEffect_DropFieldTick(void *arg0, void *data1, void *data2) {
         state->hit = 0;
         if (timer == 0) {
             state->holdTimer = state->holdFrames;
-            func_800C6C18(arg0);
+            FieldFx_TriggerActorHit(arg0);
         }
     }
 

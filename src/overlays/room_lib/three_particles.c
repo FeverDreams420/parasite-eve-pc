@@ -132,7 +132,7 @@ int RoomLib_UpdateThreeParticleTimer(void *arg0, void *slot, void *arg2) {
         state->landedFlag = 0;
         if (timer == 0) {
             state->cooldown = state->reload;
-            func_800C6C18(arg0);
+            FieldFx_TriggerActorHit(arg0);
         }
     }
 

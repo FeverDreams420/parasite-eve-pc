@@ -10,6 +10,15 @@ void Psyz_GteDataWrite(unsigned reg, unsigned int value);
 unsigned int Psyz_GteCtrlRead(unsigned reg);
 void Psyz_GteCtrlWrite(unsigned reg, unsigned int value);
 void Psyz_GteCommand(unsigned int command);
+void Psyz_GteSetPgxpMatrix(const double rot[3][3], const double trans[3]);
+void Psyz_GteClearPgxpMatrix(void);
+void Psyz_GteStoreSxyTo(unsigned reg, void *dst_addr);
+void Psyz_GteCopyPgxpSxy(const void *src_addr, const void *dst_addr, unsigned int sxy);
+int Psyz_GtePgxpNclip3(const void *s0, unsigned int xy0, const void *s1, unsigned int xy1,
+                       const void *s2, unsigned int xy2, int int_area);
+int Psyz_GtePgxpNclip4(const void *s0, unsigned int xy0, const void *s1, unsigned int xy1,
+                       const void *s2, unsigned int xy2, const void *s3, unsigned int xy3,
+                       int int_area);
 
 /*
  * PSY-Q-style GTE operations.  Keep these macros limited to COP2 state and
@@ -291,10 +300,10 @@ void Psyz_GteCommand(unsigned int command);
 #define gte_strgb0_bound() do { u32 pe_gte_word = Psyz_GteDataRead(20); memcpy(gte_out0, &pe_gte_word, 4); } while (0)
 #define gte_strgb1_bound() do { u32 pe_gte_word = Psyz_GteDataRead(21); memcpy(gte_out1, &pe_gte_word, 4); } while (0)
 #define gte_strgb2_bound() do { u32 pe_gte_word = Psyz_GteDataRead(22); memcpy(gte_out2, &pe_gte_word, 4); } while (0)
-#define gte_stsxy_three_0() do { u32 pe_gte_word = Psyz_GteDataRead(12); memcpy(gte_out0, &pe_gte_word, 4); } while (0)
-#define gte_stsxy_three_1() do { u32 pe_gte_word = Psyz_GteDataRead(13); memcpy(gte_out1, &pe_gte_word, 4); } while (0)
-#define gte_stsxy_three_2() do { u32 pe_gte_word = Psyz_GteDataRead(14); memcpy(gte_out2, &pe_gte_word, 4); } while (0)
-#define gte_stsxy2_three_0() do { u32 pe_gte_word = Psyz_GteDataRead(14); memcpy(gte_out0, &pe_gte_word, 4); } while (0)
+#define gte_stsxy_three_0() do { Psyz_GteStoreSxyTo(12, gte_out0); } while (0)
+#define gte_stsxy_three_1() do { Psyz_GteStoreSxyTo(13, gte_out1); } while (0)
+#define gte_stsxy_three_2() do { Psyz_GteStoreSxyTo(14, gte_out2); } while (0)
+#define gte_stsxy2_three_0() do { Psyz_GteStoreSxyTo(14, gte_out0); } while (0)
 #define gte_stir0_three_1() do { u32 pe_gte_word = Psyz_GteDataRead(8); memcpy(gte_out1, &pe_gte_word, 4); } while (0)
 
 #define gte_getflag(out) ((out) = Psyz_GteCtrlRead(31))
@@ -400,9 +409,9 @@ void Psyz_GteCommand(unsigned int command);
 #define gte_lwc2_3_12(p) do { u32 word; memcpy(&word, (const u8 *)(p) + 12, 4); Psyz_GteDataWrite(3, word); } while (0)
 #define gte_lwc2_4_16(p) do { u32 word; memcpy(&word, (const u8 *)(p) + 16, 4); Psyz_GteDataWrite(4, word); } while (0)
 #define gte_lwc2_5_20(p) do { u32 word; memcpy(&word, (const u8 *)(p) + 20, 4); Psyz_GteDataWrite(5, word); } while (0)
-#define gte_swc2_12_0(p) do { u32 word = Psyz_GteDataRead(12); memcpy((u8 *)(p) + 0, &word, 4); } while (0)
-#define gte_swc2_13_4(p) do { u32 word = Psyz_GteDataRead(13); memcpy((u8 *)(p) + 4, &word, 4); } while (0)
-#define gte_swc2_14_8(p) do { u32 word = Psyz_GteDataRead(14); memcpy((u8 *)(p) + 8, &word, 4); } while (0)
+#define gte_swc2_12_0(p) do { Psyz_GteStoreSxyTo(12, (u8 *)(p) + 0); } while (0)
+#define gte_swc2_13_4(p) do { Psyz_GteStoreSxyTo(13, (u8 *)(p) + 4); } while (0)
+#define gte_swc2_14_8(p) do { Psyz_GteStoreSxyTo(14, (u8 *)(p) + 8); } while (0)
 #define gte_swc2_17_0(p) do { u32 word = Psyz_GteDataRead(17); memcpy((u8 *)(p) + 0, &word, 4); } while (0)
 #define gte_swc2_18_4(p) do { u32 word = Psyz_GteDataRead(18); memcpy((u8 *)(p) + 4, &word, 4); } while (0)
 #define gte_swc2_19_8(p) do { u32 word = Psyz_GteDataRead(19); memcpy((u8 *)(p) + 8, &word, 4); } while (0)
@@ -410,7 +419,7 @@ void Psyz_GteCommand(unsigned int command);
 /* RTPS: project V0 and update SXY2/SZ3. */
 #define gte_rtps() do { Psyz_GteCommand(0x4A180001u & 0x01ffffffu); } while (0)
 
-#define gte_stsxy2(out) do { u32 word = Psyz_GteDataRead(14); memcpy((u8 *)(out) + 0, &word, 4); } while (0)
+#define gte_stsxy2(out) do { Psyz_GteStoreSxyTo(14, (u8 *)(out) + 0); } while (0)
 
 #define gte_getsz3(out) ((out) = Psyz_GteDataRead(19))
 
@@ -440,15 +449,15 @@ void Psyz_GteCommand(unsigned int command);
         gte_flags_out = (flags);                                             \
     }
 
-#define gte_stsxy0(out) do { u32 word = Psyz_GteDataRead(12); memcpy((u8 *)(out) + 0, &word, 4); } while (0)
-#define gte_stsxy1(out) do { u32 word = Psyz_GteDataRead(13); memcpy((u8 *)(out) + 0, &word, 4); } while (0)
-#define gte_stsxy1_bound() do { u32 pe_gte_word = Psyz_GteDataRead(13); memcpy(gte_out1, &pe_gte_word, 4); } while (0)
-#define gte_stsxy2_bound() do { u32 pe_gte_word = Psyz_GteDataRead(14); memcpy(gte_out2, &pe_gte_word, 4); } while (0)
+#define gte_stsxy0(out) do { Psyz_GteStoreSxyTo(12, (u8 *)(out) + 0); } while (0)
+#define gte_stsxy1(out) do { Psyz_GteStoreSxyTo(13, (u8 *)(out) + 0); } while (0)
+#define gte_stsxy1_bound() do { Psyz_GteStoreSxyTo(13, gte_out1); } while (0)
+#define gte_stsxy2_bound() do { Psyz_GteStoreSxyTo(14, gte_out2); } while (0)
 #define gte_stir0(out) do { u32 word = Psyz_GteDataRead(8); memcpy((u8 *)(out) + 0, &word, 4); } while (0)
 #define gte_stir0_bound() do { u32 pe_gte_word = Psyz_GteDataRead(8); memcpy(gte_depth_out, &pe_gte_word, 4); } while (0)
 #define gte_getflag_bound() do { gte_flags = Psyz_GteCtrlRead(31); } while (0)
 #define gte_getsz3_bound() do { gte_depth_value = Psyz_GteDataRead(19); } while (0)
-#define gte_stsxy012(out) do { { u32 pe_gte_word = Psyz_GteDataRead(12); memcpy((u8 *)(out) + 0, &pe_gte_word, 4); } { u32 pe_gte_word = Psyz_GteDataRead(13); memcpy((u8 *)(out) + 4, &pe_gte_word, 4); } { u32 pe_gte_word = Psyz_GteDataRead(14); memcpy((u8 *)(out) + 8, &pe_gte_word, 4); } } while (0)
+#define gte_stsxy012(out) do { Psyz_GteStoreSxyTo(12, (u8 *)(out) + 0); Psyz_GteStoreSxyTo(13, (u8 *)(out) + 4); Psyz_GteStoreSxyTo(14, (u8 *)(out) + 8); } while (0)
 
 #define gte_stsz123(out) do { { u32 pe_gte_word = Psyz_GteDataRead(17); memcpy((u8 *)(out) + 0, &pe_gte_word, 4); } { u32 pe_gte_word = Psyz_GteDataRead(18); memcpy((u8 *)(out) + 4, &pe_gte_word, 4); } { u32 pe_gte_word = Psyz_GteDataRead(19); memcpy((u8 *)(out) + 8, &pe_gte_word, 4); } } while (0)
 
@@ -459,8 +468,8 @@ void Psyz_GteCommand(unsigned int command);
  * debt, not additional hardware operations. Padded commands retain the two
  * retail transfer-hazard slots. */
 #define gte_ldvxy0_precise_keep(address, keep) do { u32 word; memcpy(&word, (const u8 *)(address) + 0, 4); Psyz_GteDataWrite(0, word); } while (0)
-#define gte_stsxy1_precise_keep_address(address) do { u32 word = Psyz_GteDataRead(13); memcpy((u8 *)(address) + 0, &word, 4); } while (0)
-#define gte_stsxy2_precise_keep_address(address) do { u32 word = Psyz_GteDataRead(14); memcpy((u8 *)(address) + 0, &word, 4); } while (0)
+#define gte_stsxy1_precise_keep_address(address) do { Psyz_GteStoreSxyTo(13, (u8 *)(address) + 0); } while (0)
+#define gte_stsxy2_precise_keep_address(address) do { Psyz_GteStoreSxyTo(14, (u8 *)(address) + 0); } while (0)
 #define gte_ldvxy0_mem(address) do { u32 pe_gte_word; memcpy(&pe_gte_word, (const u8 *)(address) + 0, 4); Psyz_GteDataWrite(0, pe_gte_word); } while (0)
 #define gte_ldvz0_mem(address) do { u32 pe_gte_word; memcpy(&pe_gte_word, (const u8 *)(address) + 4, 4); Psyz_GteDataWrite(1, pe_gte_word); } while (0)
 #define gte_ldvxy0_precise(address) do { u32 word; memcpy(&word, (const u8 *)(address) + 0, 4); Psyz_GteDataWrite(0, word); } while (0)
@@ -469,19 +478,19 @@ void Psyz_GteCommand(unsigned int command);
 #define gte_ldvz1_precise(address) do { u32 word; memcpy(&word, (const u8 *)(address) + 4, 4); Psyz_GteDataWrite(3, word); } while (0)
 #define gte_ldvxy2_precise(address) do { u32 word; memcpy(&word, (const u8 *)(address) + 0, 4); Psyz_GteDataWrite(4, word); } while (0)
 #define gte_ldvz2_precise(address) do { u32 word; memcpy(&word, (const u8 *)(address) + 4, 4); Psyz_GteDataWrite(5, word); } while (0)
-#define gte_stsxy2_precise(address) do { u32 word = Psyz_GteDataRead(14); memcpy((u8 *)(address) + 0, &word, 4); } while (0)
+#define gte_stsxy2_precise(address) do { Psyz_GteStoreSxyTo(14, (u8 *)(address) + 0); } while (0)
 #define gte_ldvxy1_mem(address) do { u32 pe_gte_word; memcpy(&pe_gte_word, (const u8 *)(address) + 0, 4); Psyz_GteDataWrite(2, pe_gte_word); } while (0)
-#define gte_stsxy2_mem(address) do { u32 pe_gte_word = Psyz_GteDataRead(14); memcpy((address), &pe_gte_word, 4); } while (0)
+#define gte_stsxy2_mem(address) do { Psyz_GteStoreSxyTo(14, (address)); } while (0)
 #define gte_stmac0_precise(address) do { u32 word = Psyz_GteDataRead(24); memcpy((u8 *)(address) + 0, &word, 4); } while (0)
 #define gte_stotz_precise(address) do { u32 word = Psyz_GteDataRead(7); memcpy((u8 *)(address) + 0, &word, 4); } while (0)
-#define gte_stsxy0_precise(address) do { u32 word = Psyz_GteDataRead(12); memcpy((u8 *)(address) + 0, &word, 4); } while (0)
-#define gte_stsxy1_precise(address) do { u32 word = Psyz_GteDataRead(13); memcpy((u8 *)(address) + 0, &word, 4); } while (0)
+#define gte_stsxy0_precise(address) do { Psyz_GteStoreSxyTo(12, (u8 *)(address) + 0); } while (0)
+#define gte_stsxy1_precise(address) do { Psyz_GteStoreSxyTo(13, (u8 *)(address) + 0); } while (0)
 
 /* PSY-Q style three-operand transfers: load V0..V2 from three vectors and
  * store SXY0..SXY2 to three addresses in one statement. */
 #define gte_ldv3(r1, r2, r3) do { gte_ldv0(r1); gte_ldv1(r2); gte_ldv2(r3); } while (0)
 
-#define gte_stsxy3(r1, r2, r3) do { { u32 pe_gte_word = Psyz_GteDataRead(12); memcpy((u8 *)(r1) + 0, &pe_gte_word, 4); } { u32 pe_gte_word = Psyz_GteDataRead(13); memcpy((u8 *)(r2) + 0, &pe_gte_word, 4); } { u32 pe_gte_word = Psyz_GteDataRead(14); memcpy((u8 *)(r3) + 0, &pe_gte_word, 4); } } while (0)
+#define gte_stsxy3(r1, r2, r3) do { Psyz_GteStoreSxyTo(12, (u8 *)(r1) + 0); Psyz_GteStoreSxyTo(13, (u8 *)(r2) + 0); Psyz_GteStoreSxyTo(14, (u8 *)(r3) + 0); } while (0)
 
 /* Store SZ3 / 4 through a pointer: the ordering-table depth of a projected
  * primitive (PSY-Q gte_stszotz). */
@@ -584,7 +593,7 @@ void Psyz_GteCommand(unsigned int command);
 #define gte_ldv3c(r0) do { const u8 *pe_gte_vectors = (const u8 *)(r0); gte_ldv0(pe_gte_vectors); gte_ldv1(pe_gte_vectors + 8); gte_ldv2(pe_gte_vectors + 16); } while (0)
 
 /* PSY-Q gte_stsxy3c / gte_stsz3c: SXY0..2 and SZ1..3 to consecutive words. */
-#define gte_stsxy3c(r0) do { u8 *pe_gte_dst = (u8 *)(r0); unsigned pe_gte_i; for (pe_gte_i = 0; pe_gte_i < 3; ++pe_gte_i) { u32 pe_gte_word = Psyz_GteDataRead(12 + pe_gte_i); memcpy(pe_gte_dst + pe_gte_i * 4, &pe_gte_word, 4); } } while (0)
+#define gte_stsxy3c(r0) do { u8 *pe_gte_dst = (u8 *)(r0); unsigned pe_gte_i; for (pe_gte_i = 0; pe_gte_i < 3; ++pe_gte_i) { Psyz_GteStoreSxyTo(12 + pe_gte_i, pe_gte_dst + pe_gte_i * 4); } } while (0)
 #define gte_stsz3c(r0) do { u8 *pe_gte_dst = (u8 *)(r0); unsigned pe_gte_i; for (pe_gte_i = 0; pe_gte_i < 3; ++pe_gte_i) { u32 pe_gte_word = Psyz_GteDataRead(17 + pe_gte_i); memcpy(pe_gte_dst + pe_gte_i * 4, &pe_gte_word, 4); } } while (0)
 
 /* PSY-Q gte_SetColorMatrix: the five packed words of LR1..LB3. */

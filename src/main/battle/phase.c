@@ -12,7 +12,9 @@
 #include "pe1/inventory.h"
 #include "pe1/pm.h"
 
+#ifndef NULL
 #define NULL ((void *)0)
+#endif
 s16 Battle_CalcAngleToTarget(RenderObjectEntity *object, void *target);
 void Battle_HaltOnPositiveX(void);
 int Battle_StepCharacterAction(BattleInitSlot *slot);

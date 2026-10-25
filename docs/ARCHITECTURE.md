@@ -11,38 +11,28 @@ startup, logo, movie and title-screen code. It contains no `pc/` sources and
 needs no FFmpeg dependency. Tests compile the original modules directly;
 fixtures depending on the abandoned implementation have been removed.
 
-Optional native diagnostics stop at an explicit VBlank limit, capture VRAM and
-state, and inject scheduled digital buttons into the original pad packet.
-This bounded stop proves neither natural scene completion nor campaign play.
-The reports expose original actor positions and animations, dialogue pages,
-menus, movement locks, inventory, script variables, battle queues and PE/ATB.
-Enemy reports include their actual ATB charge and increment; the legacy enemy
-member named `curHP` is the charge, while `hpAlive` holds their HP. These are
-read-only observations, not alternate implementations of battle rules.
-
-Ordinary-input play includes phone saves/Continue, both discs, Chrysler
-Building, the Truebred Eve victory, the authored EX ending, credits and return
-to title. Independent normal/sanitized cold replays from the authentic late-EX
-save agree on full state, VRAM and rendered output. The ending audio replay
-compares 244,727,451 stereo PCM frames exactly. GPU reference tests cover scales
-1–8, including executed Metal shaders. The current Day 2 replay is additional
-regression work, not the achieved gameplay boundary. These results do not by
-themselves close the remaining release-candidate/platform/package audit. See
-[PC_PORT_PLAN.md](PC_PORT_PLAN.md) for evidence and outstanding gates.
+Optional native diagnostics stop at an explicit VBlank limit, capture VRAM,
+rendered frames and audio PCM, and inject scheduled digital buttons into the
+original pad packet. The reports expose original actor positions and animations,
+dialogue pages, menus, movement locks, inventory, script variables, battle
+queues and PE/ATB. Enemy reports include their actual ATB charge and increment;
+the legacy enemy member named `curHP` is the charge, while `hpAlive` holds
+their HP. These are read-only observations, not alternate implementations of
+battle rules.
 
 Desktop image selection, TOML preferences and the Escape settings panel live
 in the original `src/main/boot/main.c`. The native SDL file dialog accepts both
 CUE/BIN images at once; the original archive loader identifies their roles and
-switches volumes. Settings use a blocking modal SDL window: the original game
-stack remains suspended and audio is paused, with its prior pause state restored
-on return. Graphics and input/output settings use our PsyZ fork; no gameplay
-rules or replacement game loop are introduced. The consuming SDL event filter
-prevents Escape from also invoking the SDK quit shortcut. Headless startup
-bypasses preferences and dialogs. User-path hierarchy and controls are described
-in the README.
+switches volumes automatically. Settings use a blocking modal SDL window: the
+original game stack remains suspended and audio is paused, with its prior pause
+state restored on return. Graphics and input/output settings use our PsyZ fork;
+no gameplay rules or replacement game loop are introduced. The consuming SDL
+event filter prevents Escape from also invoking the SDK quit shortcut. Headless
+startup bypasses preferences and dialogs. User-path hierarchy and controls are
+described in the README.
 
 The memory map and overlay addresses below describe the original game for
-asset decoding and porting research. They are not host addresses, build
+asset decoding and porting reference. They are not host addresses, build
 inputs or layout constraints. This project does not rebuild or byte-match
 PS1 binaries.
 
@@ -52,19 +42,16 @@ Gameplay fidelity is the contract. PS1 APIs may be simplified or removed; room
 and scene code is linked statically with explicit state/reset, and scratchpad
 work uses ordinary host buffers and the host stack. We do not emulate a CD drive.
 The original archive loader validates both CUE/BIN images and exposes one
-logical asset set, resolving source-specific IDs/offsets without disc-swap UI.
-The CLI mounts images by their USA roles. Both supplied images are available;
-real Disc 2 room, texture and battle reads are exercised by the Chrysler tests
-and playthrough. Full dual-image coverage and failure cases remain release
-requirements rather than consequences of those individual tests passing.
+logical asset set, resolving source-specific IDs and offsets without manual
+disc-swap prompts.
 
 The maintained PsyZ source fork is
 [khasinski/parasite-eve-psyz](https://github.com/khasinski/parasite-eve-psyz),
 with `Xeeynamo/psyz` as upstream. Missing generic capabilities can be added
-there instead of retaining unnecessary PS1 compatibility machinery. Its existing
-`Psyz_VideoSetInternalResolution` scaling is used for hi-res during scene
-integration. High-FPS presentation/interpolation is a later milestone; resolution
-and presentation cadence must never alter simulation/gameplay.
+there instead of retaining unnecessary PS1 compatibility machinery. Its
+`Psyz_VideoSetInternalResolution` scaling provides high-resolution rendering
+(`1x`–`8x`); resolution and presentation settings never alter simulation or
+gameplay.
 
 ## Shipped binaries
 
@@ -161,29 +148,27 @@ and tests, without the abandoned parallel implementation.
 There is no historical compiler, splat step, PS1 linker, assembly extraction,
 retail checksum verification or decompilation report in the build.
 
-Before adding a module, replace real MIPS/GTE operations and hardware access
-with C or PsyZ, separate serialized data from host pointers, and give globals
-normal definitions. Assets may contain original addresses that need explicit
-decoding; they cannot be dereferenced as host pointers. Some initializers
-and tables previously came from the disc and are still missing from the
-standalone C source. Recover the needed data through asset loading as each
-module is integrated, without rebuilding a PS1 image.
+Before modifying or extending a module, keep MIPS/GTE operations and hardware
+access implemented in portable C or PsyZ, separate serialized data from host
+pointers, and give globals normal definitions. Assets may contain original
+addresses that need explicit decoding; they cannot be dereferenced as host
+pointers.
 
-Legacy SDK implementations in `src/main/psyq/` are retained for functional
-reference. PsyZ owns the host runtime; avoid duplicate implementations when
-porting callers. Room/scene sources retain the original organization until
-native registration and state ownership are implemented.
+Active GTE/sound/CD helpers under `src/main/psyq/` are compiled alongside the
+game modules, while PsyZ owns the host runtime, GPU, SPU and platform layer.
 
 ## Repository layout
 
 | Path | Contents |
 | --- | --- |
-| `src/main/<subsystem>/` | game code to port |
-| `src/main/psyq/lib*/` | legacy runtime behavior to compare with PsyZ |
+| `src/main/<subsystem>/` | main executable game modules |
+| `src/main/psyq/lib*/` | portable C implementations of game-coupled PsyQ helpers |
 | `src/overlays/` | room, scene and effect modules, plus shared room code |
-| `include/` | shared types, asset layouts and legacy interfaces |
+| `include/` | shared types, asset layouts and subsystem interfaces |
 | `third_party/psyz/` | host runtime and SDL dependency |
 | `docs/` | native development guidance and data-format reference |
 
-Game data and proprietary SDK files are not distributed. The native smoke
-test builds without them; full boot requires a user-supplied USA Disc 1 BIN. See [CONTRIBUTING.md](../CONTRIBUTING.md).
+Game data and proprietary SDK files are not distributed. Unit tests that do not
+require retail assets run standalone in CI; set `PE_TEST_DISC` and
+`PE_TEST_DISC2` to run the full asset and gameplay regression suite. See
+[CONTRIBUTING.md](../CONTRIBUTING.md).

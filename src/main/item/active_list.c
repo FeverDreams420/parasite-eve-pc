@@ -76,8 +76,9 @@ unsigned int Menu_GetActionSubmenuSelection(void) {
     return g_MenuActionSubmenuSel;
 }
 
-void Inv_BoundsCheckAssertStub(int code)
+void Inv_BoundsCheckAssertStub(int code, ...)
 {
+    (void)code;
 }
 
 void Menu_FullInit(void) {

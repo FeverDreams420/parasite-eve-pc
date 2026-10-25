@@ -30,3 +30,14 @@ The matching PsyZ sources are available through this repository's pinned
 `third_party/psyz` submodule. SDL uses the zlib license, with additional notices
 for its bundled components. Desktop packages retain the corresponding license
 texts; consult each source file for any additional attribution.
+
+## IBM Plex Sans
+
+`src/main/boot/fonts/ibm_plex_sans.ttf.inc` embeds a subset of IBM Plex Sans Regular,
+Copyright (c) 2017 IBM Corp., licensed under the SIL Open Font License, Version 1.1.
+The full license text is included at `src/main/boot/fonts/OFL-IBMPlex.txt`.
+
+## stb_truetype.h
+
+`src/main/boot/stb_truetype.h` is from Sean Barrett's `stb` single-file public domain /
+MIT dual-licensed libraries (`https://github.com/nothings/stb`).

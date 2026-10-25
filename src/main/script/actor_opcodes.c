@@ -724,6 +724,9 @@ int Script_SetGteMatrix(int **args) {
     gte_swc2_9_0(translation_matrix->t);
     gte_swc2_10_4(translation_matrix->t);
     gte_swc2_11_8(translation_matrix->t);
+    Pgxp_StoreModelMatrix(&g_CurrentEntity->render_object.model_matrix,
+                          setup_actor->rot_x, setup_actor->rot_y, setup_actor->rot_z,
+                          matrix_actor->move_speed);
 
     color_actor = g_CurrentEntity;
     color_actor->render_object.shade = *args[0];

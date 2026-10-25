@@ -615,7 +615,7 @@ int SceneE08_UpdateOrbContext(void *object, void *rawSlot, void *memory) {
         state->flag = 0;
         if (state->counter == 0) {
             state->counter = state->timer;
-            func_800C6C18(object);
+            FieldFx_TriggerActorHit(object);
         }
     }
     if (FieldFx_IsLastSlotHalted() == 1) slot->flag = 2;
@@ -2345,7 +2345,7 @@ int SceneE08_UpdateLayeredSpriteContext(void *object, void *rawSlot, void *memor
         state->hitRequest = 0;
         if (state->hitTimer == 0) {
             state->hitTimer = state->hitReload;
-            func_800C6C18(object);
+            FieldFx_TriggerActorHit(object);
         }
     }
     if (FieldFx_IsLastSlotHalted() == 1) slot->flag = 2;

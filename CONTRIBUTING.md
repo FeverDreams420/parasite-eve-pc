@@ -9,46 +9,41 @@ manifest requirement or decompilation progress/debt ratchet.
 
 1. Use subsystem headers for shared declarations and ordinary C types and functions.
 2. Remove or simplify unnecessary PS1 APIs; use native C or our PsyZ fork where needed, preserving gameplay behavior.
-3. Add ported modules explicitly to the native CMake target when their dependencies work.
-4. Build with `cmake -S . -B build` and `cmake --build build --parallel`.
-5. Run `./build/parasite-eve-pc --disc <Disc 1.cue> --headless --frame-limit 8000 --dump-vram /tmp/pe.vram` for reproducible boot checks. This starts the original main; the abandoned frontend is no longer built.
-6. Validate changed game behavior with focused native tests or reproducible gameplay scenarios as modules become runnable.
+3. Build with `cmake -S . -B build -DBUILD_TESTING=ON` and `cmake --build build --parallel`.
+4. Run `ctest --test-dir build --output-on-failure` (set `PE_TEST_DISC` and `PE_TEST_DISC2` to the USA Disc 1 and Disc 2 `.cue` files to include asset and gameplay regression tests).
+5. Run `./build/parasite-eve-pc --disc <Disc 1.cue> --headless --frame-limit 8000 --dump-vram /tmp/pe.vram` for reproducible headless boot checks.
+6. Validate changed game behavior with focused native tests or reproducible gameplay scenarios.
 
-The native target reads the disc, plays the intro and renders the title/menu.
-A successful build does not imply that the game modules under `src/` compile
-or that gameplay works. CI builds the target and tests the disc reader without
-retail assets. Set `PE_TEST_DISC` when running CTest to exercise full movie
-decoding, title selection, intro cancellation and frontend shutdown.
-Use a fresh build directory when changing build structure or dependencies.
+CI builds the native target and runs the standalone test suite across macOS,
+Linux and Windows without retail assets. Use a fresh build directory when
+changing build structure or dependencies.
 
 Do not preserve register assignments, instruction scheduling, padding,
 linker order or code addresses for compiler matching. Assembly that performs
-real work must be translated or replaced before its module is ported; do not
-replace missing functionality with successful no-op stubs.
+real work must be translated or replaced with portable C; do not replace
+functionality with no-op stubs.
 
 Serialized assets and save data retain their defined widths, offsets and
 endianness. Host pointers must use pointer types, and host structures can be
-redesigned independently of the original RAM layout. Validate layout assertions
+designed independently of the original RAM layout. Validate layout assertions
 against serialized formats rather than forcing host pointers into 32 bits.
 
 Upstream is a source of optional fixes and knowledge. Imports must fit the
 native architecture and behavior; they need no PS1 binary validation.
 
-See [architecture](docs/ARCHITECTURE.md), [conventions](docs/CONVENTIONS.md),
-[code organization](docs/CODE_ORGANIZATION.md) and
-[the port plan](docs/PC_PORT_PLAN.md).
+See [architecture](docs/ARCHITECTURE.md), [conventions](docs/CONVENTIONS.md) and
+[code organization](docs/CODE_ORGANIZATION.md).
 
-The full implementation roadmap and required automated acceptance evidence
-are defined in [the port plan](docs/PC_PORT_PLAN.md). Feature completion requires
-behavior assertions and a result for the affected content/platforms; a skipped
-asset test or a passing source-only build cannot establish full-game readiness.
+Feature completion requires behavior assertions and passing results for the
+affected content and platforms; a skipped asset test or a source-only build
+cannot establish full-game readiness.
 
-PS1 hardware fidelity is not an acceptance requirement. Statically linked room
-modules and ordinary host buffers may replace overlays and scratchpad memory.
-The planned asset layer mounts both user-supplied CUE/BIN images as one logical
-set; no physical CD drive or manual disc swapping is required. Preserve logical
+PS1 hardware emulation is not an acceptance requirement. Statically linked room
+modules and ordinary host buffers replace overlays and scratchpad memory.
+The asset layer mounts both user-supplied CUE/BIN images as one logical set;
+no physical CD drive or manual disc swapping is required. Preserve logical
 asset identity, state/reset semantics and gameplay-visible event ordering.
-Hi-res through PsyZ is part of the base renderer; high FPS is a later milestone.
+High-resolution rendering (`1x`–`8x`) is provided through PsyZ.
 
 The PsyZ submodule points to
 [khasinski/parasite-eve-psyz](https://github.com/khasinski/parasite-eve-psyz).

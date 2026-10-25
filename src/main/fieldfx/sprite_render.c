@@ -906,7 +906,7 @@ void FieldFx_SpawnScriptSprite(const void *position, int mode, int size, int del
 }
 
 /* USA E051C: emit the original FT4 from the shared sprite parameters. */
-static void func_800E051C(void)
+static void FieldFx_EmitScriptSpriteQuad(void)
 {
     if ((unsigned)g_ActiveDrawSlot >= 2 || !g_ViewMatrixSlot.value ||
         !g_GeomScroll.state.position.projectionDistance ||
@@ -937,7 +937,7 @@ static void func_800E051C(void)
 }
 
 /* USA E026C: the four-cell strip; prepare UV before advancing its timer. */
-static void func_800E026C(FieldScriptSprite *sprite)
+static void FieldFx_UpdateAnimatedScriptSprite(FieldScriptSprite *sprite)
 {
     if (!sprite->active) return;
     s_ScriptSpriteDraw.clut=0x77D3;s_ScriptSpriteDraw.tpage=0x34;
@@ -952,11 +952,11 @@ static void func_800E026C(FieldScriptSprite *sprite)
             sprite->active=0;sprite->cell=0;--g_FieldFxScriptSpriteCount;return;
         }
     } else --sprite->remaining;
-    if (sprite->active==1) func_800E051C();
+    if (sprite->active==1) FieldFx_EmitScriptSpriteQuad();
 }
 
 /* USA E03A0: RGB fade rises to 255 then returns below zero. */
-static void func_800E03A0(FieldScriptSprite *sprite)
+static void FieldFx_UpdateFadingScriptSprite(FieldScriptSprite *sprite)
 {
     if (!sprite->active) return;
     s_ScriptSpriteDraw.clut=0x7713;s_ScriptSpriteDraw.tpage=0x34;
@@ -972,7 +972,7 @@ static void func_800E03A0(FieldScriptSprite *sprite)
         sprite->fade=(s16)((u16)sprite->fade+sprite->delay);
         if (sprite->fade>=256) {sprite->fade=255;sprite->active=2;}
     }
-    func_800E051C();
+    FieldFx_EmitScriptSpriteQuad();
 }
 
 void FieldFx_UpdateScriptSprites(void)
@@ -982,8 +982,8 @@ void FieldFx_UpdateScriptSprites(void)
     for (unsigned i=0;i<22 && processed<g_FieldFxScriptSpriteCount;++i) {
         FieldScriptSprite *sprite=g_FieldFxScriptSpriteList-i;
         if (!sprite->active) continue;
-        if (sprite->mode==0) func_800E026C(sprite);
-        else if (sprite->mode==1) func_800E03A0(sprite);
+        if (sprite->mode==0) FieldFx_UpdateAnimatedScriptSprite(sprite);
+        else if (sprite->mode==1) FieldFx_UpdateFadingScriptSprite(sprite);
         ++processed;
     }
 }

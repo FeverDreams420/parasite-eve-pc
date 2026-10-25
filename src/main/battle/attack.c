@@ -122,6 +122,7 @@ int Battle_StepCharacterAction(BattleInitSlot *slot)
         current->entityFlags |= 0x100;
         break;
     ready:
+        ;
         }
         g_BattleHitTimer = 0;
         actorField = &turnSlot->actor;

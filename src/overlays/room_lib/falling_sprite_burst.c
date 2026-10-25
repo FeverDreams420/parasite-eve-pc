@@ -106,7 +106,7 @@ int RoomEffect_FallingBurstTick(void *object, void *slot, void *data) {
         clock->hit=0;
         if(!clock->cooldown) {
             clock->cooldown=clock->reload;
-            func_800C6C18(object);
+            FieldFx_TriggerActorHit(object);
         }
     }
     if(FieldFx_IsLastSlotHalted()==1)control->state=2;

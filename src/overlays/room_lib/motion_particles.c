@@ -136,7 +136,7 @@ int RoomEffect_MotionParticlesTick(void *owner, void *control_data, void *state_
         state->field68 = 0;
         if (state->field66 == 0) {
             state->field66 = state->timer;
-            func_800C6C18(owner);
+            FieldFx_TriggerActorHit(owner);
         }
     }
     if (FieldFx_IsLastSlotHalted() == 1) control->b1 = 2;

@@ -48,6 +48,8 @@ void Anim_BuildRotationMatrices(RenderObjectEntity *object, RenderAnimationDataH
             /* The original slot offset selects the same work vector. */
             RotMatrixYXZ(&angles[index],
                          (GteMatrix *)&object->active_matrix[index]);
+            Pgxp_StoreBoneRotYXZ(&object->active_matrix[index],
+                                 angles[index].x, angles[index].y, angles[index].z);
         }
     }
 }
@@ -131,6 +133,7 @@ void Anim_DecodeBoneRotationsByte(RenderObjectEntity *object, RenderAnimationDat
                 angleZ[0] = sampleZ * 0x10;
             }
             RotMatrixYXZ(angle, (GteMatrix *)matrix);
+            Pgxp_StoreBoneRotYXZ(matrix, angle->x, angle->y, angle->z);
             matrix++;
             angleZ += 4;
             angle++;
@@ -210,6 +213,7 @@ void Anim_DecodeBoneRotationsShort(RenderObjectEntity *object, RenderAnimationDa
                 angleZ[0] = sampleZ;
             }
             RotMatrixYXZ(angle, (GteMatrix *)matrix);
+            Pgxp_StoreBoneRotYXZ(matrix, angle->x, angle->y, angle->z);
             matrix++;
             angleZ += 4;
             angle++;

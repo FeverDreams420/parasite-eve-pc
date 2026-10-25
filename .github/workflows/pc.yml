@@ -80,13 +80,13 @@ jobs:
           PYLICENSE
           ldd build/parasite-eve-pc > "$stage/runtime-dependencies.txt"
           git rev-parse HEAD > "$stage/source-commit.txt"
-          tar -czf Parasite-Eve-0.2-alpha-linux-x86_64.tar.gz -C package Parasite-Eve-linux-x86_64
-          sha256sum Parasite-Eve-0.2-alpha-linux-x86_64.tar.gz > linux-x86_64-sha256.txt
+          tar -czf Parasite-Eve-0.3-alpha-linux-x86_64.tar.gz -C package Parasite-Eve-linux-x86_64
+          sha256sum Parasite-Eve-0.3-alpha-linux-x86_64.tar.gz > linux-x86_64-sha256.txt
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: linux-x86_64-package
           path: |
-            Parasite-Eve-0.2-alpha-linux-x86_64.tar.gz
+            Parasite-Eve-0.3-alpha-linux-x86_64.tar.gz
             linux-x86_64-sha256.txt
             build/linux-source-only.xml
 

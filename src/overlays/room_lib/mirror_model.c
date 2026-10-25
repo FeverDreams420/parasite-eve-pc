@@ -249,18 +249,24 @@ void RoomEffect_ModelDraw(RenderObjectEntity *entity) {
         packet = (u8 *)((RenderPacket34 *)packets + slot);
         d = record->lookup_indices[3];
         gte_stmac0(area);
-        if (*area < 0) {
+        if (Psyz_GtePgxpNclip4(&xy[a], xy0, &xy[b], xy1, &xy[c], xy2, &xy[d], xy[d], *area) < 0) {
             int depth = z[a] + z[b];
             depth += z[c];
             depth += z[d];
             depth >>= 4;
             if (depth >= 0 && depth < 0x1000) {
                 RenderNativeTag *entry = ordering + depth;
+                RenderPacket34 *pkt = (RenderPacket34 *)packet;
+                u32 xy3 = xy[d];
                 ROOMFX_ADDPRIM(entry, packet);
-                ((RenderPacket34 *)packet)->sxy0 = xy0;
-                ((RenderPacket34 *)packet)->sxy1 = xy1;
-                ((RenderPacket34 *)packet)->sxy2 = xy2;
-                ((RenderPacket34 *)packet)->sxy3 = xy[d];
+                pkt->sxy0 = xy0;
+                pkt->sxy1 = xy1;
+                pkt->sxy2 = xy2;
+                pkt->sxy3 = xy3;
+                Psyz_GteCopyPgxpSxy(&xy[a], &pkt->sxy0, xy0);
+                Psyz_GteCopyPgxpSxy(&xy[b], &pkt->sxy1, xy1);
+                Psyz_GteCopyPgxpSxy(&xy[c], &pkt->sxy2, xy2);
+                Psyz_GteCopyPgxpSxy(&xy[d], &pkt->sxy3, xy3);
             }
         } else {
             ROOMFX_SETADDR(packet, 0);
@@ -286,15 +292,19 @@ void RoomEffect_ModelDraw(RenderObjectEntity *entity) {
         gte_nclip_now();
         packet = (u8 *)((RenderPacket28 *)packets + slot);
         gte_stmac0(area);
-        if (*area < 0) {
+        if (Psyz_GtePgxpNclip3(&xy[a], xy0, &xy[b], xy1, &xy[c], xy2, *area) < 0) {
             int depth = z[a] + z[b] + z[c];
             depth = depth / 3 >> 2;
             if (depth >= 0 && depth < 0x1000) {
                 RenderNativeTag *entry = ordering + depth;
+                RenderPacket28 *pkt = (RenderPacket28 *)packet;
                 ROOMFX_ADDPRIM(entry, packet);
-                ((RenderPacket28 *)packet)->sxy0 = xy0;
-                ((RenderPacket28 *)packet)->sxy1 = xy1;
-                ((RenderPacket28 *)packet)->sxy2 = xy2;
+                pkt->sxy0 = xy0;
+                pkt->sxy1 = xy1;
+                pkt->sxy2 = xy2;
+                Psyz_GteCopyPgxpSxy(&xy[a], &pkt->sxy0, xy0);
+                Psyz_GteCopyPgxpSxy(&xy[b], &pkt->sxy1, xy1);
+                Psyz_GteCopyPgxpSxy(&xy[c], &pkt->sxy2, xy2);
             }
         } else {
             ROOMFX_SETADDR(packet, 0);
@@ -321,18 +331,24 @@ void RoomEffect_ModelDraw(RenderObjectEntity *entity) {
         packet = (u8 *)((RenderPacket24 *)packets + slot);
         d = record->lookup_indices[3];
         gte_stmac0(area);
-        if (*area < 0) {
+        if (Psyz_GtePgxpNclip4(&xy[a], xy0, &xy[b], xy1, &xy[c], xy2, &xy[d], xy[d], *area) < 0) {
             int depth = z[a] + z[b];
             depth += z[c];
             depth += z[d];
             depth >>= 4;
             if (depth >= 0 && depth < 0x1000) {
                 RenderNativeTag *entry = ordering + depth;
+                RenderPacket24 *pkt = (RenderPacket24 *)packet;
+                u32 xy3 = xy[d];
                 ROOMFX_ADDPRIM(entry, packet);
-                ((RenderPacket24 *)packet)->sxy0 = xy0;
-                ((RenderPacket24 *)packet)->sxy1 = xy1;
-                ((RenderPacket24 *)packet)->sxy2 = xy2;
-                ((RenderPacket24 *)packet)->sxy3 = xy[d];
+                pkt->sxy0 = xy0;
+                pkt->sxy1 = xy1;
+                pkt->sxy2 = xy2;
+                pkt->sxy3 = xy3;
+                Psyz_GteCopyPgxpSxy(&xy[a], &pkt->sxy0, xy0);
+                Psyz_GteCopyPgxpSxy(&xy[b], &pkt->sxy1, xy1);
+                Psyz_GteCopyPgxpSxy(&xy[c], &pkt->sxy2, xy2);
+                Psyz_GteCopyPgxpSxy(&xy[d], &pkt->sxy3, xy3);
             }
         } else {
             ROOMFX_SETADDR(packet, 0);
@@ -358,15 +374,19 @@ void RoomEffect_ModelDraw(RenderObjectEntity *entity) {
         gte_nclip_now();
         packet = (u8 *)((RenderPacket1C *)packets + slot);
         gte_stmac0(area);
-        if (*area < 0) {
+        if (Psyz_GtePgxpNclip3(&xy[a], xy0, &xy[b], xy1, &xy[c], xy2, *area) < 0) {
             int depth = z[a] + z[b] + z[c];
             depth = depth / 3 >> 2;
             if (depth >= 0 && depth < 0x1000) {
                 RenderNativeTag *entry = ordering + depth;
+                RenderPacket1C *pkt = (RenderPacket1C *)packet;
                 ROOMFX_ADDPRIM(entry, packet);
-                ((RenderPacket1C *)packet)->sxy0 = xy0;
-                ((RenderPacket1C *)packet)->sxy1 = xy1;
-                ((RenderPacket1C *)packet)->sxy2 = xy2;
+                pkt->sxy0 = xy0;
+                pkt->sxy1 = xy1;
+                pkt->sxy2 = xy2;
+                Psyz_GteCopyPgxpSxy(&xy[a], &pkt->sxy0, xy0);
+                Psyz_GteCopyPgxpSxy(&xy[b], &pkt->sxy1, xy1);
+                Psyz_GteCopyPgxpSxy(&xy[c], &pkt->sxy2, xy2);
             }
         } else {
             ROOMFX_SETADDR(packet, 0);

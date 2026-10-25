@@ -3,6 +3,7 @@
 #include <string.h>
 #include "pe_inventory.h"
 #include "pe_mod_host.h"
+#include "pe_mod_menu.h"
 #include "pe1/field_pad.h"
 #include "pe1/menu_equipment.h"
 #include "pe1/menu_inventory.h"
@@ -16,6 +17,15 @@ MenuWidgetNode *g_MenuWidgetActiveListHead;
 static MenuWidgetNode main_list, panel, list, *current;
 static int loaded=1, battle, battle_equip, opens, destroyed, header_closed, rows;
 static PeHookFn hooks[PE_HOOK_COUNT];
+SaveRuntimeState g_SaveRuntimeState;
+static int *tips, toasts, auto_sort, cell;
+int pe_menu_register_toggle(const char *p,const char *l,const char *d,int *v,PeMenuPerFrame t) {
+    (void)p;(void)l;(void)d;(void)t; tips=v; return 0;
+}
+int MenuWidget_GridCellIndex(MenuWidgetNode *n) { (void)n; return cell; }
+int Inv_GetAyaSlotLimit(void) { return 10; }
+int pe_bag_sort_auto(void) { return auto_sort; }
+void pe_toast(const char *t) { assert(strstr(t, "Square")); toasts++; }
 int pe_hook_add(int id, PeHookFn fn, void *u, int p, const char *m) {
     (void)u; (void)p; (void)m; hooks[id]=fn; return 0;
 }
@@ -71,6 +81,17 @@ int main(void) {
     g_MenuItemContextFlag=3; pe_inventory_menu_shutdown(); assert(g_MenuItemContextFlag==3);
     battle=1; g_MenuItemContextFlag=0x1FF; Draw_SetPrimCallback(&main_list,5);
     assert(g_MenuItemContextFlag==0x1FF && rows==6); battle=0;
-    puts("Inventory menu checks passed: Square edge/guards, row counts with Catalog, save/exit restoration, scripted masks.");
+
+    /* Tips: the bag's first opening this session, the Items row's and an empty slot's title. */
+    assert(tips && *tips==1 && toasts==1);           /* shown once, on the first bag frame above */
+    inventory(); frame(0); assert(toasts==1);
+    u8 *title=NULL; cell=0; g_AyaInventoryItems[0]=0;
+    hooks[PE_HOOK_HELP_TEXT](&title,NULL); assert(title);                      /* empty bag slot */
+    title=NULL; g_AyaInventoryItems[0]=6; hooks[PE_HOOK_HELP_TEXT](&title,NULL); assert(!title);   /* an item: its own text */
+    current=&main_list; g_MenuItemContextFlag=0x1BF; cell=0;
+    title=NULL; hooks[PE_HOOK_HELP_TEXT](&title,NULL); assert(title);          /* the Items row */
+    title=NULL; cell=1; hooks[PE_HOOK_HELP_TEXT](&title,NULL); assert(!title); /* another row */
+    *tips=0; cell=0; title=NULL; hooks[PE_HOOK_HELP_TEXT](&title,NULL); assert(!title);
+    puts("Inventory menu checks passed: Square edge/guards, row counts with Catalog, save/exit restoration, scripted masks, sort tips.");
     return 0;
 }

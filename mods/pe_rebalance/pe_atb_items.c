@@ -284,6 +284,17 @@ static void pe_atb_tick(void) {
     }
 }
 
+/* On a borrowed (half) bar only the quick powers can be picked; the rest need a full bar and
+ * show dimmed, as a power Aya can't afford (the game refuses it with its error sound). */
+static int pe_power_available(void *ctx, void *user) {
+    PeHookPowerAvailable *p = ctx;
+    (void)user;
+    if (s_st.borrowed && pe_in_battle() && *p->enabled && p->power >= 0 && p->power < 20 &&
+        !(s_allow[ACT_PE] && ((g_pe_quick_mask >> p->power) & 1u)))
+        *p->enabled = 0;
+    return 0;
+}
+
 static int pe_atb_update(void *ctx, void *user) {
     (void)ctx; (void)user;
     pe_atb_tick();
@@ -308,6 +319,7 @@ void pe_atb_items_shutdown(void) {
 }
 void pe_atb_items_register(const char *mod_id) {
     pe_hook_add(PE_HOOK_BATTLE_UPDATE, pe_atb_update, NULL, PE_PRIORITY_LATE, mod_id);
+    pe_hook_add(PE_HOOK_POWER_AVAILABLE, pe_power_available, NULL, PE_PRIORITY_NORMAL, mod_id);
     pe_hook_add(PE_HOOK_FRAME, pe_atb_frame, NULL, PE_PRIORITY_LATE, mod_id);
     pe_hook_add(PE_HOOK_SCENE_START, pe_atb_scene, NULL, PE_PRIORITY_NORMAL, mod_id);
     pe_hook_add(PE_HOOK_SAVE_READ, pe_atb_loaded, NULL, PE_PRIORITY_NORMAL, mod_id);

@@ -33,11 +33,8 @@
 
 enum { STEP_ITEM, STEP_SLOT, STEP_EFFECT, STEP_COUNT };
 
-/* One panel and one list for the whole Catalog: the list's rows switch with the step, so
- * nothing stacks on screen. */
-#define PE_PANEL_X      40
-#define PE_PANEL_Y      40
-#define PE_PANEL_W      240
+/* One panel and one list for the whole Catalog, where the game's own screens sit: the list's
+ * rows switch with the step, so nothing stacks on screen. */
 #define PE_LIST_ROWS    8      /* visible rows; longer lists scroll */
 
 static PeScreen s_screen;
@@ -189,7 +186,7 @@ static void pe_set_step(int step, int row) {
 }
 
 static void pe_open(MenuWidgetNode *from) {
-    pe_screen_open(&s_screen, from, PE_PANEL_X, PE_PANEL_Y, PE_PANEL_W, PE_LIST_ROWS, pe_draw_list, pe_screen_input);
+    pe_screen_open_game(&s_screen, from, PE_LIST_ROWS, pe_draw_list, pe_screen_input);
     s_cat.list = s_screen.list;
     memset(s_cat.row, 0, sizeof s_cat.row);
     pe_set_step(STEP_ITEM, 0);

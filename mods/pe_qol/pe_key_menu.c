@@ -20,9 +20,6 @@
 #include "pe1/text.h"
 
 #define PE_ITEM_DRESSING_ROOM_KEY 0xC8
-#define PE_PANEL_X     20
-#define PE_PANEL_Y     40
-#define PE_PANEL_W     280
 #define PE_LIST_ROWS   8
 #define PE_ICON_WIDTH  0x12   /* as the bag's rows: icon, then the name */
 
@@ -70,7 +67,7 @@ static int pe_on_help_text(void *ctx, void *user) {
 
 static void pe_open(MenuWidgetNode *main_list) {
     const int count = pe_keys_count();
-    pe_screen_open(&s_screen, main_list, PE_PANEL_X, PE_PANEL_Y, PE_PANEL_W, PE_LIST_ROWS, pe_draw_list, pe_input);
+    pe_screen_open_game(&s_screen, main_list, PE_LIST_ROWS, pe_draw_list, pe_input);   /* flush with the game's screens */
     pe_screen_rows(&s_screen, count ? count : 1, 0);
 }
 

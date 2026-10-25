@@ -39,6 +39,7 @@ int pe_keys_count(void);
 uint16_t pe_keys_item(int i);   /* 0 past the end */
 void pe_key_menu_register(const char *mod_id);
 void pe_bag_sort_register(const char *mod_id);
+int pe_bag_sort_auto(void);     /* new items are sorted the remembered way */
 void pe_inventory_menu_register(const char *mod_id);
 void pe_inventory_menu_shutdown(void);
 #endif

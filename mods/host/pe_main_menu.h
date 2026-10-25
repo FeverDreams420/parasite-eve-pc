@@ -32,6 +32,9 @@ typedef struct PeScreen {
 
 void pe_screen_open(PeScreen *s, struct MenuWidgetNode *from, int x, int y, int width, int rows_visible,
                     void (*draw)(struct MenuWidgetNode *), int (*input)(struct MenuWidgetNode *, unsigned int));
+/* The same, flush where the game's own screens sit (the inventory panel's layout, descriptor 1). */
+void pe_screen_open_game(PeScreen *s, struct MenuWidgetNode *from, int rows_visible,
+                         void (*draw)(struct MenuWidgetNode *), int (*input)(struct MenuWidgetNode *, unsigned int));
 void pe_screen_close(PeScreen *s);   /* back to `from` */
 void pe_screen_rows(PeScreen *s, int rows, int cursor);   /* the list's row count and cursor */
 int pe_screen_title_base(void);     /* a selected_base whose title bar always prints */

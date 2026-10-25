@@ -50,9 +50,15 @@ int main(void) {
         assert(g_TextCursorX==269 && g_TextCursorY==170 && g_DrawTextDimmed==1);
     }
     header.y=84;digit_count=0;draw(&header,NULL);assert(label_y==86 && digit_y==90);
+    /* An odd bag on its last page: the header sits beside the last item; the counter stays below. */
+    inventory.has_scroll=1;inventory.y_limit=5;inventory.visible_rows=5;inventory.scroll_y=0;
+    digit_count=0;draw(&header,NULL);assert(label_y==102 && digit_y==106);
+    inventory.y_limit=12;inventory.visible_rows=8;inventory.scroll_y=2;   /* not the last page: native spot */
+    digit_count=0;draw(&header,NULL);assert(label_y==86 && digit_y==90);
+    inventory.has_scroll=0;
     int before=panels;*toggle=0;draw(&header,NULL);assert(panels==before);
     *toggle=1;enabled=0;draw(&header,NULL);assert(panels==before);
     enabled=1;loaded=0;draw(&header,NULL);assert(panels==before);
     loaded=1;inventory.parent=NULL;draw(&header,NULL);assert(panels==before);
-    puts("Junk counter checks passed: zero/full balance, placement, drawing state, toggle, economy/load guards.");
+    puts("Junk counter checks passed: zero/full balance, placement, odd bags, drawing state, toggle, economy/load guards.");
 }

@@ -38,6 +38,7 @@ typedef enum PeHookId {
     PE_HOOK_MAIN_MENU_ICON, /* PeHookMainMenuIcon: a main menu row's icon, before it is drawn */
     PE_HOOK_PLAYER_BANK, /* NULL: Scene_LoadEntityTexture entry, Aya's model / texture load step;
                           * g_SceneAreaType (her outfit bank) may be changed while entity_texture_phase is 0 */
+    PE_HOOK_POWER_AVAILABLE, /* PeHookPowerAvailable: Menu_CheckItemAffordable, can this PE power be picked now */
     PE_HOOK_COUNT
 } PeHookId;
 
@@ -78,6 +79,11 @@ typedef struct PeHookInit {
     int interactive;        /* 0 for headless runs: no window, no menus */
     const char *prefs_file; /* per-user preferences file; mods keep their files beside it */
 } PeHookInit;
+
+typedef struct PeHookPowerAvailable {
+    int power;    /* Parasite Energy power index (0 Heal 1 .. 19 Liberate) */
+    int *enabled; /* the game's answer (PE, HP, ammo); a mod may clear it */
+} PeHookPowerAvailable;
 
 typedef struct PeHookListRows {
     struct MenuWidgetNode *node;

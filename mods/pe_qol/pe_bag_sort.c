@@ -64,6 +64,7 @@ static int pe_same_items(void) {
     return 1;
 }
 static int pe_sort_mode(void) { return s_sort.mode == 1; }
+int pe_bag_sort_auto(void) { return pe_sort_mode(); }
 static int pe_set_sort_mode(int mode) {
     if (!pe_game_loaded() || mode < 0 || mode > 1) return 0;
     if (!pe_rank(s_sort.rank_ptr) || !pe_type(s_sort.type_ptr)) pe_capture_settings();

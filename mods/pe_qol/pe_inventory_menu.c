@@ -1,13 +1,25 @@
-/* Inventory menu presentation only. Sorting policy lives in pe_bag_sort.c. */
+/* Inventory menu presentation only. Sorting policy lives in pe_bag_sort.c.
+ * Tips (Inventory > Inventory tips): the title bar on the main menu's Items row and on an empty bag
+ * slot says Square sorts, and whether Auto is on; the first time the bag opens each session, a
+ * message explains both. */
+#include "pe_gametext.h"
 #include "pe_inventory.h"
 #include "pe_mod_host.h"
+#include "pe_mod_menu.h"
+#include "pe_pages.h"
 #include "pe1/field_pad.h"
 #include "pe1/menu_equipment.h"
 #include "pe1/menu_inventory.h"
 #include "pe1/menu_state.h"
 #include "pe1/menu_widget.h"
 
+#define PE_ACTION_ITEMS 0   /* the main menu's Use Item row (Menu_CreateEquipScreen) */
+
 static int s_square, s_hidden, s_hidden_mask;
+static int s_tips = 1, s_tip_shown;
+static u8 s_tip[64];
+
+static void pe_tip_once(MenuWidgetNode *current);
 
 void pe_inventory_menu_shutdown(void) {
     /* A script may have replaced the menu mask since we hid the row. */
@@ -60,6 +72,7 @@ static int pe_menu_frame(void *ctx, void *user) {
             break;
         }
     }
+    pe_tip_once(MenuWidget_GetCurrentNode());
     if (!pressed) return 0;
     MenuWidgetNode *list = MenuWidget_GetCurrentNode();
     if (!list || list->draw != Menu_DrawSelectableEquipSlotList) return 0;
@@ -79,7 +92,52 @@ static int pe_menu_frame(void *ctx, void *user) {
     Menu_CreateInvSwapView(main_list, 0);
     return 0;
 }
+/* ---- tips ---- */
+
+/* The bag list while it is Aya's Use Item screen (not picking a target or moving an item). */
+static int pe_bag_open(MenuWidgetNode *list) {
+    MenuWidgetNode *panel;
+    if (!list || list->draw != Menu_DrawSelectableEquipSlotList || !(panel = list->parent)) return 0;
+    return panel->mode == 1 && panel->selected_base == 1 && panel->update == Menu_InventoryInputHandler &&
+           !g_MenuEquipMode && !Menu_GetBattleEquipMode();
+}
+
+/* The main menu's action at list row `row`: the row-th set bit. */
+static int pe_main_action(int row) {
+    unsigned mask = g_MenuItemContextFlag & 0x1EF;
+    int action = 0;
+    for (; mask; mask >>= 1, ++action)
+        if ((mask & 1) && row-- == 0) return action;
+    return -1;
+}
+
+static int pe_tip_title(void *ctx, void *user) {
+    u8 **text = ctx;
+    MenuWidgetNode *current;
+    (void)user;
+    if (!s_tips || !pe_game_loaded() || pe_in_battle() || !(current = MenuWidget_GetCurrentNode())) return 0;
+    if (current->draw == Menu_DrawItemList && !Menu_GetBattleEquipMode() &&
+        pe_main_action(MenuWidget_GridCellIndex(current)) == PE_ACTION_ITEMS) {
+        *text = pe_text_from_ascii(s_tip, sizeof s_tip, pe_bag_sort_auto() ? "Items   Square: Sort   Auto sort on" : "Items   Square in the bag: Sort");
+    } else if (pe_bag_open(current)) {
+        const int slot = MenuWidget_GridCellIndex(current);
+        if (slot >= 0 && slot < pe_inventory_limit() && !g_AyaInventoryItems[slot])
+            *text = pe_text_from_ascii(s_tip, sizeof s_tip, pe_bag_sort_auto() ? "Square: Sort   Auto sort is on" : "Square: Sort the bag");
+    }
+    return 0;
+}
+
+static void pe_tip_once(MenuWidgetNode *current) {
+    if (!s_tips || s_tip_shown || !pe_bag_open(current)) return;
+    s_tip_shown = 1;
+    pe_toast(pe_bag_sort_auto() ? "Tip: Square sorts the bag. Auto sort is on: new items are sorted for you."
+                                : "Tip: Square sorts the bag. After a sort, new items are sorted the same way.");
+}
+
 void pe_inventory_menu_register(const char *mod_id) {
+    pe_menu_register_toggle(PE_PAGE_INVENTORY, "Inventory tips",
+        "Show that Square sorts the bag and new items sort automatically.", &s_tips, NULL);
+    pe_hook_add(PE_HOOK_HELP_TEXT, pe_tip_title, NULL, PE_PRIORITY_NORMAL, mod_id);
     pe_hook_add(PE_HOOK_LIST_ROWS, pe_menu_rows, NULL, PE_PRIORITY_EARLY, mod_id);
     pe_hook_add(PE_HOOK_FRAME, pe_menu_frame, NULL, PE_PRIORITY_NORMAL, mod_id);
     pe_hook_add(PE_HOOK_SAVE_WRITE, pe_menu_restore, NULL, PE_PRIORITY_EARLY, mod_id);

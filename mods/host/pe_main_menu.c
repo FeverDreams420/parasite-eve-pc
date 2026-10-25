@@ -170,6 +170,15 @@ void pe_screen_open(PeScreen *s, MenuWidgetNode *from, int x, int y, int width, 
     MenuWidget_SetCurrentNode(s->list);
 }
 
+#define PE_DESC_GAME_SCREEN 1   /* Aya's inventory panel (Menu_CreateEquipScreen) */
+
+void pe_screen_open_game(PeScreen *s, MenuWidgetNode *from, int rows_visible,
+                         void (*draw)(MenuWidgetNode *), int (*input)(MenuWidgetNode *, unsigned int)) {
+    const MenuWidgetSimpleDescriptor *d = MenuWidget_LookupSimpleDescriptor(PE_DESC_GAME_SCREEN);
+    const int x = d && d->x > 0 ? d->x : 28, y = d && d->y > 0 ? d->y : 24, width = d && d->width > 0 ? d->width : 252;
+    pe_screen_open(s, from, x, y, width, rows_visible, draw, input);
+}
+
 void pe_screen_close(PeScreen *s) {
     if (s->panel) MenuWidget_DestroyNode(s->panel);
     s->panel = s->list = NULL;

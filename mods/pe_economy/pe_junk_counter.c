@@ -24,6 +24,11 @@ static int pe_draw_junk(void *ctx, void *user) {
     int left = list->parent->x;
     int width = header->x - left - 8;
     if (width < 90) return 0;
+    /* An odd bag's last row has only a left cell, and on the last page the native header moves up
+     * into its free right half (Menu_DrawAmmoTypeHeader), beside that item. Stay on the row it
+     * left, where an even bag's header sits. */
+    int top = header->y;
+    if (list->has_scroll && list->y_limit - list->visible_rows - list->scroll_y == 0) top += 16;
     int saved_x = g_TextCursorX, saved_y = g_TextCursorY;
     int saved_dim = g_DrawTextDimmed;
     static u8 label[] = { 0x19, 0x44, 0x3D, 0x3A, 0xFF }; /* Junk */
@@ -34,10 +39,10 @@ static int pe_draw_junk(void *ctx, void *user) {
 
     Draw_SetTextDimmed(0);
     g_TextCursorX = left + 10;
-    g_TextCursorY = header->y + 2;
+    g_TextCursorY = top + 2;
     Draw_PrintRawText(label);
     g_TextCursorX = left + width - 10 - digits * 5;
-    g_TextCursorY = header->y + 6;
+    g_TextCursorY = top + 6;
     uint32_t divisor = 1;
     for (int i = 1; i < digits; ++i) divisor *= 10;
     for (; divisor; divisor /= 10) {
@@ -46,7 +51,7 @@ static int pe_draw_junk(void *ctx, void *user) {
     }
     /* Match the Quantity panel's native background, emitted after its text. */
     g_TextCursorX = left;
-    g_TextCursorY = header->y;
+    g_TextCursorY = top;
     g_DrawTextDimmed = header->draw_state;
     Draw_AllocColorGradient(width, header->visible_rows,
                             header->appearance.gradientPoints, header->cursor_x);

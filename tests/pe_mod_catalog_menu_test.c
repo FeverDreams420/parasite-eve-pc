@@ -23,6 +23,9 @@ MenuWidgetNode *MenuWidget_CreateSimpleNode(int m,MenuWidgetNode *p,MenuWidgetNo
 MenuWidgetNode *MenuWidget_CreateNode(int m,MenuWidgetNode *p,MenuWidgetNode *a) {
     (void)m;(void)p;(void)a;return &list;
 }
+MenuWidgetSimpleDescriptor *MenuWidget_LookupSimpleDescriptor(unsigned int i) {
+    static MenuWidgetSimpleDescriptor d = { 28, 24, 252, 0 }; (void)i; return &d;
+}
 void Draw_SetPrimCallback(MenuWidgetNode *n,int rows) {
     n->y_limit=rows; n->visible_rows=rows<8?rows:8;
 }

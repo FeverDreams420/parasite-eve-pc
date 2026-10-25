@@ -3,6 +3,7 @@
 ## Unreleased
 
 - Fixed text and image shimmering when the game switches framebuffers, at all internal resolutions.
+- Fixed geometry correction losing its vertex data while waiting for VSync before drawing a frame.
 
 ## 0.3-alpha
 

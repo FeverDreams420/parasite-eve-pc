@@ -11,6 +11,7 @@ unsigned int Psyz_GteCtrlRead(unsigned reg);
 void Psyz_GteCtrlWrite(unsigned reg, unsigned int value);
 void Psyz_GteCommand(unsigned int command);
 void Psyz_GteSetPgxpMatrix(const double rot[3][3], const double trans[3]);
+void Psyz_PgxpNextFrame(void);
 void Psyz_GteClearPgxpMatrix(void);
 void Psyz_GteStoreSxyTo(unsigned reg, void *dst_addr);
 void Psyz_GteCopyPgxpSxy(const void *src_addr, const void *dst_addr, unsigned int sxy);

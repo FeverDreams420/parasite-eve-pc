@@ -88,6 +88,9 @@ int Boot_RunFrame(void)
         state = &g_GameState;
         fade = (RenderTintTargetView *)&g_ScreenTint.targetR;
         do {
+            /* Geometry belongs to this game frame, not to each VBlank.
+             * Draw_RenderFrame waits after the OT has already been built. */
+            Psyz_PgxpNextFrame();
             g_DrawPacketOffset = 0;
             *scene_flags = 0;
             Field_HandleStateTransition();

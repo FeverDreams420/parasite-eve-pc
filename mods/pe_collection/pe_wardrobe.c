@@ -124,12 +124,14 @@ static char s_name[80];
 
 static const char *pe_group_of(const PeCostume *c) { return c->group ? c->group : "Other"; }
 
-/* Groups in the order packs registered them. */
+/* Groups in the order packs registered them; costumes that can't be worn yet (available() 0, e.g.
+ * their files are missing) are hidden, as are groups with nothing else. */
 static void pe_groups(void) {
     int i;
     s_ngroups = 0;
     for (i = 0; i < s_costumes; ++i) {
         const char *g = pe_group_of(s_costume[i]);
+        if (!pe_wearable(s_costume[i])) continue;
         unsigned j = 0;
         while (j < s_ngroups && strcmp(s_groups[j], g)) ++j;
         if (j == s_ngroups && s_ngroups < PE_MAX_GROUPS) s_groups[s_ngroups++] = g;
@@ -143,14 +145,14 @@ static void pe_filter(void) {
     pe_groups();
     s_count = 0;
     for (i = 0; i < s_costumes; ++i)
-        if ((unsigned)s_group < s_ngroups && strcmp(pe_group_of(s_costume[i]), s_groups[s_group]) == 0) s_list[s_count++] = i;
+        if (pe_wearable(s_costume[i]) && (unsigned)s_group < s_ngroups &&
+            strcmp(pe_group_of(s_costume[i]), s_groups[s_group]) == 0) s_list[s_count++] = i;
     if (s_sel >= s_count) s_sel = 0;
 }
 
 static unsigned pe_count(void) { pe_filter(); return s_count ? (unsigned)s_count : 1u; }
 
 static const char *pe_state_name(const PeCostume *c) {
-    if (!pe_wearable(c)) return "soon";
     if (pe_worn() == c) return "worn";
     return pe_profile_owned(c->key) || !c->price ? "owned" : NULL;
 }
@@ -173,7 +175,6 @@ static void pe_accept(void) {
     pe_filter();
     if (!s_count) return;
     c = s_costume[s_list[s_sel]];
-    if (!pe_wearable(c)) { pe_col_say("Not available yet"); return; }
     if (pe_worn() == c) { pe_col_say("Already wearing it"); return; }
     if (!pe_buy(c, msg, sizeof msg)) { pe_col_say(msg); return; }
     pe_set_worn(c, 1);

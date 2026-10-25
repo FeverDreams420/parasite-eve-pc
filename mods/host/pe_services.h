@@ -102,7 +102,7 @@ typedef struct PeCostume {
     const char *group;        /* the F1 Group filter: "Aya's outfits", "Resident Evil" */
     uint16_t price;           /* Junk, paid once for every game */
     int16_t bank;             /* >= 0: the game's player bundle; -1: load() does it */
-    int (*available)(void);   /* NULL: always; 0 lists it as "soon" (e.g. its files are missing) */
+    int (*available)(void);   /* NULL: always; 0 hides it from every list (e.g. its files are missing) */
     void (*load)(int wearing);
 } PeCostume;
 

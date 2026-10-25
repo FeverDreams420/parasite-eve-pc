@@ -10,7 +10,7 @@
  *
  * Costumes: the evening dress (bank 10) and T-shirt (13) are the game's own bundles. The long dress
  * (11) and transformed Aya (14) have no full player moveset and are not offered. The character skins
- * (pe_skins/<folder>/, built from the user's disc by the bridge's build_skin.py) are listed as "soon"
+ * (pe_skins/<folder>/, built from the user's disc by the bridge's build_skin.py) stay hidden
  * until their native loader is ported.
  */
 #include <ctype.h>

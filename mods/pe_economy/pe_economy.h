@@ -32,6 +32,16 @@ typedef struct PeCatalogApi {
     int (*unlock_armor)(int effect);   /* 1 if it was new */
 } PeCatalogApi;
 
+/* "wardrobe" v1: skins bought with Junk (the Collection mod, when ported); Wayne's Workshop
+ * shows a Wardrobe row while a mod publishes it. state: 0 for sale, 1 owned, 2 worn. */
+typedef struct PeWardrobeApi {
+    int (*count)(void);
+    const char *(*name)(int k);
+    unsigned (*price)(int k);
+    int (*state)(int k);
+    int (*pick)(int k, char *msg, size_t size);   /* buy or wear; msg says what happened */
+} PeWardrobeApi;
+
 /* Direct calls inside the economy mod. */
 int pe_loot_enabled(void);
 uint32_t pe_loot_junk(void);

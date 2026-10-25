@@ -199,11 +199,15 @@ uint32_t pe_shop_price(uint16_t id) {
     return pe_loot_price(price ? price : 1u);
 }
 
+/* Wayne's Workshop is a counter: buying in his dialogue box is fine though the field is busy. */
+static int s_at_counter;
+void pe_shop_at_counter(int on) { s_at_counter = on; }
+
 /* Why the shop is closed right now, or NULL. */
 static const char *pe_shop_closed(void) {
     if (!pe_game_loaded()) return "Load a game first";
     if (!pe_loot_enabled()) return "Junk economy is off";
-    if ((g_GameStateFlags & 0x2006u) || (g_GameStateFlagsWord & 0xB600u))
+    if (!s_at_counter && ((g_GameStateFlags & 0x2006u) || (g_GameStateFlagsWord & 0xB600u)))
         return "Use Requisition in the field, outside battle and game menus";
     return NULL;
 }

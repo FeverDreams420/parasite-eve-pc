@@ -17,6 +17,7 @@ int pe_shop_buy(uint16_t item, char *message, size_t size);   /* 1 if bought; me
 int pe_shop_rescue_needed(void);                 /* Aya has no usable weapon anywhere */
 int pe_shop_spare_club(char *message, size_t size);
 void pe_shop_details(uint16_t item, char *out, unsigned size);
+void pe_shop_at_counter(int on);                 /* a shop front end (Wayne's box) is open */
 
 void pe_requisition_register(const char *mod_id);      /* rules, save block, tuning rows */
 void pe_requisition_menu_register(const char *mod_id); /* the F1 page */

@@ -15,6 +15,7 @@ void pe_armor_effect_display_register(const char *mod_id);
 void pe_junk_counter_register(const char *mod_id);
 void pe_smoke_register(const char *mod_id);
 void pe_equip_sync_register(const char *mod_id); /* pe_equip_sync.c: gear edits reach the next battle */
+void pe_wayne_menu_register(const char *mod_id); /* pe_wayne_menu.c: the Workshop in Wayne's menu */
 void pe_smoke_shutdown(void);
 
 static int economy_init(void) {
@@ -28,6 +29,7 @@ static int economy_init(void) {
     pe_wayne_refund_register(MOD_ID);
     pe_smoke_register(MOD_ID);
     pe_equip_sync_register(MOD_ID);
+    pe_wayne_menu_register(MOD_ID);
     return 0;
 }
 

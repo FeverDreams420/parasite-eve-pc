@@ -176,10 +176,10 @@ static void pe_open_menu(void) {
         e->page_id = PE_BOX_PAGE;
         e->style = 1;                                   /* a window, like Wayne's */
         e->background = 0;
-        e->x = 8;
-        e->y = 24;
-        e->width = 200;
-        e->height = 88;                                 /* Wayne's Workshop sizes it, keeping the bottom */
+        e->x = 56;                                      /* near the middle of the 320x240 screen */
+        e->y = 80;
+        e->width = 208;
+        e->height = 82;                                 /* Wayne's Workshop sizes it, keeping the bottom */
         e->control.flags &= ~0x000F0000u & ~0x00100000u & ~0x00200000u;
         e->control.parts.delay = 0;
         e->control.parts.elapsed = 0;

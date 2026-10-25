@@ -408,6 +408,14 @@ static void pe_battle_start(void) {
     s_refund_frac = 0;
 }
 
+/* The actor's core is one of the battle's enemy slots (other actors' cores are other records). */
+static const EnemyCombatant *pe_enemy_core(const BattleEntity *e) {
+    int i;
+    for (i = 0; i < PE_ENEMY_SLOTS; ++i)
+        if (e->core == &g_BattleEnemySlots[i].combatant) return g_BattleEnemySlots[i].active ? e->core : NULL;
+    return NULL;
+}
+
 /* Reach: while Aya's bar is full, how far the nearest live enemy is against the gun's range. */
 static void pe_note_reach(void) {
     BattleEntity *player = pe_player(), *e;
@@ -418,7 +426,7 @@ static void pe_note_reach(void) {
     if (!player || !aya || aya->atb < 9000u || !aya->action || aya->action->range <= 0) return;
     e = (BattleEntity *)g_FieldActorListHead;
     for (guard = 0; e && guard < 64; ++guard, e = e->next) {
-        const EnemyCombatant *core = (const EnemyCombatant *)e->core;
+        const EnemyCombatant *core = pe_enemy_core(e);
         unsigned pct;
         if (e == player || !core) continue;
         if ((e->entityFlags & 0x2040u) == 0x40u || (e->entityFlags & 0x4000u) || core->hpAlive <= 0) continue;
@@ -585,8 +593,15 @@ static void pe_mod_effects_tick(void) {
     }
     if (!pe_game_loaded()) { s_in_battle = 0; return; }
     battle = pe_in_battle();
-    if (battle && !s_in_battle) pe_battle_start();
-    if (!battle && s_in_battle) pe_battle_end();
+    if (battle && !s_in_battle) {
+        pe_mod_log("pe_rebalance", "battle start (gun 0x%02X, rules %s)", pe_gun_id(), s_rules_names[s_rules]);
+        pe_battle_start();
+    }
+    if (!battle && s_in_battle) {
+        pe_mod_log("pe_rebalance", "battle end: %u gun hits, prediction %u/%u", s_bt.hits, s_bt.pred_ok,
+                   s_bt.pred_ok + s_bt.pred_bad);
+        pe_battle_end();
+    }
     s_in_battle = battle;
     if (battle) pe_note_reach();
     if (battle && pe_on()) pe_battle_tick();

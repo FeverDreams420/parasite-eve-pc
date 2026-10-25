@@ -89,17 +89,20 @@ static int pe_contains(const u8 *b, unsigned n, const char *ascii) {
     return 0;
 }
 
-/* Is `msg` Wayne's menu? Copies it into s_orig if so. */
+const u8 *pe_field_wayne_text(void);   /* pe_field_wayne.c: Warner's version of his menu */
+
+/* Is `msg` Wayne's menu (or Warner's)? Copies it into s_orig if so. */
 static int pe_is_wayne_menu(const u8 *msg) {
     unsigned n = 0, choice_at = PE_GAMETEXT_MAX;
     int count;
+    const int warner = msg && msg == pe_field_wayne_text();
     if (!msg || msg == s_buf) return 0;
     while (n < PE_GAMETEXT_MAX - 1 && msg[n] != G_END) {
         if (n >= 2 && msg[n - 2] == G_CODE && msg[n - 1] == G_CHOICE && choice_at == PE_GAMETEXT_MAX) choice_at = n;
         ++n;
     }
     if (choice_at == PE_GAMETEXT_MAX || n >= PE_GAMETEXT_MAX - 1) return 0;
-    if (!pe_contains(msg, n, "Discard junk") && !pe_contains(msg, n, "Hold equipment")) return 0;
+    if (!warner && !pe_contains(msg, n, "Discard junk") && !pe_contains(msg, n, "Hold equipment")) return 0;
     count = msg[choice_at] & 7;
     if (count < 2 || count + 1 > PE_CHOICE_MAX) return 0;    /* room for Workshop */
     memcpy(s_orig, msg, n + 1);

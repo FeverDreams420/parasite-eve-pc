@@ -24,6 +24,7 @@ typedef enum PeHookId {
     PE_HOOK_ITEM_COUNT,  /* int **: Script_CountItemsByValue entry ({&item, &result}) */
     PE_HOOK_SLOT_ROW,    /* u8 **: an item row's name (Menu_DrawSlotRow), before it is printed */
     PE_HOOK_TOOL_TRANSFER, /* PeHookToolTransfer: Inv_TransferItemBetweenLists entry (Tools) */
+    PE_HOOK_PAD_READ,    /* NULL: Field_HandleStateTransition, before it reads g_PadPackets */
     PE_HOOK_COUNT
 } PeHookId;
 

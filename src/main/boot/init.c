@@ -1,4 +1,5 @@
 #include <SDL3/SDL.h>
+#include "pe_hooks.h"
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -998,6 +999,7 @@ void Field_HandleStateTransition(void) {
         g_PadPackets[0].header = 0x4000;
         g_PadPackets[0].buttons = (u16)~hostButtons;
     }
+    PE_HOOK(PE_HOOK_PAD_READ, NULL);
 
     u32 flags;
     u32 pad_bits;

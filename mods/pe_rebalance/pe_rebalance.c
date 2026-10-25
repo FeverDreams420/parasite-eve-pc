@@ -7,6 +7,7 @@
 void pe_mod_effects_register(const char *mod_id);
 void pe_pe_balance_register(const char *mod_id);
 void pe_weapon_power_register(const char *mod_id);
+void pe_mod_effects_shutdown(void);
 
 static int rebalance_init(void) {
     pe_weapon_power_register(MOD_ID);
@@ -15,4 +16,4 @@ static int rebalance_init(void) {
     return 0;
 }
 
-const PeMod pe_mod_pe_rebalance = {MOD_ID, "PE Enhancements: rebalance", "0.1", NULL, rebalance_init, NULL};
+const PeMod pe_mod_pe_rebalance = {MOD_ID, "PE Enhancements: rebalance", "0.1", NULL, rebalance_init, pe_mod_effects_shutdown};

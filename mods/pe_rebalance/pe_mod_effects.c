@@ -382,6 +382,9 @@ static int pe_on_enemy_hit(void *ctx, void *user) {
     }
     s_hit.hp_before = enemy->hpAlive;
     s_hit.pred = pe_hit_damage(s, want, shots, nd, enemy->coreFlags, s2, turn);
+    if (s_bt.hits == 1)
+        pe_mod_log("pe_rebalance", "first gun hit: shots=%u power %d->%d defense %u->%u bonus=%d predicted=%d hp=%d",
+                   shots, pb, want, d, nd, bonus, s_hit.pred, (int)enemy->hpAlive);
     return 0;
 }
 
@@ -559,6 +562,15 @@ static void pe_fast_volley_tick(int battle) {
     if ((unsigned)(player->animFrame >> 16) >= player->animLastFrame) return;
     player->animFrame = (s32)player->animLastFrame << 16; /* the next advance makes animPrev = last */
     ++s_bt.fast_volley;
+}
+
+/* Quitting mid-battle: write the battle's rows anyway. */
+void pe_mod_effects_shutdown(void) {
+    if (!s_in_battle) return;
+    pe_mod_log("pe_rebalance", "game closed in battle: %u gun hits, prediction %u/%u", s_bt.hits, s_bt.pred_ok,
+               s_bt.pred_ok + s_bt.pred_bad);
+    pe_battle_end();
+    s_in_battle = 0;
 }
 
 /* For pe_weapon_power.c's DPS line. */

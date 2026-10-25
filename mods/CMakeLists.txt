@@ -2,7 +2,7 @@
 # Each mod is a folder here holding <id>.c files and defining `const PeMod pe_mod_<id>`.
 set(PE_MOD_LIST pe_rebalance pe_economy pe_hello CACHE STRING "Mods built into the game (folder names)")
 
-set(pe_mod_sources host/pe_mod_host.c host/pe_mod_menu.c host/pe_mod_panel.c host/pe_game.c)
+set(pe_mod_sources host/pe_mod_host.c host/pe_mod_menu.c host/pe_mod_panel.c host/pe_game.c host/pe_ps1.c)
 set(pe_mod_decls "")
 set(pe_mod_refs "")
 foreach(mod IN LISTS PE_MOD_LIST)

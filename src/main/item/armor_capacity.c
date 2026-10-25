@@ -1,4 +1,5 @@
 #include "common.h"
+#include "pe_hooks.h"
 #include "pe1/aya.h"
 #include "pe1/battle_cmd.h"
 #include "pe1/inventory.h"
@@ -317,6 +318,7 @@ void Inv_TransferItemBetweenLists(unsigned selection, int modifier, int flags, i
     ItemDataRecord *source, *dest, *ammo;
     int reserve;
     int slot, i, j, value, group, move;
+    PE_HOOK(PE_HOOK_TOOL_TRANSFER, (&(PeHookToolTransfer){selection, modifier, flags, cost}));
     {
         int index = RestoreSelection(selection);
         source = 0;

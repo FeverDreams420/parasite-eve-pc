@@ -23,6 +23,7 @@ typedef enum PeHookId {
     PE_HOOK_SAVE_READ,   /* u8 *: the 8 KB card block of a save being loaded */
     PE_HOOK_ITEM_COUNT,  /* int **: Script_CountItemsByValue entry ({&item, &result}) */
     PE_HOOK_SLOT_ROW,    /* u8 **: an item row's name (Menu_DrawSlotRow), before it is printed */
+    PE_HOOK_TOOL_TRANSFER, /* PeHookToolTransfer: Inv_TransferItemBetweenLists entry (Tools) */
     PE_HOOK_COUNT
 } PeHookId;
 
@@ -34,6 +35,13 @@ typedef struct PeHookRewards {
 typedef struct PeHookInvCommand {
     int command, value;
 } PeHookInvCommand;
+
+typedef struct PeHookToolTransfer {
+    unsigned selection; /* the donor's saved selection; the target is the other one */
+    int modifier;       /* >= 0: that mod moves; < 0: the + bonuses move */
+    int flags;          /* bit 0: Super Tool (the donor survives) */
+    int cost;
+} PeHookToolTransfer;
 
 typedef struct PeHookSpell {
     unsigned spell;           /* Parasite Energy power index */

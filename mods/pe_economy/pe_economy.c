@@ -3,9 +3,11 @@
 #include "pe_mod_host.h"
 
 void pe_loot_register(void);
+void pe_loot_catalog_menu_register(void);
 
 static int economy_init(void) {
     pe_loot_register();
+    pe_loot_catalog_menu_register();
     return 0;
 }
 

@@ -46,4 +46,32 @@ uint32_t pe_loot_price(uint32_t base);
 int pe_loot_wayne_waiting(void);
 int pe_loot_handin_blocked(void);
 
+/* The Mod Catalog (pe_loot_catalog.c). which: 0 = the equipped gun, 1 = the equipped armor.
+ * Records are PS1 addresses of equipment records (pe_ps1.h). */
+enum {
+    PE_CAT_OK, PE_CAT_NO_GAME, PE_CAT_OFF, PE_CAT_NO_ITEM, PE_CAT_NO_SLOTS, PE_CAT_LOCKED,
+    PE_CAT_ALREADY, PE_CAT_BAG, PE_CAT_JUNK, PE_CAT_TOOL, PE_CAT_EMPTY,
+};
+uint32_t pe_cat_record(int which);
+int pe_cat_slots(int which);
+int pe_cat_slot_effect(int which, int slot);
+int pe_cat_board_count(int which);
+int pe_cat_board_effect(int which, int i);
+int pe_cat_unlocked(int which, int e);
+uint32_t pe_cat_price(int which, int e);
+int pe_cat_needs_tool(int which, int e);
+int pe_cat_is_bag_mod(int which, int e);
+int pe_cat_install(int which, int slot, int e, int dry_run);
+int pe_cat_remove(int which, int slot, int dry_run);
+int pe_cat_replaces(int which, int slot, int e, int *out, int max);
+int pe_catalog_armor_unlocked(int effect);
+int pe_catalog_unlock_armor(int effect);
+uint32_t pe_catalog_dismantle_preview(uint32_t rec);
+uint32_t pe_catalog_dismantle_reward(uint32_t rec, int *unlocks_out);
+int pe_rebuild_count(void);
+uint8_t pe_rebuild_item(int i);
+uint32_t pe_rebuild_price_index(int i);
+unsigned pe_rebuild_bought_slots(int i);
+int pe_rebuild_index(int i, char *msg, size_t msg_size);
+
 #endif

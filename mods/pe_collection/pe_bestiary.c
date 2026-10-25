@@ -1,77 +1,141 @@
 /*
- * Bestiary: 75 creatures, story and Chrysler (pe_collection_data.h, generated from the bridge's
- * Bestiary draft). Per creature:
+ * Bestiary: a registry of creatures (`bestiary` service, host/pe_services.h). Packs add creatures
+ * and map their enemies to them; resolvers (a randomizer's shuffled enemies) are asked first. Per
+ * creature:
  *   basics   (name, HP, defense, where)  first kill, or any purchase;
  *   weakness (weak / strong elements)    casting Scan on it, 5 kills (bosses: defeat), or Junk;
  *   loot     (drop and steal odds)       15 kills, or Junk (bosses: Junk only).
  * Kills: every battle frame (PE_HOOK_BATTLE_UPDATE) the enemy slots are watched; an enemy whose HP
- * goes from above 0 to 0 or less is a kill of the creature found by (room, identity). Scan: power 7
- * on an enemy (PE_HOOK_SPELL). F1 pages: area and progress filters, a creature row browsed with
- * left / right, its details, one purchase.
+ * goes from above 0 to 0 or less is a kill of the creature it resolves to. Scan: power 7 on an
+ * enemy (PE_HOOK_SPELL). Unlocks are saved by the creature's key. F1 pages: area and progress
+ * filters, a creature row browsed with left / right, its details, one purchase.
  */
 #include <stdio.h>
 #include <string.h>
 
 #include "pe_collection.h"
-#include "pe_collection_data.h"
 #include "pe_game.h"
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
 #include "pe_pages.h"
 
-#define PE_SCAN        7
-#define PE_ENEMY_SLOTS 7
-#define PE_MAX_SECTIONS 12
+#define PE_SCAN           7
+#define PE_ENEMY_SLOTS    7
+#define PE_MAX_CREATURES  512
+#define PE_MAX_MAPPINGS   2048
+#define PE_MAX_RESOLVERS  8
+#define PE_MAX_SECTIONS   32
+#define PE_KILLS_WEAK     5
+#define PE_KILLS_LOOT     15
 
-/* ---- creatures ---- */
-static int pe_creature_of(int map, unsigned identity) {
-    int lo = 0, hi = PE_CREATURE_KEYS - 1;      /* keys are sorted by (map, id) */
-    while (lo <= hi) {
-        const int mid = (lo + hi) / 2;
-        const PeCreatureKey *k = &g_pe_creature_keys[mid];
-        if (k->map == map && k->id == identity) return k->creature;
-        if (k->map < map || (k->map == map && k->id < identity)) lo = mid + 1;
-        else hi = mid - 1;
-    }
+/* ---- the registry ---- */
+static const PeCreatureInfo *s_creature[PE_MAX_CREATURES];
+static int s_creatures;
+static struct { uint16_t room, identity; int16_t handle; } s_map[PE_MAX_MAPPINGS];
+static int s_maps;
+static PeBestiaryResolver s_resolver[PE_MAX_RESOLVERS];
+static int s_resolvers;
+static int s_event = -1;
+
+static int pe_valid(int h) { return h >= 0 && h < s_creatures; }
+
+static int pe_find(const char *key) {
+    int h;
+    if (!key) return -1;
+    for (h = 0; h < s_creatures; ++h) if (strcmp(s_creature[h]->key, key) == 0) return h;
     return -1;
 }
 
-static uint8_t *pe_state(int c) { return &pe_col_profile()->creature[c]; }
-static unsigned pe_kills(int c) { return *pe_state(c) >> 3; }
+static int pe_add(const PeCreatureInfo *info) {
+    if (!info || !info->key || !*info->key || !info->name || s_creatures == PE_MAX_CREATURES || pe_find(info->key) >= 0) {
+        pe_mod_log("pe_collection", "bestiary: creature %s refused", info && info->key ? info->key : "?");
+        return -1;
+    }
+    s_creature[s_creatures] = info;
+    return s_creatures++;
+}
 
-static void pe_unlock(int c, uint8_t bits, const char *why) {
-    const uint8_t old = *pe_state(c), now = (uint8_t)(old | bits | C_MET), gained = (uint8_t)(now & ~old);
+static const PeCreatureInfo *pe_info(int h) { return pe_valid(h) ? s_creature[h] : NULL; }
+
+static int pe_replace(int h, const PeCreatureInfo *info) {
+    if (!pe_valid(h) || !info || !info->key || strcmp(info->key, s_creature[h]->key) != 0) return 0;
+    s_creature[h] = info;
+    return 1;
+}
+
+static int pe_map(int room, unsigned identity, int h) {
+    int i;
+    if (!pe_valid(h) || room < 0) return 0;
+    for (i = 0; i < s_maps; ++i)
+        if (s_map[i].room == room && s_map[i].identity == identity) { s_map[i].handle = (int16_t)h; return 1; }
+    if (s_maps == PE_MAX_MAPPINGS) return 0;
+    s_map[s_maps].room = (uint16_t)room;
+    s_map[s_maps].identity = (uint16_t)identity;
+    s_map[s_maps++].handle = (int16_t)h;
+    return 1;
+}
+
+static int pe_add_resolver(PeBestiaryResolver fn) {
+    if (!fn || s_resolvers == PE_MAX_RESOLVERS) return 0;
+    s_resolver[s_resolvers++] = fn;
+    return 1;
+}
+
+/* Which creature an enemy is: resolvers (newest first), then the mapped table. */
+static int pe_resolve(int room, unsigned identity, const EnemyCombatant *enemy) {
+    int i;
+    for (i = s_resolvers - 1; i >= 0; --i) {
+        const int h = s_resolver[i](room, identity, enemy);
+        if (pe_valid(h)) return h;
+    }
+    for (i = 0; i < s_maps; ++i)
+        if (s_map[i].room == room && s_map[i].identity == identity) return s_map[i].handle;
+    return -1;
+}
+
+static unsigned pe_state(int h) { return pe_valid(h) ? pe_profile_creature(s_creature[h]->key, NULL) : 0u; }
+static unsigned pe_kills(int h) { unsigned k = 0; if (pe_valid(h)) (void)pe_profile_creature(s_creature[h]->key, &k); return k; }
+
+static void pe_unlock_why(int h, unsigned bits, const char *why) {
+    const unsigned old = pe_state(h), now = (old | bits | PE_BESTIARY_MET) & 7u, gained = now & ~old;
+    const PeCreatureInfo *c = pe_info(h);
     char msg[96];
-    if (now == old) return;
-    *pe_state(c) = now;
-    pe_col_changed();
-    snprintf(msg, sizeof msg, "Bestiary: %s%s%s%s", g_pe_creatures[c].name, gained & C_WEAK ? " - weaknesses" : "",
-             gained & C_LOOT ? " - loot" : "", gained == C_MET ? " - new entry" : "");
+    if (!c || now == old) return;
+    pe_profile_set_creature(c->key, now, pe_kills(h));
+    snprintf(msg, sizeof msg, "Bestiary: %s%s%s%s", c->name, gained & PE_BESTIARY_WEAK ? " - weaknesses" : "",
+             gained & PE_BESTIARY_LOOT ? " - loot" : "", gained == PE_BESTIARY_MET ? " - new entry" : "");
     pe_toast(msg);
-    pe_log("bestiary", "creature=%s bits=0x%02X why=%s", g_pe_creatures[c].name, now & 7u, why);
+    pe_log("bestiary", "creature=%s bits=0x%02X why=%s", c->key, now, why);
+    {
+        PeBestiaryEvent e = { h, gained, why };
+        pe_event_emit(s_event, &e);
+    }
 }
 
-static void pe_kill(int c) {
-    unsigned k = pe_kills(c);
-    uint8_t bits = C_MET;
-    if (k < 31u) {
-        ++k;
-        *pe_state(c) = (uint8_t)((*pe_state(c) & 7u) | (k << 3));
-        pe_col_changed();
-    }
-    if (g_pe_creatures[c].boss) bits |= C_WEAK;            /* defeated: its weaknesses are known */
+static void pe_unlock(int h, unsigned bits) { pe_unlock_why(h, bits, "mod"); }
+
+static void pe_kill(int h) {
+    const PeCreatureInfo *c = pe_info(h);
+    unsigned k = pe_kills(h) + 1u, bits = PE_BESTIARY_MET;
+    if (!c) return;
+    pe_profile_set_creature(c->key, pe_state(h), k);
+    if (c->boss) bits |= PE_BESTIARY_WEAK;                 /* defeated: its weaknesses are known */
     else {
-        if (k >= 5u) bits |= C_WEAK;
-        if (k >= 15u) bits |= C_LOOT;
+        if (k >= PE_KILLS_WEAK) bits |= PE_BESTIARY_WEAK;
+        if (k >= PE_KILLS_LOOT) bits |= PE_BESTIARY_LOOT;
     }
-    pe_unlock(c, bits, "kill");
+    pe_unlock_why(h, bits, "kill");
 }
 
-/* Kills: watch the enemy slots during battle. */
+const PeBestiaryApi g_pe_bestiary_api = {
+    pe_add, pe_find, pe_info, pe_replace, pe_map, pe_add_resolver, pe_state, pe_kills, pe_unlock,
+};
+
+/* ---- kills and Scan ---- */
 static struct { int tracking; uint8_t entity_id; uint16_t identity; int32_t hp; } s_slot[PE_ENEMY_SLOTS];
 
 static int pe_on_battle(void *ctx, void *user) {
-    const int map = pe_room_number();
+    const int room = pe_room_number();
     int s;
     (void)ctx;
     (void)user;
@@ -89,9 +153,9 @@ static int pe_on_battle(void *ctx, void *user) {
             s_slot[s].identity = id;
             continue;
         }
-        if (s_slot[s].hp > 0 && hp <= 0 && map > 0) {
-            const int c = pe_creature_of(map, s_slot[s].identity ? s_slot[s].identity : id);
-            if (c >= 0) pe_kill(c);
+        if (s_slot[s].hp > 0 && hp <= 0 && room > 0) {
+            const int h = pe_resolve(room, s_slot[s].identity ? s_slot[s].identity : id, core);
+            if (h >= 0) pe_kill(h);
         }
         s_slot[s].hp = hp;
         if (id) s_slot[s].identity = id;
@@ -102,60 +166,67 @@ static int pe_on_battle(void *ctx, void *user) {
 static int pe_on_spell(void *ctx, void *user) {
     const PeHookSpell *spell = (const PeHookSpell *)ctx;
     const EnemyCombatant *core;
-    int c;
+    int h;
     (void)user;
     if (spell->spell != PE_SCAN || !spell->target || spell->target == pe_player() || !pe_game_loaded()) return 0;
     if (!(core = (const EnemyCombatant *)spell->target->core)) return 0;
-    if ((c = pe_creature_of(pe_room_number(), (uint16_t)core->field04.fieldId04)) >= 0) pe_unlock(c, C_WEAK, "scan");
+    if ((h = pe_resolve(pe_room_number(), (uint16_t)core->field04.fieldId04, core)) >= 0) pe_unlock_why(h, PE_BESTIARY_WEAK, "scan");
     return 0;
 }
 
 static void pe_field_tick(void) { if (!pe_in_battle()) memset(s_slot, 0, sizeof s_slot); }   /* each battle starts fresh */
 
 /* ---- F1 pages ---- */
-static const char *s_sections[PE_MAX_SECTIONS + 1] = { "All areas" };
-static unsigned s_nsections = 1;
-static int s_area, s_show, s_sel, s_list[PE_CREATURES], s_count;
+static const char *s_sections[PE_MAX_SECTIONS + 1];
+static unsigned s_nsections;
+static int s_area, s_show, s_sel, s_list[PE_MAX_CREATURES], s_count;
 static const char *const s_show_names[] = { "All", "Met", "Not complete" };
-static char s_name[64];
+static char s_name[80];
 
-static void pe_build_sections(void) {
-    int c;
-    for (c = 0; c < PE_CREATURES; ++c) {
+/* Areas in the order packs registered them. */
+static void pe_sections(void) {
+    int h;
+    s_sections[0] = "All areas";
+    s_nsections = 1;
+    for (h = 0; h < s_creatures; ++h) {
+        const char *sec = s_creature[h]->section ? s_creature[h]->section : "Other";
         unsigned j = 1;
-        while (j < s_nsections && strcmp(s_sections[j], g_pe_creatures[c].section)) ++j;
-        if (j == s_nsections && s_nsections <= PE_MAX_SECTIONS) s_sections[s_nsections++] = g_pe_creatures[c].section;
+        while (j < s_nsections && strcmp(s_sections[j], sec)) ++j;
+        if (j == s_nsections && s_nsections <= PE_MAX_SECTIONS) s_sections[s_nsections++] = sec;
     }
 }
+static unsigned pe_area_count(void) { pe_sections(); return s_nsections; }
+static const char *pe_area_name(unsigned i) { pe_sections(); return i < s_nsections ? s_sections[i] : ""; }
 
 static void pe_filter(void) {
-    int c;
+    int h;
+    pe_sections();
     s_count = 0;
-    for (c = 0; c < PE_CREATURES; ++c) {
-        const uint8_t s = *pe_state(c);
-        if (s_area > 0 && (unsigned)s_area < s_nsections && strcmp(g_pe_creatures[c].section, s_sections[s_area])) continue;
-        if (s_show == 1 && !(s & C_MET)) continue;
-        if (s_show == 2 && (s & C_WEAK) && (s & C_LOOT)) continue;
-        s_list[s_count++] = c;
+    for (h = 0; h < s_creatures; ++h) {
+        const unsigned s = pe_state(h);
+        const char *sec = s_creature[h]->section ? s_creature[h]->section : "Other";
+        if (s_area > 0 && (unsigned)s_area < s_nsections && strcmp(sec, s_sections[s_area])) continue;
+        if (s_show == 1 && !(s & PE_BESTIARY_MET)) continue;
+        if (s_show == 2 && (s & PE_BESTIARY_WEAK) && (s & PE_BESTIARY_LOOT)) continue;
+        s_list[s_count++] = h;
     }
     if (s_sel >= s_count) s_sel = 0;
 }
 
 static int pe_current(void) { pe_filter(); return s_count ? s_list[s_sel] : -1; }
-
 static unsigned pe_count(void) { pe_filter(); return s_count ? (unsigned)s_count : 1u; }
 
 static const char *pe_name(unsigned i) {
-    int c;
-    uint8_t s;
+    const PeCreatureInfo *c;
+    unsigned s;
     pe_filter();
     if (!s_count) return "None";
     if (i >= (unsigned)s_count) i = 0;
-    c = s_list[i];
-    s = *pe_state(c);
-    if (!(s & C_MET)) snprintf(s_name, sizeof s_name, "???  (%u/%d)", i + 1, s_count);
-    else snprintf(s_name, sizeof s_name, "%s%s%s  (%u/%d)", g_pe_creatures[c].ex ? "EX " : "", g_pe_creatures[c].name,
-                  (s & C_WEAK) && (s & C_LOOT) ? " *" : g_pe_creatures[c].boss ? " (boss)" : "", i + 1, s_count);
+    c = s_creature[s_list[i]];
+    s = pe_state(s_list[i]);
+    if (!(s & PE_BESTIARY_MET)) snprintf(s_name, sizeof s_name, "???  (%u/%d)", i + 1, s_count);
+    else snprintf(s_name, sizeof s_name, "%s%s%s  (%u/%d)", c->ex ? "EX " : "", c->name,
+                  (s & PE_BESTIARY_WEAK) && (s & PE_BESTIARY_LOOT) ? " *" : c->boss ? " (boss)" : "", i + 1, s_count);
     return s_name;
 }
 
@@ -168,53 +239,55 @@ static const char *pe_elems(uint8_t bits, char *buf, unsigned size) {
     return buf[0] ? buf : "none";
 }
 
-static void pe_info(char *out, unsigned size) {
-    const int c = pe_current();
-    const PeCreature *k;
-    if (c < 0) { snprintf(out, size, "-"); return; }
-    k = &g_pe_creatures[c];
-    if (*pe_state(c) & C_MET)
-        snprintf(out, size, "HP %u  Def %u  %s  kills %u", k->hp, k->defense, k->section, pe_kills(c));
-    else snprintf(out, size, "Not met yet  (%s)", k->section);
+static void pe_info_row(char *out, unsigned size) {
+    const int h = pe_current();
+    const PeCreatureInfo *c = pe_info(h);
+    if (!c) { snprintf(out, size, "-"); return; }
+    if (pe_state(h) & PE_BESTIARY_MET)
+        snprintf(out, size, "HP %u  Def %u  %s  kills %u", c->hp, c->defense, c->section ? c->section : "", pe_kills(h));
+    else snprintf(out, size, "Not met yet  (%s)", c->section ? c->section : "");
 }
 
-static void pe_elements(char *out, unsigned size) {
-    const int c = pe_current();
+static void pe_elements_row(char *out, unsigned size) {
+    const int h = pe_current();
+    const PeCreatureInfo *c = pe_info(h);
     char weak[48], strong[48];
-    if (c < 0) { snprintf(out, size, "-"); return; }
-    if (*pe_state(c) & C_WEAK)
-        snprintf(out, size, "Weak: %s  Strong: %s", pe_elems(g_pe_creatures[c].weak, weak, sizeof weak),
-                 pe_elems(g_pe_creatures[c].strong, strong, sizeof strong));
-    else snprintf(out, size, "Scan, %s or %u Junk", g_pe_creatures[c].boss ? "defeat" : "5 kills", g_pe_creatures[c].price_weak);
+    if (!c) { snprintf(out, size, "-"); return; }
+    if (pe_state(h) & PE_BESTIARY_WEAK)
+        snprintf(out, size, "Weak: %s  Strong: %s", pe_elems(c->weak, weak, sizeof weak), pe_elems(c->strong, strong, sizeof strong));
+    else snprintf(out, size, "Scan, %s or %u Junk", c->boss ? "defeat" : "5 kills", c->price_weak);
 }
 
-static void pe_drop(char *out, unsigned size) {
-    const int c = pe_current();
-    if (c < 0) snprintf(out, size, "-");
-    else if (*pe_state(c) & C_LOOT) snprintf(out, size, "%s", g_pe_creatures[c].drop);
-    else snprintf(out, size, "%s%u Junk", g_pe_creatures[c].boss ? "" : "15 kills or ", g_pe_creatures[c].price_loot);
+static void pe_drop_row(char *out, unsigned size) {
+    const int h = pe_current();
+    const PeCreatureInfo *c = pe_info(h);
+    if (!c) snprintf(out, size, "-");
+    else if (pe_state(h) & PE_BESTIARY_LOOT) snprintf(out, size, "%s", c->drop ? c->drop : "nothing");
+    else snprintf(out, size, "%s%u Junk", c->boss ? "" : "15 kills or ", c->price_loot);
 }
 
-static void pe_steal(char *out, unsigned size) {
-    const int c = pe_current();
-    snprintf(out, size, "%s", c >= 0 && (*pe_state(c) & C_LOOT) ? g_pe_creatures[c].steal : "-");
+static void pe_steal_row(char *out, unsigned size) {
+    const int h = pe_current();
+    const PeCreatureInfo *c = pe_info(h);
+    snprintf(out, size, "%s", c && (pe_state(h) & PE_BESTIARY_LOOT) ? (c->steal ? c->steal : "nothing") : "-");
 }
 
-static unsigned pe_next_price(int c, uint8_t *bit) {
-    const uint8_t s = *pe_state(c);
-    if (!(s & C_WEAK)) { *bit = C_WEAK; return g_pe_creatures[c].price_weak; }
-    if (!(s & C_LOOT)) { *bit = C_LOOT; return g_pe_creatures[c].price_loot; }
+static unsigned pe_next_price(int h, unsigned *bit) {
+    const unsigned s = pe_state(h);
+    const PeCreatureInfo *c = pe_info(h);
     *bit = 0;
+    if (!c) return 0;
+    if (!(s & PE_BESTIARY_WEAK)) { *bit = PE_BESTIARY_WEAK; return c->price_weak; }
+    if (!(s & PE_BESTIARY_LOOT)) { *bit = PE_BESTIARY_LOOT; return c->price_loot; }
     return 0;
 }
 
 static void pe_buy(void) {
-    const int c = pe_current();
+    const int h = pe_current();
     char msg[96];
-    uint8_t bit;
-    unsigned price;
-    if (c < 0) return;
-    price = pe_next_price(c, &bit);
+    unsigned bit, price;
+    if (h < 0) return;
+    price = pe_next_price(h, &bit);
     if (!bit) { pe_col_say("Already complete"); return; }
     if (!pe_col_junk_ready(msg, sizeof msg)) { pe_col_say(msg); return; }
     if (!pe_col_spend(price)) {
@@ -222,25 +295,26 @@ static void pe_buy(void) {
         pe_col_say(msg);
         return;
     }
-    pe_unlock(c, bit, "junk");
-    pe_col_save_now();
+    pe_unlock_why(h, bit, "junk");
+    pe_profile_save();
 }
 
 static void pe_buy_label(char *out, unsigned size) {
-    const int c = pe_current();
-    uint8_t bit = 0;
-    const unsigned price = c >= 0 ? pe_next_price(c, &bit) : 0;
+    const int h = pe_current();
+    unsigned bit = 0;
+    const unsigned price = h >= 0 ? pe_next_price(h, &bit) : 0;
     if (!bit) snprintf(out, size, "Complete");
-    else snprintf(out, size, "%s for %u Junk (have %u)", bit == C_WEAK ? "Weaknesses" : "Loot", price, pe_col_junk());
+    else snprintf(out, size, "%s for %u Junk (have %u)", bit == PE_BESTIARY_WEAK ? "Weaknesses" : "Loot", price, pe_col_junk());
 }
 
 static void pe_progress(char *out, unsigned size) {
-    int c, met = 0, done = 0;
-    for (c = 0; c < PE_CREATURES; ++c) {
-        met += (*pe_state(c) & C_MET) != 0;
-        done += (*pe_state(c) & (C_WEAK | C_LOOT)) == (C_WEAK | C_LOOT);
+    int h, met = 0, done = 0;
+    for (h = 0; h < s_creatures; ++h) {
+        const unsigned s = pe_state(h);
+        met += (s & PE_BESTIARY_MET) != 0;
+        done += (s & (PE_BESTIARY_WEAK | PE_BESTIARY_LOOT)) == (PE_BESTIARY_WEAK | PE_BESTIARY_LOOT);
     }
-    snprintf(out, size, "Met %d/%d  Complete %d", met, PE_CREATURES, done);
+    snprintf(out, size, "Met %d/%d  Complete %d", met, s_creatures, done);
 }
 
 static void pe_result(char *out, unsigned size) { snprintf(out, size, "%s", pe_col_last_said()); }
@@ -248,15 +322,16 @@ static void pe_result(char *out, unsigned size) { snprintf(out, size, "%s", pe_c
 void pe_bestiary_reset(void) { memset(s_slot, 0, sizeof s_slot); s_sel = 0; }
 
 void pe_bestiary_register(const char *mod_id) {
-    pe_build_sections();
-    pe_menu_register_choice(PE_PAGE_BESTIARY, "Area", "Which creatures to browse.", &s_area, s_sections, s_nsections);
+    s_event = pe_event_id("bestiary.unlock");
+    pe_menu_register_dynamic_choice(PE_PAGE_BESTIARY, "Area", "Which creatures to browse.", &s_area, PE_MAX_SECTIONS + 1,
+                                    pe_area_count, pe_area_name);
     pe_menu_register_choice(PE_PAGE_BESTIARY, "Show", "All, met only, or not complete.", &s_show, s_show_names, 3);
     pe_menu_register_dynamic_choice(PE_PAGE_BESTIARY, "Creature", "Left / right to browse. * = complete.", &s_sel,
-                                    PE_CREATURES, pe_count, pe_name);
-    pe_menu_register_info(PE_PAGE_BESTIARY, "Info", "HP, defense, where, kills.", pe_info);
-    pe_menu_register_info(PE_PAGE_BESTIARY, "Elements", "Weak and strong elements.", pe_elements);
-    pe_menu_register_info(PE_PAGE_BESTIARY, "Drop", "What it drops (odds).", pe_drop);
-    pe_menu_register_info(PE_PAGE_BESTIARY, "Steal", "What can be stolen (odds).", pe_steal);
+                                    PE_MAX_CREATURES, pe_count, pe_name);
+    pe_menu_register_info(PE_PAGE_BESTIARY, "Info", "HP, defense, where, kills.", pe_info_row);
+    pe_menu_register_info(PE_PAGE_BESTIARY, "Elements", "Weak and strong elements.", pe_elements_row);
+    pe_menu_register_info(PE_PAGE_BESTIARY, "Drop", "What it drops (odds).", pe_drop_row);
+    pe_menu_register_info(PE_PAGE_BESTIARY, "Steal", "What can be stolen (odds).", pe_steal_row);
     pe_menu_register_info(PE_PAGE_BESTIARY, "Next tier", "What Buy unlocks: weaknesses, then loot.", pe_buy_label);
     pe_menu_register_action(PE_PAGE_BESTIARY, "Buy next tier", "Spend Junk on the next tier. Kept in every game.", pe_buy);
     pe_menu_register_info(PE_PAGE_BESTIARY, "Progress", "Bestiary totals.", pe_progress);

@@ -8,7 +8,14 @@
  *   "junk"      v1  pe_economy  the Junk counter
  *   "catalog"   v1  pe_economy  armor effects unlocked in the Mod Catalog
  *   "keys"      v1  pe_qol      the key item pocket
- *   "wardrobe"  v1  pe_collection  outfits bought with Junk
+ *   "wardrobe"  v1  pe_collection  costumes that can be worn now (for shops such as Wayne's)
+ *   "bestiary"  v1  pe_collection  register creatures, map enemies to them, unlock entries
+ *   "costumes"  v1  pe_collection  register costumes (the game's outfits or a mod's own models)
+ *
+ * Providers (an import pack, a randomizer) register at their init, so they list "pe_collection"
+ * in their PeMod requires. Keys are stable names saved in the player's profile ("pe1/rat",
+ * "re2/claire"): a key must never change once released; unlocks of packs that aren't loaded stay
+ * in the profile untouched.
  */
 
 #include <stddef.h>
@@ -48,5 +55,69 @@ typedef struct PeWardrobeApi {
     int (*state)(int k);
     int (*pick)(int k, char *msg, size_t size);   /* buy or wear; msg says what happened */
 } PeWardrobeApi;
+
+/* ---- Bestiary ----
+ * A creature's entry has three tiers: basics (met: first kill or any purchase), weaknesses (Scan,
+ * 5 kills, defeating a boss, or Junk) and loot (15 kills, or Junk; bosses: Junk only). The info is
+ * the provider's and may be replaced at any time (a randomizer's drops). Elements are the game's:
+ * bits 1 heat, 2 frost, 4 cyanide, 8 acid, 16 tranquilizer. */
+enum { PE_BESTIARY_MET = 1u, PE_BESTIARY_WEAK = 2u, PE_BESTIARY_LOOT = 4u };
+
+typedef struct PeCreatureInfo {
+    const char *key;          /* stable, unique: "pe1/rat"; saved in the profile */
+    const char *name;
+    const char *section;      /* the F1 Area filter: "Day 1", "Chrysler", "Resident Evil 2" */
+    uint8_t boss, ex;         /* ex: the EX Game's version */
+    uint16_t hp, defense;
+    uint8_t weak, strong;     /* element bits */
+    const char *drop, *steal; /* shown as given: "Medicine 1 90%, nothing 10%" */
+    uint16_t price_weak, price_loot;   /* Junk */
+} PeCreatureInfo;
+
+/* Which creature is this enemy? (room number, the enemy's identity, its battle record); a creature
+ * handle, or -1 to leave it to the next resolver and finally the mapped table. */
+struct EnemyCombatant;
+typedef int (*PeBestiaryResolver)(int room, unsigned identity, const struct EnemyCombatant *enemy);
+
+typedef struct PeBestiaryApi {
+    int (*add)(const PeCreatureInfo *info);              /* handle, or -1 (key taken, full); info must outlive the game */
+    int (*find)(const char *key);                        /* handle or -1 */
+    const PeCreatureInfo *(*info)(int handle);
+    int (*replace)(int handle, const PeCreatureInfo *info);  /* same key; 0 if refused */
+    int (*map)(int room, unsigned identity, int handle); /* enemy `identity` in `room` is this creature */
+    int (*add_resolver)(PeBestiaryResolver fn);          /* asked first, newest first */
+    unsigned (*state)(int handle);                       /* PE_BESTIARY_* bits */
+    unsigned (*kills)(int handle);
+    void (*unlock)(int handle, unsigned bits);           /* also announces it */
+} PeBestiaryApi;
+
+/* ---- Costumes ----
+ * A costume is either one of the game's player bundles (bank 10 evening dress, 12 Aya, 13 T-shirt:
+ * g_SceneAreaType) or a model its provider puts in itself: load(1) at the start of Aya's model load
+ * (PE_HOOK_PLAYER_BANK, entity_texture_phase 0) while it is worn, load(0) once when it comes off;
+ * the provider adds whatever other hooks its loader needs. */
+typedef struct PeCostume {
+    const char *key;          /* stable, unique: "pe1/tshirt"; saved in the profile */
+    const char *name;         /* "Aya: T-shirt", "Claire (RE2)" */
+    const char *group;        /* the F1 Group filter: "Aya's outfits", "Resident Evil" */
+    uint16_t price;           /* Junk, paid once for every game */
+    int16_t bank;             /* >= 0: the game's player bundle; -1: load() does it */
+    int (*available)(void);   /* NULL: always; 0 lists it as "soon" (e.g. its files are missing) */
+    void (*load)(int wearing);
+} PeCostume;
+
+typedef struct PeCostumesApi {
+    int (*add)(const PeCostume *costume);   /* handle, or -1 (key taken, full); must outlive the game */
+    const PeCostume *(*worn)(void);         /* NULL: Aya's own clothes */
+    int (*reload)(void);                    /* the game's same-room reload, so a change shows now; 0 if not now */
+} PeCostumesApi;
+
+/* Events (pe_event_id): "bestiary.unlock" (PeBestiaryEvent *), "wardrobe.worn" (const PeCostume *,
+ * NULL for Aya's own). */
+typedef struct PeBestiaryEvent {
+    int handle;
+    unsigned gained;          /* PE_BESTIARY_* bits new with this unlock */
+    const char *why;          /* "kill", "scan", "junk", or a mod's own */
+} PeBestiaryEvent;
 
 #endif

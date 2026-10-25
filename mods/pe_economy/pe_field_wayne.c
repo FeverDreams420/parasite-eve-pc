@@ -1,6 +1,6 @@
 /*
- * Wayne's services from Warner, in the Day 4 park section with no way back to the station
- * (map 374). Ported from the psxrecomp build (src/mods/pe_field_wayne.c): Store equipment, Store
+ * Wayne's services from Warner, where he stands guard (found by his retail talk script, not by
+ * room). Ported from the psxrecomp build (src/mods/pe_field_wayne.c): Store equipment, Store
  * item and the Workshop (Requisition, Rebuild, Mod Permit Card); not Discard junk -- making guns
  * stays Wayne's.
  *
@@ -35,7 +35,6 @@
 
 void Menu_OpenEquipScreen(int mode);
 
-#define PE_WARNER_MAP     374
 #define PE_WARNER_MODEL   0x04
 #define PE_CONTACT_OFF    0x154   /* his contact task, from the script base */
 #define PE_TEXTBOX_SHOWN  2
@@ -178,15 +177,12 @@ static int pe_on_textboxes(void *ctx, void *user) {
             s_pending = g_MenuEquipSlotIndex;
         s_menu_box = NULL;
     }
-    if (!s_enabled || !pe_loot_enabled() || pe_map_number() != PE_WARNER_MAP) { pe_forget(); return 0; }
+    if (!s_enabled || !pe_loot_enabled()) { pe_forget(); return 0; }
     if (s_warner && !pe_is_warner(s_warner)) pe_forget();   /* a room reload brings a fresh actor */
-    if (!s_warner && !(s_warner = pe_find_warner())) {
-        static int s_reported_token = -1;
-        if (s_reported_token != token) {                    /* once per room: say why nothing happens */
-            s_reported_token = token;
-            pe_mod_log("pe_economy", "Warner's room, but no actor with his retail talk script (services off here)");
-        }
-        return 0;
+    if (!s_warner) {
+        /* Found by his retail talk script (checked word for word), in whatever room he stands. */
+        if (!(s_warner = pe_find_warner())) return 0;
+        pe_mod_log("pe_economy", "Warner found in room %d: storage and Workshop offered", pe_map_number());
     }
     if (pe_talk_running()) {
         pe_talk_tick();

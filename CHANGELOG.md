@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Press Start during a story movie to pause it and choose whether to skip. Skipping also stops music started for that movie.
+
 - Added optional 4x SSAA antialiasing and bilinear filtering for model textures in Graphics settings. Both are off by default.
 - Fixed text and image shimmering when the game switches framebuffers, at all internal resolutions.
 - Fixed geometry correction losing its vertex data while waiting for VSync before drawing a frame.

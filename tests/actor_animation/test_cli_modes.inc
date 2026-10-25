@@ -1229,6 +1229,7 @@
     if(argc==2 && !strcmp(argv[1],"--attack-effect-status-gate"))return original_attack_effect_status_gate()?0:158;
     if(argc==2 && !strcmp(argv[1],"--tool-equipped-donor"))return original_tool_equipped_donor()?0:157;
 
+    if(argc==3 && !strcmp(argv[1],"--native-movie-skip"))return original_native_movie_skip(argv[2]);
     if(argc==3 && !strcmp(argv[1],"--native-control"))return original_native_control(argv[2]);
     if(argc==3 && !strcmp(argv[1],"--native-diagnostic-hp-arguments"))return native_diagnostic_hp_arguments(argv[2])?0:1;
     if(argc==2 && !strcmp(argv[1],"--texture-pages")){

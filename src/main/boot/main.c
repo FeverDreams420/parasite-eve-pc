@@ -861,6 +861,99 @@ static void Host_ProcessSettingsPointer(
     }
 }
 
+static void Host_AnswerPrompt(HostOverlayState *state, int skip) {
+    state->skip = skip;
+    state->open = 0;
+}
+
+/* Row 0 Yes, 1 No; -1 inside the panel between rows, -2 outside it. */
+static int Host_PromptRowAt(SDL_Window *game, float windowX, float windowY) {
+    float density = game ? SDL_GetWindowPixelDensity(game) : 1.0f;
+    if (density <= 0.0f) {
+        density = 1.0f;
+    }
+    float scale = s_overlayLayout.scale > 0.0f ? s_overlayLayout.scale : 1.0f;
+    float x = (windowX * density - (float)s_overlayLayout.x) / scale;
+    float y = (windowY * density - (float)s_overlayLayout.y) / scale;
+
+    if (x < 0.0f || x >= (float)PROMPT_PANEL_W || y < 0.0f ||
+        y >= (float)OverlayPromptDesignHeight()) {
+        return -2;
+    }
+    for (int r = 0; r < PROMPT_ROWS; r++) {
+        OverlayRect rect = OverlayPromptRowRect(r);
+        if (x >= rect.x && x < rect.x + rect.w && y >= rect.y && y < rect.y + rect.h) {
+            return r;
+        }
+    }
+    return -1;
+}
+
+/* Skip-movie question: Esc, Circle or a click outside keep watching. */
+static void Host_ProcessPromptEvent(
+    HostOverlayState *state,
+    const SDL_Event *event,
+    SDL_Window *game
+) {
+    if (event->type == SDL_EVENT_KEY_DOWN) {
+        int repeat = event->key.repeat != 0;
+        switch (event->key.scancode) {
+        case SDL_SCANCODE_ESCAPE:
+            if (!repeat) {
+                Host_AnswerPrompt(state, 0);
+            }
+            break;
+        case SDL_SCANCODE_UP:
+        case SDL_SCANCODE_DOWN:
+        case SDL_SCANCODE_W:
+        case SDL_SCANCODE_S:
+            state->row ^= 1;
+            state->dirty = 1;
+            break;
+        case SDL_SCANCODE_RETURN:
+        case SDL_SCANCODE_KP_ENTER:
+        case SDL_SCANCODE_SPACE:
+            if (!repeat) {
+                Host_AnswerPrompt(state, state->row == 0);
+            }
+            break;
+        default:
+            break;
+        }
+    } else if (event->type == SDL_EVENT_GAMEPAD_BUTTON_DOWN) {
+        switch (event->gbutton.button) {
+        case SDL_GAMEPAD_BUTTON_DPAD_UP:
+        case SDL_GAMEPAD_BUTTON_DPAD_DOWN:
+            state->row ^= 1;
+            state->dirty = 1;
+            break;
+        case SDL_GAMEPAD_BUTTON_SOUTH:
+        case SDL_GAMEPAD_BUTTON_START:
+            Host_AnswerPrompt(state, state->row == 0);
+            break;
+        case SDL_GAMEPAD_BUTTON_EAST:
+            Host_AnswerPrompt(state, 0);
+            break;
+        default:
+            break;
+        }
+    } else if (event->type == SDL_EVENT_MOUSE_MOTION) {
+        int row = Host_PromptRowAt(game, event->motion.x, event->motion.y);
+        if (row >= 0 && row != state->row) {
+            state->row = row;
+            state->dirty = 1;
+        }
+    } else if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
+               event->button.button == SDL_BUTTON_LEFT) {
+        int row = Host_PromptRowAt(game, event->button.x, event->button.y);
+        if (row >= 0) {
+            Host_AnswerPrompt(state, row == 0);
+        } else if (row == -2) {
+            Host_AnswerPrompt(state, 0);
+        }
+    }
+}
+
 static void Host_ProcessSettingsEvent(
     HostOverlayState *state,
     const SDL_Event *event,
@@ -879,6 +972,10 @@ static void Host_ProcessSettingsEvent(
             state->quit = 1;
             state->open = 0;
         }
+        return;
+    }
+    if (state->prompt) {
+        Host_ProcessPromptEvent(state, event, game);
         return;
     }
 
@@ -1122,6 +1219,62 @@ static void Host_Settings(SDL_Window *game) {
         event.type = SDL_EVENT_QUIT;
         SDL_PushEvent(&event);
     }
+}
+
+/* g_BootMovieSkipConfirm: the movie, game clock and audio stay paused until
+ * the question is answered. No keeps watching. */
+static int Host_ConfirmMovieSkip(void) {
+    SDL_Window *game = Psyz_GetWindow_SDL3();
+    int paused = Psyz_AudioIsPaused();
+    int skip = 0;
+    int quit = 0;
+
+    Psyz_PauseHostClock_SDL3(true);
+    Psyz_AudioPause();
+    if (game != NULL && s_overlayGpuDevice != NULL) {
+        s_overlayState = (HostOverlayState){
+            .open = 1,
+            .row = 1,
+            .dirty = 1,
+            .prompt = 1
+        };
+        while (s_overlayState.open) {
+            Host_OverlayRefreshGPU(s_overlayGpuDevice, game, &s_overlayState);
+            Psyz_VideoVSync(0);
+        }
+        skip = s_overlayState.skip;
+        quit = s_overlayState.quit;
+        s_overlayState = (HostOverlayState){0};
+    } else {
+        SDL_MessageBoxButtonData buttons[] = {
+            {0, 1, "Yes"},
+            {SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT | SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "No"}
+        };
+        SDL_MessageBoxData box = {
+            .flags = SDL_MESSAGEBOX_INFORMATION,
+            .window = game,
+            .title = "Parasite Eve - Skip cutscene",
+            .message = "Do you want to skip the cutscene?",
+            .numbuttons = 2,
+            .buttons = buttons
+        };
+        int choice = 0;
+        skip = SDL_ShowMessageBox(&box, &choice) && choice == 1;
+    }
+
+    /* Avoid the answering key leaking into the resumed original pad poll. */
+    SDL_ResetKeyboard();
+    Psyz_PauseHostClock_SDL3(false);
+    if (!paused) {
+        Psyz_AudioUnpause();
+    }
+    if (quit) {
+        SDL_Event event;
+        SDL_zero(event);
+        event.type = SDL_EVENT_QUIT;
+        SDL_PushEvent(&event);
+    }
+    return skip;
 }
 
 static void Host_PauseForFocus(SDL_Window *game) {
@@ -1548,6 +1701,7 @@ images_ready:;
         memcpy(host_options.discs, ordered, sizeof(ordered));
         host_images = images;
         g_CdImageRequest = Host_RequestImage;
+        g_BootMovieSkipConfirm = Host_ConfirmMovieSkip;
         host_options.scale = internal_resolution;
         Host_InstallSettingsOverlay();
         Host_ApplyOptions(NULL);
@@ -1691,6 +1845,7 @@ shutdown:
     CdRom_BindImage(NULL, NULL);
     g_CdImageVolumes[0] = g_CdImageVolumes[1] = NULL;
     g_CdImageRequest = NULL;
+    g_BootMovieSkipConfirm = NULL;
     host_images = NULL;
     pe_disc_close(&images[0]);
     pe_disc_close(&images[1]);

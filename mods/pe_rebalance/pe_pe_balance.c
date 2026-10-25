@@ -23,6 +23,7 @@
 #include "pe_game.h"
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
+#include "pe_pages.h"
 
 enum { RULES_VANILLA, RULES_REBALANCED, RULES_CUSTOM };
 static const char *const s_rules_names[] = { "Vanilla", "Rebalanced", "Custom" };
@@ -109,7 +110,7 @@ static int pe_on_spell(void *ctx, void *user) {
     return 0;
 }
 
-#define PE_PAGE "Items & Parasite Energy"
+#define PE_PAGE PE_PAGE_PE_BALANCE
 void pe_pe_balance_register(const char *mod_id) {
     int i;
     pe_apply(RULES_REBALANCED);

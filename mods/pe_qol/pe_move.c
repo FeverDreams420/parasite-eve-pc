@@ -27,6 +27,7 @@
 #include "pe_game.h"
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
+#include "pe_pages.h"
 #include "pe1/boot.h"
 #include "pe1/pad_state.h"
 
@@ -181,11 +182,11 @@ static void pe_move_tick(void) {
 }
 
 void pe_move_register(const char *mod_id) {
-    pe_menu_register_toggle(0, "Always run", "Hold the run button to walk (d-pad and stick).", &s_always_run, NULL);
-    pe_menu_register_choice(0, "Run speed", "How fast Aya runs in the field.", &s_run_choice, s_speed_names, PE_SPEED_CHOICES);
-    pe_menu_register_choice(0, "Walk speed", "How fast Aya walks in the field.", &s_walk_choice, s_speed_names, PE_SPEED_CHOICES);
-    pe_menu_register_choice(0, "Combat speed", "How fast Aya moves during battle.", &s_combat_choice, s_speed_names, PE_SPEED_CHOICES);
-    pe_menu_register_choice(0, "Battle start speed", "Aya's walk to her spot as a fight opens.", &s_entry_choice,
+    pe_menu_register_toggle(PE_PAGE_MOVEMENT, "Always run", "Hold the run button to walk (d-pad and stick).", &s_always_run, NULL);
+    pe_menu_register_choice(PE_PAGE_MOVEMENT, "Run speed", "How fast Aya runs in the field.", &s_run_choice, s_speed_names, PE_SPEED_CHOICES);
+    pe_menu_register_choice(PE_PAGE_MOVEMENT, "Walk speed", "How fast Aya walks in the field.", &s_walk_choice, s_speed_names, PE_SPEED_CHOICES);
+    pe_menu_register_choice(PE_PAGE_MOVEMENT, "Combat speed", "How fast Aya moves during battle.", &s_combat_choice, s_speed_names, PE_SPEED_CHOICES);
+    pe_menu_register_choice(PE_PAGE_MOVEMENT, "Battle start speed", "Aya's walk to her spot as a fight opens.", &s_entry_choice,
                             s_entry_names, PE_ENTRY_CHOICES);
     pe_menu_register_tick(pe_move_tick);
     pe_hook_add(PE_HOOK_PAD_READ, pe_on_pad_read, NULL, PE_PRIORITY_NORMAL, mod_id);

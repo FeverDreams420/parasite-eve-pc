@@ -51,12 +51,18 @@ int pe_menu_register_dynamic_choice(const char *sub, const char *label, const ch
                                     int *index, unsigned max_count, PeMenuChoiceCount count_fn,
                                     PeMenuChoiceName name_fn);
 int pe_menu_register_tick(PeMenuPerFrame fn);
+/* A read-only line: text() fills the value shown on the right (Junk, prices, results). */
+typedef void (*PeMenuText)(char *out, unsigned size);
+int pe_menu_register_info(const char *sub, const char *label, const char *description, PeMenuText text);
+/* Describe sub-page `sub` of the current page: the footer line when its link is selected,
+ * and its place among its sibling pages (lower first; pages without one keep their order). */
+int pe_menu_page(const char *sub, const char *description, int order);
 
 /* ---- for the panel ---- */
 
 typedef enum PeRowKind {
     PE_ROW_TOGGLE, PE_ROW_ACTION, PE_ROW_CHOICE, PE_ROW_INT,
-    PE_ROW_LIVE_INT, PE_ROW_LIVE_CHOICE, PE_ROW_DYNAMIC_CHOICE
+    PE_ROW_LIVE_INT, PE_ROW_LIVE_CHOICE, PE_ROW_DYNAMIC_CHOICE, PE_ROW_INFO
 } PeRowKind;
 
 typedef struct PeMenuRow {
@@ -72,7 +78,17 @@ typedef struct PeMenuRow {
     PeMenuSet set;
     PeMenuChoiceCount count_fn;
     PeMenuChoiceName name_fn;
+    PeMenuText text_fn;
 } PeMenuRow;
+
+/* Page metadata (pe_menu_page), by full path, or NULL. */
+typedef struct PeMenuPageInfo {
+    char path[96];
+    const char *description;
+    int order;
+} PeMenuPageInfo;
+const PeMenuPageInfo *pe_menu_page_info(const char *path);
+int pe_menu_row_adjustable(const PeMenuRow *row);   /* left/right change it */
 
 int pe_menu_row_count(void);
 PeMenuRow *pe_menu_row(int index);

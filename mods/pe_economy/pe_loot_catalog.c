@@ -38,6 +38,7 @@
 #include "pe_ps1.h"
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
+#include "pe_pages.h"
 #include "pe_item_table.h"
 #include "pe_economy.h"
 #include "pe_game.h"
@@ -46,14 +47,6 @@
  * the F1 board is a list row here (the Mods panel has no tile grid yet); hooks are PE_HOOK_*. */
 enum { PE_CELL_DIM = 1, PE_CELL_EMPTY = 2, PE_CELL_HIGHLIGHT = 4, PE_CELL_MARK = 8 };
 
-#define PE_FN_INV_DISPATCH      0x8005D2B4u
-#define PE_FN_SAVE_SERIALIZE    0x8003F800u
-#define PE_FN_SAVE_DESERIALIZE  0x8003FBD8u
-#define PE_FN_TOOL_TRANSFER     0x8005A318u   /* Inv_TransferItemBetweenLists */
-#define PE_SEL_INDEX_ADDR       0x8009D090u   /* g_InvSavedSelectionIndex[2] */
-#define PE_SEL_STORAGE_ADDR     0x8009D098u   /* g_InvSavedSelectionFromStorage[2] */
-#define PE_LIST_OVERRIDE_ADDR   0x8009D04Cu   /* g_InvActiveListOverride */
-#define PE_OVERRIDE_LIMIT_ADDR  0x8009D054u   /* g_InvOverrideSlotLimit */
 #define PE_INV_CMD_START_NEW_GAME 1117
 
 #define PE_MAX_HP_ADDR          0x800C0E06u
@@ -186,7 +179,6 @@ typedef struct {
     uint16_t payout;     /* Junk dismantling paid (rebuild price base) */
 } PeRebuildEntry;
 
-#define PE_CATALOG_STATE_VERSION 1u
 static struct {
     uint32_t bits[2];                         /* unlocked effects, bit e */
     uint8_t rebuild_count;
@@ -600,7 +592,6 @@ static void pe_grid_tick(void) {
 
 /* "Selected" row: the cursor tile's full name and what it costs. */
 static char s_sel_text[64];
-static unsigned pe_one(void) { return 1; }
 static const char *pe_sel_name(unsigned i) {
     (void)i;
     const int e = pe_grid_effect();
@@ -641,8 +632,6 @@ static const char *pe_repl_name(unsigned i) {
     return s_repl_text;
 }
 
-static const char *pe_result_name(unsigned i) { (void)i; return s_result; }
-static int s_text_dummy[3];               /* storage for the read-only text rows */
 
 static unsigned pe_slot_list_count(void) {
     const uint32_t rec = pe_target_record();
@@ -830,7 +819,6 @@ int pe_cat_replaces(int which, int slot, int e, int *out, int max) {
     return k;
 }
 
-static int pe_readonly(int value) { (void)value; return 0; }
 
 /* ---- Rebuild -------------------------------------------------------------------- */
 static int s_rb_choice;
@@ -967,7 +955,6 @@ static void pe_rebuild(void) {
 }
 
 /* ---- live shop rows: your Junk, what the selection costs or pays ------------------- */
-static int pe_get_junk(void) { return (int)pe_loot_junk(); }
 
 static uint32_t pe_selected_dismantle_record(int *which) {
     if (!pe_loaded()) return 0;
@@ -1172,78 +1159,66 @@ int pe_catalog_unlock_armor(int effect);
 static const PeCatalogApi s_catalog_api = { pe_catalog_armor_unlocked, pe_catalog_unlock_armor };
 
 /* ---- menu ----------------------------------------------------------------------- */
-#define PE_DIS_PAGE    "Workshop/Dismantle"
-#define PE_CAT_PAGE    "Workshop/Mod Catalog"
-#define PE_RB_PAGE     "Workshop/Rebuild"
-#define PE_TUNING_PAGE "Debug/Loot tuning"
+/* Read-only lines (info rows) for values the rows above them pick. */
+static void pe_junk_info(char *out, unsigned size) { snprintf(out, size, "%u", (unsigned)pe_loot_junk()); }
+static void pe_pays_info(char *out, unsigned size) {
+    const int pays = pe_get_dismantle_pays(), fresh = pe_get_dismantle_unlocks();
+    if (!pays) snprintf(out, size, "-");
+    else snprintf(out, size, "%d Junk, %d new effect%s", pays, fresh, fresh == 1 ? "" : "s");
+}
+static void pe_cost_info(char *out, unsigned size) {
+    const int cost = pe_get_rebuild_cost();
+    if (!cost) snprintf(out, size, "-");
+    else snprintf(out, size, "%d Junk", cost);
+}
+static void pe_sel_info(char *out, unsigned size) { snprintf(out, size, "%s", pe_sel_name(0)); }
+static void pe_repl_info(char *out, unsigned size) { snprintf(out, size, "%s", pe_repl_name(0)); }
+static void pe_result_info(char *out, unsigned size) { snprintf(out, size, "%s", s_result); }
 
-/* Called from pe_mod_menu.c after pe_loot_menu_register (Workshop rows first). */
-void pe_loot_catalog_menu_register(void) {
-    (void)pe_menu_register_live_int(PE_DIS_PAGE, "Your Junk",
-        "Junk you have now.", 0, 99999, 1, pe_get_junk, pe_readonly);
-    (void)pe_menu_register_dynamic_choice(PE_DIS_PAGE, "Item",
-        "Unequipped gun or armor.", &s_dis_choice, 50,
-        pe_dis_list_count, pe_dis_list_name);
-    (void)pe_menu_register_live_int(PE_DIS_PAGE, "Pays (Junk)",
-        "Junk this item gives.", 0, 999, 1, pe_get_dismantle_pays, pe_readonly);
-    (void)pe_menu_register_live_int(PE_DIS_PAGE, "New effects",
-        "Effects it adds to the Catalog.", 0, 10, 1, pe_get_dismantle_unlocks, pe_readonly);
-    (void)pe_menu_register_action(PE_DIS_PAGE, "Dismantle",
-        "Press twice. Effects go to the Catalog.", pe_dismantle);
+void pe_catalog_register(const char *mod_id) {
+    (void)pe_menu_register_info(PE_PAGE_CATALOG, "Your Junk", "Junk you have now.", pe_junk_info);
+    (void)pe_menu_register_dynamic_choice(PE_PAGE_CATALOG, "Item",
+        "Work on your equipped gun or your equipped armor.", &s_target, 2, pe_target_list_count, pe_target_list_name);
+    (void)pe_menu_register_dynamic_choice(PE_PAGE_CATALOG, "Effect",
+        "Locked: dismantle gear with it to unlock. * = already on the item.", &s_grid, 24, pe_grid_count, pe_grid_name);
+    (void)pe_menu_register_info(PE_PAGE_CATALOG, "Price", "The effect's full name and what installing it costs.", pe_sel_info);
+    (void)pe_menu_register_dynamic_choice(PE_PAGE_CATALOG, "Slot",
+        "The mod slot to fill or clear.", &s_slot_choice, PE_MAX_MODS, pe_slot_list_count, pe_slot_list_name);
+    (void)pe_menu_register_info(PE_PAGE_CATALOG, "Replaces", "What installing takes out of the item.", pe_repl_info);
+    (void)pe_menu_register_action(PE_PAGE_CATALOG, "Install", "Press twice: put the effect in the slot.", pe_grid_accept);
+    (void)pe_menu_register_action(PE_PAGE_CATALOG, "Remove", "Empty the slot. The effect stays unlocked.", pe_remove);
+    (void)pe_menu_register_info(PE_PAGE_CATALOG, "Result", "What the last action did.", pe_result_info);
 
-    (void)pe_menu_register_live_int(PE_CAT_PAGE, "Your Junk",
-        "Junk you have now.", 0, 99999, 1, pe_get_junk, pe_readonly);
-    (void)pe_menu_register_dynamic_choice(PE_CAT_PAGE, "Item",
-        "Your equipped gun or armor.", &s_target, 2,
-        pe_target_list_count, pe_target_list_name);
-    (void)pe_menu_register_dynamic_choice(PE_CAT_PAGE, "Effect",
-        "Locked: dismantle to unlock. * = on the item.", &s_grid, 24,
-        pe_grid_count, pe_grid_name);
-    (void)pe_menu_register_dynamic_choice(PE_CAT_PAGE, "Selected",
-        "The effect under the cursor.", &s_text_dummy[0], 1, pe_one, pe_sel_name);
-    (void)pe_menu_register_dynamic_choice(PE_CAT_PAGE, "Slot",
-        "Mod slot to fill or clear.", &s_slot_choice, PE_MAX_MODS,
-        pe_slot_list_count, pe_slot_list_name);
-    (void)pe_menu_register_dynamic_choice(PE_CAT_PAGE, "Replaces",
-        "What installing removes.", &s_text_dummy[1], 1, pe_one, pe_repl_name);
-    (void)pe_menu_register_action(PE_CAT_PAGE, "Install",
-        "Press twice: put the effect in the slot.", pe_grid_accept);
-    (void)pe_menu_register_action(PE_CAT_PAGE, "Remove",
-        "Empty the slot. Stays unlocked.", pe_remove);
-    (void)pe_menu_register_dynamic_choice(PE_CAT_PAGE, "Result",
-        "What the last action did.", &s_text_dummy[2], 1, pe_one, pe_result_name);
+    (void)pe_menu_register_info(PE_PAGE_DISMANTLE, "Your Junk", "Junk you have now.", pe_junk_info);
+    (void)pe_menu_register_dynamic_choice(PE_PAGE_DISMANTLE, "Item",
+        "A gun or armor you aren't wearing.", &s_dis_choice, 50, pe_dis_list_count, pe_dis_list_name);
+    (void)pe_menu_register_info(PE_PAGE_DISMANTLE, "Gives", "Junk and new Mod Catalog effects for this item.", pe_pays_info);
+    (void)pe_menu_register_action(PE_PAGE_DISMANTLE, "Dismantle", "Press twice. Its effects go to the Mod Catalog.", pe_dismantle);
+    (void)pe_menu_register_info(PE_PAGE_DISMANTLE, "Result", "What the last action did.", pe_result_info);
 
-    (void)pe_menu_register_live_int(PE_RB_PAGE, "Your Junk",
-        "Junk you have now.", 0, 99999, 1, pe_get_junk, pe_readonly);
-    (void)pe_menu_register_dynamic_choice(PE_RB_PAGE, "Item",
-        "Dismantled gear, newest first.", &s_rb_choice, PE_REBUILD_MAX,
-        pe_rb_list_count, pe_rb_list_name);
-    (void)pe_menu_register_live_int(PE_RB_PAGE, "Cost (Junk)",
-        "Price to rebuild this item.", 0, 999, 1, pe_get_rebuild_cost, pe_readonly);
-    (void)pe_menu_register_action(PE_RB_PAGE, "Rebuild",
-        "Buy it back with empty mod slots.", pe_rebuild);
+    (void)pe_menu_register_info(PE_PAGE_REBUILD, "Your Junk", "Junk you have now.", pe_junk_info);
+    (void)pe_menu_register_dynamic_choice(PE_PAGE_REBUILD, "Item",
+        "Dismantled gear, newest first.", &s_rb_choice, PE_REBUILD_MAX, pe_rb_list_count, pe_rb_list_name);
+    (void)pe_menu_register_info(PE_PAGE_REBUILD, "Cost", "Price to rebuild this item.", pe_cost_info);
+    (void)pe_menu_register_action(PE_PAGE_REBUILD, "Rebuild", "Buy it back, with empty mod slots.", pe_rebuild);
+    (void)pe_menu_register_info(PE_PAGE_REBUILD, "Result", "What the last action did.", pe_result_info);
 
-    (void)pe_menu_register_int(PE_TUNING_PAGE, "Mod price common",
-        "Junk for a common effect.", &s_price[0], 0, 500, 5);
-    (void)pe_menu_register_int(PE_TUNING_PAGE, "Mod price mid",
-        "Junk for a mid effect.", &s_price[1], 0, 500, 5);
-    (void)pe_menu_register_int(PE_TUNING_PAGE, "Mod price premium",
-        "Junk for a premium effect (+Tool).", &s_price[2], 0, 500, 5);
-    (void)pe_menu_register_int(PE_TUNING_PAGE, "Rebuild markup %",
-        "Rebuild price vs dismantle payout.", &s_rebuild_markup, 100, 300, 10);
-    (void)pe_menu_register_action(PE_TUNING_PAGE, "Unlock all effects",
-        "Debug: fill the Mod Catalog.", pe_debug_unlock_all);
-    (void)pe_menu_register_action(PE_TUNING_PAGE, "Clear catalog",
-        "Debug: empty Catalog and Rebuild list.", pe_debug_clear_catalog);
-    (void)pe_menu_register_action(PE_TUNING_PAGE, "Give test gun",
-        "Debug: M9 +5, ROF3 Heat 3Cmd Steal.", pe_debug_test_gun);
-    (void)pe_menu_register_action(PE_TUNING_PAGE, "Give test armor",
-        "Debug: N Protector, 4 armor mods.", pe_debug_test_armor);
+    (void)pe_menu_register_int(PE_PAGE_DEBUG_CATALOG, "Mod price common", "Junk for a common effect.", &s_price[0], 0, 500, 5);
+    (void)pe_menu_register_int(PE_PAGE_DEBUG_CATALOG, "Mod price mid", "Junk for a mid effect.", &s_price[1], 0, 500, 5);
+    (void)pe_menu_register_int(PE_PAGE_DEBUG_CATALOG, "Mod price premium", "Junk for a premium effect (+Tool).",
+                               &s_price[2], 0, 500, 5);
+    (void)pe_menu_register_int(PE_PAGE_DEBUG_CATALOG, "Rebuild markup %", "Rebuild price vs dismantle payout.",
+                               &s_rebuild_markup, 100, 300, 10);
+    (void)pe_menu_register_action(PE_PAGE_DEBUG_CATALOG, "Unlock all effects", "Debug: fill the Mod Catalog.", pe_debug_unlock_all);
+    (void)pe_menu_register_action(PE_PAGE_DEBUG_CATALOG, "Clear catalog", "Debug: empty the Catalog and Rebuild list.",
+                                  pe_debug_clear_catalog);
+    (void)pe_menu_register_action(PE_PAGE_DEBUG_CATALOG, "Give test gun", "Debug: M9 +5, ROF3 Heat 3Cmd Steal.", pe_debug_test_gun);
+    (void)pe_menu_register_action(PE_PAGE_DEBUG_CATALOG, "Give test armor", "Debug: N Protector, 4 armor mods.", pe_debug_test_armor);
 
     (void)pe_menu_register_tick(pe_grid_tick);
-    pe_service_publish("catalog", 1, &s_catalog_api, "pe_economy");
-    pe_hook_add(PE_HOOK_SAVE_WRITE, pe_on_save_serialize, NULL, PE_PRIORITY_NORMAL, "pe_economy");
-    pe_hook_add(PE_HOOK_SAVE_READ, pe_on_save_deserialize, NULL, PE_PRIORITY_NORMAL, "pe_economy");
-    pe_hook_add(PE_HOOK_INV_COMMAND, pe_on_inv_dispatch, NULL, PE_PRIORITY_NORMAL, "pe_economy");
-    pe_hook_add(PE_HOOK_TOOL_TRANSFER, pe_on_tool_transfer, NULL, PE_PRIORITY_NORMAL, "pe_economy");
+    pe_service_publish("catalog", 1, &s_catalog_api, mod_id);
+    pe_hook_add(PE_HOOK_SAVE_WRITE, pe_on_save_serialize, NULL, PE_PRIORITY_NORMAL, mod_id);
+    pe_hook_add(PE_HOOK_SAVE_READ, pe_on_save_deserialize, NULL, PE_PRIORITY_NORMAL, mod_id);
+    pe_hook_add(PE_HOOK_INV_COMMAND, pe_on_inv_dispatch, NULL, PE_PRIORITY_NORMAL, mod_id);
+    pe_hook_add(PE_HOOK_TOOL_TRANSFER, pe_on_tool_transfer, NULL, PE_PRIORITY_NORMAL, mod_id);
 }

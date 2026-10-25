@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "pe_mod_host.h"
+#include "pe_pages.h"
 
 extern const PeMod *const g_pe_mods[]; /* generated: pe_mod_list.c */
 
@@ -195,6 +196,7 @@ static void pe_host_start(const PeHookInit *init) {
         s_log = fopen(log_path, "w");
     pe_mod_log(NULL, "mod host started (%s)", s_interactive ? "interactive" : "headless");
     pe_menu_load_settings();
+    pe_pages_describe();
     pe_start_mods();
     if (s_interactive) pe_panel_install();
     s_started = 1;

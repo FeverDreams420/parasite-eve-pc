@@ -193,6 +193,47 @@ int pe_menu_register_dynamic_choice(const char *sub, const char *label, const ch
     return 0;
 }
 
+int pe_menu_register_info(const char *sub, const char *label, const char *description, PeMenuText text) {
+    PeMenuRow *row;
+    if (!text || !(row = pe_row_new(PE_ROW_INFO, sub, label, description))) return -1;
+    row->text_fn = text;
+    return 0;
+}
+
+/* ---- page metadata ---- */
+enum { PE_MAX_PAGES = 64 };
+static PeMenuPageInfo s_pages[PE_MAX_PAGES];
+static int s_page_count;
+
+int pe_menu_page(const char *sub, const char *description, int order) {
+    PeMenuPageInfo *p;
+    char path[96];
+    int i;
+    if (!sub || !*sub) return -1;
+    snprintf(path, sizeof path, "%s/%s", s_page, sub);
+    for (i = 0; i < s_page_count && strcmp(s_pages[i].path, path) != 0; ++i) {}
+    if (i == s_page_count) {
+        if (s_page_count >= PE_MAX_PAGES) return -1;
+        ++s_page_count;
+    }
+    p = &s_pages[i];
+    snprintf(p->path, sizeof p->path, "%s", path);
+    p->description = description;
+    p->order = order;
+    return 0;
+}
+
+const PeMenuPageInfo *pe_menu_page_info(const char *path) {
+    int i;
+    for (i = 0; i < s_page_count; ++i)
+        if (strcmp(s_pages[i].path, path) == 0) return &s_pages[i];
+    return NULL;
+}
+
+int pe_menu_row_adjustable(const PeMenuRow *row) {
+    return row->kind != PE_ROW_ACTION && row->kind != PE_ROW_INFO;
+}
+
 static int pe_menu_tick(void *ctx, void *user) {
     int i;
     (void)ctx;
@@ -248,6 +289,10 @@ void pe_menu_row_value_text(PeMenuRow *row, char *out, unsigned size) {
         if (pe_dynamic_count(row) == 0) snprintf(out, size, "(none)");
         else snprintf(out, size, "%s", row->name_fn((unsigned)*row->value));
         break;
+    case PE_ROW_INFO:
+        out[0] = '\0';
+        row->text_fn(out, size);
+        break;
     }
 }
 
@@ -278,15 +323,25 @@ void pe_menu_row_step(PeMenuRow *row, int direction) {
         if (count) *row->value = pe_wrap(*row->value + direction, (int)count);
         break;
     case PE_ROW_ACTION:
+    case PE_ROW_INFO:
         break;
     }
 }
 
+/* Enter: run an action, flip a toggle, cycle a choice. Numbers change with left/right only. */
 void pe_menu_row_accept(PeMenuRow *row) {
-    if (row->kind == PE_ROW_ACTION) {
+    switch (row->kind) {
+    case PE_ROW_ACTION:
         pe_mod_log(NULL, "action %s/%s", row->page, row->label);
         row->action();
-    } else if (row->kind == PE_ROW_TOGGLE) {
+        break;
+    case PE_ROW_TOGGLE:
+    case PE_ROW_CHOICE:
+    case PE_ROW_LIVE_CHOICE:
+    case PE_ROW_DYNAMIC_CHOICE:
         pe_menu_row_step(row, 1);
+        break;
+    default:
+        break;
     }
 }

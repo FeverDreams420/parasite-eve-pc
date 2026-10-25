@@ -33,6 +33,7 @@
 #include "pe_game.h"
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
+#include "pe_pages.h"
 #include "pe1/weapon_list_output.h"
 
 enum { RULES_VANILLA, RULES_REBALANCED, RULES_CUSTOM };
@@ -624,12 +625,12 @@ void pe_mod_effects_register(const char *mod_id) {
     int i;
     /* Saved values restore as the rows register; the rules then follow from what they match. */
     pe_apply_rules(RULES_REBALANCED);
-    pe_menu_register_choice("Mod Effects", "Rules", "Vanilla, Rebalanced, or Custom.", &s_rules, s_rules_names, 3);
+    pe_menu_register_choice(PE_PAGE_MOD_EFFECTS, "Rules", "Vanilla, Rebalanced, or Custom.", &s_rules, s_rules_names, 3);
     for (i = 0; i < PE_ROWS; ++i) {
         if (s_rows[i].choice)
-            pe_menu_register_choice("Mod Effects", s_rows[i].label, s_rows[i].desc, s_rows[i].value, s_onoff, 2);
+            pe_menu_register_choice(PE_PAGE_MOD_EFFECTS, s_rows[i].label, s_rows[i].desc, s_rows[i].value, s_onoff, 2);
         else
-            pe_menu_register_int("Mod Effects", s_rows[i].label, s_rows[i].desc, s_rows[i].value,
+            pe_menu_register_int(PE_PAGE_MOD_EFFECTS, s_rows[i].label, s_rows[i].desc, s_rows[i].value,
                                  s_rows[i].min, s_rows[i].max, s_rows[i].step);
     }
     s_rules = pe_matches(RULES_REBALANCED) ? RULES_REBALANCED : pe_matches(RULES_VANILLA) ? RULES_VANILLA : RULES_CUSTOM;

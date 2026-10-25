@@ -37,6 +37,7 @@
 #include "pe_game.h"
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
+#include "pe_pages.h"
 #include "pe1/battle.h"
 #include "pe1/draw_state.h"
 #include "pe1/game_timers.h"
@@ -821,7 +822,6 @@ static void pe_loot_tick(void) {
 
 /* ---- menu ---- */
 static int pe_get_junk(void) { return (int)s_st.junk; }
-static int pe_readonly(int value) { (void)value; return 0; }
 static int pe_get_rare_within(void) {
     const int left = (int)pe_rare_guarantee() - (int)s_st.rare_dry, step = (int)pe_pity_step();
     return left < 1 ? 1 : (left + step - 1) / step;
@@ -851,18 +851,28 @@ static void pe_give_100(void) { pe_give_junk_toast(100); }
 static void pe_give_1000(void) { pe_give_junk_toast(1000); }
 static int pe_set_junk_debug(int v) { if (v < 0 || v > 99999) return 0; s_st.junk = (uint32_t)v; return 1; }
 
-#define PE_WORKSHOP_PAGE "Workshop"
-#define PE_TUNING_PAGE   "Debug/Loot tuning"
+static void pe_junk_text(char *out, unsigned size) {
+    if (!pe_game_loaded()) snprintf(out, size, "load a game");
+    else snprintf(out, size, "%u", (unsigned)s_st.junk);
+}
+static void pe_rare_text(char *out, unsigned size) {
+    if (!pe_game_loaded()) snprintf(out, size, "-");
+    else snprintf(out, size, "%d battle%s", pe_get_rare_within(), pe_get_rare_within() == 1 ? "" : "s");
+}
 
-void pe_loot_register(void) {
-    pe_menu_register_toggle(PE_WORKSHOP_PAGE, "Junk economy", "Junk counter, Mod Catalog and shop.", &s_enabled, pe_loot_tick);
-    pe_menu_register_live_int(PE_WORKSHOP_PAGE, "Junk", "Earned in battles and chests.", 0, 99999, 1, pe_get_junk, pe_readonly);
-    pe_menu_register_action(PE_WORKSHOP_PAGE, "Take out Junk", "Economy off: counter Junk to bag/trunk.", pe_take_out_junk);
-    pe_menu_register_live_int(PE_WORKSHOP_PAGE, "Rare drop within", "Battles until a rare drop is certain.", 1, 999, 1,
-                              pe_get_rare_within, pe_readonly);
-    pe_menu_register_choice(PE_WORKSHOP_PAGE, "Wayne hand-in", "Junk that Discard junk gives Wayne.", &s_handin_mode, s_handin_names, 2);
-    pe_menu_register_live_choice(PE_WORKSHOP_PAGE, "Difficulty", "Junk, rare luck and prices. Any time.", s_preset_names, 3,
-                                 pe_get_preset, pe_set_preset);
+#define PE_TUNING_PAGE PE_PAGE_DEBUG_LOOT
+
+void pe_loot_register(const char *mod_id) {
+    pe_menu_register_info(PE_PAGE_ECONOMY, "Junk", "Earned in battles and chests; spent in the Workshop.", pe_junk_text);
+    pe_menu_register_live_choice(PE_PAGE_ECONOMY, "Difficulty", "Junk earned, rare luck and prices. Change any time.",
+                                 s_preset_names, 3, pe_get_preset, pe_set_preset);
+    pe_menu_register_info(PE_PAGE_ECONOMY, "Rare drop within", "Won battles until a rare drop is certain.", pe_rare_text);
+    pe_menu_register_choice(PE_PAGE_ECONOMY, "Wayne hand-in", "How much Junk Wayne's Discard junk gives him.",
+                            &s_handin_mode, s_handin_names, 2);
+    pe_menu_register_toggle(PE_PAGE_ECONOMY, "Junk economy", "Off: Junk goes back in the bag, as in the original game.",
+                            &s_enabled, pe_loot_tick);
+    pe_menu_register_action(PE_PAGE_ECONOMY, "Take out Junk", "With the economy off: move counter Junk to the bag and trunk.",
+                            pe_take_out_junk);
     pe_menu_register_int(PE_TUNING_PAGE, "Junk floor", "Junk for every won battle.", &s_tune_floor, 0, 10, 1);
     pe_menu_register_int(PE_TUNING_PAGE, "EXP per Junk", "Battle EXP for each extra Junk.", &s_tune_exp_per_junk, 1, 100, 1);
     pe_menu_register_int(PE_TUNING_PAGE, "Battle Junk cap", "Most Junk from one battle.", &s_tune_battle_cap, 1, 200, 1);
@@ -878,13 +888,13 @@ void pe_loot_register(void) {
     pe_menu_register_action(PE_TUNING_PAGE, "Give 1000 Junk", "Debug: add 1000 Junk.", pe_give_1000);
     pe_menu_register_live_int(PE_TUNING_PAGE, "Set Junk", "Debug: change the Junk counter.", 0, 99999, 10, pe_get_junk, pe_set_junk_debug);
 
-    pe_service_publish("junk", 1, &s_junk_api, MOD_ID);
-    pe_hook_add(PE_HOOK_BATTLE_REWARDS, pe_on_rewards, NULL, PE_PRIORITY_NORMAL, MOD_ID);
-    pe_hook_add(PE_HOOK_SLOT_ROW, pe_on_slot_row, NULL, PE_PRIORITY_NORMAL, MOD_ID);
-    pe_hook_add(PE_HOOK_STEAL, pe_on_steal, NULL, PE_PRIORITY_NORMAL, MOD_ID);
-    pe_hook_add(PE_HOOK_ITEM_ADD, pe_on_item_add, NULL, PE_PRIORITY_LATE, MOD_ID);  /* after loggers see the real id */
-    pe_hook_add(PE_HOOK_ITEM_COUNT, pe_on_item_count, NULL, PE_PRIORITY_NORMAL, MOD_ID);
-    pe_hook_add(PE_HOOK_INV_COMMAND, pe_on_inv_command, NULL, PE_PRIORITY_NORMAL, MOD_ID);
-    pe_hook_add(PE_HOOK_SAVE_WRITE, pe_on_save_write, NULL, PE_PRIORITY_NORMAL, MOD_ID);
-    pe_hook_add(PE_HOOK_SAVE_READ, pe_on_save_read, NULL, PE_PRIORITY_NORMAL, MOD_ID);
+    pe_service_publish("junk", 1, &s_junk_api, mod_id);
+    pe_hook_add(PE_HOOK_BATTLE_REWARDS, pe_on_rewards, NULL, PE_PRIORITY_NORMAL, mod_id);
+    pe_hook_add(PE_HOOK_SLOT_ROW, pe_on_slot_row, NULL, PE_PRIORITY_NORMAL, mod_id);
+    pe_hook_add(PE_HOOK_STEAL, pe_on_steal, NULL, PE_PRIORITY_NORMAL, mod_id);
+    pe_hook_add(PE_HOOK_ITEM_ADD, pe_on_item_add, NULL, PE_PRIORITY_LATE, mod_id);  /* after loggers see the real id */
+    pe_hook_add(PE_HOOK_ITEM_COUNT, pe_on_item_count, NULL, PE_PRIORITY_NORMAL, mod_id);
+    pe_hook_add(PE_HOOK_INV_COMMAND, pe_on_inv_command, NULL, PE_PRIORITY_NORMAL, mod_id);
+    pe_hook_add(PE_HOOK_SAVE_WRITE, pe_on_save_write, NULL, PE_PRIORITY_NORMAL, mod_id);
+    pe_hook_add(PE_HOOK_SAVE_READ, pe_on_save_read, NULL, PE_PRIORITY_NORMAL, mod_id);
 }

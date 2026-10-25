@@ -20,11 +20,13 @@
  * Aya's bag, else the item's base data.
  */
 #include <stdint.h>
+#include <stdio.h>
 #include <psyz/video.h>
 
 #include "pe_game.h"
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
+#include "pe_pages.h"
 #include "pe1/menu_context_help.h"
 #include "pe1/weapon_list_output.h"
 
@@ -166,13 +168,16 @@ static int pe_on_help_text(void *ctx, void *user) {
     return 0;
 }
 
-static int pe_get_turn_tenths(void) { return (int)(s_clock_x10 * 10u / (50u * 4u)); }
-static int pe_readonly(int value) { (void)value; return 0; }
+static void pe_turn_text(char *out, unsigned size) {
+    const unsigned tenths = s_clock_x10 * 10u / (50u * 4u);
+    snprintf(out, size, "%u.%u s%s", tenths / 10u, tenths % 10u, s_clock_samples ? "" : " (not measured yet)");
+}
 
 void pe_weapon_power_register(const char *mod_id) {
-    pe_menu_register_toggle(0, "Weapon power", "Shows gun damage per second in menus.", &s_show_power, NULL);
-    pe_menu_register_live_int("Debug", "DPS clock (turn, 0.1 s)", "After an attack at Active Time 1; measured in battle.",
-                              0, 100000, 1, pe_get_turn_tenths, pe_readonly);
+    pe_menu_register_toggle(PE_PAGE_COMBAT, "Weapon power (DPS)", "Shows gun damage per second in the item menu.",
+                            &s_show_power, NULL);
+    pe_menu_register_info(PE_PAGE_DEBUG, "DPS turn clock", "A turn after an attack at Active Time 1, measured in battle.",
+                          pe_turn_text);
     pe_menu_register_tick(pe_clock_tick);
     pe_hook_add(PE_HOOK_HELP_TEXT, pe_on_help_text, NULL, PE_PRIORITY_NORMAL, mod_id);
 }

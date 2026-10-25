@@ -1,8 +1,20 @@
-# Mod host and mods, built only with -DPE_MODS=ON.
-# Each mod is a folder here holding <id>.c files and defining `const PeMod pe_mod_<id>`.
-set(PE_MOD_LIST pe_qol pe_rebalance pe_economy pe_hello CACHE STRING "Mods built into the game (folder names)")
+# Mod host and mods, built only with -DPE_MODS=ON. See mods/README.md.
+# Each mod is a folder here holding .c files and defining `const PeMod pe_mod_<folder>`.
+# pe_hello is the example mod; add it to the list to build it.
+set(PE_MOD_LIST pe_qol pe_rebalance pe_economy CACHE STRING "Mods built into the game (folder names)")
 
-set(pe_mod_sources host/pe_mod_host.c host/pe_mod_menu.c host/pe_mod_panel.c host/pe_game.c host/pe_ps1.c)
+set(pe_host_sources
+    host/pe_mod_host.c      # registry, hooks, services, events, logs
+    host/pe_mod_menu.c      # Mods panel rows and pe_mods.ini
+    host/pe_mod_panel.c     # the F1 panel: navigation and input
+    host/pe_pages.c         # PE Enhancements page layout
+    host/pe_game.c          # game access helpers
+    host/pe_ps1.c           # PS1-address access for ported code
+    host/ui/pe_ui_raster.c  # drawing: boxes and text
+    host/ui/pe_ui_gpu.c     # the overlay quad
+    host/ui/pe_toast.c)     # one-line messages
+
+set(pe_mod_sources ${pe_host_sources})
 set(pe_mod_decls "")
 set(pe_mod_refs "")
 foreach(mod IN LISTS PE_MOD_LIST)

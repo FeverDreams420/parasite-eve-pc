@@ -10,6 +10,7 @@ void pe_god_mode_register(const char *mod_id);
 void pe_encounters_register(const char *mod_id);
 void pe_battle_frequency_register(const char *mod_id);
 void pe_ammo_register(const char *mod_id);
+void pe_floors_register(const char *mod_id);   /* pe_floors.c: Debug bag / bonus points floors */
 
 static int qol_init(void) {
     pe_move_register(MOD_ID);
@@ -20,6 +21,7 @@ static int qol_init(void) {
     pe_encounters_register(MOD_ID);
     pe_battle_frequency_register(MOD_ID);
     pe_ammo_register(MOD_ID);
+    pe_floors_register(MOD_ID);
     return 0;
 }
 

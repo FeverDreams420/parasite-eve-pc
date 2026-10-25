@@ -8,7 +8,7 @@
  *   "junk"      v1  pe_economy  the Junk counter
  *   "catalog"   v1  pe_economy  armor effects unlocked in the Mod Catalog
  *   "keys"      v1  pe_qol      the key item pocket
- *   "wardrobe"  v1  (Collection, when ported)  skins bought with Junk
+ *   "wardrobe"  v1  pe_collection  outfits bought with Junk
  */
 
 #include <stddef.h>

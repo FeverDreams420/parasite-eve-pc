@@ -1,4 +1,5 @@
 #include "common.h"
+#include "pe_hooks.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1366,6 +1367,7 @@ int CdRom_DetectDiscChange(void) {
 /* Load the area textures and model/action bank through the original phases. */
 int Scene_LoadEntityTexture(void)
 {
+    PE_HOOK(PE_HOOK_PLAYER_BANK, NULL);
     int bank = g_SceneAreaType;
     u32 lba = g_GameState.pe_image_base_lba;
     Pe1GameState *state = &g_GameState;

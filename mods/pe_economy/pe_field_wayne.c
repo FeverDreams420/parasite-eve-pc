@@ -29,7 +29,6 @@
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
 #include "pe_pages.h"
-#include "pe1/asset_table.h"
 #include "pe1/field_sfx.h"
 #include "pe1/scene_dispatch.h"
 #include "pe1/scene_transition.h"
@@ -80,18 +79,6 @@ static int s_pending = -1;        /* storage screen to open: PE_STORE_*, or -1 *
 static int s_pending_wait;        /* frames left before it opens */
 
 static int pe_free_field(void) { return !(g_GameStateFlags & 0x2006u) && !(g_GameStateFlagsWord & 0xB600u); }
-
-/* The room number from the scene token's base-32 name ("M374..."). */
-static int pe_map_number(void) {
-    const unsigned token = (unsigned)g_SceneDispatchToken;
-    int n = 0, i;
-    for (i = 2; i < 5; ++i) {
-        const char c = (char)g_Base32CharTable[(token >> ((5 - i) * 5 + 2)) & 0x1Fu];
-        if (c < '0' || c > '9') return -1;
-        n = n * 10 + (c - '0');
-    }
-    return n;
-}
 
 /* Is `e` Warner, with his retail contact task? */
 static int pe_is_warner(BattleEntity *e) {
@@ -220,7 +207,7 @@ static int pe_on_textboxes(void *ctx, void *user) {
     if (!s_warner) {
         /* Found by his retail talk script (checked word for word), in whatever room he stands. */
         if (!(s_warner = pe_find_warner())) return 0;
-        pe_mod_log("pe_economy", "Warner found in room %d: storage and Workshop offered", pe_map_number());
+        pe_mod_log("pe_economy", "Warner found in room %d: storage and Workshop offered", pe_room_number());
     }
     if (pe_talk_running()) {
         pe_talk_tick();

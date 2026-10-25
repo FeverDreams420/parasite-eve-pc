@@ -9,7 +9,9 @@
  *     Combat              rules, mod effects, Parasite Energy, DPS  (pe_rebalance)
  *     Economy             Junk, difficulty, Catalog, Dismantle,      (pe_economy)
  *                         Rebuild
- *     Debug               tuning and test rows of every mod
+ *     Inventory           key item pocket, bag sorting              (pe_qol)
+ *     Collection          Bestiary, Wardrobe                        (pe_collection)
+ *     Debug              tuning and test rows of every mod
  *
  * The sub-page strings are passed as `sub` to pe_menu_register_* while PE_MENU_PAGE is the
  * current page; pe_pages_describe() gives each page its description and order. */
@@ -28,7 +30,11 @@
 #define PE_PAGE_REBUILD        "Economy/Rebuild"
 #define PE_PAGE_INVENTORY       "Inventory"
 #define PE_PAGE_KEYS            "Inventory/Key items"
+#define PE_PAGE_COLLECTION      "Collection"
+#define PE_PAGE_BESTIARY        "Collection/Bestiary"
+#define PE_PAGE_WARDROBE        "Collection/Wardrobe"
 #define PE_PAGE_DEBUG          "Debug"
+#define PE_PAGE_DEBUG_COLLECTION "Debug/Collection"
 #define PE_PAGE_DEBUG_LOOT     "Debug/Loot tuning"
 #define PE_PAGE_DEBUG_CATALOG  "Debug/Mod Catalog"
 

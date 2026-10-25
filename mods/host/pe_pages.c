@@ -17,8 +17,12 @@ void pe_pages_describe(void) {
     pe_menu_page(PE_PAGE_REBUILD, "Buy dismantled gear back.", 30);
     pe_menu_page(PE_PAGE_INVENTORY, "Key-item pocket, remembered bag sorting and inventory counters.", 40);
     pe_menu_page(PE_PAGE_KEYS, "Browse pocketed keys and story items.", 10);
+    pe_menu_page(PE_PAGE_COLLECTION, "Bestiary and Wardrobe, kept across every game.", 50);
+    pe_menu_page(PE_PAGE_BESTIARY, "Creatures you've met: weaknesses and loot.", 10);
+    pe_menu_page(PE_PAGE_WARDROBE, "Aya's outfits, bought once with Junk.", 20);
     pe_menu_page(PE_PAGE_DEBUG, "Tuning and test tools. Changes the balance.", 90);
     pe_menu_page(PE_PAGE_DEBUG_LOOT, "Junk amounts, rare drop chances, debug Junk.", 10);
     pe_menu_page(PE_PAGE_DEBUG_CATALOG, "Prices, unlock-all and test gear.", 20);
+    pe_menu_page(PE_PAGE_DEBUG_COLLECTION, "Reset Bestiary and Wardrobe unlocks.", 30);
     pe_menu_begin(0);
 }

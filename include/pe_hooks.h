@@ -36,6 +36,8 @@ typedef enum PeHookId {
     PE_HOOK_TEXTBOXES,   /* NULL: Menu_DrawTextboxEntries entry, before the dialogue boxes draw */
     PE_HOOK_ITEM_ACTIONS, /* PeHookItemActions: an item's action list (Use / Move / Discard ...) just opened */
     PE_HOOK_MAIN_MENU_ICON, /* PeHookMainMenuIcon: a main menu row's icon, before it is drawn */
+    PE_HOOK_PLAYER_BANK, /* NULL: Scene_LoadEntityTexture entry, Aya's model / texture load step;
+                          * g_SceneAreaType (her outfit bank) may be changed while entity_texture_phase is 0 */
     PE_HOOK_COUNT
 } PeHookId;
 

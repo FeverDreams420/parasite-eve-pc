@@ -1,4 +1,17 @@
 #include "pe_game.h"
+#include "pe1/asset_table.h"
+#include "pe1/scene_dispatch.h"
+
+int pe_room_number(void) {
+    const unsigned token = (unsigned)g_SceneDispatchToken;
+    int n = 0, i;
+    for (i = 2; i < 5; ++i) {
+        const char c = (char)g_Base32CharTable[(token >> ((5 - i) * 5 + 2)) & 0x1Fu];
+        if (c < '0' || c > '9') return -1;
+        n = n * 10 + (c - '0');
+    }
+    return n;
+}
 
 BattleEntity *pe_player(void) { return D_8009D254; }
 

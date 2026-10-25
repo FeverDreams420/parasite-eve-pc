@@ -1,15 +1,13 @@
 /*
  * The Mod Catalog in Aya's own menu (native rewrite of the psxrecomp build's pe_catalog_menu.c).
  *
- * Main menu: one more row after the game's last (not in battle). PE_HOOK_LIST_ROWS gives the
- * main list (draw == Menu_DrawItemList) the extra row; the game draws a row past its last action
- * with its own spare icon, and PE_HOOK_HELP_TEXT titles it "Mod Catalog"; PE_HOOK_MAIN_MENU_ACTION
- * opens the Catalog when it is confirmed (the game would do nothing).
+ * Main menu: a "Mod Catalog" row after the game's last, through the host's extra rows
+ * (pe_main_menu.h; the game's own spare icon).
  *
- * The Catalog is built from the game's own menu widgets, the way its screens are: a panel node
- * with our input handler and a list node with our row drawer (MenuWidget_DrawList), so cursor
- * movement, scrolling and sounds are the game's. One wide panel whose list shows three steps
- * in turn (Circle goes back a step, each step remembers its row):
+ * The Catalog is a host screen built from the game's own menu widgets: a panel node with our
+ * input handler and a list node with our row drawer (MenuWidget_DrawList), so cursor movement,
+ * scrolling and sounds are the game's. One wide panel whose list shows three steps in turn
+ * (Circle goes back a step, each step remembers its row):
  *   Item    your equipped gun / armor
  *   Slot    that item's mod slots
  *   Effect  Remove, the unlocked effects with their price, locked ones dimmed
@@ -22,21 +20,15 @@
 
 #include "pe_economy.h"
 #include "pe_game.h"
+#include "pe_main_menu.h"
 #include "pe_mod_host.h"
 #include "pe1/draw_state.h"
 #include "pe1/menu_draw_list.h"
 #include "pe1/menu_sound.h"
-#include "pe1/menu_scroll_cursor.h"
-#include "pe1/menu_state.h"
 #include "pe1/menu_widget.h"
 #include "pe_catalog.h"
 #include "pe_gametext.h"
 
-void Menu_DrawItemList(MenuWidgetNode *node);
-
-#define PE_DESC_PANEL   0x20   /* the options menu's panel and list layout */
-#define PE_TITLE_BASE   17     /* a selected_base whose title-bar case always prints */
-#define PE_MAX_ROWS     24
 #define PE_TEXT_MAX     64
 
 enum { STEP_ITEM, STEP_SLOT, STEP_EFFECT, STEP_COUNT };
@@ -48,8 +40,10 @@ enum { STEP_ITEM, STEP_SLOT, STEP_EFFECT, STEP_COUNT };
 #define PE_PANEL_W      240
 #define PE_LIST_ROWS    8      /* visible rows; longer lists scroll */
 
+static PeScreen s_screen;
+
 static struct {
-    MenuWidgetNode *panel, *list, *main_list;
+    MenuWidgetNode *list;  /* s_screen.list while the Catalog is open */
     int step;
     int row[STEP_COUNT]; /* the row each step was left on */
     int which;           /* 0 gun, 1 armor */
@@ -171,119 +165,39 @@ static void pe_title_for(int step, char *out, size_t size) {
 
 static int pe_step_of(const MenuWidgetNode *node) { return node && node == s_cat.list ? s_cat.step : -1; }
 
-static int pe_main_row_count(void) {
-    int bits = g_MenuItemContextFlag & 0x1EF, n = 0;
-    while (bits) { n += bits & 1; bits >>= 1; }
-    return n;
-}
-
 static int pe_on_help_text(void *ctx, void *user) {
     u8 **text = (u8 **)ctx;
-    MenuWidgetNode *current = MenuWidget_GetCurrentNode();
-    const int step = pe_step_of(current);
+    const int step = pe_step_of(MenuWidget_GetCurrentNode());
     char title[PE_TEXT_MAX];
     (void)user;
     if (step >= 0) {
         pe_title_for(step, title, sizeof title);
         *text = pe_game_text(s_title, title);
-    } else if (current && current->draw == (void (*)())Menu_DrawItemList && !Menu_GetBattleEquipMode() &&
-               MenuWidget_GridCellIndex(current) == pe_main_row_count()) {
-        *text = pe_game_text(s_title, "Mod Catalog");
     }
     return 0;
 }
 
-/* ---- Aya's panels ----
- * Like the game's own screens, the Catalog hides Aya's status panels (mode-1 panels 0x12, 0x18,
- * 0x2D, hidden while their cursor_y is set: MenuWidget_UpdateAndDraw) and the HP overlay, and
- * puts them back when it closes. */
-extern int g_MenuBattleStatusOverlayActive;
-enum { PE_HIDDEN_MAX = 4 };
-static struct { MenuWidgetNode *node[PE_HIDDEN_MAX]; int selected[PE_HIDDEN_MAX]; int overlay; } s_hidden;
-
-static void pe_hide_panels(void) {
-    MenuWidgetNode *node = g_MenuWidgetActiveListHead;
-    int n = 0, guard;
-    memset(&s_hidden, 0, sizeof s_hidden);
-    for (guard = 0; node && guard < 64 && n < PE_HIDDEN_MAX; ++guard, node = node->next) {
-        const int sel = node->selected_base;
-        if (node->mode == 1 && (sel == 0x12 || sel == 0x18 || sel == 0x2D) && node->cursor_y == 0) {
-            node->cursor_y = 1;
-            s_hidden.node[n] = node;
-            s_hidden.selected[n++] = sel;
-        }
-    }
-    s_hidden.overlay = g_MenuBattleStatusOverlayActive;
-    g_MenuBattleStatusOverlayActive = 0;
-}
-
-static void pe_show_panels(void) {
-    int i;
-    for (i = 0; i < PE_HIDDEN_MAX; ++i) {
-        MenuWidgetNode *node = s_hidden.node[i];
-        if (node && node->mode == 1 && node->selected_base == s_hidden.selected[i]) node->cursor_y = 0;
-    }
-    g_MenuBattleStatusOverlayActive = s_hidden.overlay;
-    memset(&s_hidden, 0, sizeof s_hidden);
-}
-
-/* ---- screens ---- */
+/* ---- the screen ---- */
 static int pe_screen_input(MenuWidgetNode *panel, unsigned int buttons);
-
-/* The stock grid handler advances the viewport by one row, even when its
- * Options layout wraps the cursor to the opposite end. Keep those jumps
- * (and input arriving during a scroll animation) inside this list's viewport. */
-static int pe_scroll_input(MenuWidgetNode *list, unsigned int buttons) {
-    int handled = Menu_StepScrollCursor(list, buttons);
-    int top = list->scroll_y;
-    if (list->cursor_y < top) top = list->cursor_y;
-    else if (list->cursor_y >= top + list->visible_rows)
-        top = list->cursor_y - list->visible_rows + 1;
-    if (top != list->scroll_y) {
-        list->scroll_y = top;
-        list->scroll_adjust = 0;
-    }
-    return handled;
-}
 
 /* Show step `step` in the list, the cursor on `row`. */
 static void pe_set_step(int step, int row) {
-    const int rows = pe_row_count(step);
     s_cat.step = step;
     s_cat.armed = -1;
     s_cat.result[0] = '\0';
-    s_cat.list->scroll_adjust = 0;
-    s_cat.list->cursor_x = 0;
-    s_cat.list->cursor_y = row >= 0 && row < rows ? row : 0;
-    s_cat.list->scroll_y = s_cat.list->cursor_y >= PE_LIST_ROWS ? s_cat.list->cursor_y - PE_LIST_ROWS + 1 : 0;
-    Draw_SetPrimCallback(s_cat.list, rows);
+    pe_screen_rows(&s_screen, pe_row_count(step), row);
 }
 
 static void pe_open(MenuWidgetNode *from) {
-    s_cat.panel = MenuWidget_CreateSimpleNode(PE_DESC_PANEL, from, 0, 0);
-    s_cat.list = MenuWidget_CreateNode(PE_DESC_PANEL, s_cat.panel, s_cat.panel);
-    s_cat.panel->update = pe_screen_input;
-    s_cat.panel->x = PE_PANEL_X;
-    s_cat.panel->y = PE_PANEL_Y;
-    s_cat.panel->grid_width = PE_PANEL_W;
-    /* The list clips to cell width, independently of the panel's background.
-     * Replace the borrowed Options layout's 68-pixel cell with the panel's
-     * inner width (the list's x offset supplies the margin on either side). */
-    s_cat.list->draw_state = PE_PANEL_W - 2 * s_cat.list->x;
-    s_cat.list->draw = (void (*)())pe_draw_list;
-    s_cat.list->update = pe_scroll_input;
-    s_cat.list->selected_base = PE_TITLE_BASE;
-    s_cat.list->visible_rows_mirror = PE_LIST_ROWS;
+    pe_screen_open(&s_screen, from, PE_PANEL_X, PE_PANEL_Y, PE_PANEL_W, PE_LIST_ROWS, pe_draw_list, pe_screen_input);
+    s_cat.list = s_screen.list;
     memset(s_cat.row, 0, sizeof s_cat.row);
-    MenuWidget_SetCurrentNode(s_cat.list);
     pe_set_step(STEP_ITEM, 0);
 }
 
 static void pe_close(void) {
-    MenuWidget_DestroyNode(s_cat.panel);
-    s_cat.panel = s_cat.list = NULL;
-    pe_show_panels();
-    if (s_cat.main_list) MenuWidget_SetCurrentNode(s_cat.main_list);
+    s_cat.list = NULL;
+    pe_screen_close(&s_screen);
 }
 
 /* Circle: back a step, or out of the Catalog. */
@@ -325,7 +239,7 @@ static void pe_effect_confirm(int row) {
 
 static int pe_screen_input(MenuWidgetNode *panel, unsigned int buttons) {
     const int step = s_cat.step;
-    if (panel != s_cat.panel) return 0;
+    if (panel != s_screen.panel) return 0;
     if (buttons & 0x40) {                                   /* Circle */
         pe_back();
         Menu_PlayCancelSound();
@@ -354,33 +268,9 @@ static int pe_screen_input(MenuWidgetNode *panel, unsigned int buttons) {
 }
 
 /* ---- main menu row ---- */
-static int pe_on_list_rows(void *ctx, void *user) {
-    const PeHookListRows *r = (const PeHookListRows *)ctx;
-    (void)user;
-    if (r->node && r->node->draw == (void (*)())Menu_DrawItemList && !Menu_GetBattleEquipMode() &&
-        pe_loot_enabled() && pe_game_loaded()) {
-        ++*r->count;
-        /* The main list shows at most visible_rows_mirror rows (8, its layout's cap): with every
-         * game row present ours would sit past it. Raise the cap; the game grows the panel. */
-        if (r->node->visible_rows_mirror < *r->count) r->node->visible_rows_mirror = *r->count;
-        pe_mod_log("pe_economy", "main menu: %d rows with Mod Catalog", *r->count);
-    }
-    return 0;
-}
-
-static int pe_on_main_action(void *ctx, void *user) {
-    const PeHookMenuAction *a = (const PeHookMenuAction *)ctx;
-    (void)user;
-    pe_mod_log("pe_economy", "main menu action %d", a->action);
-    if (a->action != 9 || Menu_GetBattleEquipMode() || !pe_loot_enabled()) return 0;
-    s_cat.main_list = a->list;
-    pe_hide_panels();
-    pe_open(a->list);
-    return 1;                                              /* handled: the game plays the confirm sound */
-}
+static const PeMainMenuRow s_row = { "Mod Catalog", 0, pe_loot_enabled, pe_open };
 
 void pe_catalog_menu_register(const char *mod_id) {
-    pe_hook_add(PE_HOOK_LIST_ROWS, pe_on_list_rows, NULL, PE_PRIORITY_NORMAL, mod_id);
-    pe_hook_add(PE_HOOK_MAIN_MENU_ACTION, pe_on_main_action, NULL, PE_PRIORITY_NORMAL, mod_id);
+    pe_main_menu_add(&s_row, 10);
     pe_hook_add(PE_HOOK_HELP_TEXT, pe_on_help_text, NULL, PE_PRIORITY_LATE, mod_id);
 }

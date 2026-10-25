@@ -179,6 +179,16 @@ from the main menu; Wayne's storage is untouched by automatic sorting.
 pe_qol/pe_inventory_menu.c owns the shortcut and transient row hiding, separate
 from sorting policy. It restores the original menu mask on save and menu exit.
 
+Key Items in Aya's main menu (pe_qol/pe_key_menu.c, while the pocket is on): a row with the
+Dressing Room Key's icon opens a view-only list of the pocket, each key with its icon and name and
+the highlighted key's game description in the title bar. Circle or Cross goes back.
+
+Extra main-menu rows and screens are a host service (host/pe_main_menu.h): a mod adds a row
+(title, icon item, shown test, open callback, order) and builds its screen with pe_screen_open /
+pe_screen_rows / pe_screen_close, which also hide Aya's status panels and keep scrolling inside
+the list. The host owns the main-menu hooks (LIST_ROWS, MAIN_MENU_ICON, HELP_TEXT for the row
+names, MAIN_MENU_ACTION). Order: Mod Catalog 10, Key Items 20.
+
 pe_qol/pe_key_items.c and pe_bag_sort.c each own their state, hooks and rows.
 pe_inventory.h holds private save/field helpers. PKEY and SORT use the exact
 recomp v1 card layouts and checksums. SORT stores original table identifiers,

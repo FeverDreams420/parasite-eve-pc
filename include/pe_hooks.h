@@ -35,6 +35,7 @@ typedef enum PeHookId {
     PE_HOOK_EQUIP_EFFECT, /* PeHookEquipEffect: effect icon draw; nonzero replaces sprite */
     PE_HOOK_TEXTBOXES,   /* NULL: Menu_DrawTextboxEntries entry, before the dialogue boxes draw */
     PE_HOOK_ITEM_ACTIONS, /* PeHookItemActions: an item's action list (Use / Move / Discard ...) just opened */
+    PE_HOOK_MAIN_MENU_ICON, /* PeHookMainMenuIcon: a main menu row's icon, before it is drawn */
     PE_HOOK_COUNT
 } PeHookId;
 
@@ -99,6 +100,12 @@ typedef struct PeHookItemActions {
     int context;                  /* g_MenuItemActionContext: 0 consumables, 1 and 2 others */
     int list_id, slot;            /* g_MenuActiveItemList (0 = Aya's bag), g_MenuActiveItemSlot */
 } PeHookItemActions;
+
+typedef struct PeHookMainMenuIcon {
+    int row;     /* the list row */
+    int action;  /* 0-8 the game's rows; 9 = a row past the last one */
+    int sprite;  /* action + 0x56; may be changed */
+} PeHookMainMenuIcon;
 
 #ifdef PE_MODS
 int pe_hook_dispatch(int id, void *ctx);

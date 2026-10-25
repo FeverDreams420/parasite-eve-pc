@@ -34,6 +34,10 @@ static inline int pe_inventory_load(const void *card, unsigned at, void *data, u
     memcpy(data, p + 16, n); return 1;
 }
 void pe_key_items_register(const char *mod_id);
+int pe_keys_enabled(void);
+int pe_keys_count(void);
+uint16_t pe_keys_item(int i);   /* 0 past the end */
+void pe_key_menu_register(const char *mod_id);
 void pe_bag_sort_register(const char *mod_id);
 void pe_inventory_menu_register(const char *mod_id);
 void pe_inventory_menu_shutdown(void);

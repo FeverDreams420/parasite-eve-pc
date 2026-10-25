@@ -2,7 +2,9 @@
  * Inject stock cursor outcomes to exercise wrap, rapid input and page jumps. */
 #include <assert.h>
 #include <stdio.h>
+#include "../mods/host/pe_main_menu.c"
 #include "../mods/pe_economy/pe_catalog_menu.c"
+int pe_in_battle(void) { return 0; }
 int g_MenuItemContextFlag, g_MenuBattleStatusOverlayActive;
 MenuWidgetNode *g_MenuWidgetActiveListHead;
 static MenuWidgetNode panel, list;
@@ -59,7 +61,7 @@ static void outcome(int row,int top,int adjust,int want_top,int want_adjust) {
     assert(list.cursor_y>=list.scroll_y && list.cursor_y<list.scroll_y+list.visible_rows);
 }
 int main(void) {
-    s_cat.list=&list; list.visible_rows_mirror=8;
+    s_cat.list=s_screen.list=&list; list.visible_rows_mirror=8;
     pe_set_step(STEP_EFFECT,0);
     outcome(20,0,0,13,0); /* Up wraps first to last. */
     outcome(0,13,0,0,0);  /* Down wraps last to first. */

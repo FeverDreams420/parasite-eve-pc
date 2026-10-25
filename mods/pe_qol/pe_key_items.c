@@ -128,6 +128,11 @@ static const char *pe_key_name(unsigned i) {
     }
     s_name[n] = 0; return s_name;
 }
+/* For the Key Items screen (pe_key_menu.c). */
+int pe_keys_enabled(void) { return s_enabled; }
+int pe_keys_count(void) { return s_keys.count; }
+uint16_t pe_keys_item(int i) { return i >= 0 && i < s_keys.count ? s_keys.ids[i] : 0; }
+
 static void pe_key_total(char *out, unsigned size) { snprintf(out, size, "%u", s_keys.count); }
 void pe_key_items_register(const char *mod_id) {
     pe_menu_register_toggle(PE_PAGE_INVENTORY, "Key item pocket", "Keys leave the bag. Off returns them as space allows.", &s_enabled, pe_key_tick);

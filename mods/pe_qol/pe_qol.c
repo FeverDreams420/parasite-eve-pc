@@ -15,6 +15,7 @@ void pe_floors_register(const char *mod_id);   /* pe_floors.c: Debug bag / bonus
 static int qol_init(void) {
     pe_move_register(MOD_ID);
     pe_key_items_register(MOD_ID);
+    pe_key_menu_register(MOD_ID);
     pe_bag_sort_register(MOD_ID);
     pe_inventory_menu_register(MOD_ID);
     pe_god_mode_register(MOD_ID);

@@ -31,6 +31,7 @@
 #include <string.h>
 
 #include "pe_game.h"
+#include "pe_mod_effects.h"
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
 #include "pe_pages.h"

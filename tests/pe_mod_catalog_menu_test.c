@@ -35,7 +35,9 @@ int Menu_GetBattleEquipMode(void) { return 0; }
 int pe_game_loaded(void) { return 1; }
 int pe_loot_enabled(void) { return 1; }
 uint32_t pe_loot_junk(void) { return 100; }
-uint32_t pe_cat_record(int w) { (void)w;return 1; }
+static ItemDataRecord equipped_record = { .iconId = 1, .itemId = 0x45, .kind = 1, .tailCount = 3 };
+ItemDataRecord *pe_cat_record(int w) { (void)w;return &equipped_record; }
+const char *pe_cat_item_name(int id) { (void)id;return "M9"; }
 int pe_cat_slots(int w) { (void)w;return 3; }
 int pe_cat_slot_effect(int w,int s) { (void)w;(void)s;return 0; }
 int pe_cat_board_count(int w) { (void)w;return 20; }
@@ -45,7 +47,6 @@ uint32_t pe_cat_price(int w,int e) { (void)w;(void)e;return 10; }
 int pe_cat_needs_tool(int w,int e) { (void)w;(void)e;return 0; }
 int pe_cat_install(int w,int s,int e,int d) { (void)w;(void)s;(void)e;(void)d;return 0; }
 int pe_cat_remove(int w,int s,int d) { (void)w;(void)s;(void)d;return 0; }
-uint8_t psx_mod_read_byte(uint32_t a) { (void)a;return 1; }
 void pe_log(const char *t,const char *f,...) { (void)t;(void)f; }
 void pe_mod_log(const char *t,const char *f,...) { (void)t;(void)f; }
 int pe_hook_add(int i,PeHookFn f,void *u,int p,const char *m) {

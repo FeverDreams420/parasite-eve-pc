@@ -25,6 +25,7 @@
 
 #include "pe_game.h"
 #include "pe_mod_host.h"
+#include "pe_mod_effects.h"
 #include "pe_mod_menu.h"
 #include "pe_pages.h"
 #include "pe1/menu_context_help.h"
@@ -39,9 +40,6 @@
 static int s_show_power = 1;
 static u8 s_text[PE_TEXT_MAX];
 static uint32_t s_clock_x10 = PE_DEFAULT_CLOCK_X10, s_clock_samples;
-
-int pe_fx_attack_bonus(unsigned gun);
-int pe_fx_rof_volley_pct(void);
 
 /* Item id whose name lives at `text`, or 0 (the last hit is checked first). */
 static unsigned pe_item_for_name(const u8 *text) {

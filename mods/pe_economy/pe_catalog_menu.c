@@ -23,14 +23,14 @@
 #include "pe_economy.h"
 #include "pe_game.h"
 #include "pe_mod_host.h"
-#include "pe_ps1.h"
 #include "pe1/draw_state.h"
 #include "pe1/menu_draw_list.h"
 #include "pe1/menu_sound.h"
 #include "pe1/menu_scroll_cursor.h"
 #include "pe1/menu_state.h"
 #include "pe1/menu_widget.h"
-#include "pe_item_table.h"
+#include "pe_catalog.h"
+#include "pe_gametext.h"
 
 void Menu_DrawItemList(MenuWidgetNode *node);
 
@@ -61,31 +61,8 @@ static struct {
 static u8 s_title[PE_TEXT_MAX + 1];
 static u8 s_row_text[PE_TEXT_MAX + 1];
 
-/* ---- game text ---- */
-static u8 pe_glyph(char c) {
-    if (c >= 'A' && c <= 'Z') return (u8)(0x10 + (c - 'A'));
-    if (c >= 'a' && c <= 'z') return (u8)(0x30 + (c - 'a'));
-    if (c >= '0' && c <= '9') return (u8)(c - '0');
-    switch (c) {
-    case '.': return 0x2F; case ',': return 0x4B; case ':': return 0x4A;
-    case '!': return 0x2B; case '\'': return 0x2E; case '/': return 0x4C;
-    default: return 0x0F;
-    }
-}
-
-static u8 *pe_game_text(u8 *out, const char *ascii) {
-    unsigned n = 0;
-    for (; *ascii && n < PE_TEXT_MAX; ++ascii) out[n++] = pe_glyph(*ascii);
-    out[n] = 0xFF;
-    return out;
-}
-
-static const char *pe_item_name(int id) {
-    unsigned i;
-    for (i = 0; i < PE_ITEM_COUNT; i++)
-        if (pe_item_ids[i] == id) return pe_item_names[i];
-    return "None";
-}
+/* Menu text in the game's glyph code (pe_gametext.h), into a 0xFF-terminated buffer. */
+static u8 *pe_game_text(u8 *out, const char *ascii) { return pe_text_from_ascii(out, PE_TEXT_MAX + 1, ascii); }
 
 /* Effect names as the Catalog shows them (title case for the menu font). */
 static const char *const s_gun_names[21] = {
@@ -117,8 +94,8 @@ static int pe_cursor(int step) { (void)step; return s_cat.list ? MenuWidget_Grid
 
 static void pe_item_row(int index) {
     char text[PE_TEXT_MAX];
-    const uint32_t rec = pe_cat_record(index);
-    snprintf(text, sizeof text, "%s: %s", index ? "Armor" : "Gun", rec ? pe_item_name(psx_mod_read_byte(rec + 4)) : "None");
+    const ItemDataRecord *rec = pe_cat_record(index);
+    snprintf(text, sizeof text, "%s: %s", index ? "Armor" : "Gun", rec ? pe_cat_item_name(rec->itemId) : "None");
     Draw_SetTextDimmed(rec == 0);
     Draw_PrintRawText(pe_game_text(s_row_text, text));
     Draw_SetTextDimmed(0);

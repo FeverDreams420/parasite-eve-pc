@@ -1,8 +1,5 @@
 #ifndef PE_INVENTORY_SERVICE_H
 #define PE_INVENTORY_SERVICE_H
-#include <stdint.h>
-/* keys v1, published by pe_qol. Optional consumers keep working without it. */
-typedef struct PeKeysApi {
-    int (*take)(uint16_t item); /* pocket a key; 1 means handled successfully */
-} PeKeysApi;
+/* Kept for older includes: the keys v1 service now lives in pe_services.h. */
+#include "pe_services.h"
 #endif

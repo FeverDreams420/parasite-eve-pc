@@ -35,6 +35,14 @@ static inline unsigned char pe_glyph(char c) {
     }
 }
 
+/* ASCII text in glyph code into `out` (size bytes, 0xFF-terminated); returns out. */
+static inline unsigned char *pe_text_from_ascii(unsigned char *out, unsigned size, const char *ascii) {
+    unsigned n = 0;
+    for (; *ascii && n + 1 < size; ++ascii) out[n++] = pe_glyph(*ascii);
+    out[n] = G_END;
+    return out;
+}
+
 static inline void pe_t_init(PeText *t) {
     memset(t, 0, sizeof *t);
     t->lines = 1;

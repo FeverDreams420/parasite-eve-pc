@@ -9,7 +9,7 @@
 #include "pe_mod_menu.h"
 #include "pe_pages.h"
 #include "pe_panacea.h"
-#include "../pe_economy/pe_economy.h"
+#include "pe_services.h"
 #include "pe1/item_ids.h"
 
 static const struct { int first, second, result; const char *name; } s_recipes[] = {

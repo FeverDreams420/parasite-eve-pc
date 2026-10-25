@@ -1,46 +1,12 @@
 #ifndef PE_ECONOMY_H
 #define PE_ECONOMY_H
 
-/* The economy's services, for its own files and for other mods
- * (pe_service_get("junk", 1) and so on). */
+/* The economy mod's own calls, shared by its files. Other mods use the services in
+ * host/pe_services.h instead. */
 
 #include <stddef.h>
 #include <stdint.h>
-#include "pe_inventory_service.h"
-
-/* Economy armor mods in the game's unused armor effect numbers 17-20. */
-#define PE_FX_BARGAIN    17 /* prices -15% */
-#define PE_FX_SCAVENGER  18 /* battle Junk +50% */
-#define PE_FX_LUCKY_FIND 19 /* pity builds twice as fast */
-#define PE_FX_SALVAGER   20 /* dismantle Junk +25% */
-
-/* "junk" v1: the Junk counter (pe_loot.c). */
-typedef struct PeJunkApi {
-    int (*enabled)(void);              /* "Junk economy" switch */
-    uint32_t (*junk)(void);
-    int (*spend)(uint32_t n);          /* 0 (and nothing spent) if short */
-    void (*give)(uint32_t n);
-    int (*armor_has)(int effect);      /* on the equipped armor */
-    uint32_t (*price)(uint32_t base);  /* after preset and Bargain; callers cap after */
-    int (*wayne_waiting)(void);        /* he holds 300+ but can't build before Day 4 */
-    int (*handin_blocked)(void);       /* a hand-in needs one free bag slot */
-} PeJunkApi;
-
-/* "catalog" v1: armor effects unlocked in the Mod Catalog (pe_loot_catalog.c). */
-typedef struct PeCatalogApi {
-    int (*armor_unlocked)(int effect);
-    int (*unlock_armor)(int effect);   /* 1 if it was new */
-} PeCatalogApi;
-
-/* "wardrobe" v1: skins bought with Junk (the Collection mod, when ported); Wayne's Workshop
- * shows a Wardrobe row while a mod publishes it. state: 0 for sale, 1 owned, 2 worn. */
-typedef struct PeWardrobeApi {
-    int (*count)(void);
-    const char *(*name)(int k);
-    unsigned (*price)(int k);
-    int (*state)(int k);
-    int (*pick)(int k, char *msg, size_t size);   /* buy or wear; msg says what happened */
-} PeWardrobeApi;
+#include "pe_services.h"   /* PE_FX_*, PeJunkApi, PeCatalogApi, PeKeysApi, PeWardrobeApi */
 
 /* Direct calls inside the economy mod. */
 int pe_loot_enabled(void);
@@ -52,13 +18,13 @@ uint32_t pe_loot_price(uint32_t base);
 int pe_loot_wayne_waiting(void);
 int pe_loot_handin_blocked(void);
 
-/* The Mod Catalog (pe_loot_catalog.c). which: 0 = the equipped gun, 1 = the equipped armor.
- * Records are PS1 addresses of equipment records (pe_ps1.h). */
+/* The Mod Catalog (pe_catalog.c, pe_dismantle.c). which: 0 = the equipped gun, 1 = the equipped armor.
+ */
 enum {
     PE_CAT_OK, PE_CAT_NO_GAME, PE_CAT_OFF, PE_CAT_NO_ITEM, PE_CAT_NO_SLOTS, PE_CAT_LOCKED,
     PE_CAT_ALREADY, PE_CAT_BAG, PE_CAT_JUNK, PE_CAT_TOOL, PE_CAT_EMPTY,
 };
-uint32_t pe_cat_record(int which);
+struct ItemDataRecord *pe_cat_record(int which);  /* the equipped gun / armor record, or NULL */
 int pe_cat_slots(int which);
 int pe_cat_slot_effect(int which, int slot);
 int pe_cat_board_count(int which);
@@ -72,8 +38,8 @@ int pe_cat_remove(int which, int slot, int dry_run);
 int pe_cat_replaces(int which, int slot, int e, int *out, int max);
 int pe_catalog_armor_unlocked(int effect);
 int pe_catalog_unlock_armor(int effect);
-uint32_t pe_catalog_dismantle_preview(uint32_t rec);
-uint32_t pe_catalog_dismantle_reward(uint32_t rec, int *unlocks_out);
+uint32_t pe_catalog_dismantle_preview(const struct ItemDataRecord *rec);
+uint32_t pe_catalog_dismantle_reward(const struct ItemDataRecord *rec, int *unlocks_out);
 int pe_rebuild_count(void);
 uint8_t pe_rebuild_item(int i);
 uint32_t pe_rebuild_price_index(int i);

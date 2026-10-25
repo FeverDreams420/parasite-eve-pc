@@ -22,7 +22,7 @@ mods/
     pe_mod_panel.c       the F1 panel: pages, navigation, input
     pe_pages.*           where PE Enhancements rows live (one layout for all mods)
     pe_game.*            game access: Aya's actor and Combatant, equipped records, base items
-    pe_ps1.*             PS1-address access for ported code (fixed-layout objects only)
+    pe_ps1.*             PS1-address access for ported code (fixed-layout objects only; unused today)
     ui/                  drawing (pe_ui_raster), the overlay quad (pe_ui_gpu), toasts
   pe_qol/              quality of life: movement, encounter switch, Debug God mode and ammo (off by default)
   pe_rebalance/        mod effects, Parasite Energy balance, half-bar turns / Quick powers, weapon power (DPS)
@@ -59,7 +59,8 @@ moved, disabled or updated without touching the others.
   a versioned struct of functions; a mod that finds none carries on without it.
 - **Events**: `pe_event_id("name")` and `pe_event_emit(id, ctx)` for announcements.
 
-Published today: `junk` v1 and `catalog` v1 (pe_economy, see `pe_economy/pe_economy.h`).
+Service definitions live in `host/pe_services.h`, never in a mod's folder: `junk` v1 and
+`catalog` v1 (pe_economy), `keys` v1 (pe_qol), `wardrobe` v1 (for the Collection port).
 
 ## The Mods panel
 
@@ -78,7 +79,7 @@ inside the game's CRC, at the same offsets as the psxrecomp build so saves move 
 | Offset (from 0x1C90) | Block | Owner |
 |---|---|---|
 | +0x000 | `PELT` Junk, rare pity, difficulty | pe_economy/pe_loot.c |
-| +0x040 | `PECT` Mod Catalog unlocks, Rebuild list | pe_economy/pe_loot_catalog.c |
+| +0x040 | `PECT` Mod Catalog unlocks, Rebuild list | pe_economy/pe_catalog.c |
 | +0x1C0 | `PESH` Requisition | pe_economy/pe_requisition.c |
 | +0x200 | `PKEY` key item pocket | pe_qol/pe_key_items.c |
 | +0x260 | `SORT` bag sort | pe_qol/pe_bag_sort.c |
@@ -244,3 +245,11 @@ buying though the field is busy (pe_shop_at_counter). Messages use pe_gametext.h
 pe_economy/pe_equip_sync.c reruns the game's equipment rebuild in free field whenever the
 equipped gun or armor record changes, so Catalog, Tool and editor changes reach the next battle.
 
+
+## Mod Catalog files
+
+- `pe_catalog.c`: effects, prices, install / remove rules, unlocks, the PECT save block, the
+  `catalog` service.
+- `pe_dismantle.c`: Dismantle, Rebuild and Tool salvage.
+- `pe_catalog_pages.c`: the F1 pages. `pe_catalog_menu.c`: the Catalog in Aya's own menu.
+- `pe_catalog.h`: their private interface; other files use the `pe_cat_*` calls in pe_economy.h.

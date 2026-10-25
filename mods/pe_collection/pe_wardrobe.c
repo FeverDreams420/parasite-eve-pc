@@ -225,6 +225,38 @@ static int pe_ward_pick(int k, char *msg, size_t size) {   /* buy if needed, the
 }
 static const PeWardrobeApi s_wardrobe = { pe_ward_count, pe_ward_name, pe_ward_price, pe_ward_state, pe_ward_pick };
 
+/* ---- for the Wardrobe screen in Aya's menu ---- */
+static int s_reload_after_menu;
+
+static int pe_owned_wearable(const PeCostume *c) { return pe_wearable(c) && (pe_profile_owned(c->key) || !c->price); }
+
+int pe_wardrobe_owned_count(void) {
+    int n = 0, i;
+    for (i = 0; i < s_costumes; ++i) n += pe_owned_wearable(s_costume[i]);
+    return n;
+}
+
+const PeCostume *pe_wardrobe_owned(int k) {
+    int i;
+    for (i = 0; i < s_costumes; ++i)
+        if (pe_owned_wearable(s_costume[i]) && k-- == 0) return s_costume[i];
+    return NULL;
+}
+
+const PeCostume *pe_wardrobe_worn(void) { return pe_worn(); }
+
+void pe_wardrobe_wear_later(const PeCostume *c) {
+    pe_set_worn(c, 0);
+    s_reload_after_menu = 1;
+}
+
+/* Once Aya's menu has closed, the room reloads so the costume picked there shows. */
+static void pe_reload_tick(void) {
+    if (!s_reload_after_menu || !pe_game_loaded() || (g_GameStateFlags & 0x2006u)) return;
+    s_reload_after_menu = 0;
+    (void)pe_reload();
+}
+
 void pe_wardrobe_reset(void) { s_sel = 0; }
 
 void pe_wardrobe_register(const char *mod_id) {
@@ -236,6 +268,7 @@ void pe_wardrobe_register(const char *mod_id) {
     pe_menu_register_action(PE_PAGE_WARDROBE, "Wear Aya's own", "Back to the clothes the story gives her.", pe_default);
     pe_menu_register_info(PE_PAGE_WARDROBE, "Status", "What Aya wears, and your Junk.", pe_status);
     pe_menu_register_info(PE_PAGE_WARDROBE, "Result", "What the last action did.", pe_result);
+    pe_menu_register_tick(pe_reload_tick);
     pe_service_publish("wardrobe", 1, &s_wardrobe, mod_id);
     pe_hook_add(PE_HOOK_PLAYER_BANK, pe_on_player_bank, NULL, PE_PRIORITY_NORMAL, mod_id);
 }

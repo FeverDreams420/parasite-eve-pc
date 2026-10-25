@@ -13,6 +13,8 @@
  * layout, hide Aya's status panels behind it as the game's own screens do, and keep scrolling
  * inside the list. */
 
+#include "pe_hooks.h"
+
 struct MenuWidgetNode;
 
 typedef struct PeMainMenuRow {
@@ -20,7 +22,14 @@ typedef struct PeMainMenuRow {
     int icon_item;        /* item whose inventory icon the row shows; 0 = the game's spare icon */
     int (*shown)(void);   /* NULL = always */
     void (*open)(struct MenuWidgetNode *main_list);   /* confirmed */
+    /* Optional, instead of icon_item: draw extra sprites at the icon's spot (the text cursor) and/or
+     * set icon->sprite, which the game then draws there. */
+    void (*icon)(PeHookMainMenuIcon *icon);
 } PeMainMenuRow;
+
+/* The main menu's own icons: action + PE_MAIN_MENU_SPRITE (0 Use Item .. 3 Equip Armor .. 8). */
+#define PE_MAIN_MENU_SPRITE 0x56
+#define PE_ACTION_EQUIP_ARMOR 3
 
 void pe_main_menu_add(const PeMainMenuRow *row, int order);   /* row must outlive the game */
 

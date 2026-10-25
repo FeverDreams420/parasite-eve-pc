@@ -72,8 +72,9 @@ static int pe_on_icon(void *ctx, void *user) {
     PeHookMainMenuIcon *icon = (PeHookMainMenuIcon *)ctx;
     const PeMainMenuRow *row;
     (void)user;
-    if (icon->action != 9 || !pe_menu_open_here() || !(row = pe_row_at(icon->row)) || !row->icon_item) return 0;
-    {
+    if (icon->action != 9 || !pe_menu_open_here() || !(row = pe_row_at(icon->row))) return 0;
+    if (row->icon) { row->icon(icon); return 0; }
+    if (row->icon_item) {
         const ItemDataRecord *rec = Inv_LookupItemRecordScaled(row->icon_item);
         if (rec && rec->iconId) icon->sprite = rec->iconId - 1;
     }

@@ -58,6 +58,7 @@ int pe_menu_register_dynamic_choice(const char *s, const char *l, const char *d,
 }
 int pe_menu_register_info(const char *s, const char *l, const char *d, PeMenuText t) { (void)s; (void)l; (void)d; (void)t; return 0; }
 int pe_menu_register_tick(PeMenuPerFrame f) { (void)f; return 0; }
+void pe_wardrobe_menu_register(const char *m) { (void)m; }   /* the menu screen: drawing only */
 
 /* The last entry of an F1 filter row (Area, Group). */
 static const char *last_filter(const char *label) {
@@ -159,6 +160,13 @@ int main(void) {
     s_hook[PE_HOOK_PLAYER_BANK](NULL, NULL);
     s_hook[PE_HOOK_PLAYER_BANK](NULL, NULL);
     assert(s_loads[0] == 1 && s_loads[1] == 1);
+
+    /* Aya's menu lists what is owned and wearable: Claire (bought above), not the unbought outfits. */
+    assert(pe_wardrobe_owned_count() == 1 && pe_wardrobe_owned(0) == &s_claire && !pe_wardrobe_owned(1));
+    pe_wardrobe_wear_later(&s_claire);
+    assert(pe_wardrobe_worn() == &s_claire);
+    pe_wardrobe_wear_later(NULL);
+    assert(pe_wardrobe_worn() == NULL);
 
     /* The game's own outfit: the bank is rewritten at the player load. */
     assert((i = find_shop(shop, "T-shirt")) >= 0 && shop->pick(i, msg, sizeof msg));

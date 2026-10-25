@@ -53,4 +53,11 @@ void pe_wardrobe_register(const char *mod_id);
 void pe_bestiary_reset(void);
 void pe_wardrobe_reset(void);
 
+/* For the Wardrobe screen in Aya's menu (pe_wardrobe_menu.c): costumes owned and wearable now. */
+int pe_wardrobe_owned_count(void);
+const PeCostume *pe_wardrobe_owned(int k);
+const PeCostume *pe_wardrobe_worn(void);         /* NULL: Aya's own clothes */
+void pe_wardrobe_wear_later(const PeCostume *c); /* worn from the next room load (the menu's close) */
+void pe_wardrobe_menu_register(const char *mod_id);
+
 #endif

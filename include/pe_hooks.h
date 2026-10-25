@@ -25,6 +25,8 @@ typedef enum PeHookId {
     PE_HOOK_SLOT_ROW,    /* u8 **: an item row's name (Menu_DrawSlotRow), before it is printed */
     PE_HOOK_TOOL_TRANSFER, /* PeHookToolTransfer: Inv_TransferItemBetweenLists entry (Tools) */
     PE_HOOK_PAD_READ,    /* NULL: Field_HandleStateTransition, before it reads g_PadPackets */
+    PE_HOOK_LIST_ROWS,   /* PeHookListRows: Draw_SetPrimCallback entry; the row count may change */
+    PE_HOOK_MAIN_MENU_ACTION, /* PeHookMenuAction: Aya's main menu confirm; replaceable */
     PE_HOOK_COUNT
 } PeHookId;
 
@@ -53,6 +55,16 @@ typedef struct PeHookInit {
     int interactive;        /* 0 for headless runs: no window, no menus */
     const char *prefs_file; /* per-user preferences file; mods keep their files beside it */
 } PeHookInit;
+
+typedef struct PeHookListRows {
+    struct MenuWidgetNode *node;
+    int *count;
+} PeHookListRows;
+
+typedef struct PeHookMenuAction {
+    int action;                   /* 0-8 the game's rows; 9 = a row past the last one */
+    struct MenuWidgetNode *list;  /* the main list node */
+} PeHookMenuAction;
 
 #ifdef PE_MODS
 int pe_hook_dispatch(int id, void *ctx);

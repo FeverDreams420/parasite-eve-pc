@@ -6,10 +6,12 @@
 
 void pe_loot_register(const char *mod_id);    /* pe_loot.c: Junk, battle rewards, rare drops */
 void pe_catalog_register(const char *mod_id); /* pe_loot_catalog.c: Mod Catalog, Dismantle, Rebuild */
+void pe_catalog_menu_register(const char *mod_id); /* pe_catalog_menu.c: the Catalog in Aya's menu */
 
 static int economy_init(void) {
     pe_loot_register(MOD_ID);
     pe_catalog_register(MOD_ID);
+    pe_catalog_menu_register(MOD_ID);
     return 0;
 }
 

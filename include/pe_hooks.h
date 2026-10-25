@@ -39,6 +39,8 @@ typedef enum PeHookId {
     PE_HOOK_PLAYER_BANK, /* NULL: Scene_LoadEntityTexture entry, Aya's model / texture load step;
                           * g_SceneAreaType (her outfit bank) may be changed while entity_texture_phase is 0 */
     PE_HOOK_POWER_AVAILABLE, /* PeHookPowerAvailable: Menu_CheckItemAffordable, can this PE power be picked now */
+    PE_HOOK_PLAYER_ROWS, /* NULL: Scene_InitEntityPlayer step 0x27, before Aya's actor takes bank_slots[0]
+                          * and her rows (g_GameState.bank_rows) */
     PE_HOOK_COUNT
 } PeHookId;
 

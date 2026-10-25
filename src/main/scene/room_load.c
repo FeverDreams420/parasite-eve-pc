@@ -1549,6 +1549,7 @@ s32 Scene_InitEntityPlayer(s32 resume) {
         gameState->scene_init_phase = 0x27;
         return 1;
     case 39:
+        PE_HOOK(PE_HOOK_PLAYER_ROWS, NULL);
         {
             FieldActor *player = g_PlayerEntity;
             player->model_state.model_header = g_GameState.bank_slots[0];

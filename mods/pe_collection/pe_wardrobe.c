@@ -49,7 +49,7 @@ static int pe_find(const char *key) {
 
 static int pe_add(const PeCostume *c) {
     if (!c || !c->key || !*c->key || !c->name || s_costumes == PE_MAX_COSTUMES || pe_find(c->key) >= 0 ||
-        (c->bank >= 0 && !pe_gameplay_bank(c->bank)) || (c->bank < 0 && !c->load)) {
+        (c->bank >= 0 && !pe_gameplay_bank(c->bank)) || (c->bank < 0 && !c->load && !(c->bundle && *c->bundle))) {
         pe_mod_log("pe_collection", "wardrobe: costume %s refused", c && c->key ? c->key : "?");
         return -1;
     }
@@ -57,7 +57,11 @@ static int pe_add(const PeCostume *c) {
     return s_costumes++;
 }
 
-static int pe_wearable(const PeCostume *c) { return c && (!c->available || c->available()); }
+static int pe_is_skin(const PeCostume *c) { return c && c->bank < 0 && !c->load; }   /* the skin loader's */
+
+static int pe_wearable(const PeCostume *c) {
+    return c && (!c->available || c->available()) && (!pe_is_skin(c) || pe_skin_available(c->bundle));
+}
 
 static const PeCostume *pe_worn(void) {
     const int i = pe_find(pe_profile_worn());
@@ -75,13 +79,17 @@ static int pe_reload(void) {
 const PeCostumesApi g_pe_costumes_api = { pe_add, pe_worn, pe_reload };
 
 /* ---- the costume at room load ---- */
+static int s_room_bank = -1;            /* the bank the room itself asked for, before any costume */
+
 static int pe_on_player_bank(void *ctx, void *user) {
     const PeCostume *c = pe_worn();
     (void)ctx;
     (void)user;
     if (!pe_game_loaded() || g_GameState.entity_texture_phase != 0) return 0;
+    s_room_bank = g_SceneAreaType;                              /* phase 0 comes once a load */
     if (s_loaded && s_loaded != c) { s_loaded->load(0); s_loaded = NULL; }   /* a provider costume comes off */
     if (!c || !pe_gameplay_bank(g_SceneAreaType)) return 0;                /* not in Liberate, story scenes */
+    if (pe_is_skin(c)) return 0;                                /* the skin loader puts it on */
     if (c->bank < 0) {
         c->load(1);
         s_loaded = c;
@@ -95,14 +103,26 @@ static int pe_on_player_bank(void *ctx, void *user) {
     return 0;
 }
 
-static void pe_set_worn(const PeCostume *c, int reload) {
+/* Does wearing `c` need the room reloaded? Skins swap in instantly (pe_skin_loader.c); the game's
+ * own bundles need loading unless the right one is loaded already; a provider's model goes in at
+ * the room load. */
+static int pe_needs_reload(const PeCostume *c) {
+    int bank;
+    if (pe_is_skin(c)) return 0;
+    if (c && c->bank < 0) return 1;
+    bank = c ? c->bank : s_room_bank;
+    return bank < 0 || bank != g_GameState.loaded_entity_bank;
+}
+
+static void pe_set_worn(const PeCostume *c, int now) {
     char msg[96];
+    const int reload = pe_needs_reload(c);
     pe_profile_set_worn(c ? c->key : "");
     pe_profile_save();
-    pe_log("wardrobe", "wear=%s", c ? c->key : "own");
+    pe_log("wardrobe", "wear=%s reload=%d", c ? c->key : "own", reload);
     pe_event_emit(s_event, (void *)c);
-    if (!reload) return;
-    snprintf(msg, sizeof msg, pe_reload() ? "Wearing %s" : "Wearing %s from the next room", c ? c->name : "Aya's own clothes");
+    if (!now) return;
+    snprintf(msg, sizeof msg, !reload || pe_reload() ? "Wearing %s" : "Wearing %s from the next room", c ? c->name : "Aya's own clothes");
     pe_col_say(msg);
 }
 
@@ -247,8 +267,8 @@ const PeCostume *pe_wardrobe_owned(int k) {
 const PeCostume *pe_wardrobe_worn(void) { return pe_worn(); }
 
 void pe_wardrobe_wear_later(const PeCostume *c) {
+    s_reload_after_menu = pe_needs_reload(c);        /* a skin goes in by itself as the menu closes */
     pe_set_worn(c, 0);
-    s_reload_after_menu = 1;
 }
 
 /* Once Aya's menu has closed, the room reloads so the costume picked there shows. */

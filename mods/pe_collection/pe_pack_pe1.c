@@ -10,8 +10,8 @@
  *
  * Costumes: the evening dress (bank 10) and T-shirt (13) are the game's own bundles. The long dress
  * (11) and transformed Aya (14) have no full player moveset and are not offered. The character skins
- * (pe_skins/<folder>/, built from the user's disc by the bridge's build_skin.py) stay hidden
- * until their native loader is ported.
+ * (pe_skins/<folder>/, built from the user's disc by the bridge's build_skin.py) are skin
+ * bundles the Wardrobe loads (pe_skin_loader.c); one whose folder is missing stays hidden.
  */
 #include <ctype.h>
 #include <stdio.h>
@@ -74,9 +74,6 @@ const char *pe_pack_pe1_costume_key(int index) {
     return index > 0 && index < PE_SKINS ? s_costume_key[index] : NULL;
 }
 
-static int pe_skins_not_ported(void) { return 0; }
-static void pe_skin_load(int wearing) { (void)wearing; }
-
 static const char *pe_skin_group(const PeSkin *k) {
     return k->price >= 250 ? "Main cast" : k->price >= 100 ? "Supporting cast" : "Extras";
 }
@@ -100,8 +97,7 @@ void pe_pack_pe1_register(void) {
         const PeSkin *k = &g_pe_skins[i];
         if (k->kind == 0 && k->area != 10 && k->area != 13) continue;   /* no full moveset */
         s_costume[i] = (PeCostume){ s_costume_key[i], k->name, k->kind ? pe_skin_group(k) : "Aya's outfits", k->price,
-                                    (int16_t)(k->kind ? -1 : k->area), k->kind ? pe_skins_not_ported : NULL,
-                                    k->kind ? pe_skin_load : NULL };
+                                    (int16_t)(k->kind ? -1 : k->area), NULL, NULL, k->kind ? k->folder : NULL };
         w->add(&s_costume[i]);
     }
 }

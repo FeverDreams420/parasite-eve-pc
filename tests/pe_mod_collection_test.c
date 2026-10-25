@@ -59,6 +59,8 @@ int pe_menu_register_dynamic_choice(const char *s, const char *l, const char *d,
 int pe_menu_register_info(const char *s, const char *l, const char *d, PeMenuText t) { (void)s; (void)l; (void)d; (void)t; return 0; }
 int pe_menu_register_tick(PeMenuPerFrame f) { (void)f; return 0; }
 void pe_wardrobe_menu_register(const char *m) { (void)m; }   /* the menu screen: drawing only */
+void pe_skin_register(const char *m) { (void)m; }            /* the loader: game buffers, VRAM */
+int pe_skin_available(const char *folder) { return strcmp(folder, "test_skin") == 0; }
 
 /* The last entry of an F1 filter row (Area, Group). */
 static const char *last_filter(const char *label) {
@@ -78,6 +80,9 @@ static int s_loads[2];
 static void claire_load(int wearing) { ++s_loads[wearing ? 1 : 0]; }
 static const PeCostume s_claire = { "re2/claire", "Claire (RE2)", "Resident Evil", 25, -1, NULL, claire_load };
 static const PeCostume s_bad_bank = { "x/bad", "Bad", "X", 0, 11, NULL, NULL };
+static const PeCostume s_skin = { "x/skin", "Skin", "Skins", 10, -1, NULL, NULL, "test_skin" };
+static const PeCostume s_skin_missing = { "x/nofiles", "No files", "Skins", 0, -1, NULL, NULL, "missing_skin" };
+static const PeCostume s_nothing = { "x/nothing", "Nothing", "Skins", 0, -1, NULL, NULL, NULL };
 
 static void kill_once(int slot, unsigned identity) {
     BattleEnemySlot *e = &g_BattleEnemySlots[slot];
@@ -148,6 +153,9 @@ int main(void) {
 
     /* Costumes: a provider's model gets load(1) at the player load while worn, load(0) once after. */
     assert(w->add(&s_bad_bank) < 0);
+    assert(w->add(&s_nothing) < 0);                  /* bank -1 needs a bundle or load() */
+    assert(w->add(&s_skin) >= 0 && w->add(&s_skin_missing) >= 0);
+    assert(find_shop(shop, "Skin") >= 0 && find_shop(shop, "No files") < 0);   /* no files: hidden */
     assert(w->add(&s_claire) >= 0);
     assert(strcmp(last_filter("Group"), "Resident Evil") == 0);
     assert(w->worn() == NULL);                       /* ff7/cloud isn't loaded: Aya's own clothes */

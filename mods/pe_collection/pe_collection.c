@@ -52,6 +52,7 @@ static int collection_init(void) {
     pe_bestiary_register(MOD_ID);
     pe_wardrobe_register(MOD_ID);
     pe_wardrobe_menu_register(MOD_ID);
+    pe_skin_register(MOD_ID);
     pe_pack_pe1_register();
     pe_menu_register_action(PE_PAGE_DEBUG_COLLECTION, "Reset collection", "Forget all Bestiary and Wardrobe unlocks.", pe_reset);
     pe_menu_register_tick(pe_profile_tick);

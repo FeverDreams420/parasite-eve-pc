@@ -92,18 +92,24 @@ typedef struct PeBestiaryApi {
 } PeBestiaryApi;
 
 /* ---- Costumes ----
- * A costume is either one of the game's player bundles (bank 10 evening dress, 12 Aya, 13 T-shirt:
- * g_SceneAreaType) or a model its provider puts in itself: load(1) at the start of Aya's model load
- * (PE_HOOK_PLAYER_BANK, entity_texture_phase 0) while it is worn, load(0) once when it comes off;
- * the provider adds whatever other hooks its loader needs. */
+ * A costume is one of:
+ *   - one of the game's player bundles (bank 10 evening dress, 12 Aya, 13 T-shirt: g_SceneAreaType);
+ *   - a skin folder in the game's own player formats (bank -1, `bundle`): pe_skins/<bundle>/ beside
+ *     the preferences, holding texture.bin, model.bin, day1-8.bin and optionally rooms.bin and
+ *     meta.bin (the bridge's build_skin.py makes them); the Wardrobe loads it and swaps it in
+ *     instantly, and hides the costume while its files are missing;
+ *   - a model its provider puts in itself (bank -1, `load`): load(1) at the start of Aya's model
+ *     load (PE_HOOK_PLAYER_BANK, entity_texture_phase 0) while it is worn, load(0) once when it
+ *     comes off; the provider adds whatever other hooks its loader needs. */
 typedef struct PeCostume {
     const char *key;          /* stable, unique: "pe1/tshirt"; saved in the profile */
     const char *name;         /* "Aya: T-shirt", "Claire (RE2)" */
     const char *group;        /* the F1 Group filter: "Aya's outfits", "Resident Evil" */
     uint16_t price;           /* Junk, paid once for every game */
-    int16_t bank;             /* >= 0: the game's player bundle; -1: load() does it */
+    int16_t bank;             /* >= 0: the game's player bundle; -1: `bundle` or load() */
     int (*available)(void);   /* NULL: always; 0 hides it from every list (e.g. its files are missing) */
     void (*load)(int wearing);
+    const char *bundle;       /* bank -1 without load(): the skin folder under pe_skins/ */
 } PeCostume;
 
 typedef struct PeCostumesApi {

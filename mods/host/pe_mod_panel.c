@@ -566,6 +566,8 @@ static void pe_init_gpu(SDL_Window *window, SDL_GPUDevice *device) {
     if (s_device && s_device != device) pe_gpu_release();
     s_window = window;
     s_device = device;
+    if (window) SDL_SetWindowTitle(window, "Parasite Eve (Mods) - F1: Mods");
+    pe_mod_log(NULL, "Mods panel GPU overlay ready");
 }
 
 static void pe_destroy_gpu(void) {
@@ -655,7 +657,11 @@ static void pe_panel_event(const SDL_Event *ev) {
 
 static void pe_panel_run(void) {
     int audio_paused = Psyz_AudioIsPaused();
-    if (!s_device) return; /* no in-window GPU overlay (fallback renderer): no panel yet */
+    if (!s_device) { /* no in-window GPU overlay (fallback renderer): no panel yet */
+        pe_mod_log(NULL, "Mods panel unavailable: no GPU overlay");
+        return;
+    }
+    pe_mod_log(NULL, "Mods panel opened");
     Psyz_PauseHostClock_SDL3(true);
     Psyz_AudioPause();
     s_panel.open = 1;

@@ -16,7 +16,7 @@ void pe_junk_counter_register(const char *mod_id);
 void pe_smoke_register(const char *mod_id);
 void pe_equip_sync_register(const char *mod_id); /* pe_equip_sync.c: gear edits reach the next battle */
 void pe_wayne_menu_register(const char *mod_id); /* pe_wayne_menu.c: the Workshop in Wayne's menu */
-void pe_field_wayne_register(const char *mod_id); /* pe_field_wayne.c: Warner's services (Day 4 park) */
+void pe_field_wayne_register(const char *mod_id); /* pe_field_wayne.c: Warner's services */
 void pe_smoke_shutdown(void);
 
 static int economy_init(void) {

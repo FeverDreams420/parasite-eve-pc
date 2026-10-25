@@ -208,7 +208,7 @@ static void pe_field_wayne_tick(void) {
 }
 
 void pe_field_wayne_register(const char *mod_id) {
-    pe_menu_register_toggle(PE_PAGE_ECONOMY, "Warner helps out", "Warner (Day 4 park) offers storage and the Workshop.",
+    pe_menu_register_toggle(PE_PAGE_ECONOMY, "Warner helps out", "Warner offers storage and the Workshop wherever he stands guard.",
                             &s_enabled, pe_field_wayne_tick);
     pe_hook_add(PE_HOOK_TEXTBOXES, pe_on_textboxes, NULL, PE_PRIORITY_EARLY, mod_id);  /* before pe_wayne_menu */
 }

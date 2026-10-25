@@ -27,6 +27,7 @@
 #include "pe1/draw_state.h"
 #include "pe1/menu_draw_list.h"
 #include "pe1/menu_sound.h"
+#include "pe1/menu_scroll_cursor.h"
 #include "pe1/menu_state.h"
 #include "pe1/menu_widget.h"
 #include "pe_item_table.h"
@@ -252,12 +253,29 @@ static void pe_show_panels(void) {
 /* ---- screens ---- */
 static int pe_screen_input(MenuWidgetNode *panel, unsigned int buttons);
 
+/* The stock grid handler advances the viewport by one row, even when its
+ * Options layout wraps the cursor to the opposite end. Keep those jumps
+ * (and input arriving during a scroll animation) inside this list's viewport. */
+static int pe_scroll_input(MenuWidgetNode *list, unsigned int buttons) {
+    int handled = Menu_StepScrollCursor(list, buttons);
+    int top = list->scroll_y;
+    if (list->cursor_y < top) top = list->cursor_y;
+    else if (list->cursor_y >= top + list->visible_rows)
+        top = list->cursor_y - list->visible_rows + 1;
+    if (top != list->scroll_y) {
+        list->scroll_y = top;
+        list->scroll_adjust = 0;
+    }
+    return handled;
+}
+
 /* Show step `step` in the list, the cursor on `row`. */
 static void pe_set_step(int step, int row) {
     const int rows = pe_row_count(step);
     s_cat.step = step;
     s_cat.armed = -1;
     s_cat.result[0] = '\0';
+    s_cat.list->scroll_adjust = 0;
     s_cat.list->cursor_x = 0;
     s_cat.list->cursor_y = row >= 0 && row < rows ? row : 0;
     s_cat.list->scroll_y = s_cat.list->cursor_y >= PE_LIST_ROWS ? s_cat.list->cursor_y - PE_LIST_ROWS + 1 : 0;
@@ -271,7 +289,12 @@ static void pe_open(MenuWidgetNode *from) {
     s_cat.panel->x = PE_PANEL_X;
     s_cat.panel->y = PE_PANEL_Y;
     s_cat.panel->grid_width = PE_PANEL_W;
+    /* The list clips to cell width, independently of the panel's background.
+     * Replace the borrowed Options layout's 68-pixel cell with the panel's
+     * inner width (the list's x offset supplies the margin on either side). */
+    s_cat.list->draw_state = PE_PANEL_W - 2 * s_cat.list->x;
     s_cat.list->draw = (void (*)())pe_draw_list;
+    s_cat.list->update = pe_scroll_input;
     s_cat.list->selected_base = PE_TITLE_BASE;
     s_cat.list->visible_rows_mirror = PE_LIST_ROWS;
     memset(s_cat.row, 0, sizeof s_cat.row);

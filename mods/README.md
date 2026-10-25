@@ -24,9 +24,9 @@ mods/
     pe_game.*            game access: Aya's actor and Combatant, equipped records, base items
     pe_ps1.*             PS1-address access for ported code (fixed-layout objects only)
     ui/                  drawing (pe_ui_raster), the overlay quad (pe_ui_gpu), toasts
-  pe_qol/              quality of life: movement (Always run, speeds)
-  pe_rebalance/        mod effects, Parasite Energy balance, weapon power (DPS)
-  pe_economy/          Junk and loot, Mod Catalog / Dismantle / Rebuild
+  pe_qol/              quality of life: movement, encounter switch, Debug God mode and ammo (off by default)
+  pe_rebalance/        mod effects, Parasite Energy balance, half-bar turns / Quick powers, weapon power (DPS)
+  pe_economy/          Junk and loot, Mod Catalog / Dismantle / Rebuild, vanilla Wayne craft refund
   pe_hello/            example mod (not built by default)
 ```
 
@@ -79,6 +79,156 @@ inside the game's CRC, at the same offsets as the psxrecomp build so saves move 
 |---|---|---|
 | +0x000 | `PELT` Junk, rare pity, difficulty | pe_economy/pe_loot.c |
 | +0x040 | `PECT` Mod Catalog unlocks, Rebuild list | pe_economy/pe_loot_catalog.c |
-| +0x1C0 | `PESH` Requisition | (to port) |
-| +0x200 | `PKEY` key item pocket | (to port) |
-| +0x260 | `SORT` bag sort | (to port) |
+| +0x1C0 | `PESH` Requisition | pe_economy/pe_requisition.c |
+| +0x200 | `PKEY` key item pocket | pe_qol/pe_key_items.c |
+| +0x260 | `SORT` bag sort | pe_qol/pe_bag_sort.c |
+
+## Optional encounter and ammo controls
+
+No random battles (Combat) reads the game's own saved switch. Turning it off
+clears only that bit; loading another save or starting a new game clears the
+session override. A save made with the switch on retains it.
+
+Infinite ammo (Debug) defaults to Off. Refill spares tops up the equipped gun's
+reserve pool; Never reload also tops up the gun and its live battle ammo.
+Each feature has its own file and registration function in pe_qol.
+
+## Half-bar turns
+
+Combat / Parasite Energy includes the recomp's half-bar ATB rules. Rebalanced
+allows Items, Quick PE powers and weapon changes at half a bar; armor changes
+and escape remain full-bar by default. Quick powers default to Heal 1/2,
+Detox, Medic, Scan, Slow and Confuse. Cancelling refunds the borrowed gauge;
+full powers and attacks still pay a full bar through refill debt. Vanilla
+disables half-bar actions. The gold gauge indicator uses native HUD quads.
+
+Runtime turn accounting lives in pe_rebalance/pe_atb_items.c; settings remain
+on the PE rules page. No new game hooks or card-save blocks are required.
+
+Regression coverage is retained in tests/pe_mod_atb_test.c. It links only the
+half-bar and PE-balance feature sources against native headers, with test-owned
+game state and mod-host callbacks, to exercise turn accounting and rule presets.
+
+## Battle frequency
+
+Combat / Battle frequency ports the recomp's Normal, More (2x), Lots (4x),
+and Every check choices. Normal is the default. It changes the random-roll
+range only for the encounter script sequence; unrelated RNG is unchanged.
+Every check still respects story gates, room encounter rules and rooms with
+no encounters. No random battles overrides it. This increases fight frequency,
+not the number of enemies in a fight.
+
+pe_qol/pe_battle_frequency.c owns matching and settings. A single SCRIPT_RANDOM
+hook supplies local RNG bounds; loaded scripts and save data are not patched.
+
+## Panacea and medicine combining
+
+Panacea (item 0x19) restores 400 HP and cures ailments in battle or the field,
+while preserving ailment immunities. It uses Medicine 4's icon and healing
+effect. The Parasite Energy rules page enables it in Rebalanced and disables
+it in Vanilla; names remain readable for already-carried Panacea.
+
+Combat / Combine items provides the recomp recipes through the shared F1
+panel: two Medicine 1/2/3 become the next tier, or Medicine 4 plus Full Cure
+become Panacea. Junk economy must be enabled, both ingredients must be in
+Aya's bag, and combining is outside battle and game menus. Press Combine
+twice; the bag is checked again before consuming anything.
+
+pe_rebalance/pe_panacea.c owns effects, labels and use flags; pe_combine.c
+owns recipes and confirmation. They share only their feature header and
+use the versioned Junk service for the optional economy dependency. Existing
+item IDs use the normal game save; no new save block is needed.
+
+## Smoke Grenades
+
+Combat / Smoke Grenades sells the recomp's escape item for 15 Junk before
+difficulty/Bargain pricing. Purchase in the field with a free bag slot; press
+Buy twice. Junk economy must be enabled to buy, but carried grenades remain
+usable when it is off. The item is battle-only, guarantees an ordinary escape,
+and is disabled when any living active enemy forbids escape. A blocked item
+that reaches resolution is returned to the bag slot freed by its consumption.
+
+pe_economy/pe_smoke.c owns the effects, labels, availability and purchase rows.
+It uses the existing ITEM_USE and TEXT_LOOKUP hooks. Normal inventory saves
+carry item 0x18; no new hook or save block is needed.
+
+## Inventory convenience
+
+Inventory / Key item pocket moves story keys and Chrysler elevator keys out
+of Aya's bag. Inventory / Key items browses them. Story count/removal hooks
+query the pocket directly, including with a full bag; no equipment or items
+are parked elsewhere. Turning it off returns keys as slots become free, while
+remaining pocketed keys still work for story checks. Key pickups and full-bag
+found-list rewards also use the pocket. The keys v1 service remains compatible
+with pe_economy's loot handling.
+
+Bag sort starts Manual for a new game. Use the game's Sort screen to choose
+an order and enable Auto, or choose Auto in F1 / Inventory. Bag changes are
+sorted only in free field; manually rearranging the same items in the game
+menu switches back to Manual. The native sorter preserves equipped slots.
+Square on Aya's Use Item list opens the native Sort screen. Sort is hidden
+from the main menu; Wayne's storage is untouched by automatic sorting.
+pe_qol/pe_inventory_menu.c owns the shortcut and transient row hiding, separate
+from sorting policy. It restores the original menu mask on save and menu exit.
+
+pe_qol/pe_key_items.c and pe_bag_sort.c each own their state, hooks and rows.
+pe_inventory.h holds private save/field helpers. PKEY and SORT use the exact
+recomp v1 card layouts and checksums. SORT stores original table identifiers,
+which map explicitly to native tables; no host pointers are serialized.
+
+Run the inventory regression checks on Windows with
+`tests/run_pe_inventory_test.ps1` after configuring build-mods. The test
+links both feature files and the real native inventory sorter; unrelated
+game paths are isolated by explicit test stubs.
+
+Inventory Junk counter (pe_economy/pe_junk_counter.c): enabled by default;
+F1 / PE Enhancements / Inventory / Junk counter saves its visibility in pe_mods.ini.
+Draws the live economy balance in the free box left of Quantity, following the
+native header when bag height or scrolling changes. Hidden when Junk economy
+is off. The native header provides one draw hook; all presentation stays in
+the feature file. It never changes inventory capacity, balances or save data.
+
+Custom armor effect display (pe_economy/pe_armor_effect_display.c) replaces
+retail sprite lookup only for armor effects 17-20: BRG (Bargain), SCV
+(Scavenger), LCK (Lucky Find), SLV (Salvager). Badges fit the 36-pixel
+effect cells; selecting a badge shows the full name in the help bar.
+Original armor and all weapon effects retain native icons. One replaceable
+equipment-effect draw hook keeps presentation in the economy feature file.
+Checks: tests/run_pe_armor_effect_display_test.ps1.
+
+## Requisition
+
+F1 / PE Enhancements / Economy / Requisition offers Medicine 1-4, Cure-P/D/C/M,
+Full Cure, Bullets x15/x30, Rockets, Smoke Grenades, Revive and Tools. The four
+economy effects are sold as direct Catalog unlocks and leave the list once
+unlocked; they require no bag slot. Tools disappear if either Tool Kit is in
+Aya's bag or Wayne's storage. This ports the F1 shop; Wayne's dialogue menu
+is a separate future integration.
+
+Goods use recomp prices (Medicine 3 = 35, Medicine 4 = 80). Tools start at 40,
+increase by 10 per purchase and cap at 100 after difficulty/Bargain pricing.
+Revive costs 300 on the first playthrough or 500 in EX Game, before those
+adjustments. Tuning lives under Debug / Loot tuning. The Tool purchase count
+uses the exact recomp PESH v1 save block, checksum and offset; loading an old
+save without that block or starting a new game resets the count.
+
+Buy requires two presses with the same stable goods identity, price and bag.
+Returning to gameplay or loading/changing scenes cancels confirmation.
+Purchase rechecks the balance, bag space, current unlocks and ammo capacity.
+Ammo merges into native shared pools; it needs a new bag slot only when its
+pool is not already carried. Purchases are restricted to the free field with
+Junk economy enabled, outside battles, cutscenes and native game menus.
+
+Rescue matches the recomp: if no weapon in Aya's bag or Wayne's storage can
+attack (melee, loaded rounds, or ammunition in its matching pool), Bullets x15
+are free and Spare Club can issue a free Club 1 after confirmation. Spare Club
+requires both a bag slot and a free equipment record. A field reminder points
+to this page once per episode; no usable weapons are replaced.
+
+pe_requisition.c owns rules, native inventory access, tuning and persistence;
+pe_requisition_menu.c owns the shared F1 page, confirmation and rescue reminder.
+pe_requisition.h exposes stable goods IDs for future menu clients. No native
+engine hooks were added. Deferred custom-content ideas remain unimplemented.
+
+Run tests/run_pe_requisition_test.ps1 for focused purchase, ammo, unlock,
+Tool-price, rescue/storage, confirmation, guard and save-layout checks.

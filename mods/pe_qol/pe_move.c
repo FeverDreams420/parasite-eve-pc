@@ -47,7 +47,7 @@ static const int32_t s_entry_factor[] = { 0x10000, 0x18000, 0x20000, 0x30000, 0x
 #define PE_ENTRY_CHOICES 5
 
 static int s_always_run = 1;
-static int s_run_choice = 2, s_walk_choice = 2;   /* 1.5x: the stock run felt too slow */
+static int s_run_choice = 3, s_walk_choice = 3;   /* 1.75x field movement by default */
 static int s_combat_choice = 0, s_entry_choice = 0;
 static int32_t s_run_mask = 0x4000;               /* the run bit's own buttons (Circle) */
 

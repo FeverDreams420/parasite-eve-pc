@@ -449,6 +449,7 @@ void Battle_ApplyDamage(int damageKind) {
     s8 result = -1;
     Combatant *actor;
     int flags;
+    PE_HOOK(PE_HOOK_ITEM_USE, &damageKind);
 
     if ((g_GameStateFlags & 2) == 0) {
         BattleEntity *localActor = D_8009D254;

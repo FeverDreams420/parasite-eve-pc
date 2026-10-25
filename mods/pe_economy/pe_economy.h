@@ -6,6 +6,7 @@
 
 #include <stddef.h>
 #include <stdint.h>
+#include "pe_inventory_service.h"
 
 /* Economy armor mods in the game's unused armor effect numbers 17-20. */
 #define PE_FX_BARGAIN    17 /* prices -15% */
@@ -30,11 +31,6 @@ typedef struct PeCatalogApi {
     int (*armor_unlocked)(int effect);
     int (*unlock_armor)(int effect);   /* 1 if it was new */
 } PeCatalogApi;
-
-/* "keys" v1: the key item pocket. */
-typedef struct PeKeysApi {
-    int (*take)(uint16_t item);        /* found-list key with the bag full: into the pocket */
-} PeKeysApi;
 
 /* Direct calls inside the economy mod. */
 int pe_loot_enabled(void);

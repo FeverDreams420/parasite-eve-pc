@@ -707,6 +707,7 @@ void Inv_SortInventoryByMode(s32 arg0, s32 arg1) {
         }
     }
     Inv_RebuildSelectableMask();
+    PE_HOOK(PE_HOOK_INVENTORY_SORTED, NULL);
 }
 
 void Inv_SortContainerItems(int arg0) {

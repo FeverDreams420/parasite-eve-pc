@@ -1234,7 +1234,7 @@ s32 Inv_AddItem(s32 arg0) {
     s32 t;
     s16 *cur;
     s16 *end;
-    PE_HOOK(PE_HOOK_ITEM_ADD, &arg0);
+    if (PE_HOOK(PE_HOOK_ITEM_ADD, &arg0)) return 0;
     ItemDataRecord *ent;
 
     ret = 0;

@@ -1,4 +1,5 @@
 #include "pe1/aya.h"
+#include "pe_hooks.h"
 #include "pe1/draw_state.h"
 #include "pe1/draw_wipe_rect.h"
 #include "pe1/inventory.h"
@@ -490,6 +491,8 @@ void Menu_DrawActionCodeItem(int arg0) {
         if (code == 0) {
             return;
         }
+
+        if (PE_HOOK(PE_HOOK_EQUIP_EFFECT, (&(PeHookEquipEffect){code, g_InvItemUsableFlag == 0}))) return;
 
         if (g_InvItemUsableFlag != 0) {
             Draw_AllocSprite(code + 0x22);

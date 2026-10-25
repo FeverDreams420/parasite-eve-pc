@@ -13,8 +13,7 @@
  *   - Scan summary: vanilla Scan only flashes one "Susceptible to ..." line per weakness and never
  *     shows resistances; Rebalanced adds one on-screen line with both.
  *
- * Not ported yet: the half-bar turn rows and Quick powers (they drive the half-bar ATB mod, a
- * QoL port) and Panacea (a custom item, economy port).
+ * Half-bar turns use pe_atb_items.c; Panacea uses pe_panacea.c and pe_combine.c.
  */
 #include <stdint.h>
 #include <stdio.h>
@@ -24,6 +23,8 @@
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
 #include "pe_pages.h"
+#include "pe_atb_items.h"
+#include "pe_panacea.h"
 
 enum { RULES_VANILLA, RULES_REBALANCED, RULES_CUSTOM };
 static const char *const s_rules_names[] = { "Vanilla", "Rebalanced", "Custom" };
@@ -32,6 +33,13 @@ static int s_heal1, s_heal2, s_heal3, s_cost_detox, s_cost_scan, s_scan_summary;
 
 typedef struct { const char *label, *desc; int vanilla, rebalanced, min, max, step; int *value; int toggle; } PeRow;
 static PeRow s_rows[] = {
+    { "Panacea", "Combine Medicine 4 and Full Cure for a healing cure.", 0, 1, 0, 1, 1, &g_pe_panacea, 1 },
+    { "Half-bar turns", "Gold bar: chosen actions at half.", 0, 1, 0, 1, 1, &g_pe_half_enabled, 1 },
+    { "Half bar: Items", "Use items from a half bar.", 0, 1, 0, 1, 1, &g_pe_half_allow[0], 1 },
+    { "Half bar: PE quick powers", "Quick powers cost half a bar.", 0, 1, 0, 1, 1, &g_pe_half_allow[1], 1 },
+    { "Half bar: change weapon", "Swap weapons from a half bar.", 0, 1, 0, 1, 1, &g_pe_half_allow[2], 1 },
+    { "Half bar: change armor", "Swap armor from a half bar.", 0, 0, 0, 1, 1, &g_pe_half_allow[3], 1 },
+    { "Half bar: escape", "Try to escape from a half bar.", 0, 0, 0, 1, 1, &g_pe_half_allow[4], 1 },
     { "Heal 1 % of max HP", "0 = vanilla (+30 HP).", 0, 15, 0, 100, 5, &s_heal1, 0 },
     { "Heal 2 % of max HP", "0 = vanilla (+60 HP).", 0, 30, 0, 100, 5, &s_heal2, 0 },
     { "Heal 3 % of max HP", "0 = vanilla (+280 HP).", 0, 65, 0, 100, 5, &s_heal3, 0 },
@@ -41,16 +49,35 @@ static PeRow s_rows[] = {
 };
 #define PE_ROWS ((int)(sizeof s_rows / sizeof s_rows[0]))
 
+static int s_quick[20];
+static const struct { int index; const char *label; int rebalanced; } s_powers[] = {
+    {0, "Heal 1", 1}, {1, "Heal 2", 1}, {2, "Heal 3", 0}, {3, "Detox", 1}, {4, "Medic", 1},
+    {5, "Barrier", 0}, {6, "Energy Shot", 0}, {7, "Scan", 1}, {8, "Slow", 1}, {9, "Haste", 0},
+    {10, "Confuse", 1}, {11, "Gene Heal", 0}, {12, "Preraise", 0}, {18, "Full Recover", 0},
+    {19, "Liberate", 0},
+};
+#define PE_POWERS ((int)(sizeof s_powers / sizeof s_powers[0]))
+static const char *const s_quick_names[] = { "Full bar", "Half bar" };
+
+static void pe_sync_quick(void) {
+    uint32_t mask = 0;
+    for (int i = 0; i < 20; ++i) if (s_quick[i]) mask |= 1u << i;
+    g_pe_quick_mask = mask;
+}
+
 static void pe_apply(int rules) {
     int i;
     if (rules == RULES_CUSTOM) return;
     for (i = 0; i < PE_ROWS; ++i) *s_rows[i].value = rules == RULES_VANILLA ? s_rows[i].vanilla : s_rows[i].rebalanced;
+    for (i = 0; i < PE_POWERS; ++i) s_quick[s_powers[i].index] = rules == RULES_VANILLA ? 0 : s_powers[i].rebalanced;
 }
 
 static int pe_matches(int rules) {
     int i;
     for (i = 0; i < PE_ROWS; ++i)
         if (*s_rows[i].value != (rules == RULES_VANILLA ? s_rows[i].vanilla : s_rows[i].rebalanced)) return 0;
+    for (i = 0; i < PE_POWERS; ++i)
+        if (s_quick[s_powers[i].index] != (rules == RULES_VANILLA ? 0 : s_powers[i].rebalanced)) return 0;
     return 1;
 }
 
@@ -59,6 +86,7 @@ static void pe_balance_tick(void) {
     else if (s_rules != RULES_CUSTOM && !pe_matches(s_rules)) s_rules = s_rules_shown = RULES_CUSTOM;
     else if (s_rules == RULES_CUSTOM && pe_matches(RULES_REBALANCED)) s_rules = s_rules_shown = RULES_REBALANCED;
     else if (s_rules == RULES_CUSTOM && pe_matches(RULES_VANILLA)) s_rules = s_rules_shown = RULES_VANILLA;
+    pe_sync_quick();
 }
 
 /* Scan summary, from the target's statusFlags2 pairs (0 average, 1 resists, 2 weak). */
@@ -122,6 +150,11 @@ void pe_pe_balance_register(const char *mod_id) {
             pe_menu_register_int(PE_PAGE, s_rows[i].label, s_rows[i].desc, s_rows[i].value,
                                  s_rows[i].min, s_rows[i].max, s_rows[i].step);
     }
+    for (i = 0; i < PE_POWERS; ++i)
+        pe_menu_register_choice(PE_PAGE_QUICK_POWERS, s_powers[i].label,
+            "Half bar costs less ATB; shooting powers still cost a full bar.",
+            &s_quick[s_powers[i].index], s_quick_names, 2);
+    pe_sync_quick();
     s_rules = pe_matches(RULES_REBALANCED) ? RULES_REBALANCED : pe_matches(RULES_VANILLA) ? RULES_VANILLA : RULES_CUSTOM;
     s_rules_shown = s_rules;
     pe_menu_register_tick(pe_balance_tick);

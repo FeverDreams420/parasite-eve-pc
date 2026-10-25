@@ -70,6 +70,7 @@ typedef struct HostOverlayState {
     int open;
     int page;
     int row;
+    int scroll;
     int bind_device;
     int capturing_binding;
     int quit;
@@ -197,32 +198,43 @@ static int Host_SettingsTotalRowCount(int page) {
     return Host_SettingsPureRowCount(page) + OVERLAY_ACTION_ROWS;
 }
 
+enum {
+    OVERLAY_CONTROLS_BINDING_COUNT = 16,
+    OVERLAY_CONTROLS_VISIBLE_BINDINGS = OVERLAY_VISIBLE_CONTROLS - 1,
+    OVERLAY_CONTROLS_MAX_SCROLL = OVERLAY_CONTROLS_BINDING_COUNT - OVERLAY_CONTROLS_VISIBLE_BINDINGS
+};
+
 static int Host_SettingsVisibleSettingCount(int page) {
-    int count = Host_SettingsPureRowCount(page);
-    if (page == OVERLAY_PAGE_CONTROLS && count > OVERLAY_VISIBLE_CONTROLS) {
-        return OVERLAY_VISIBLE_CONTROLS;
-    }
-    return count;
+    (void)page;
+    return OVERLAY_VISIBLE_CONTROLS;
 }
 
 static int Host_SettingsVisibleRowCount(int page) {
     return Host_SettingsVisibleSettingCount(page) + OVERLAY_ACTION_ROWS;
 }
 
-/* First scrollable binding index (1..16) shown in the Controls window */
-static int Host_ControlsScrollOffset(int selectedRow) {
-    int maxVisibleBindings = OVERLAY_VISIBLE_CONTROLS - 1; /* row 0 is Binding device */
-    int totalBindings = 16;
-    if (selectedRow <= 0 || selectedRow > totalBindings) {
-        return 0;
+static int Host_ClampControlsScroll(int scroll) {
+    if (scroll < 0) return 0;
+    if (scroll > OVERLAY_CONTROLS_MAX_SCROLL) return OVERLAY_CONTROLS_MAX_SCROLL;
+    return scroll;
+}
+
+/* Scrolls the Controls binding window by the minimum amount needed to keep
+ * a keyboard/gamepad-selected binding row in view. Mouse hover never calls this. */
+static void Host_EnsureControlsRowVisible(HostOverlayState *state) {
+    state->scroll = Host_ClampControlsScroll(state->scroll);
+    if (state->page != OVERLAY_PAGE_CONTROLS) {
+        return;
     }
-    int bindingIdx = selectedRow - 1;
-    int start = bindingIdx - (maxVisibleBindings / 2);
-    if (start < 0) start = 0;
-    if (start > totalBindings - maxVisibleBindings) {
-        start = totalBindings - maxVisibleBindings;
+    if (state->row <= 0 || state->row > OVERLAY_CONTROLS_BINDING_COUNT) {
+        return;
     }
-    return start;
+    int bindingIdx = state->row - 1;
+    if (bindingIdx < state->scroll) {
+        state->scroll = bindingIdx;
+    } else if (bindingIdx >= state->scroll + OVERLAY_CONTROLS_VISIBLE_BINDINGS) {
+        state->scroll = bindingIdx - OVERLAY_CONTROLS_VISIBLE_BINDINGS + 1;
+    }
 }
 
 /* ---- surface ---- */
@@ -446,8 +458,9 @@ static float OverlayValueCentre(void) {
     return (float)(OVERLAY_PANEL_W - OVERLAY_PAD) - (float)OVERLAY_VALUE_W * 0.5f;
 }
 
-/* Maps a logical row on `page` to its visible slot (0..visibleRows-1), or -1 if scrolled off */
-static int OverlayVisibleSlotForRow(int page, int selectedRow, int row) {
+/* Maps a logical row on `state->page` to its visible slot (0..visibleRows-1), or -1 if scrolled off */
+static int OverlayVisibleSlotForRow(const HostOverlayState *state, int row) {
+    int page = state->page;
     int pureCount = Host_SettingsPureRowCount(page);
     int visibleSettings = Host_SettingsVisibleSettingCount(page);
     if (row >= pureCount) {
@@ -459,18 +472,17 @@ static int OverlayVisibleSlotForRow(int page, int selectedRow, int row) {
     if (row == 0) {
         return 0;
     }
-    int scroll = Host_ControlsScrollOffset(selectedRow);
+    int scroll = Host_ClampControlsScroll(state->scroll);
     int bindingIdx = row - 1;
-    int maxVisibleBindings = OVERLAY_VISIBLE_CONTROLS - 1;
-    if (bindingIdx < scroll || bindingIdx >= scroll + maxVisibleBindings) {
+    if (bindingIdx < scroll || bindingIdx >= scroll + OVERLAY_CONTROLS_VISIBLE_BINDINGS) {
         return -1;
     }
     return 1 + (bindingIdx - scroll);
 }
 
-static OverlayRect OverlayRowRect(int page, int selectedRow, int row) {
-    int visibleSettings = Host_SettingsVisibleSettingCount(page);
-    int slot = OverlayVisibleSlotForRow(page, selectedRow, row);
+static OverlayRect OverlayRowRect(const HostOverlayState *state, int row) {
+    int visibleSettings = Host_SettingsVisibleSettingCount(state->page);
+    int slot = OverlayVisibleSlotForRow(state, row);
     if (slot < 0) {
         return (OverlayRect){0.0f, -1000.0f, 0.0f, 0.0f};
     }
@@ -579,7 +591,7 @@ static void PaintRows(const Painter *p) {
     int row;
 
     for (row = 0; row < totalRows; row++) {
-        int slot = OverlayVisibleSlotForRow(page, p->state->row, row);
+        int slot = OverlayVisibleSlotForRow(p->state, row);
         if (slot < 0) continue;
 
         float top = OverlayRowTop(visibleSettings, slot) * s;
@@ -629,6 +641,21 @@ static void PaintRows(const Painter *p) {
                      quit ? "Quit game" : "Resume game", quit ? kDanger : label,
                      ALIGN_LEFT);
         }
+    }
+
+    if (page == OVERLAY_PAGE_CONTROLS) {
+        int scroll = Host_ClampControlsScroll(p->state->scroll);
+        float trackTop = (OverlayRowTop(visibleSettings, 1) + 4.0f) * s;
+        float trackH = (float)(OVERLAY_CONTROLS_VISIBLE_BINDINGS * OVERLAY_ROW_H - 8) * s;
+        float trackX = (float)(OVERLAY_PANEL_W - 12) * s;
+        float thumbH = trackH * ((float)OVERLAY_CONTROLS_VISIBLE_BINDINGS /
+                                 (float)OVERLAY_CONTROLS_BINDING_COUNT);
+        float thumbTop = trackTop + (trackH - thumbH) *
+                         ((float)scroll / (float)OVERLAY_CONTROLS_MAX_SCROLL);
+        FillRoundRect(p->surface, trackX, trackTop, 4.0f * s, trackH, 2.0f * s,
+                      WithAlpha(kText, 0.10f));
+        FillRoundRect(p->surface, trackX, thumbTop, 4.0f * s, thumbH, 2.0f * s,
+                      WithAlpha(kAccent, 0.65f));
     }
 }
 

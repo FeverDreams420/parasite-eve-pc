@@ -714,6 +714,7 @@ static void Host_SwitchSettingsPage(HostOverlayState *state, int nextPage) {
     if (state->page != normalized) {
         state->page = normalized;
         state->row = 0;
+        state->scroll = 0;
         state->bind_device = HOST_BIND_KEYBOARD;
         state->capturing_binding = 0;
         state->status = NULL;
@@ -805,7 +806,7 @@ static void Host_ProcessSettingsPointer(
     int totalRows = Host_SettingsTotalRowCount(state->page);
     int hitRow = -1;
     for (int r = 0; r < totalRows; r++) {
-        OverlayRect rect = OverlayRowRect(state->page, state->row, r);
+        OverlayRect rect = OverlayRowRect(state, r);
         if (x >= rect.x && x < rect.x + rect.w && y >= rect.y && y < rect.y + rect.h) {
             hitRow = r;
             break;
@@ -917,10 +918,12 @@ static void Host_ProcessSettingsEvent(
             break;
         case SDL_SCANCODE_UP:
             state->row = (state->row + totalRows - 1) % totalRows;
+            Host_EnsureControlsRowVisible(state);
             state->dirty = 1;
             break;
         case SDL_SCANCODE_DOWN:
             state->row = (state->row + 1) % totalRows;
+            Host_EnsureControlsRowVisible(state);
             state->dirty = 1;
             break;
         case SDL_SCANCODE_LEFT:
@@ -957,10 +960,12 @@ static void Host_ProcessSettingsEvent(
             break;
         case SDL_GAMEPAD_BUTTON_DPAD_UP:
             state->row = (state->row + totalRows - 1) % totalRows;
+            Host_EnsureControlsRowVisible(state);
             state->dirty = 1;
             break;
         case SDL_GAMEPAD_BUTTON_DPAD_DOWN:
             state->row = (state->row + 1) % totalRows;
+            Host_EnsureControlsRowVisible(state);
             state->dirty = 1;
             break;
         case SDL_GAMEPAD_BUTTON_DPAD_LEFT:
@@ -974,6 +979,18 @@ static void Host_ProcessSettingsEvent(
             break;
         default:
             break;
+        }
+    } else if (event->type == SDL_EVENT_MOUSE_WHEEL) {
+        if (state->page == OVERLAY_PAGE_CONTROLS && event->wheel.y != 0.0f) {
+            int step = event->wheel.y > 0.0f ? -1 : 1;
+            if (event->wheel.direction == SDL_MOUSEWHEEL_FLIPPED) {
+                step = -step;
+            }
+            int nextScroll = Host_ClampControlsScroll(state->scroll + step);
+            if (nextScroll != state->scroll) {
+                state->scroll = nextScroll;
+                state->dirty = 1;
+            }
         }
     } else if (event->type == SDL_EVENT_MOUSE_MOTION) {
         Host_ProcessSettingsPointer(state, event->motion.x, event->motion.y, 0, game, fallbackWindow);

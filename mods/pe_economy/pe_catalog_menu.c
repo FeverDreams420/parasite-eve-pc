@@ -8,7 +8,8 @@
  *
  * The Catalog is built from the game's own menu widgets, the way its screens are: a panel node
  * with our input handler and a list node with our row drawer (MenuWidget_DrawList), so cursor
- * movement, scrolling and sounds are the game's. Three steps, each its own panel:
+ * movement, scrolling and sounds are the game's. One wide panel whose list shows three steps
+ * in turn (Circle goes back a step, each step remembers its row):
  *   Item    your equipped gun / armor
  *   Slot    that item's mod slots
  *   Effect  Remove, the unlocked effects with their price, locked ones dimmed
@@ -39,12 +40,20 @@ void Menu_DrawItemList(MenuWidgetNode *node);
 
 enum { STEP_ITEM, STEP_SLOT, STEP_EFFECT, STEP_COUNT };
 
+/* One panel and one list for the whole Catalog: the list's rows switch with the step, so
+ * nothing stacks on screen. */
+#define PE_PANEL_X      40
+#define PE_PANEL_Y      40
+#define PE_PANEL_W      240
+#define PE_LIST_ROWS    8      /* visible rows; longer lists scroll */
+
 static struct {
-    MenuWidgetNode *panel[STEP_COUNT], *list[STEP_COUNT];
-    MenuWidgetNode *main_list;
-    int which;        /* 0 gun, 1 armor */
+    MenuWidgetNode *panel, *list, *main_list;
+    int step;
+    int row[STEP_COUNT]; /* the row each step was left on */
+    int which;           /* 0 gun, 1 armor */
     int slot;
-    int armed;        /* effect row armed by the first press, or -1 */
+    int armed;           /* effect row armed by the first press, or -1 */
     char result[PE_TEXT_MAX];
 } s_cat = { .armed = -1 };
 
@@ -103,7 +112,7 @@ static int pe_row_count(int step) {
 
 static int pe_effect_of_row(int row) { return row <= 0 ? 0 : pe_cat_board_effect(s_cat.which, row - 1); }
 
-static int pe_cursor(int step) { return s_cat.list[step] ? MenuWidget_GridCellIndex(s_cat.list[step]) : 0; }
+static int pe_cursor(int step) { (void)step; return s_cat.list ? MenuWidget_GridCellIndex(s_cat.list) : 0; }
 
 static void pe_item_row(int index) {
     char text[PE_TEXT_MAX];
@@ -141,9 +150,10 @@ static void pe_effect_row(int index) {
     Draw_SetTextDimmed(0);
 }
 
-static void pe_draw_item_list(MenuWidgetNode *node) { MenuWidget_DrawList(node, pe_item_row); }
-static void pe_draw_slot_list(MenuWidgetNode *node) { MenuWidget_DrawList(node, pe_slot_row); }
-static void pe_draw_effect_list(MenuWidgetNode *node) { MenuWidget_DrawList(node, pe_effect_row); }
+static void pe_draw_list(MenuWidgetNode *node) {
+    static void (*const rows[STEP_COUNT])(int) = { pe_item_row, pe_slot_row, pe_effect_row };
+    MenuWidget_DrawList(node, rows[s_cat.step]);
+}
 
 /* ---- title bar ---- */
 static const char *pe_install_problem(int code) {
@@ -181,11 +191,7 @@ static void pe_title_for(int step, char *out, size_t size) {
     }
 }
 
-static int pe_step_of(const MenuWidgetNode *node) {
-    int step;
-    for (step = 0; step < STEP_COUNT; ++step) if (node && node == s_cat.list[step]) return step;
-    return -1;
-}
+static int pe_step_of(const MenuWidgetNode *node) { return node && node == s_cat.list ? s_cat.step : -1; }
 
 static int pe_main_row_count(void) {
     int bits = g_MenuItemContextFlag & 0x1EF, n = 0;
@@ -246,31 +252,50 @@ static void pe_show_panels(void) {
 /* ---- screens ---- */
 static int pe_screen_input(MenuWidgetNode *panel, unsigned int buttons);
 
-static void pe_open(int step, MenuWidgetNode *from) {
-    static void (*const draws[STEP_COUNT])(MenuWidgetNode *) = { pe_draw_item_list, pe_draw_slot_list, pe_draw_effect_list };
-    MenuWidgetNode *panel = MenuWidget_CreateSimpleNode(PE_DESC_PANEL, from, 0, 0);
-    MenuWidgetNode *list = MenuWidget_CreateNode(PE_DESC_PANEL, panel, panel);
-    panel->update = pe_screen_input;
-    list->draw = (void (*)())draws[step];
-    list->selected_base = PE_TITLE_BASE;
-    panel->x += step * 12;                                    /* each step a little to the right */
-    list->x += step * 12;
-    s_cat.panel[step] = panel;
-    s_cat.list[step] = list;
+/* Show step `step` in the list, the cursor on `row`. */
+static void pe_set_step(int step, int row) {
+    const int rows = pe_row_count(step);
+    s_cat.step = step;
     s_cat.armed = -1;
     s_cat.result[0] = '\0';
-    MenuWidget_SetCurrentNode(list);
-    Draw_SetPrimCallback(list, pe_row_count(step));
+    s_cat.list->cursor_x = 0;
+    s_cat.list->cursor_y = row >= 0 && row < rows ? row : 0;
+    s_cat.list->scroll_y = s_cat.list->cursor_y >= PE_LIST_ROWS ? s_cat.list->cursor_y - PE_LIST_ROWS + 1 : 0;
+    Draw_SetPrimCallback(s_cat.list, rows);
 }
 
-static void pe_close(int step) {
-    MenuWidgetNode *back = step > 0 ? s_cat.list[step - 1] : s_cat.main_list;
-    MenuWidget_DestroyNode(s_cat.panel[step]);
-    s_cat.panel[step] = s_cat.list[step] = NULL;
-    s_cat.armed = -1;
-    s_cat.result[0] = '\0';
-    if (step == STEP_ITEM) pe_show_panels();                /* leaving the Catalog */
-    if (back) MenuWidget_SetCurrentNode(back);
+static void pe_open(MenuWidgetNode *from) {
+    s_cat.panel = MenuWidget_CreateSimpleNode(PE_DESC_PANEL, from, 0, 0);
+    s_cat.list = MenuWidget_CreateNode(PE_DESC_PANEL, s_cat.panel, s_cat.panel);
+    s_cat.panel->update = pe_screen_input;
+    s_cat.panel->x = PE_PANEL_X;
+    s_cat.panel->y = PE_PANEL_Y;
+    s_cat.panel->grid_width = PE_PANEL_W;
+    s_cat.list->draw = (void (*)())pe_draw_list;
+    s_cat.list->selected_base = PE_TITLE_BASE;
+    s_cat.list->visible_rows_mirror = PE_LIST_ROWS;
+    memset(s_cat.row, 0, sizeof s_cat.row);
+    MenuWidget_SetCurrentNode(s_cat.list);
+    pe_set_step(STEP_ITEM, 0);
+}
+
+static void pe_close(void) {
+    MenuWidget_DestroyNode(s_cat.panel);
+    s_cat.panel = s_cat.list = NULL;
+    pe_show_panels();
+    if (s_cat.main_list) MenuWidget_SetCurrentNode(s_cat.main_list);
+}
+
+/* Circle: back a step, or out of the Catalog. */
+static void pe_back(void) {
+    if (s_cat.step == STEP_ITEM) { pe_close(); return; }
+    pe_set_step(s_cat.step - 1, s_cat.row[s_cat.step - 1]);
+}
+
+/* Cross on a row that leads deeper: remember it and show the next step. */
+static void pe_forward(int row) {
+    s_cat.row[s_cat.step] = row;
+    pe_set_step(s_cat.step + 1, 0);
 }
 
 static void pe_effect_confirm(int row) {
@@ -299,11 +324,10 @@ static void pe_effect_confirm(int row) {
 }
 
 static int pe_screen_input(MenuWidgetNode *panel, unsigned int buttons) {
-    int step;
-    for (step = 0; step < STEP_COUNT && panel != s_cat.panel[step]; ++step) {}
-    if (step == STEP_COUNT) return 0;
-    if (buttons & 0x40) {                                   /* Circle: back a step */
-        pe_close(step);
+    const int step = s_cat.step;
+    if (panel != s_cat.panel) return 0;
+    if (buttons & 0x40) {                                   /* Circle */
+        pe_back();
         Menu_PlayCancelSound();
         return 1;
     }
@@ -313,12 +337,12 @@ static int pe_screen_input(MenuWidgetNode *panel, unsigned int buttons) {
         if (step == STEP_ITEM) {
             if (!pe_cat_record(row)) { Menu_PlayErrorSound(); return 1; }
             s_cat.which = row;
-            pe_open(STEP_SLOT, s_cat.list[STEP_ITEM]);
+            pe_forward(row);
             Menu_PlayConfirmSound();
         } else if (step == STEP_SLOT) {
             if (pe_cat_slots(s_cat.which) <= 0) { Menu_PlayErrorSound(); return 1; }
             s_cat.slot = row;
-            pe_open(STEP_EFFECT, s_cat.list[STEP_SLOT]);
+            pe_forward(row);
             Menu_PlayConfirmSound();
         } else {
             pe_effect_confirm(row);
@@ -349,11 +373,9 @@ static int pe_on_main_action(void *ctx, void *user) {
     (void)user;
     pe_mod_log("pe_economy", "main menu action %d", a->action);
     if (a->action != 9 || Menu_GetBattleEquipMode() || !pe_loot_enabled()) return 0;
-    memset(s_cat.panel, 0, sizeof s_cat.panel);
-    memset(s_cat.list, 0, sizeof s_cat.list);
     s_cat.main_list = a->list;
     pe_hide_panels();
-    pe_open(STEP_ITEM, a->list);
+    pe_open(a->list);
     return 1;                                              /* handled: the game plays the confirm sound */
 }
 

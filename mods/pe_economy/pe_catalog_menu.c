@@ -299,14 +299,20 @@ static int pe_on_list_rows(void *ctx, void *user) {
     const PeHookListRows *r = (const PeHookListRows *)ctx;
     (void)user;
     if (r->node && r->node->draw == (void (*)())Menu_DrawItemList && !Menu_GetBattleEquipMode() &&
-        pe_loot_enabled() && pe_game_loaded())
+        pe_loot_enabled() && pe_game_loaded()) {
         ++*r->count;
+        /* The main list shows at most visible_rows_mirror rows (8, its layout's cap): with every
+         * game row present ours would sit past it. Raise the cap; the game grows the panel. */
+        if (r->node->visible_rows_mirror < *r->count) r->node->visible_rows_mirror = *r->count;
+        pe_mod_log("pe_economy", "main menu: %d rows with Mod Catalog", *r->count);
+    }
     return 0;
 }
 
 static int pe_on_main_action(void *ctx, void *user) {
     const PeHookMenuAction *a = (const PeHookMenuAction *)ctx;
     (void)user;
+    pe_mod_log("pe_economy", "main menu action %d", a->action);
     if (a->action != 9 || Menu_GetBattleEquipMode() || !pe_loot_enabled()) return 0;
     memset(s_cat.panel, 0, sizeof s_cat.panel);
     memset(s_cat.list, 0, sizeof s_cat.list);

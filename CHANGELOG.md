@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Story movies can be skipped: `Start`/`Enter` pauses the movie and asks "Do you want to skip the cutscene?" in the settings overlay style. `No` resumes the movie.
+
 ## 0.3-alpha
 
 - Moved the settings menu (`Esc`) to an in-window overlay rendered directly over the main game window instead of opening a separate window.

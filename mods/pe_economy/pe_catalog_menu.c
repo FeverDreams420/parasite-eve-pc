@@ -209,6 +209,40 @@ static int pe_on_help_text(void *ctx, void *user) {
     return 0;
 }
 
+/* ---- Aya's panels ----
+ * Like the game's own screens, the Catalog hides Aya's status panels (mode-1 panels 0x12, 0x18,
+ * 0x2D, hidden while their cursor_y is set: MenuWidget_UpdateAndDraw) and the HP overlay, and
+ * puts them back when it closes. */
+extern int g_MenuBattleStatusOverlayActive;
+enum { PE_HIDDEN_MAX = 4 };
+static struct { MenuWidgetNode *node[PE_HIDDEN_MAX]; int selected[PE_HIDDEN_MAX]; int overlay; } s_hidden;
+
+static void pe_hide_panels(void) {
+    MenuWidgetNode *node = g_MenuWidgetActiveListHead;
+    int n = 0, guard;
+    memset(&s_hidden, 0, sizeof s_hidden);
+    for (guard = 0; node && guard < 64 && n < PE_HIDDEN_MAX; ++guard, node = node->next) {
+        const int sel = node->selected_base;
+        if (node->mode == 1 && (sel == 0x12 || sel == 0x18 || sel == 0x2D) && node->cursor_y == 0) {
+            node->cursor_y = 1;
+            s_hidden.node[n] = node;
+            s_hidden.selected[n++] = sel;
+        }
+    }
+    s_hidden.overlay = g_MenuBattleStatusOverlayActive;
+    g_MenuBattleStatusOverlayActive = 0;
+}
+
+static void pe_show_panels(void) {
+    int i;
+    for (i = 0; i < PE_HIDDEN_MAX; ++i) {
+        MenuWidgetNode *node = s_hidden.node[i];
+        if (node && node->mode == 1 && node->selected_base == s_hidden.selected[i]) node->cursor_y = 0;
+    }
+    g_MenuBattleStatusOverlayActive = s_hidden.overlay;
+    memset(&s_hidden, 0, sizeof s_hidden);
+}
+
 /* ---- screens ---- */
 static int pe_screen_input(MenuWidgetNode *panel, unsigned int buttons);
 
@@ -235,6 +269,7 @@ static void pe_close(int step) {
     s_cat.panel[step] = s_cat.list[step] = NULL;
     s_cat.armed = -1;
     s_cat.result[0] = '\0';
+    if (step == STEP_ITEM) pe_show_panels();                /* leaving the Catalog */
     if (back) MenuWidget_SetCurrentNode(back);
 }
 
@@ -317,6 +352,7 @@ static int pe_on_main_action(void *ctx, void *user) {
     memset(s_cat.panel, 0, sizeof s_cat.panel);
     memset(s_cat.list, 0, sizeof s_cat.list);
     s_cat.main_list = a->list;
+    pe_hide_panels();
     pe_open(STEP_ITEM, a->list);
     return 1;                                              /* handled: the game plays the confirm sound */
 }

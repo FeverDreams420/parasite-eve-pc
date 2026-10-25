@@ -1249,6 +1249,7 @@
     if(argc==3 && !strcmp(argv[1],"--native-hallway"))return original_native_bootstrap(argv[2],6);
     if(argc==3 && !strcmp(argv[1],"--native-backstage"))return original_native_bootstrap(argv[2],5);
     if(argc==3 && !strcmp(argv[1],"--native-melissa"))return original_native_bootstrap(argv[2],4);
+    if(argc==3 && !strcmp(argv[1],"--native-graphics-controls"))return original_native_graphics_controls(argv[2]);
     if(argc==3 && !strcmp(argv[1],"--native-field-control"))return original_native_bootstrap(argv[2],1);
     if(argc==2 && !strcmp(argv[1],"--spu-pitch-modulation"))return original_spu_pitch_modulation()?0:1;
     if(argc==2 && !strcmp(argv[1],"--spu-noise"))return original_spu_noise()?0:1;

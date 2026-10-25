@@ -85,6 +85,7 @@ int g_BootHostActive;
 u32 g_BootHostVBlankLimit;
 u32 g_BootHostVBlankCount;
 u32 g_BootHostControlAt;
+void (*g_BootHostGraphicsOptions)(int, int, int);
 const char *g_BootHostVramPath;
 const char *g_BootHostFramePath;
 const char *g_BootHostAudioPath;
@@ -347,7 +348,9 @@ static void Boot_PrintHostDiagnosticJson(int terminal) {
         printf("null");
     }
 
-    printf("},\"inventory\":{\"capacity\":%u,\"slots\":[", (unsigned)g_AyaSaveState.inventory_slot_count);
+    printf("},\"graphics\":{\"resolution\":%u,\"geometry\":%d,\"antialiasing\":%d,\"filtering\":%d},\"inventory\":{\"capacity\":%u,\"slots\":[",
+           Psyz_VideoGetInternalResolution(), Psyz_VideoGetGeometryCorrection(),
+           Psyz_VideoGetAntialiasing(), Psyz_VideoGetModelFiltering(), (unsigned)g_AyaSaveState.inventory_slot_count);
     for (unsigned slot = 0; slot < 50; ++slot) {
         printf("%s%u", slot ? "," : "", (unsigned)(u16)g_AyaSaveState.inventory_items[slot]);
     }
@@ -620,6 +623,22 @@ static void Boot_ReadHostControlCommand(void) {
     if (!strcmp(line, "quit")) {
         BOOT_WRITE_PROFILE();
         _Exit(EXIT_SUCCESS);
+    }
+    if (!strncmp(line, "graphics ", 9)) {
+        int geometry, antialiasing, filtering;
+        char extra;
+        const char *backend=SDL_GetEnvironmentVariable(SDL_GetEnvironment(), "PSYZ_HEADLESS");
+        if (!backend || strcmp(backend, "gpu") || !g_BootHostGraphicsOptions ||
+            sscanf(line + 9, "%d %d %d %c", &geometry, &antialiasing, &filtering, &extra) != 3 ||
+            (unsigned)geometry > 1 || (unsigned)antialiasing > 1 || (unsigned)filtering > 1 ||
+            g_BootHostVBlankLimit - g_BootHostVBlankCount <= 8) {
+            fprintf(stderr, "Invalid graphics control command\n");
+            fflush(stderr);
+            _Exit(2);
+        }
+        g_BootHostGraphicsOptions(geometry, antialiasing, filtering);
+        g_BootHostControlAt = g_BootHostVBlankCount + 8;
+        return;
     }
     if (strncmp(line, "advance ", 8)) {
         fprintf(stderr, "Invalid control command\n");

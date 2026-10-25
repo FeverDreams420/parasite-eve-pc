@@ -303,6 +303,18 @@ int main(int argc, char **argv) {
     assert(Host_String("'C:\\game\\disc.cue' # comment", decoded, sizeof(decoded)));
     assert(!strcmp(decoded, "C:\\game\\disc.cue"));
 
+    char enabled_effect[] = "true", invalid_effect[] = "2";
+    assert(Host_ParseOptionValue("graphics", "antialiasing", enabled_effect));
+    assert(Host_ParseOptionValue("graphics", "model_filtering", enabled_effect));
+    assert(Host_SaveOptions());
+    host_options.antialiasing = host_options.model_filtering = 0;
+    Host_LoadOptions(host_options.user_file);
+    assert(host_options.antialiasing == 1 && host_options.model_filtering == 1);
+    assert(!Host_ParseOptionValue("graphics", "antialiasing", invalid_effect));
+    assert(!Host_ParseOptionValue("graphics", "model_filtering", invalid_effect));
+    assert(host_options.antialiasing == 1 && host_options.model_filtering == 1);
+    host_options.antialiasing = host_options.model_filtering = 0;
+
     char invalid[4096];
     snprintf(invalid, sizeof(invalid), "%s/invalid.toml", test_directory);
     FILE *f = fopen(invalid, "w");

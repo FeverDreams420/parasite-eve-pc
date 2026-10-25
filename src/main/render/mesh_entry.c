@@ -3,6 +3,48 @@
 u16 GetClut(int x, int y);
 u16 GetTPage(int tp, int abr, int x, int y);
 #include "pe1/render_prim.h"
+#include <psyz/gpu.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <inttypes.h>
+
+static uint64_t hd_geometry_key;
+static const char *hd_background_path;
+
+static uint64_t Render_HdHash(uint64_t hash, const void *data, size_t size) {
+    const u8 *bytes=data;
+    for (size_t i=0;i<size;++i) hash=(hash^bytes[i])*UINT64_C(1099511628211);
+    return hash;
+}
+
+static int Render_HdCommand(const u_long *words, int available, void *unused) {
+    (void)unused;
+    if (available<3) return -1;
+    Psyz_GpuSelectSpriteAtlas((uint64_t)(u32)words[1] | ((uint64_t)(u32)words[2]<<32),
+                             (u32)words[0]&0xFFFFFF);
+    return 3;
+}
+
+/* Hash immutable descriptors before scripts animate the native entries. The
+ * exporter hashes the same little-endian fields, independent of host pointers. */
+void Render_PrepareHdBackgrounds(void) {
+    hd_background_path=getenv("PE_HD_BACKGROUNDS");
+    hd_geometry_key=0;
+    if (!hd_background_path || !*hd_background_path) return;
+    Psyz_GpuRegisterCommandHandler(0xF8,Render_HdCommand,NULL);
+    const GeomEntry *entries=(const void *)((const u8 *)g_GeomState+g_GeomState->entry_offset);
+    uint64_t hash=UINT64_C(14695981039346656037);
+    for (unsigned i=0;i<g_GeomState->entry_count06;++i) {
+        const GeomEntry *entry=&entries[i];
+        hash=Render_HdHash(hash,&entry->group,1);
+        hash=Render_HdHash(hash,&entry->prim_count,2);
+        hash=Render_HdHash(hash,&entry->base_x,4);
+        hash=Render_HdHash(hash,(const u8 *)entry+entry->u28.pos_ptr,(size_t)entry->prim_count*4);
+        hash=Render_HdHash(hash,(const u8 *)entry+entry->u2C.uv_ptr,(size_t)entry->prim_count*8);
+    }
+    hd_geometry_key=hash;
+    fprintf(stderr,"HD background geometry %016" PRIx64 " (%u entries)\n",hash,(unsigned)g_GeomState->entry_count06);
+}
 
 /* A mesh entry seen as the address its self-relative array offsets add to. */
 typedef union GeomEntryAddress {
@@ -35,6 +77,16 @@ int Render_LoadMeshEntry(GeomEntry *entry, RenderTilePacket *buffer, void **end)
     shade = 128;
     paletteMax = paletteStart;
 
+    uint64_t atlas_key=0;
+    if (hd_geometry_key && hd_background_path) {
+        const GeomEntry *entries=(const void *)((const u8 *)g_GeomState+g_GeomState->entry_offset);
+        u32 index=(u32)(entry-entries);
+        atlas_key=Render_HdHash(hd_geometry_key,&index,4);
+        char filename[4096];
+        int size=snprintf(filename,sizeof(filename),"%s/%016" PRIx64 ".bmp",hd_background_path,atlas_key);
+        if (size<0 || (size_t)size>=sizeof(filename) || Psyz_GpuLoadSpriteAtlas(atlas_key,filename)!=1)
+            atlas_key=0;
+    }
     entry->u30.prim = buffer;
     /* The page pointer and disp_x are stored through pointers to the fields.
      * GCC 2.7 lets a load of a fixed scalar pass a structure field store, but
@@ -56,7 +108,11 @@ int Render_LoadMeshEntry(GeomEntry *entry, RenderTilePacket *buffer, void **end)
             RenderTexturePagePacket *page = pages;
             RenderTilePacket *sprite = buffer;
             do {
-                sprite->length = 3;
+                sprite->length = 7;
+                sprite->hd_command = atlas_key ? 0xF8000000u | i : 0;
+                sprite->hd_key_low = atlas_key ? (u32)atlas_key : 0;
+                sprite->hd_key_high = atlas_key ? (u32)(atlas_key>>32) : 0;
+                sprite->packed_marker = 0x005A4D50u;
                 sprite->code = 0x7c;
                 sprite->r = shade;
                 sprite->g = shade;

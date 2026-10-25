@@ -298,6 +298,7 @@ int Render_DrawMeshList(void *buffer, void **end)
     int x;
 
     Render_LoadGeomState(*group);
+    Render_PrepareHdBackgrounds();
     address.state = state;
     address.word += state->entry_offset_1C;
     view = &address.viewport[*group];

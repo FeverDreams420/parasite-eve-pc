@@ -537,6 +537,22 @@ int Script_PointInPoly(int **arg0) {
     return 1;
 }
 
+/* Scene audio slots (bit per slot) a script started while a movie plays. */
+static u8 g_MovieMusicSlots;
+
+/* Played through, music started with a movie ends with it; a skipped movie
+ * stops it the way script op 0xC9 does. */
+void Script_StopMovieMusic(void) {
+    int i;
+
+    for (i = 0; i < 2; i++) {
+        if (g_MovieMusicSlots & (1 << i)) {
+            Akao_Cmd_11(g_GameState.scene_audio.tracks.keys[i][1]);
+        }
+    }
+    g_MovieMusicSlots = 0;
+}
+
 /* Original movie opcode: decoder/player code is statically linked.
  * The existing native work area replaces the two executable overlay loads. */
 int Script_LoadSceneData(int **args) {
@@ -557,6 +573,7 @@ int Script_LoadSceneData(int **args) {
     /* Reloading the PS1 player used to reset these movie-local values. */
     g_MenuCardVideoDepthFlip=0;
     g_MenuCardVideoSize[0]=g_MenuCardVideoSize[1]=0;
+    g_MovieMusicSlots=0;
     if (!MenuCardFirst_InitVideoBuffers(1,buffers) || !MenuCardFirst_OpenVideo(number)) {
         DecDCToutCallback(NULL);
         MenuCardFirst_ResetDisplayState();
@@ -1228,6 +1245,9 @@ int Akao_ProcessCommand(AkaoCommandArgs args) {
         *args[5] = Akao_Cmd_10((locals.slot == 0 ? g_GameState.bank_work_base : g_GameState.bank_work_end));
         Akao_Cmd_C0_WithSlot(0, 0x7F);
         CdRom_RegisterAudioSlot(locals.slot, *args[1], *args[5], 0x7F);
+        if (g_GameState.flags & 0x8000) {
+            g_MovieMusicSlots |= 1 << locals.slot;
+        }
         break;
     case 0xCB:
         status = CdRom_SeekToTrack(*args[1], 1, 1, &locals.slot,
@@ -1244,6 +1264,9 @@ int Akao_ProcessCommand(AkaoCommandArgs args) {
             (locals.slot == 0 ? g_GameState.bank_work_base : g_GameState.bank_work_end), *args[2]);
         CdRom_RegisterAudioSlot(locals.slot, *args[1], *args[5],
                                   *args[2]);
+        if (g_GameState.flags & 0x8000) {
+            g_MovieMusicSlots |= 1 << locals.slot;
+        }
         break;
     case 0xC9:
         locals.slot = CdRom_GetAudioSlotByKey(*args[1]);

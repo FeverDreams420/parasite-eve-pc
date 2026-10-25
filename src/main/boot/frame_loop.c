@@ -1,4 +1,5 @@
 #include "common.h"
+#include "pe1/akao_send.h"
 #include "pe1/battle_runtime.h"
 #include "pe1/battle_status.h"
 #include "pe1/boot_disc_check.h"
@@ -150,6 +151,7 @@ int Boot_RunFrame(void)
                     /* A chosen skip ends the movie as its last frame would. */
                     if (playing && skip_movie) {
                         MenuCardFirst_StopVideo();
+                        Script_StopMovieMusic();
                         playing = 0;
                     }
                     if (playing == 0) {

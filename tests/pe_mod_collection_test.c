@@ -62,6 +62,7 @@ int pe_menu_register_tick(PeMenuPerFrame f) { (void)f; return 0; }
 void pe_wardrobe_menu_register(const char *m) { (void)m; }   /* the menu screen: drawing only */
 void pe_skin_register(const char *m) { (void)m; }            /* the loader: game buffers, VRAM */
 int pe_skin_available(const char *folder) { return strcmp(folder, "test_skin") == 0; }
+int pe_skin_instant(void) { return 0; }
 
 /* The last entry of an F1 filter row (Area, Group). */
 static const char *last_filter(const char *label) {

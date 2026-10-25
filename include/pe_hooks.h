@@ -41,6 +41,8 @@ typedef enum PeHookId {
     PE_HOOK_POWER_AVAILABLE, /* PeHookPowerAvailable: Menu_CheckItemAffordable, can this PE power be picked now */
     PE_HOOK_PLAYER_ROWS, /* NULL: Scene_InitEntityPlayer step 0x27, before Aya's actor takes bank_slots[0]
                           * and her rows (g_GameState.bank_rows) */
+    PE_HOOK_PLAYER_TEXTURES, /* SceneAssetBlob *: Aya's texture blob just read, before its TIMs go to VRAM;
+                              * replaceable (nonzero: the game skips its upload) */
     PE_HOOK_COUNT
 } PeHookId;
 

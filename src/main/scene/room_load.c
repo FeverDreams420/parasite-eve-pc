@@ -1415,6 +1415,10 @@ retry:
         break;
     case 3:
         blob = (SceneAssetBlob *)state->scene_load_scratch;
+        if (PE_HOOK(PE_HOOK_PLAYER_TEXTURES, blob)) {
+            state->entity_texture_phase = 4;
+            break;
+        }
         directory = SceneAsset_ResolveOffset(blob, blob->directoryOffset);
         timOffset = directory->timEntries & 0x3fffff;
         firstTim = SceneAsset_ResolveOffset(blob, timOffset);

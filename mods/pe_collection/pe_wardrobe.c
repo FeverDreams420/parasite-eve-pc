@@ -103,12 +103,13 @@ static int pe_on_player_bank(void *ctx, void *user) {
     return 0;
 }
 
-/* Does wearing `c` need the room reloaded? Skins swap in instantly (pe_skin_loader.c); the game's
+/* Does wearing `c` (instead of what is worn now) need the room reloaded? Skins swap in place with
+ * Instant swap on (pe_skin_loader.c), otherwise the room reloads to put one on or take it off; the game's
  * own bundles need loading unless the right one is loaded already; a provider's model goes in at
  * the room load. */
 static int pe_needs_reload(const PeCostume *c) {
     int bank;
-    if (pe_is_skin(c)) return 0;
+    if (pe_is_skin(c) || pe_is_skin(pe_worn())) return !pe_skin_instant();   /* on or off */
     if (c && c->bank < 0) return 1;
     bank = c ? c->bank : s_room_bank;
     return bank < 0 || bank != g_GameState.loaded_entity_bank;

@@ -31,6 +31,8 @@
 #include "pe_collection.h"
 #include "pe_game.h"
 #include "pe_mod_host.h"
+#include "pe_mod_menu.h"
+#include "pe_pages.h"
 #include "pe1/entity_animation.h"
 #include "pe1/game_state.h"
 #include "pe1/pe_image.h"
@@ -73,6 +75,9 @@ static int s_tex_known;
 static PeSkin *s_pointed;               /* the skin bank_slots / rows point at, or NULL */
 static void *s_replaced[PE_ROWS_PER_BANK];   /* the game's row each pointed slot held */
 static int s_gun_written = -1;
+static int s_instant;                   /* F1: swap in place (off until it is proven in game) */
+
+int pe_skin_instant(void) { return s_instant; }
 
 static u32 rd32(const u8 *b, u32 o) { return (u32)b[o] | (u32)b[o + 1] << 8 | (u32)b[o + 2] << 16 | (u32)b[o + 3] << 24; }
 
@@ -366,16 +371,7 @@ static int pe_on_player_bank(void *ctx, void *user) {
         pe_log("skin", "model load: bank %d (loaded %d) new=%d wanted=%s vram=%s", g_SceneAreaType,
                g_GameState.loaded_entity_bank, (g_GameState.flags & PE_NEW_BUNDLE) != 0, k ? k->folder : "own",
                !s_tex_known ? "unknown" : s_tex ? s_tex->folder : "game");
-    if (g_GameState.entity_texture_phase == 3) {              /* the game's upload is next */
-        pe_keep_game_textures();
-        if (k) {
-            pe_upload(&k->tex);
-            g_GameState.entity_texture_phase = 4;             /* skip Aya's: on to the bundle */
-            pe_log("skin", "%s textures in", k->folder);
-        }
-        s_tex = k;
-        s_tex_known = 1;
-    } else if (g_GameState.entity_texture_phase == 0 && !(g_GameState.flags & PE_NEW_BUNDLE)) {
+    if (g_GameState.entity_texture_phase == 0 && !(g_GameState.flags & PE_NEW_BUNDLE)) {
         /* Unknown after a load (VRAM may hold anything), or the game's not at hand: let the game
          * load its bundle again, through the upload above. */
         if (!s_tex_known || (s_tex != k && !pe_textures(k))) {
@@ -384,6 +380,21 @@ static int pe_on_player_bank(void *ctx, void *user) {
         }
     }
     return 0;
+}
+
+/* The game just read Aya's texture blob: keep it, and put a worn skin's TIMs in VRAM instead. */
+static int pe_on_player_textures(void *ctx, void *user) {
+    PeSkin *k;
+    (void)user;
+    if (!pe_save_loaded() || ctx != g_GameState.scene_load_scratch) return 0;
+    pe_keep_game_textures();
+    k = pe_can_apply() ? pe_wanted() : NULL;
+    s_tex = k;
+    s_tex_known = 1;
+    if (!k) return 0;
+    pe_upload(&k->tex);
+    pe_log("skin", "%s textures in", k->folder);
+    return 1;                                                 /* the game skips Aya's */
 }
 
 static int pe_on_player_rows(void *ctx, void *user) {
@@ -401,7 +412,7 @@ static int pe_on_frame(void *ctx, void *user) {
     if (!pe_game_loaded()) return 0;
     k = pe_can_apply() ? pe_wanted() : NULL;
     if (!s_tex_known && !k) return 0;                   /* nothing to put on; the next load tells us */
-    if ((k != s_tex || !s_tex_known) && !pe_in_battle() && !(g_GameStateFlags & 0x2006u) && g_PlayerEntity && pe_textures(k)) {
+    if (s_instant && (k != s_tex || !s_tex_known) && !pe_in_battle() && !(g_GameStateFlags & 0x2006u) && g_PlayerEntity && pe_textures(k)) {
         pe_keep(k);
         pe_rebind_player();
         pe_log("skin", "wearing %s (instant)", k ? k->folder : "Aya's own");
@@ -431,7 +442,10 @@ static int pe_on_load(void *ctx, void *user) {
 
 void pe_skin_register(const char *mod_id) {
     pe_hook_add(PE_HOOK_PLAYER_BANK, pe_on_player_bank, NULL, PE_PRIORITY_LATE, mod_id);   /* after the Wardrobe's bank */
+    pe_hook_add(PE_HOOK_PLAYER_TEXTURES, pe_on_player_textures, NULL, PE_PRIORITY_NORMAL, mod_id);
     pe_hook_add(PE_HOOK_PLAYER_ROWS, pe_on_player_rows, NULL, PE_PRIORITY_NORMAL, mod_id);
+    pe_menu_register_toggle(PE_PAGE_WARDROBE, "Instant swap (experimental)",
+        "Swap skins in place, no room reload. Off: the room reloads, as the recomp did.", &s_instant, NULL);
     pe_hook_add(PE_HOOK_FRAME, pe_on_frame, NULL, PE_PRIORITY_LATE, mod_id);
     pe_hook_add(PE_HOOK_BATTLE_UPDATE, pe_on_battle, NULL, PE_PRIORITY_LATE, mod_id);
     pe_hook_add(PE_HOOK_SAVE_READ, pe_on_load, NULL, PE_PRIORITY_NORMAL, mod_id);

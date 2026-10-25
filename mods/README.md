@@ -253,3 +253,12 @@ equipped gun or armor record changes, so Catalog, Tool and editor changes reach 
 - `pe_dismantle.c`: Dismantle, Rebuild and Tool salvage.
 - `pe_catalog_pages.c`: the F1 pages. `pe_catalog_menu.c`: the Catalog in Aya's own menu.
 - `pe_catalog.h`: their private interface; other files use the `pe_cat_*` calls in pe_economy.h.
+
+## Warner's services
+
+pe_economy/pe_field_wayne.c: in the Day 4 park section (map 374) Warner offers Store equipment,
+Store item and the Workshop. While his retail talk task runs (checked word for word, read-only),
+his first dialogue box shows our menu (PE_HOOK_TEXTBOXES, ahead of pe_wayne_menu.c, which adds
+Mod Permit Card and Workshop). A storage choice opens the game's storage screen once his task has
+unlocked the field. Nothing in his script is patched. F1 > Economy > Warner helps out.
+

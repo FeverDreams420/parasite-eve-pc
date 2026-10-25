@@ -10,13 +10,16 @@
  *
  * Native design (the recomp patched his bytecode to jump into a script of ours; native jumps are
  * offsets from the script's own buffer, so that doesn't carry over):
- *   - while his talk runs, his first line's dialogue box is pointed at our menu text, "Torres sent
- *     supplies." and Store equipment / Store item / Cancel, in Wayne's window style. Wayne's
- *     Workshop (pe_wayne_menu.c) recognises it and adds Mod Permit Card and Workshop above Cancel;
- *   - when the box closes on Store equipment or Store item, the storage screen opens once his
- *     task has unlocked the field, the way his script opcode would (Script_BeginSceneTransition:
- *     Render_BeginSceneLoad, Menu_OpenEquipScreen, menu flags). Talk to him again for more.
- * His second line still shows; nothing in his script or the story changes.
+ *   - his talk plays untouched, both lines;
+ *   - when his task ends, the field is locked again the way his script does it (field event 0xFE
+ *     from him, Script_QueueFieldSfx) and a dialogue box of ours opens: "Torres sent supplies."
+ *     and Store equipment / Store item / Cancel, in Wayne's window style. Wayne's Workshop
+ *     (pe_wayne_menu.c) recognises it and adds Mod Permit Card and Workshop above Cancel;
+ *   - when it closes, the field is unlocked (event 0xFF, as his script ends) and, on Store
+ *     equipment or Store item, the storage screen opens the way his script opcode would
+ *     (Script_BeginSceneTransition: Render_BeginSceneLoad, Menu_OpenEquipScreen, menu flags).
+ *     Talk to him again for more.
+ * Nothing in his script or the story changes.
  */
 #include <string.h>
 
@@ -27,6 +30,7 @@
 #include "pe_mod_menu.h"
 #include "pe_pages.h"
 #include "pe1/asset_table.h"
+#include "pe1/field_sfx.h"
 #include "pe1/scene_dispatch.h"
 #include "pe1/scene_transition.h"
 #include "pe1/script_node.h"
@@ -40,6 +44,10 @@ void Menu_OpenEquipScreen(int mode);
 #define PE_TEXTBOX_SHOWN  2
 #define PE_STORE_EQUIPMENT 0
 #define PE_STORE_ITEMS    1
+#define PE_FIELD_LOCK     0xFE    /* field events his talk sends at its start and end */
+#define PE_FIELD_UNLOCK   0xFF
+#define PE_BOX_PAGE      0x7F00  /* our box's page id: no room message uses it */
+#define PE_STORAGE_DELAY  2       /* frames after the unlock before the storage screen opens */
 
 /* His contact task, base + 0x154 .. 0x36C, as read 2026-10-14 (retail). */
 static const uint32_t s_orig[] = {
@@ -69,6 +77,7 @@ static int s_boxes_this_talk;     /* dialogue boxes his current talk has opened 
 static u8 *s_last_message;        /* the box message seen last frame */
 static TextboxEntry *s_menu_box;  /* the box showing our menu */
 static int s_pending = -1;        /* storage screen to open: PE_STORE_*, or -1 */
+static int s_pending_wait;        /* frames left before it opens */
 
 static int pe_free_field(void) { return !(g_GameStateFlags & 0x2006u) && !(g_GameStateFlagsWord & 0xB600u); }
 
@@ -131,6 +140,11 @@ static void pe_write_text(void) {
 /* For pe_wayne_menu.c: a box showing this is Wayne's menu (Warner's version). */
 const u8 *pe_field_wayne_text(void) { return s_text_ready ? s_text : NULL; }
 
+/* Lock or unlock the field the way his talk does: a field event sent from him. */
+static void pe_field_event(int value) {
+    Script_QueueFieldSfx(value, 0, 0, s_warner->fieldSfxId, 0);
+}
+
 static void pe_forget(void) {
     s_warner = NULL;
     s_boxes_this_talk = 0;
@@ -138,26 +152,44 @@ static void pe_forget(void) {
     s_menu_box = NULL;
 }
 
-/* During his talk: his first dialogue box shows our menu instead of his line. */
+/* During his talk: count (and log) the lines he says; they are left as they are. */
 static void pe_talk_tick(void) {
     int i;
     for (i = 0; i < 4; ++i) {
         TextboxEntry *e = &g_TextboxEntries[i];
-        if (e->state == 0 || !e->message) continue;
-        if (e == s_menu_box) {                          /* ours: closing on a storage choice? */
-            if (e->state != PE_TEXTBOX_SHOWN) continue;
-            return;
-        }
-        if (e->message == s_last_message) return;
+        char said[256];
+        if (e->state == 0 || !e->message || e->message == s_last_message) continue;
         s_last_message = e->message;
-        if (++s_boxes_this_talk == 1) {
-            pe_write_text();
-            e->message = s_text;
-            e->style = 1;                               /* a window at the box's own spot, like Wayne's */
-            e->background = 0;
-            s_menu_box = e;
-            pe_log("field_wayne", "menu shown");
-        }
+        pe_log("field_wayne", "line %d: %s", ++s_boxes_this_talk, pe_text_to_ascii(said, sizeof said, e->message));
+        return;
+    }
+}
+
+/* After his talk: our menu in a box of its own, typed out at once (Render_SetupColorTable's
+ * setup, without looking the text up in the room's messages). */
+static void pe_open_menu(void) {
+    int i;
+    for (i = 0; i < 4; ++i) {
+        TextboxEntry *e = &g_TextboxEntries[i];
+        if (e->state != 0) continue;
+        pe_write_text();
+        e->page_id = PE_BOX_PAGE;
+        e->style = 1;                                   /* a window, like Wayne's */
+        e->background = 0;
+        e->x = 8;
+        e->y = 24;
+        e->width = 200;
+        e->height = 88;                                 /* Wayne's Workshop sizes it, keeping the bottom */
+        e->control.flags &= ~0x000F0000u & ~0x00100000u & ~0x00200000u;
+        e->control.parts.delay = 0;
+        e->control.parts.elapsed = 0;
+        e->message = s_text;
+        e->state = PE_TEXTBOX_SHOWN;
+        g_DialogueChoiceCursor = 0;
+        g_MenuEquipSlotIndex = -1;
+        s_menu_box = e;
+        pe_field_event(PE_FIELD_LOCK);
+        pe_log("field_wayne", "menu shown");
         return;
     }
 }
@@ -172,12 +204,18 @@ static int pe_on_textboxes(void *ctx, void *user) {
     if (token != s_token) { s_token = token; pe_forget(); s_pending = -1; }
 
     /* Our menu box closed: the dialogue box left the chosen row in g_MenuEquipSlotIndex. */
-    if (s_menu_box && s_menu_box->state != PE_TEXTBOX_SHOWN) {
-        if (g_MenuEquipSlotIndex == PE_STORE_EQUIPMENT || g_MenuEquipSlotIndex == PE_STORE_ITEMS)
+    if (s_menu_box && (s_menu_box->state != PE_TEXTBOX_SHOWN || s_menu_box->page_id != PE_BOX_PAGE)) {
+        if (g_MenuEquipSlotIndex == PE_STORE_EQUIPMENT || g_MenuEquipSlotIndex == PE_STORE_ITEMS) {
             s_pending = g_MenuEquipSlotIndex;
+            s_pending_wait = PE_STORAGE_DELAY;
+        }
         s_menu_box = NULL;
+        if (s_warner) pe_field_event(PE_FIELD_UNLOCK);
     }
-    if (!s_enabled || !pe_loot_enabled()) { pe_forget(); return 0; }
+    if (!s_enabled || !pe_loot_enabled()) {             /* an open menu still unlocks as it closes */
+        if (!s_menu_box) pe_forget();
+        return 0;
+    }
     if (s_warner && !pe_is_warner(s_warner)) pe_forget();   /* a room reload brings a fresh actor */
     if (!s_warner) {
         /* Found by his retail talk script (checked word for word), in whatever room he stands. */
@@ -186,17 +224,19 @@ static int pe_on_textboxes(void *ctx, void *user) {
     }
     if (pe_talk_running()) {
         pe_talk_tick();
-    } else {
-        s_boxes_this_talk = 0;                          /* between talks */
+    } else if (s_boxes_this_talk) {                     /* his talk just ended: our menu */
+        s_boxes_this_talk = 0;
         s_last_message = NULL;
+        if (!s_menu_box) pe_open_menu();
     }
     return 0;
 }
 
-/* Every frame: once his task has unlocked the field, open the storage screen chosen. */
+/* Every frame: once the field is unlocked again, open the storage screen chosen. */
 static void pe_field_wayne_tick(void) {
-    if (!pe_game_loaded() || !s_warner || pe_talk_running()) return;
-    if (s_pending >= 0 && pe_free_field()) {
+    if (!pe_game_loaded() || !s_warner || pe_talk_running() || s_pending < 0) return;
+    if (s_pending_wait > 0) { --s_pending_wait; return; }
+    if (pe_free_field()) {
         const int mode = s_pending;
         s_pending = -1;
         Render_BeginSceneLoad();

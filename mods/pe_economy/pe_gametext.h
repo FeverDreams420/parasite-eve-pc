@@ -43,6 +43,27 @@ static inline unsigned char *pe_text_from_ascii(unsigned char *out, unsigned siz
     return out;
 }
 
+/* A game message back to ASCII, for logs: line breaks as " / ", other codes as {XX}. */
+static inline char *pe_text_to_ascii(char *out, unsigned size, const unsigned char *msg) {
+    unsigned n = 0, i;
+    for (i = 0; msg && msg[i] != G_END && i < 512 && n + 6 < size; ++i) {
+        const unsigned char c = msg[i];
+        if (c < 10) out[n++] = (char)('0' + c);
+        else if (c >= 0x10 && c < 0x2A) out[n++] = (char)('A' + c - 0x10);
+        else if (c >= 0x30 && c < 0x4A) out[n++] = (char)('a' + c - 0x30);
+        else switch (c) {
+        case 0x0F: out[n++] = ' '; break;
+        case 0x2F: out[n++] = '.'; break; case 0x4B: out[n++] = ','; break;
+        case 0x4A: out[n++] = ':'; break; case 0x2B: out[n++] = '!'; break;
+        case 0x2E: out[n++] = '\''; break; case 0x4C: out[n++] = '/'; break;
+        case G_NEWLINE: n += (unsigned)snprintf(out + n, size - n, " / "); break;
+        default: n += (unsigned)snprintf(out + n, size - n, "{%02X}", c); break;
+        }
+    }
+    out[n < size ? n : size - 1] = 0;
+    return out;
+}
+
 static inline void pe_t_init(PeText *t) {
     memset(t, 0, sizeof *t);
     t->lines = 1;

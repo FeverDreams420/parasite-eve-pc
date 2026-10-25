@@ -11,8 +11,17 @@ typedef enum PeHookId {
     PE_HOOK_INIT,        /* PeHookInit: once, before the first scene */
     PE_HOOK_SCENE_START, /* NULL: a field scene finished loading, before its first frame */
     PE_HOOK_FRAME,       /* NULL: every field frame, after pad input is read */
+    PE_HOOK_BATTLE_UPDATE, /* NULL: Battle_Update entry, every battle frame */
+    PE_HOOK_ENEMY_HIT,   /* BattleEntity *: Battle_StepEnemyMovement entry, before an enemy's damage */
+    PE_HOOK_SPELL,       /* PeHookSpell: Battle_ApplySpellEffect entry (battle and menu) */
+    PE_HOOK_HELP_TEXT,   /* u8 **: the menu title-bar line, before it is printed; may be replaced */
     PE_HOOK_COUNT
 } PeHookId;
+
+typedef struct PeHookSpell {
+    unsigned spell;           /* Parasite Energy power index */
+    struct BattleEntity *target;
+} PeHookSpell;
 
 typedef struct PeHookInit {
     int interactive;        /* 0 for headless runs: no window, no menus */

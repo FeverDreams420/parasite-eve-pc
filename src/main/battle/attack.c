@@ -12,6 +12,7 @@
 #include "pe1/inventory.h"
 #include "pe1/item_ids.h"
 #include "pe1/random.h"
+#include "pe_hooks.h"
 
 /* State shared by the original battle action functions. */
 u8 g_BattleActionAnimModes[4];
@@ -583,6 +584,7 @@ void Battle_ApplySpellEffect(u32 idx, BattleEntity *ent) {
     BattleActionSoundTable soundTable;
     s32 dmg;
 
+    PE_HOOK(PE_HOOK_SPELL, (&(PeHookSpell){idx, ent}));
     dmg = 0;
     if (!(g_GameStateFlags & 2)) {
         soundTable = g_BattleActionSoundIds;

@@ -61,6 +61,24 @@ void pe_mod_log(const char *mod_id, const char *fmt, ...) {
     }
 }
 
+void pe_log(const char *tag, const char *fmt, ...) {
+    static FILE *play;
+    static int tried;
+    char path[1100];
+    va_list args;
+    if (!play && !tried) {
+        tried = 1;
+        if (pe_mod_path(path, sizeof(path), "pe_play.log") == 0) play = fopen(path, "a");
+    }
+    if (!play) return;
+    fprintf(play, "%s ", tag);
+    va_start(args, fmt);
+    vfprintf(play, fmt, args);
+    va_end(args);
+    fputc('\n', play);
+    fflush(play);
+}
+
 int pe_mod_interactive(void) { return s_interactive; }
 
 /* ---- hooks and events ---- */

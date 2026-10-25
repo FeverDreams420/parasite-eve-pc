@@ -43,6 +43,11 @@ int pe_mod_is_running(const char *mod_id);
 int pe_mod_interactive(void);
 int pe_mod_path(char *out, size_t size, const char *file);
 void pe_mod_log(const char *mod_id, const char *fmt, ...);
+/* Play log (pe_play.log beside the preferences): one "tag key=value ..." row,
+ * the same rows as the psxrecomp build's play log, for the analysis tools. */
+void pe_log(const char *tag, const char *fmt, ...);
+/* A one-line message over the game for a few seconds (interactive runs). */
+void pe_toast(const char *text);
 
 /* host internals shared by its own files */
 void pe_menu_load_settings(void);

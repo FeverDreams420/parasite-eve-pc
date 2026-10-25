@@ -321,6 +321,7 @@ static SDL_GPUTexture *s_texture;
 static SDL_GPUBuffer *s_vertices;
 static int s_tex_w, s_tex_h, s_win_w, s_win_h;
 static Layout s_layout;
+static float s_dim = 0.62f; /* screen dimming behind the quad: the panel dims, a toast doesn't */
 static PsyzOverlayInitCB_SDL3GPU s_prev_init;
 static PsyzOverlayRenderCB_SDL3GPU s_prev_render;
 static PsyzOverlayDestroyCB s_prev_destroy;
@@ -473,7 +474,7 @@ static void pe_gpu_upload(void) {
     }
     su = 0.5f / (float)s_tex_w;
     sv = ((float)s_tex_h - 0.5f) / (float)s_tex_h;
-    pe_quad(verts, -1, 1, 1, -1, su, sv, su, sv, 0.62f);
+    pe_quad(verts, -1, 1, 1, -1, su, sv, su, sv, s_dim);
     pe_quad(verts + 6, (float)s_layout.x / w * 2 - 1, 1 - (float)s_layout.y / h * 2,
             (float)(s_layout.x + s_layout.w) / w * 2 - 1, 1 - (float)(s_layout.y + s_layout.h) / h * 2,
             0, 0, 1, (float)(s_tex_h - 1) / (float)s_tex_h, 1);
@@ -517,10 +518,60 @@ static void pe_gpu_upload(void) {
     SDL_ReleaseGPUTransferBuffer(s_device, transfer);
 }
 
+/* ---- toast: one line over the game, drawn with the panel's pipeline ---- */
+
+static char s_toast[160];
+static Uint64 s_toast_until;
+static int s_toast_dirty;
+
+void pe_toast(const char *text) {
+    snprintf(s_toast, sizeof(s_toast), "%s", text ? text : "");
+    s_toast_until = SDL_GetTicks() + 4000;
+    s_toast_dirty = 1;
+}
+
+static int pe_toast_tick(void *ctx, void *user) {
+    int w = 0, h = 0;
+    float s, tw;
+    (void)ctx;
+    (void)user;
+    if (!s_toast_until || s_panel.open) return 0;
+    if (SDL_GetTicks() >= s_toast_until) {
+        s_toast_until = 0;
+        return 0;
+    }
+    if (!s_toast_dirty || !s_device || !s_window || !pe_font_ready()) return 0;
+    SDL_GetWindowSizeInPixels(s_window, &w, &h);
+    if (w <= 0 || h <= 0) return 0;
+    s = floorf((float)h / (float)REFERENCE_H * 8.0f) / 8.0f;
+    if (s < 0.5f) s = 0.5f;
+    tw = TextWidth(s_toast, 17 * s);
+    s_layout.scale = s;
+    s_layout.w = (int)ceilf(tw + 2 * PANEL_PAD * s);
+    if (s_layout.w > w) s_layout.w = w;
+    s_layout.h = (int)ceilf(44 * s);
+    s_layout.x = (w - s_layout.w) / 2;
+    s_layout.y = (int)(h * 0.06f);
+    s_win_w = w;
+    s_win_h = h;
+    if (!pe_surface_resize(s_layout.w, s_layout.h)) return 0;
+    memset(s_surface.pixels, 0, (size_t)s_surface.w * (size_t)s_surface.h * 4u);
+    FillRoundRect(0, 0, (float)s_layout.w, (float)s_layout.h, 10 * s, kBorder);
+    FillRoundRect(1, 1, (float)s_layout.w - 2, (float)s_layout.h - 2, 9 * s, kPanel);
+    DrawText(PANEL_PAD * s, 28 * s, 17 * s, s_toast, kText, ALIGN_LEFT);
+    s_surface.pixels[((size_t)(s_surface.h - 1) * (size_t)s_surface.w) * 4u + 3] = 255;
+    s_dim = 0.0f;
+    if (pe_gpu_pipeline(SDL_GetGPUSwapchainTextureFormat(s_device, s_window))) pe_gpu_upload();
+    s_toast_dirty = 0;
+    s_panel.dirty = 1; /* the panel repaints over the toast's texture next time */
+    return 0;
+}
+
 static void pe_refresh(void) {
     int w = 0, h = 0;
     Layout l;
     if (!s_device || !s_window) return;
+    s_dim = 0.62f;
     SDL_GetWindowSizeInPixels(s_window, &w, &h);
     if (w <= 0 || h <= 0 || !pe_font_ready()) return;
     pe_layout(w, h, &l);
@@ -543,7 +594,7 @@ static void pe_render(SDL_GPUCommandBuffer *cmd, SDL_GPURenderPass *pass) {
     SDL_GPUBufferBinding vtx;
 
     if (s_prev_render) s_prev_render(cmd, pass);
-    if (!s_panel.open || !s_pipeline || !s_texture || !s_vertices || s_win_w <= 0 || s_win_h <= 0) return;
+    if (!(s_panel.open || (s_toast_until && !s_toast_dirty)) || !s_pipeline || !s_texture || !s_vertices || s_win_w <= 0 || s_win_h <= 0) return;
     viewport = (SDL_GPUViewport){0, 0, (float)s_win_w, (float)s_win_h, 0, 1};
     scissor = (SDL_Rect){0, 0, s_win_w, s_win_h};
     SDL_SetGPUViewport(pass, &viewport);
@@ -701,5 +752,6 @@ void pe_panel_install(void) {
     s_prev_render = Psyz_OverlayRender_SDL3GPU(pe_render);
     s_prev_destroy = Psyz_OverlayDestroyCB(pe_destroy_gpu);
     s_prev_filter = Psyz_SetOverlayEventFilter_SDL3(pe_filter);
+    pe_hook_add(PE_HOOK_FRAME, pe_toast_tick, NULL, PE_PRIORITY_LATE, "panel");
     pe_mod_log(NULL, "Mods panel on F1");
 }

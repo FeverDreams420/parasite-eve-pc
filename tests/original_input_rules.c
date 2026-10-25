@@ -485,6 +485,53 @@ int main(int argc, char **argv) {
     assert(Psyz_SetOverlayEventFilter_SDL3(Host_SettingsEvent) == NULL);
     assert(Psyz_SetOverlayEventFilter_SDL3(NULL) == Host_SettingsEvent);
 
+    /* Issue #2: All settings tabs share a fixed panel height and top Y anchor. */
+    OverlayLayout base_layout = {0};
+    OverlayComputeLayout(OVERLAY_PAGE_GRAPHICS, 1280, 720, &base_layout);
+    for (int page = 0; page < OVERLAY_PAGE_COUNT; ++page) {
+        OverlayLayout page_layout = {0};
+        OverlayComputeLayout(page, 1280, 720, &page_layout);
+        assert(page_layout.x == base_layout.x && page_layout.y == base_layout.y);
+        assert(page_layout.w == base_layout.w && page_layout.h == base_layout.h);
+    }
+
+    /* Issue #3: Mouse hover on Controls never auto-scrolls; wheel & keys step by 1. */
+    s_overlayLayout = base_layout;
+    HostOverlayState scroll_state = {
+        .open = 1,
+        .page = OVERLAY_PAGE_CONTROLS,
+        .row = 0,
+        .scroll = 0
+    };
+    OverlayRect bottom_visible = OverlayRowRect(&scroll_state, OVERLAY_CONTROLS_VISIBLE_BINDINGS);
+    SDL_Event hover;
+    SDL_zero(hover);
+    hover.type = SDL_EVENT_MOUSE_MOTION;
+    hover.motion.x = (float)base_layout.x + (bottom_visible.x + 20.0f) * base_layout.scale;
+    hover.motion.y = (float)base_layout.y + (bottom_visible.y + 10.0f) * base_layout.scale;
+    Host_ProcessSettingsEvent(&scroll_state, &hover, NULL, NULL);
+    assert(scroll_state.row == OVERLAY_CONTROLS_VISIBLE_BINDINGS);
+    assert(scroll_state.scroll == 0);
+
+    SDL_Event wheel;
+    SDL_zero(wheel);
+    wheel.type = SDL_EVENT_MOUSE_WHEEL;
+    wheel.wheel.y = -1.0f;
+    Host_ProcessSettingsEvent(&scroll_state, &wheel, NULL, NULL);
+    assert(scroll_state.scroll == 1);
+
+    SDL_Event down_key;
+    SDL_zero(down_key);
+    down_key.type = SDL_EVENT_KEY_DOWN;
+    down_key.key.scancode = SDL_SCANCODE_DOWN;
+    down_key.key.down = true;
+    Host_ProcessSettingsEvent(&scroll_state, &down_key, NULL, NULL);
+    assert(scroll_state.row == OVERLAY_CONTROLS_VISIBLE_BINDINGS + 1);
+    assert(scroll_state.scroll == 1);
+    Host_ProcessSettingsEvent(&scroll_state, &down_key, NULL, NULL);
+    assert(scroll_state.row == OVERLAY_CONTROLS_VISIBLE_BINDINGS + 2);
+    assert(scroll_state.scroll == 2);
+
     /* Multi-selection callback owns paths and rejects a third image. */
     HostDiscDialog dialog = {0};
     const char *files[] = {"second.cue", "first.cue", NULL};

@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Story movies can be skipped: `Start`/`Enter` pauses the movie and asks "Do you want to skip the cutscene?" in the settings overlay style. `No` resumes the movie.
+- Fixed text and image shimmering when the game switches framebuffers, at all internal resolutions.
 
 ## 0.3-alpha
 

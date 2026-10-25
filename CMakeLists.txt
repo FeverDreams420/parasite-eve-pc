@@ -24,6 +24,12 @@ endif()
 option(BUILD_TESTING "Build original game tests" OFF)
 include(CTest)
 
+# Mod host (mods/). Off: the PE_HOOK lines compile to nothing.
+option(PE_MODS "Build with the mod host and the mods in mods/" OFF)
+if(PE_MODS)
+    add_compile_definitions(PE_MODS=1)
+endif()
+
 # PsyZ belongs to the original game build, independently of the abandoned frontend.
 set(PSYZ_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/psyz)
 add_subdirectory(${PSYZ_DIR}/psyz ${CMAKE_CURRENT_BINARY_DIR}/psyz)
@@ -347,6 +353,10 @@ set(PE_COMMON_GAME_OBJECTS
     $<TARGET_OBJECTS:parasite-eve-original-falling>
     $<TARGET_OBJECTS:parasite-eve-original-e19>
     $<TARGET_OBJECTS:parasite-eve-original-e08>)
+if(PE_MODS)
+    add_subdirectory(mods)
+    list(APPEND PE_COMMON_GAME_OBJECTS $<TARGET_OBJECTS:pe-mods>)
+endif()
 
 target_sources(parasite-eve-pc PRIVATE ${PE_COMMON_GAME_OBJECTS})
 

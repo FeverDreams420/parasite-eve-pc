@@ -792,6 +792,17 @@ static void Host_ApplySettingsAction(
     Host_ApplyOptions(game);
 }
 
+/* The headless control console uses the same actions as the actual menu. */
+static void Host_ControlGraphics(int geometry, int antialiasing, int filtering) {
+    const int values[3] = {geometry, antialiasing, filtering};
+    HostOverlayState state = {.open=1, .page=HOST_PAGE_GRAPHICS};
+    for (int i=0;i<3;++i) {
+        state.row=4+i;
+        if (kGraphics[state.row].get()!=values[i])
+            Host_ApplySettingsAction(&state, 1, 0, NULL);
+    }
+}
+
 static void Host_ProcessSettingsPointer(
     HostOverlayState *state,
     float windowX,
@@ -1190,7 +1201,7 @@ static void Host_PrintHelp(const char *program_name) {
     printf("--headless uses native-resolution software rendering; --headless-gpu keeps the actual GPU window hidden and supports internal scaling.\n");
     printf("--dump-frame writes the rendered display as RGB888 PPM at each control/terminal boundary.\n");
     printf("--dump-audio writes stereo 44100 Hz signed-16-bit little-endian PCM; requires headless and PSYZ_AUDIO_CLOCK=video.\n");
-    printf("Headless control: --control-at N pauses for stdin commands: advance FRAMES BUTTON_MASK or quit (requires --frame-limit).\n");
+    printf("Headless control: --control-at N pauses for stdin commands: advance FRAMES BUTTON_MASK, graphics PGXP AA FILTER (0/1; advances 8 blanks), or quit (requires --frame-limit).\n");
     printf("Headless fixtures only: --diagnostic-hp-at VBLANK:EXPECTED_HP:VALUE (requires --frame-limit; output is marked coverage-only)\n");
 }
 
@@ -1520,6 +1531,8 @@ image_error:
     }
 
 images_ready:;
+    host_options.scale = internal_resolution;
+    g_BootHostGraphicsOptions = Host_ControlGraphics;
     if (interactive) {
         /* Copy both before replacing picker storage: selection can be reversed. */
         char ordered[2][4096] = {{0}};

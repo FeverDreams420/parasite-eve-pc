@@ -1,3 +1,83 @@
+/* Exercise the menu actions after a real scene has already been rendered.
+ * Startup-only comparisons miss precision lost in a deferred GPU queue. */
+static int original_native_graphics_controls(const char *executable)
+{
+    const char *disc=getenv("PE_TEST_DISC");
+    if(!disc || !*disc)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+    if(!SDL_Init(SDL_INIT_EVENTS))return 1;
+    char resolved[2][4096];const char *paths[]={executable,disc};
+    char *cwd=SDL_GetCurrentDirectory();if(!cwd)return 1;
+    for(unsigned i=0;i<2;++i){
+        bool absolute=paths[i][0]=='/' || paths[i][0]=='\\' || (paths[i][0] && paths[i][1]==':');
+        int n=snprintf(resolved[i],sizeof(resolved[i]),"%s%s",absolute?"":cwd,paths[i]);
+        if(n<0 || (size_t)n>=sizeof(resolved[i])){SDL_free(cwd);return 1;}
+    }
+    SDL_free(cwd);
+    char directory[4096],capture[4200];
+    snprintf(directory,sizeof(directory),"%spe-graphics-%llx",SDL_GetBasePath(),(unsigned long long)SDL_GetPerformanceCounter());
+    if(!SDL_CreateDirectory(directory))return 1;
+    snprintf(capture,sizeof(capture),"%s/frame.ppm",directory);
+    const char *args[]={resolved[0],"--disc",resolved[1],"--headless-gpu","--internal-resolution","4",
+        "--geometry-correction","0","--antialiasing","0","--model-filtering","0",
+        "--frame-limit","60000","--control-at","24000","--dump-frame",capture,
+        "--pad-at","10000:8","--pad-at","10010:0","--pad-at","11000:16","--pad-at","11010:0",
+        "--pad-at","11500:16384","--pad-at","11510:0",NULL};
+    SDL_PropertiesID props=SDL_CreateProperties();
+    SDL_SetPointerProperty(props,SDL_PROP_PROCESS_CREATE_ARGS_POINTER,(void *)args);
+    SDL_SetStringProperty(props,SDL_PROP_PROCESS_CREATE_WORKING_DIRECTORY_STRING,directory);
+    SDL_SetNumberProperty(props,SDL_PROP_PROCESS_CREATE_STDIN_NUMBER,SDL_PROCESS_STDIO_APP);
+    SDL_SetNumberProperty(props,SDL_PROP_PROCESS_CREATE_STDOUT_NUMBER,SDL_PROCESS_STDIO_APP);
+    SDL_SetBooleanProperty(props,SDL_PROP_PROCESS_CREATE_STDERR_TO_STDOUT_BOOLEAN,true);
+    SDL_Process *child=SDL_CreateProcessWithProperties(props);SDL_DestroyProperties(props);if(!child)return 1;
+    SDL_IOStream *input=SDL_GetProcessInput(child),*output=SDL_GetProcessOutput(child);
+    const char *commands[]={"graphics 1 0 0\n","graphics 1 0 1\n","graphics 1 1 1\n",
+        "graphics 0 0 0\n","graphics 1 1 1\n","advance 8 0\n","quit\n"};
+    const char *expected[]={"\"geometry\":0,\"antialiasing\":0,\"filtering\":0",
+        "\"geometry\":1,\"antialiasing\":0,\"filtering\":0",
+        "\"geometry\":1,\"antialiasing\":0,\"filtering\":1",
+        "\"geometry\":1,\"antialiasing\":1,\"filtering\":1",
+        "\"geometry\":0,\"antialiasing\":0,\"filtering\":0",
+        "\"geometry\":1,\"antialiasing\":1,\"filtering\":1",
+        "\"geometry\":1,\"antialiasing\":1,\"filtering\":1"};
+    unsigned char *images[7]={0};size_t sizes[7]={0};unsigned count=0;int ok=input && output;
+    char *line=SDL_malloc(1024*1024);size_t used=0;char byte;
+    if(!line)ok=0;
+    while(ok){
+        if(SDL_ReadIO(output,&byte,1)!=1){
+            if(SDL_GetIOStatus(output)==SDL_IO_STATUS_NOT_READY){SDL_Delay(1);continue;}
+            break;
+        }
+        if(used>=1024*1024-1){ok=0;break;}line[used++]=byte;
+        if(byte!='\n')continue;
+        line[used]=0;used=0;
+        if(strstr(line,"runtime error:") || strstr(line,"ERROR: AddressSanitizer")){ok=0;break;}
+        if(strncmp(line,"{\"event\":\"control\"",18))continue;
+        if(count>=7 || !strstr(line,expected[count]) || !strstr(line,"\"rgb24\":0")){fprintf(stderr,"Unexpected graphics snapshot: %s",line);ok=0;break;}
+        images[count]=SDL_LoadFile(capture,&sizes[count]);
+        if(!images[count] || (count && sizes[count]!=sizes[0])){ok=0;break;}
+        size_t length=strlen(commands[count]);
+        if(SDL_WriteIO(input,commands[count],length)!=length){ok=0;break;}
+        ++count;
+    }
+    if(!ok)SDL_KillProcess(child,true);
+    int status=-1;SDL_WaitProcess(child,true,&status);SDL_DestroyProcess(child);SDL_free(line);
+    ok=ok && status==0 && count==7;
+    if(ok){
+        for(unsigned option=1;option<=3;++option){
+            size_t differences=0;
+            for(size_t i=0;i<sizes[0];++i)differences+=images[option-1][i]!=images[option][i];
+            printf("Live graphics option %u: %zu changed channels\n",option,differences);
+            if(differences<1000)ok=0;
+        }
+        if(memcmp(images[0],images[4],sizes[0]) || memcmp(images[3],images[5],sizes[0]) ||
+            memcmp(images[5],images[6],sizes[0]))ok=0;
+    }
+    for(unsigned i=0;i<7;++i)SDL_free(images[i]);
+    if(!ok){fprintf(stderr,"Live graphics controls failed: status=%d captures=%u\n",status,count);return 1;}
+    puts("Live graphics controls: all three options change real scene pixels; toggles are reversible and stable");
+    return 0;
+}
+
 static int original_native_control(const char *executable)
 {
     const char *disc=getenv("PE_TEST_DISC");if(!disc || !*disc)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
@@ -10,7 +90,7 @@ static int original_native_control(const char *executable)
     memcpy(final_command,"advance 2 0",11);final_command[sizeof(final_command)-1]=0;
     const char *commands[]={"advance 2 0x4000\nadvance 4 0\n","quit\n","",
         "advance 2 0x4000","advance 2 0x4000\r\nquit",final_command,"advance 0 0\n","advance 7 0\n",
-        "advance -1 0\n","advance 1 65536\n","advance 1 -1\n","advance 1 0 garbage\n","advance 2\n","unknown\n",NULL};
+        "advance -1 0\n","advance 1 65536\n","advance 1 -1\n","advance 1 0 garbage\n","advance 2\n","unknown\n","graphics 2 0 0\n","graphics 0 0\n","graphics 0 0 0 trailing\n",NULL};
     char too_long[200];memset(too_long,'x',sizeof(too_long));too_long[sizeof(too_long)-1]=0;
     unsigned passed=0;
     for(unsigned trial=0;trial<sizeof(commands)/sizeof(*commands);++trial){

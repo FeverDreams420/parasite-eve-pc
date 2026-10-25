@@ -232,3 +232,15 @@ engine hooks were added. Deferred custom-content ideas remain unimplemented.
 
 Run tests/run_pe_requisition_test.ps1 for focused purchase, ammo, unlock,
 Tool-price, rescue/storage, confirmation, guard and save-layout checks.
+## Wayne's Workshop
+
+pe_economy/pe_wayne_menu.c rewrites Wayne's own choice box (PE_HOOK_TEXTBOXES, before the
+boxes draw): Mod Permit Card and Workshop above Cancel, Junk and his count on Discard junk.
+Workshop opens Requisition, Rebuild (5 a page, Left/Right pages, dimmed rows can't be bought
+now) and a Wardrobe row while a mod publishes the `wardrobe` v1 service. Mod Permit Card adds
+one mod slot after a Yes / No. Circle goes back. While his box is the counter the shop allows
+buying though the field is busy (pe_shop_at_counter). Messages use pe_gametext.h.
+
+pe_economy/pe_equip_sync.c reruns the game's equipment rebuild in free field whenever the
+equipped gun or armor record changes, so Catalog, Tool and editor changes reach the next battle.
+

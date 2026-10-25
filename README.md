@@ -22,6 +22,7 @@ Keep each CUE file next to its BIN file.
 
 **Enter** is START and skips movies. View or change all bindings in **Escape → Controls**.
 Settings and selected disc paths are saved automatically.
+Optional geometry correction, antialiasing and model texture filtering are in **Escape → Graphics**.
 
 ## Build
 

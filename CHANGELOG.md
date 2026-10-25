@@ -2,8 +2,10 @@
 
 ## Unreleased
 
+- Added optional 4x SSAA antialiasing and bilinear filtering for model textures in Graphics settings. Both are off by default.
 - Fixed text and image shimmering when the game switches framebuffers, at all internal resolutions.
 - Fixed geometry correction losing its vertex data while waiting for VSync before drawing a frame.
+- Fixed geometry correction data being lost when model drawing commands enter the GPU queue.
 
 ## 0.3-alpha
 

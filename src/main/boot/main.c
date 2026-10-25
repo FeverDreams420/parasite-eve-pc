@@ -30,6 +30,8 @@ static struct {
     int aspect;
     int dither;
     int geometry_correction;
+    int antialiasing;
+    int model_filtering;
     int fullscreen;
     int keys[16];
     int buttons[16];
@@ -167,6 +169,12 @@ static int Host_ParseOptionValue(const char *section, const char *key, char *val
                 return 0;
             }
             host_options.dither = v;
+        } else if (!strcmp(key, "antialiasing")) {
+            if (v > 1) return 0;
+            host_options.antialiasing = v;
+        } else if (!strcmp(key, "model_filtering")) {
+            if (v > 1) return 0;
+            host_options.model_filtering = v;
         } else if (!strcmp(key, "geometry_correction")) {
             if (v > 1) {
                 return 0;
@@ -278,7 +286,9 @@ static int Host_SaveOptions(void) {
         "fullscreen = %s\n"
         "square_pixels = %s\n"
         "disable_dithering = %s\n"
-        "geometry_correction = %s\n\n"
+        "geometry_correction = %s\n"
+        "antialiasing = %s\n"
+        "model_filtering = %s\n\n"
         "[audio]\n"
         "volume = %u\n\n"
         "[discs]\n"
@@ -288,6 +298,8 @@ static int Host_SaveOptions(void) {
         host_options.aspect ? "true" : "false",
         host_options.dither ? "true" : "false",
         host_options.geometry_correction ? "true" : "false",
+        host_options.antialiasing ? "true" : "false",
+        host_options.model_filtering ? "true" : "false",
         host_options.volume
     );
     Host_WriteString(file, host_options.discs[0]);
@@ -358,6 +370,8 @@ static void Host_InitOptions(int enabled) {
     host_options.enabled = enabled;
     host_options.scale = 1;
     host_options.geometry_correction = 1;
+    host_options.antialiasing = 0;
+    host_options.model_filtering = 0;
     host_options.volume = 100;
     Boot_InitHostBindings();
     for (unsigned i = 0; i < 16; ++i) {
@@ -430,6 +444,8 @@ static void Host_ApplyOptions(SDL_Window *window) {
     Psyz_VideoSetAspectMode((PsyzAspectMode)host_options.aspect);
     Psyz_VideoSetDitheringMode((PsyzDitherMode)host_options.dither);
     Psyz_VideoSetGeometryCorrection(host_options.geometry_correction != 0);
+    Psyz_VideoSetAntialiasing(host_options.antialiasing != 0);
+    Psyz_VideoSetModelFiltering(host_options.model_filtering != 0);
     Psyz_AudioSetOutputVolume(host_options.volume);
     for (unsigned i = 0; i < 16; ++i) {
         Psyz_SetKeyboardBinding_SDL3(i, (SDL_Scancode)host_options.keys[i]);
@@ -1165,6 +1181,7 @@ static void Host_InstallSettingsOverlay(void) {
 static void Host_PrintHelp(const char *program_name) {
     printf(
         "Usage: %s [--disc <USA Disc 1 CUE/BIN>] [--disc2 <USA Disc 2 CUE/BIN>] [--choose-discs] "
+        "[--geometry-correction 0|1] [--antialiasing 0|1] [--model-filtering 0|1] "
         "[--headless | --headless-gpu] [--internal-resolution 1..8] [--frame-limit N] [--control-at N] "
         "[--dump-vram PATH] [--dump-frame PATH] [--dump-audio PATH] [--pad-at VBLANK:BUTTON_MASK ...]\n",
         program_name
@@ -1266,6 +1283,7 @@ int main(int argc, char **argv) {
     unsigned internal_resolution = host_options.scale;
     int resolution_argument = 0;
     int headless_argument = 0;
+    unsigned effect_arguments = 0;
 
     for (int arg = 1; arg < argc; ++arg) {
         if (!strcmp(argv[arg], "--help")) {
@@ -1297,6 +1315,21 @@ int main(int argc, char **argv) {
                 return EXIT_FAILURE;
             }
             internal_resolution = (unsigned)scale;
+        } else if (!strcmp(argv[arg], "--geometry-correction") ||
+                   !strcmp(argv[arg], "--antialiasing") ||
+                   !strcmp(argv[arg], "--model-filtering")) {
+            unsigned effect = !strcmp(argv[arg], "--geometry-correction") ? 1u :
+                              !strcmp(argv[arg], "--antialiasing") ? 2u : 4u;
+            if ((effect_arguments & effect) || arg + 1 >= argc ||
+                (strcmp(argv[arg+1], "0") && strcmp(argv[arg+1], "1"))) {
+                fprintf(stderr, "Missing, invalid or duplicate graphics effect (use 0 or 1)\n");
+                return EXIT_FAILURE;
+            }
+            effect_arguments |= effect;
+            int enabled = argv[++arg][0] == '1';
+            if (effect == 1u) host_options.geometry_correction = enabled;
+            else if (effect == 2u) host_options.antialiasing = enabled;
+            else host_options.model_filtering = enabled;
         } else if (!strcmp(argv[arg], "--frame-limit")) {
             char *end = NULL;
             errno = 0;
@@ -1383,6 +1416,11 @@ int main(int argc, char **argv) {
     }
 
     const char *headless_mode = SDL_GetEnvironmentVariable(SDL_GetEnvironment(), "PSYZ_HEADLESS");
+    if ((host_options.antialiasing || host_options.model_filtering) &&
+        headless_mode && !strcmp(headless_mode, "1")) {
+        fprintf(stderr, "Graphics enhancements require --headless-gpu\n");
+        return EXIT_FAILURE;
+    }
     if (internal_resolution > 1 && headless_mode && !strcmp(headless_mode, "1")) {
         fprintf(stderr, "Software headless supports only internal resolution 1; use --headless-gpu\n");
         return EXIT_FAILURE;
@@ -1508,8 +1546,12 @@ images_ready:;
         fprintf(stderr, "Cannot select internal resolution\n");
         goto shutdown;
     }
-    if (!interactive && internal_resolution > 1) {
-        Psyz_VideoSetGeometryCorrection(host_options.geometry_correction != 0);
+    if (!interactive) {
+        if (internal_resolution > 1 || (effect_arguments & 1u) ||
+            host_options.antialiasing || host_options.model_filtering)
+            Psyz_VideoSetGeometryCorrection(host_options.geometry_correction != 0);
+        Psyz_VideoSetAntialiasing(host_options.antialiasing);
+        Psyz_VideoSetModelFiltering(host_options.model_filtering);
     }
     Boot_InitSystem();
     if (Psyz_VideoGetInternalResolution() != internal_resolution) {

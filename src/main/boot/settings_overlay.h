@@ -138,6 +138,13 @@ ACCESSORS(Dither, host_options.dither != 0,
 ACCESSORS(GeometryCorrection, host_options.geometry_correction != 0,
           host_options.geometry_correction = i)
 
+static const char *const kAntialiasNames[] = {"Off", "4x SSAA"};
+ACCESSORS(Antialiasing, host_options.antialiasing != 0,
+          host_options.antialiasing = i)
+static const char *const kFilterNames[] = {"Original", "Bilinear"};
+ACCESSORS(ModelFiltering, host_options.model_filtering != 0,
+          host_options.model_filtering = i)
+
 static const OverlaySetting kGraphics[] = {
     SETTING("Render resolution", "Higher values increase image detail and GPU load.",
             kScaleNames, Scale),
@@ -149,6 +156,10 @@ static const OverlaySetting kGraphics[] = {
             kDitherNames, Dither),
     SETTING("Geometry correction", "Subpixel vertex precision and perspective-correct 3D textures.",
             kSwitchNames, GeometryCorrection),
+    SETTING("Antialiasing", "Smoother edges: twice each axis, four samples per pixel. Uses more GPU time and memory.",
+            kAntialiasNames, Antialiasing),
+    SETTING("Model textures", "Bilinear filtering for 3D models; backgrounds and text keep original sampling.",
+            kFilterNames, ModelFiltering),
 };
 
 /* audio */

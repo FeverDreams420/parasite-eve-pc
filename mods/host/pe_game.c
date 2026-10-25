@@ -22,6 +22,8 @@ Combatant *pe_aya_core(void) {
 
 int pe_game_loaded(void) { return g_AyaSaveState.max_hp != 0 && D_8009D254 != NULL; }
 
+int pe_save_loaded(void) { return g_AyaSaveState.max_hp != 0; }
+
 int pe_in_battle(void) { return (g_GameStateFlags & 2) != 0; }
 
 ItemDataRecord *pe_equipped(int armor) {

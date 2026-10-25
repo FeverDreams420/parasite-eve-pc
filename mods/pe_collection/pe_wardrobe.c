@@ -85,8 +85,8 @@ static int pe_on_player_bank(void *ctx, void *user) {
     const PeCostume *c = pe_worn();
     (void)ctx;
     (void)user;
-    if (!pe_game_loaded() || g_GameState.entity_texture_phase != 0) return 0;
-    s_room_bank = g_SceneAreaType;                              /* phase 0 comes once a load */
+    if (!pe_save_loaded() || g_GameState.entity_texture_phase != 0) return 0;   /* the actor is rebuilt meanwhile */
+    s_room_bank = g_SceneAreaType;                            /* phase 0 comes once a load */
     if (s_loaded && s_loaded != c) { s_loaded->load(0); s_loaded = NULL; }   /* a provider costume comes off */
     if (!c || !pe_gameplay_bank(g_SceneAreaType)) return 0;                /* not in Liberate, story scenes */
     if (pe_is_skin(c)) return 0;                                /* the skin loader puts it on */

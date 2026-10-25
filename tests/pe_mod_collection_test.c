@@ -21,6 +21,7 @@ static char s_dir[512];
 static uint32_t s_junk = 1000;
 
 int pe_game_loaded(void) { return 1; }
+int pe_save_loaded(void) { return 1; }
 int pe_in_battle(void) { return 0; }
 int pe_room_number(void) { return s_room; }
 BattleEntity *pe_player(void) { return NULL; }

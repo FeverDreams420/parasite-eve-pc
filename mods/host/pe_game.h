@@ -12,6 +12,7 @@
 BattleEntity *pe_player(void);       /* Aya's actor, or NULL */
 Combatant *pe_aya_core(void);        /* her Combatant (stats, gauge, action), or NULL */
 int pe_game_loaded(void);            /* a game is running (not the title screens) */
+int pe_save_loaded(void);            /* a game's data is loaded, even mid room load (no player actor yet) */
 int pe_in_battle(void);
 int pe_room_number(void);            /* the room's map number ("M374..." -> 374), or -1 */
 

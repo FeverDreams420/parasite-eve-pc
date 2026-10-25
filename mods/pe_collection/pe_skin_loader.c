@@ -110,6 +110,11 @@ static PeSkin *pe_find(const char *folder, int create) {
     return &s_skin[s_skins++];
 }
 
+static PeSkin *pe_load_failed(const char *folder, const char *file) {
+    pe_log("skin", "%s: %s missing or unreadable, skin not worn", folder, file);
+    return NULL;
+}
+
 static PeSkin *pe_load(const char *folder) {
     PeSkin *k = pe_find(folder, 1);
     PeBlob meta = { 0, 0 };
@@ -118,11 +123,11 @@ static PeSkin *pe_load(const char *folder) {
     if (!k) return NULL;
     if (k->loaded) return k->ok ? k : NULL;
     k->loaded = 1;
-    if (!pe_read(folder, "model.bin", &k->model) || !pe_dir(&k->model)) return NULL;
-    if (!pe_read(folder, "texture.bin", &k->tex) || !pe_dir(&k->tex)) return NULL;
+    if (!pe_read(folder, "model.bin", &k->model) || !pe_dir(&k->model)) return pe_load_failed(folder, "model.bin");
+    if (!pe_read(folder, "texture.bin", &k->tex) || !pe_dir(&k->tex)) return pe_load_failed(folder, "texture.bin");
     for (d = 1; d <= 8; ++d) {
         snprintf(name, sizeof name, "day%d.bin", d);
-        if (!pe_read(folder, name, &k->day[d]) || !pe_dir(&k->day[d])) return NULL;
+        if (!pe_read(folder, name, &k->day[d]) || !pe_dir(&k->day[d])) return pe_load_failed(folder, name);
     }
     if (pe_read(folder, "rooms.bin", &k->rooms) && !memcmp(k->rooms.data, "PERR", 4)) {
         const u32 n = rd32(k->rooms.data, 4);
@@ -153,7 +158,8 @@ int pe_skin_available(const char *folder) {
 
 /* ---- what should be worn ---- */
 static int pe_gameplay_bank(void) { return g_SceneAreaType >= 10 && g_SceneAreaType <= 13; }
-static int pe_can_apply(void) { return pe_game_loaded() && pe_gameplay_bank() && !(g_GameState.flags & PE_LIBERATE); }
+/* pe_save_loaded, not pe_game_loaded: during a room load the player actor is rebuilt. */
+static int pe_can_apply(void) { return pe_save_loaded() && pe_gameplay_bank() && !(g_GameState.flags & PE_LIBERATE); }
 
 static PeSkin *pe_wanted(void) {
     const PeCostume *c = pe_wardrobe_worn();
@@ -354,8 +360,12 @@ static int pe_on_player_bank(void *ctx, void *user) {
     PeSkin *k;
     (void)ctx;
     (void)user;
-    if (!pe_game_loaded()) return 0;
+    if (!pe_save_loaded()) return 0;
     k = pe_can_apply() ? pe_wanted() : NULL;
+    if (g_GameState.entity_texture_phase == 0)
+        pe_log("skin", "model load: bank %d (loaded %d) new=%d wanted=%s vram=%s", g_SceneAreaType,
+               g_GameState.loaded_entity_bank, (g_GameState.flags & PE_NEW_BUNDLE) != 0, k ? k->folder : "own",
+               !s_tex_known ? "unknown" : s_tex ? s_tex->folder : "game");
     if (g_GameState.entity_texture_phase == 3) {              /* the game's upload is next */
         pe_keep_game_textures();
         if (k) {
@@ -379,7 +389,7 @@ static int pe_on_player_bank(void *ctx, void *user) {
 static int pe_on_player_rows(void *ctx, void *user) {
     (void)ctx;
     (void)user;
-    if (pe_game_loaded()) pe_keep(pe_can_apply() && s_tex_known ? s_tex : NULL);
+    if (pe_save_loaded()) pe_keep(pe_can_apply() && s_tex_known ? s_tex : NULL);
     return 0;
 }
 
@@ -388,9 +398,10 @@ static int pe_on_frame(void *ctx, void *user) {
     PeSkin *k;
     (void)ctx;
     (void)user;
-    if (!pe_game_loaded() || !s_tex_known) return 0;
+    if (!pe_game_loaded()) return 0;
     k = pe_can_apply() ? pe_wanted() : NULL;
-    if (k != s_tex && !pe_in_battle() && !(g_GameStateFlags & 0x2006u) && g_PlayerEntity && pe_textures(k)) {
+    if (!s_tex_known && !k) return 0;                   /* nothing to put on; the next load tells us */
+    if ((k != s_tex || !s_tex_known) && !pe_in_battle() && !(g_GameStateFlags & 0x2006u) && g_PlayerEntity && pe_textures(k)) {
         pe_keep(k);
         pe_rebind_player();
         pe_log("skin", "wearing %s (instant)", k ? k->folder : "Aya's own");

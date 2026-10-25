@@ -135,6 +135,13 @@ become Panacea. Junk economy must be enabled, both ingredients must be in
 Aya's bag, and combining is outside battle and game menus. Press Combine
 twice; the bag is checked again before consuming anything.
 
+In Aya's item menu a medicine whose partner is in the bag gets a fourth
+action, Combine, under Use / Move / Discard; it combines at once and closes
+the list (Combine items / Combine in item menu). It uses PE_HOOK_ITEM_ACTIONS:
+the action list just opened, whose row count, row drawer and panel input step
+a mod may replace. Text helpers for the game's glyph code are in
+host/pe_gametext.h.
+
 pe_rebalance/pe_panacea.c owns effects, labels and use flags; pe_combine.c
 owns recipes and confirmation. They share only their feature header and
 use the versioned Junk service for the optional economy dependency. Existing
@@ -253,12 +260,17 @@ equipped gun or armor record changes, so Catalog, Tool and editor changes reach 
 - `pe_dismantle.c`: Dismantle, Rebuild and Tool salvage.
 - `pe_catalog_pages.c`: the F1 pages. `pe_catalog_menu.c`: the Catalog in Aya's own menu.
 - `pe_catalog.h`: their private interface; other files use the `pe_cat_*` calls in pe_economy.h.
+- `pe_discard_dismantle.c`: Discard on a gun or armor in Aya's menu or Wayne's storage reads
+  Dismantle and confirms with what it pays (PE_HOOK_ITEM_ACTIONS); the equipped gear and the last
+  Club keep the plain Discard. F1 > Economy > Discard dismantles.
 
 ## Warner's services
 
-pe_economy/pe_field_wayne.c: in the Day 4 park section (map 374) Warner offers Store equipment,
-Store item and the Workshop. While his retail talk task runs (checked word for word, read-only),
-his first dialogue box shows our menu (PE_HOOK_TEXTBOXES, ahead of pe_wayne_menu.c, which adds
-Mod Permit Card and Workshop). A storage choice opens the game's storage screen once his task has
-unlocked the field. Nothing in his script is patched. F1 > Economy > Warner helps out.
+pe_economy/pe_field_wayne.c: wherever Warner stands guard (map 374) he offers Store equipment,
+Store item and the Workshop. His retail talk task (checked word for word, read-only) plays
+untouched; when it ends, the field is locked again the way his script does it (field event 0xFE)
+and our menu opens in a dialogue box of its own near the screen centre (PE_HOOK_TEXTBOXES, ahead
+of pe_wayne_menu.c, which adds Mod Permit Card and Workshop). Closing it unlocks the field (0xFF);
+a storage choice then opens the game's storage screen. Nothing in his script is patched. F1 >
+Economy > Warner helps out.
 

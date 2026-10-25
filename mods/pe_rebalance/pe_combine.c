@@ -1,16 +1,29 @@
-/* Recomp medicine recipes (pe_native_menu.c), using the shared F1 panel.
+/* Recomp medicine recipes (pe_native_menu.c), in two places:
+ *   - F1 > Combat > Combine items: pick a recipe, press twice (an unchanged bag between presses);
+ *   - Aya's item menu: a medicine with its partner in the bag gets a fourth action, "Combine",
+ *     under Use / Move / Discard (PE_HOOK_ITEM_ACTIONS: the list gets a row, its own row drawer
+ *     and its panel's input step). Accepting it combines at once and closes the list.
  * Bag-only and outside battle. The optional Junk service gates this economy
- * feature; there is no link-time dependency on pe_economy. Confirmation is
- * press-twice, with an unchanged bag required between presses. */
+ * feature; there is no link-time dependency on pe_economy. */
 #include <stdio.h>
 #include <string.h>
 #include "pe_game.h"
+#include "pe_gametext.h"
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
 #include "pe_pages.h"
 #include "pe_panacea.h"
 #include "pe_services.h"
+#include "pe1/draw_state.h"
 #include "pe1/item_ids.h"
+#include "pe1/menu_dialog.h"
+#include "pe1/menu_draw_list.h"
+#include "pe1/menu_equipment.h"
+#include "pe1/menu_sound.h"
+#include "pe1/menu_widget.h"
+
+void Menu_ContextPick(int row);   /* lists.c: draws one of the game's action rows */
+void Inv_SelectActiveList(int list);
 
 static const struct { int first, second, result; const char *name; } s_recipes[] = {
     {ITEM_MEDICINE_1, ITEM_MEDICINE_1, ITEM_MEDICINE_2, "2 Medicine 1 into Medicine 2"},
@@ -65,6 +78,81 @@ static void pe_combine(void) {
               s_recipe == 1 ? "Combined into Medicine 3" : "Combined into Medicine 2");
 }
 
+/* ---- the Combine row in Aya's item menu ---- */
+
+#define PE_COMBINE_ROW 3          /* under the game's three */
+#define PE_ROW_HEIGHT  16
+#define PE_ACCEPT      0x10000u
+
+static int s_menu_row = 1;        /* F1 toggle */
+static int s_menu_slot, s_menu_partner, s_menu_result;
+static u8 s_label[16];
+
+/* The partner of the medicine in bag slot `slot`, by the recipes; sets the result. */
+static int pe_partner(int slot, int *result) {
+    int limit = Inv_GetAyaSlotLimit(), item, i, r;
+    if (limit > 50) limit = 50;
+    if (slot < 0 || slot >= limit) return -1;
+    item = g_AyaInventoryItems[slot];
+    for (r = 0; r < (int)pe_recipe_count(); ++r) {
+        int partner;
+        if (item == s_recipes[r].first) partner = s_recipes[r].second;
+        else if (item == s_recipes[r].second) partner = s_recipes[r].first;
+        else continue;
+        for (i = 0; i < limit; ++i)
+            if (i != slot && g_AyaInventoryItems[i] == partner) { *result = s_recipes[r].result; return i; }
+    }
+    return -1;
+}
+
+static void pe_action_row(int row) {
+    if (row != PE_COMBINE_ROW) { Menu_ContextPick(row); return; }
+    MenuWidget_DrawCenteredText(s_label);
+}
+
+static void pe_menu_draw(MenuWidgetNode *node) {
+    Inv_SelectActiveList(g_MenuActiveItemList);
+    MenuWidget_DrawList(node, pe_action_row);
+}
+
+static int pe_menu_step(MenuWidgetNode *panel, unsigned int flags) {
+    int other, result = 0;
+    const char *into;
+    char msg[48];
+    if (!(flags & PE_ACCEPT) || MenuWidget_GridCellIndex(MenuWidget_GetChild(panel, 0)) != PE_COMBINE_ROW)
+        return Menu_StepEquipScreen(panel, flags);
+    other = pe_partner(s_menu_slot, &result);
+    if (other < 0 || other != s_menu_partner || result != s_menu_result) { Menu_PlayErrorSound(); return 1; }
+    pe_log("combine", "from=0x%02X into=0x%02X menu=1", g_AyaInventoryItems[s_menu_slot], result);
+    g_AyaInventoryItems[s_menu_slot] = (s16)result;
+    g_AyaInventoryItems[other] = 0;
+    into = result == ITEM_ITEM25 ? "Panacea" : result == ITEM_MEDICINE_4 ? "Medicine 4" :
+           result == ITEM_MEDICINE_3 ? "Medicine 3" : "Medicine 2";
+    snprintf(msg, sizeof msg, "Combined into %s", into);
+    pe_toast(msg);
+    MenuWidget_DestroyNode(panel);
+    Menu_PlayConfirmSound();
+    return 1;
+}
+
+static int pe_on_item_actions(void *ctx, void *user) {
+    PeHookItemActions *a = ctx;
+    const PeJunkApi *junk = pe_service_get("junk", 1);
+    int result = 0, partner;
+    (void)user;
+    if (!s_menu_row || a->context != 0 || a->list_id != 0 || pe_in_battle() || !junk || !junk->enabled()) return 0;
+    if ((partner = pe_partner(a->slot, &result)) < 0) return 0;
+    if (!s_label[0]) pe_text_from_ascii(s_label, sizeof s_label, "Combine");
+    s_menu_slot = a->slot;
+    s_menu_partner = partner;
+    s_menu_result = result;
+    a->list->y_limit = a->list->visible_rows = a->list->visible_rows_mirror = PE_COMBINE_ROW + 1;
+    a->panel->visible_rows += PE_ROW_HEIGHT;             /* the panel's height */
+    a->list->draw = pe_menu_draw;
+    a->panel->update = pe_menu_step;
+    return 0;
+}
+
 static void pe_ingredients(char *out, unsigned size) {
     int a, b;
     snprintf(out, size, "%s", pe_game_loaded() && pe_pair(&a, &b) ? "Ready" : "Missing ingredients");
@@ -73,7 +161,9 @@ static void pe_last_result(char *out, unsigned size) { snprintf(out, size, "%s",
 static void pe_disarm_tick(void) { s_armed = -1; }
 
 void pe_combine_register(const char *mod_id) {
-    (void)mod_id;
+    pe_menu_register_toggle(PE_PAGE_COMBINE, "Combine in item menu",
+        "A medicine with its partner in Aya's bag gets a Combine action.", &s_menu_row, NULL);
+    pe_hook_add(PE_HOOK_ITEM_ACTIONS, pe_on_item_actions, NULL, PE_PRIORITY_NORMAL, mod_id);
     pe_menu_register_dynamic_choice(PE_PAGE_COMBINE, "Recipe", "Combines two carried medicines, outside battle.",
         &s_recipe, 4, pe_recipe_count, pe_recipe_name);
     pe_menu_register_info(PE_PAGE_COMBINE, "Ingredients", "Both ingredients must be in Aya's bag.", pe_ingredients);

@@ -310,6 +310,11 @@ void Menu_OpenItemActionSubmenu(MenuWidgetNode *arg0, s32 arg1, s32 arg2) {
     }
     g_MenuItemActionDisabled = var_s0_2;
     Inv_RebuildSelectableMask();
+    {
+        PeHookItemActions actions = {temp_v0_2, temp_s1, g_MenuItemActionContext, arg1, arg2};
+        PE_HOOK(PE_HOOK_ITEM_ACTIONS, &actions);
+        (void)actions;
+    }
     if (g_MenuItemActionContext == 0) {
         var_s2 = 0;
         temp_s0 = g_MenuActiveItemSlot;

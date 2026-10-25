@@ -34,6 +34,7 @@ typedef enum PeHookId {
     PE_HOOK_INVENTORY_HEADER, /* MenuWidgetNode *: after Aya's Quantity header is drawn */
     PE_HOOK_EQUIP_EFFECT, /* PeHookEquipEffect: effect icon draw; nonzero replaces sprite */
     PE_HOOK_TEXTBOXES,   /* NULL: Menu_DrawTextboxEntries entry, before the dialogue boxes draw */
+    PE_HOOK_ITEM_ACTIONS, /* PeHookItemActions: an item's action list (Use / Move / Discard ...) just opened */
     PE_HOOK_COUNT
 } PeHookId;
 
@@ -89,6 +90,15 @@ typedef struct PeHookMenuAction {
     int action;                   /* 0-8 the game's rows; 9 = a row past the last one */
     struct MenuWidgetNode *list;  /* the main list node */
 } PeHookMenuAction;
+
+/* The panel's update and the list's draw and rows may be replaced; g_MenuItemActionStateTable
+ * [context] gives the game's action of each row. */
+typedef struct PeHookItemActions {
+    struct MenuWidgetNode *panel; /* update = Menu_StepEquipScreen */
+    struct MenuWidgetNode *list;  /* draw = Menu_DrawContextActionList, 3 rows */
+    int context;                  /* g_MenuItemActionContext: 0 consumables, 1 and 2 others */
+    int list_id, slot;            /* g_MenuActiveItemList (0 = Aya's bag), g_MenuActiveItemSlot */
+} PeHookItemActions;
 
 #ifdef PE_MODS
 int pe_hook_dispatch(int id, void *ctx);

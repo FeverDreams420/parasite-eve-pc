@@ -1,6 +1,6 @@
 # Mod host and mods, built only with -DPE_MODS=ON.
 # Each mod is a folder here holding <id>.c files and defining `const PeMod pe_mod_<id>`.
-set(PE_MOD_LIST pe_rebalance pe_hello CACHE STRING "Mods built into the game (folder names)")
+set(PE_MOD_LIST pe_rebalance pe_economy pe_hello CACHE STRING "Mods built into the game (folder names)")
 
 set(pe_mod_sources host/pe_mod_host.c host/pe_mod_menu.c host/pe_mod_panel.c host/pe_game.c)
 set(pe_mod_decls "")

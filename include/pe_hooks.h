@@ -15,8 +15,25 @@ typedef enum PeHookId {
     PE_HOOK_ENEMY_HIT,   /* BattleEntity *: Battle_StepEnemyMovement entry, before an enemy's damage */
     PE_HOOK_SPELL,       /* PeHookSpell: Battle_ApplySpellEffect entry (battle and menu) */
     PE_HOOK_HELP_TEXT,   /* u8 **: the menu title-bar line, before it is printed; may be replaced */
+    PE_HOOK_BATTLE_REWARDS, /* PeHookRewards: Aya_SetTotalExp entry, once per won battle */
+    PE_HOOK_INV_COMMAND, /* PeHookInvCommand: Inv_DispatchCommand entry */
+    PE_HOOK_ITEM_ADD,    /* s32 *: Inv_AddItem entry; the item id may be changed */
+    PE_HOOK_STEAL,       /* NULL: a steal's Inv_AddItem follows (Battle_ResolveHitOnTimer) */
+    PE_HOOK_SAVE_WRITE,  /* u8 *: the 8 KB card block, before its CRC (free tail from 0x1C90) */
+    PE_HOOK_SAVE_READ,   /* u8 *: the 8 KB card block of a save being loaded */
+    PE_HOOK_ITEM_COUNT,  /* int **: Script_CountItemsByValue entry ({&item, &result}) */
+    PE_HOOK_SLOT_ROW,    /* u8 **: an item row's name (Menu_DrawSlotRow), before it is printed */
     PE_HOOK_COUNT
 } PeHookId;
+
+typedef struct PeHookRewards {
+    int exp;
+    struct BattleRewardSlot *list; /* 10 entries, id 0 ends */
+} PeHookRewards;
+
+typedef struct PeHookInvCommand {
+    int command, value;
+} PeHookInvCommand;
 
 typedef struct PeHookSpell {
     unsigned spell;           /* Parasite Energy power index */

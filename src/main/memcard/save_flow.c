@@ -1,4 +1,5 @@
 #include "common.h"
+#include "pe_hooks.h"
 #include "pe1/game_timers.h"
 #include "pe1/geom_state.h"
 #include "pe1/inventory_slots.h"
@@ -52,6 +53,7 @@ int g_MemCardEventF000Spec0004Flag, g_MemCardEventF000Spec8000Flag, g_MemCardEve
     g_SaveIoCursor += sizeof(type)
 
 int Save_SerializeTail(void) {
+    PE_HOOK(PE_HOOK_SAVE_WRITE, g_MemCardFileBuffer);
     if ((g_AyaBattleState.action && g_AyaBattleState.action != &g_SavedBattleStateTail) ||
         (g_AyaBattleState.attributes && g_AyaBattleState.attributes != &g_BattleEquipStateBlock)) return -1;
     /* The file contains the original 0x70-byte record, not host padding or
@@ -84,6 +86,7 @@ int Save_SerializeTail(void) {
 
 int Save_DeserializeTail(void) {
     u32 links[2];
+    PE_HOOK(PE_HOOK_SAVE_READ, g_MemCardFileBuffer);
     memcpy(links, g_SaveIoCursor + 0x818 + 0x68, sizeof(links));
     if ((links[0] && links[0] != 0x800B0CB0u) ||
         (links[1] && links[1] != 0x8009D1B0u)) return -1;

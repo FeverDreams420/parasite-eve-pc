@@ -463,11 +463,19 @@ static int pe_on_player_textures(void *ctx, void *user) {
     return 1;                                                 /* the game skips Aya's */
 }
 
+/* Not pe_can_apply: the room load's player steps (Scene_InitEntityPlayer 0x20) set flags 0x20000
+ * until the end of step 0x27, so here it would always say no and her actor would take the game's
+ * model under the skin's textures. Liberate's own model is bank 14, outside the gameplay banks. */
 static int pe_on_player_rows(void *ctx, void *user) {
+    PeSkin *k;
     (void)ctx;
     (void)user;
-    if (pe_save_loaded()) pe_keep(pe_can_apply() && s_tex_known ? s_tex : NULL);
-    if (pe_save_loaded()) pe_keep_rooms();
+    if (!pe_save_loaded()) return 0;
+    k = pe_gameplay_bank() && s_tex_known ? s_tex : NULL;
+    pe_log("skin", "player rows: bank %d flags %X vram=%s -> %s", g_SceneAreaType, (unsigned)g_GameState.flags,
+           !s_tex_known ? "unknown" : s_tex ? s_tex->folder : "game", k ? k->folder : "game's model");
+    pe_keep(k);
+    pe_keep_rooms();
     return 0;
 }
 

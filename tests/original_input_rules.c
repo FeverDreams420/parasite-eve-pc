@@ -542,11 +542,37 @@ int main(int argc, char **argv) {
     speed_key.type = SDL_EVENT_KEY_UP;
     speed_key.key.down = false;
     assert(Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == 1);
+    /* Left/Right on the speed row steps the hold's speed between 2x and
+     * PSYZ_SPEED_MAX, stopping at both ends; it is saved. */
+    assert(host_options.speed_factor == 2);
+    SDL_Event step;
+    SDL_zero(step);
+    step.type = SDL_EVENT_KEY_DOWN;
+    step.key.down = true;
+    step.key.scancode = SDL_SCANCODE_LEFT;
+    Host_ProcessSettingsEvent(&speed_state, &step, NULL, NULL);
+    assert(host_options.speed_factor == 2);
+    step.key.scancode = SDL_SCANCODE_RIGHT;
+    for (unsigned i = 0; i < 3; ++i) {
+        Host_ProcessSettingsEvent(&speed_state, &step, NULL, NULL);
+    }
+    assert(host_options.speed_factor == PSYZ_SPEED_MAX && !speed_state.capturing_binding);
+    speed_key.type = SDL_EVENT_KEY_DOWN;
+    speed_key.key.down = true;
+    assert(Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == PSYZ_SPEED_MAX);
+    speed_key.type = SDL_EVENT_KEY_UP;
+    speed_key.key.down = false;
+    assert(Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == 1);
     speed_key.type = SDL_EVENT_KEY_DOWN;
     speed_key.key.down = true;
     assert(Host_SaveOptions());
     host_options.keys[HOST_SPEED_BINDING] = HOST_UNBOUND_KEY;
+    host_options.speed_factor = 2;
     Host_LoadOptions(host_options.user_file);
+    assert(host_options.speed_factor == PSYZ_SPEED_MAX);
+    step.key.scancode = SDL_SCANCODE_LEFT;
+    Host_ProcessSettingsEvent(&speed_state, &step, NULL, NULL);
+    assert(host_options.speed_factor == PSYZ_SPEED_MAX - 1);
     assert(host_options.keys[HOST_SPEED_BINDING] == SDL_SCANCODE_G);
     assert(host_options.buttons[HOST_SPEED_BINDING] == HOST_UNBOUND_BUTTON);
     SDL_Event clear = speed_key;

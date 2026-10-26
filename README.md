@@ -20,7 +20,7 @@ Keep each CUE file next to its BIN file.
 2. You can start with either disc. If the other is needed, the game asks for it by name.
 3. Press **Escape** for graphics, controls, audio and disc settings. You can add the other disc there later.
 
-**Enter** is START and skips movies; in a story movie, START pauses it and asks whether to skip. View or change all bindings in **Escape → Controls**. A **2x speed** button can be bound there too: the game runs at 2x while it is held. It is unbound until you choose a key or button, and keeps your VSync setting.
+**Enter** is START and skips movies; in a story movie, START pauses it and asks whether to skip. View or change all bindings in **Escape → Controls**. A **speed** button can be bound there too: the game runs at 2x while it is held, or 3x or 4x with the arrows either side of the number (Left/Right on that row). It is unbound until you choose a key or button, and keeps your VSync setting.
 Settings and selected disc paths are saved automatically.
 Optional geometry correction, antialiasing and model texture filtering are in **Escape → Graphics**.
 

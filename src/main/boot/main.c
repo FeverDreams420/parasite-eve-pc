@@ -33,7 +33,9 @@ static struct {
     int antialiasing;
     int model_filtering;
     int fullscreen;
-    /* 16 pad buttons, then the 2x speed hold (unbound by default) */
+    /* 2..PSYZ_SPEED_MAX, used while the speed binding is held */
+    unsigned speed_factor;
+    /* 16 pad buttons, then the speed hold (unbound by default) */
     int keys[17];
     int buttons[17];
     char discs[2][4096];
@@ -54,7 +56,7 @@ static const char *const host_button_names[HOST_BINDING_COUNT] = {
     "Speed"
 };
 
-/* 2x while the speed binding is held; every start is 1x. */
+/* speed_factor while the speed binding is held; every start is 1x. */
 static unsigned host_speed = 1;
 
 static void Host_SetSpeed(unsigned speed) {
@@ -207,6 +209,11 @@ static int Host_ParseOptionValue(const char *section, const char *key, char *val
             return 0;
         }
         host_options.volume = (unsigned)v;
+    } else if (!strcmp(section, "game") && !strcmp(key, "speed")) {
+        if (v < 2 || v > PSYZ_SPEED_MAX) {
+            return 0;
+        }
+        host_options.speed_factor = (unsigned)v;
     } else if (!strcmp(section, "keyboard") || !strcmp(section, "controller")) {
         for (unsigned i = 0; i < HOST_BINDING_COUNT; ++i) {
             if (!strcmp(key, host_button_names[i])) {
@@ -314,6 +321,8 @@ static int Host_SaveOptions(void) {
         "model_filtering = %s\n\n"
         "[audio]\n"
         "volume = %u\n\n"
+        "[game]\n"
+        "speed = %u\n\n"
         "[discs]\n"
         "disc1 = ",
         host_options.scale,
@@ -323,7 +332,8 @@ static int Host_SaveOptions(void) {
         host_options.geometry_correction ? "true" : "false",
         host_options.antialiasing ? "true" : "false",
         host_options.model_filtering ? "true" : "false",
-        host_options.volume
+        host_options.volume,
+        host_options.speed_factor
     );
     Host_WriteString(file, host_options.discs[0]);
     fputs("\ndisc2 = ", file);
@@ -396,6 +406,7 @@ static void Host_InitOptions(int enabled) {
     host_options.antialiasing = 0;
     host_options.model_filtering = 0;
     host_options.volume = 100;
+    host_options.speed_factor = 2;
     Boot_InitHostBindings();
     for (unsigned i = 0; i < 16; ++i) {
         host_options.keys[i] = Psyz_GetKeyboardBinding_SDL3(i);
@@ -808,6 +819,12 @@ static void Host_ApplySettingsAction(
         state->bind_device = (state->bind_device == HOST_BIND_CONTROLLER)
                                  ? HOST_BIND_KEYBOARD
                                  : HOST_BIND_CONTROLLER;
+    } else if (state->row == HOST_SPEED_BINDING + 1 && !activate_only) {
+        int factor = (int)host_options.speed_factor + action;
+        if (factor < 2 || factor > PSYZ_SPEED_MAX) {
+            return;
+        }
+        host_options.speed_factor = (unsigned)factor;
     } else if (activate_only) {
         state->capturing_binding = 1;
         state->status = NULL;
@@ -889,6 +906,12 @@ static void Host_ProcessSettingsPointer(
     int designH = OverlayDesignHeight(Host_SettingsVisibleRowCount(state->page));
     if (x < 0.0f || x >= (float)OVERLAY_PANEL_W || y < 0.0f || y >= (float)designH) {
         state->open = 0;
+        return;
+    }
+    if (state->page == HOST_PAGE_CONTROLS && hitRow == HOST_SPEED_BINDING + 1 &&
+        x < (float)(OVERLAY_PAD + OVERLAY_SPEED_STEP_W)) {
+        int action = x < (float)(OVERLAY_PAD + OVERLAY_SPEED_STEP_CENTRE) ? -1 : 1;
+        Host_ApplySettingsAction(state, action, 0, game);
         return;
     }
     if (hitRow >= 0) {
@@ -1364,7 +1387,7 @@ static void Host_PauseForFocus(SDL_Window *game) {
     }
 }
 
-/* The game runs at 2x while the bound key, button or trigger is held. */
+/* The game runs at speed_factor while the bound key, button or trigger is held. */
 static bool Host_SpeedHoldEvent(const SDL_Event *event) {
     static int trigger_held;
     int key = host_options.keys[HOST_SPEED_BINDING];
@@ -1394,7 +1417,7 @@ static bool Host_SpeedHoldEvent(const SDL_Event *event) {
     } else {
         return false;
     }
-    Host_SetSpeed(held ? 2 : 1);
+    Host_SetSpeed(held ? host_options.speed_factor : 1);
     /* Trigger motion still reaches the pad state. */
     return event->type != SDL_EVENT_GAMEPAD_AXIS_MOTION;
 }

@@ -299,6 +299,7 @@ static void pe_host_start(const PeHookInit *init) {
     pe_start_mods();
     if (s_all_on) {                              /* off: nothing but F1 touches the game */
         pe_main_menu_init();
+        pe_equip_sync_init();
     }
     if (s_interactive) pe_panel_install();
     s_started = 1;

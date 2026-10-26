@@ -55,6 +55,8 @@ Open **F1 → PE Enhancements** to configure them.
 - **Junk economy** (`pe_economy`): a shared Junk counter, battle and steal rewards, Super/Duper
   Junk conversion, difficulty presets, rare drops with soft pity, a Junk counter beside the
   bag's Quantity, and four economy armor effects (Bargain, Scavenger, Lucky Find, Salvager).
+- **Mod Catalog** (`pe_economy`): dismantle equipment to unlock effects, then install, remove or
+  replace them on equipped gear, from Aya's main menu or F1; Rebuild buys dismantled gear back.
 
 Mod builds are experimental; a passing build or test does not establish full in-game compatibility.
 

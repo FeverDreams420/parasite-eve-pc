@@ -25,10 +25,14 @@
 #define PE_PAGE_QUICK_POWERS    "Combat/Parasite Energy/Quick powers"
 #define PE_PAGE_COMBINE         "Combat/Combine items"
 #define PE_PAGE_ECONOMY        "Economy"
+#define PE_PAGE_CATALOG        "Economy/Mod Catalog"
+#define PE_PAGE_DISMANTLE      "Economy/Dismantle"
+#define PE_PAGE_REBUILD        "Economy/Rebuild"
 #define PE_PAGE_INVENTORY       "Inventory"
 #define PE_PAGE_KEYS            "Inventory/Key items"
 #define PE_PAGE_DEBUG          "Debug"
 #define PE_PAGE_DEBUG_LOOT     "Debug/Loot tuning"
+#define PE_PAGE_DEBUG_CATALOG  "Debug/Mod Catalog"
 
 /* Descriptions and order of the pages above (host/pe_pages.c; called by the host at start). */
 void pe_pages_describe(void);

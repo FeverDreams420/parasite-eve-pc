@@ -34,6 +34,7 @@ mods/
     pe_game.*            game access and the game facts every mod shares (see below)
     pe_game_facts.c      those facts as tables: mod effect names and groups, power tags
     pe_main_menu.*       extra rows in Aya's main menu, and screens from the game's own widgets
+    pe_equip_sync.c      edited equipment reaches the next battle
     pe_gametext.h        text in the game's glyph code; pe_item_table.h the game's item names
     ui/                  drawing (pe_ui_raster), the overlay quad (pe_ui_gpu), toasts
   pe_qol/              quality of life: movement, encounters, key item pocket, bag sort, Key Items menu
@@ -100,6 +101,7 @@ inside the game's CRC, at the same offsets as the psxrecomp build so saves move 
 | Offset (from 0x1C90) | Block | Owner |
 |---|---|---|
 | +0x000 | `PELT` Junk, rare pity, difficulty | pe_economy/pe_loot.c |
+| +0x040 | `PECT` Mod Catalog unlocks, Rebuild list | pe_economy/pe_catalog.c |
 | +0x200 | `PKEY` key item pocket | pe_qol/pe_key_items.c |
 | +0x260 | `SORT` bag sort | pe_qol/pe_bag_sort.c |
 
@@ -228,6 +230,17 @@ effect cells; selecting a badge shows the full name in the help bar.
 Original armor and all weapon effects retain native icons. One replaceable
 equipment-effect draw hook keeps presentation in the economy feature file.
 Checks: tests/run_pe_armor_effect_display_test.ps1.
+
+## Mod Catalog files
+
+- `pe_catalog.c`: effects, prices, install / remove rules, unlocks, the PECT save block, the
+  `catalog` service.
+- `pe_dismantle.c`: Dismantle, Rebuild and Tool salvage.
+- `pe_catalog_pages.c`: the F1 pages. `pe_catalog_menu.c`: the Catalog in Aya's own menu.
+- `pe_catalog.h`: their private interface; other files use the `pe_cat_*` calls in pe_economy.h.
+- `pe_discard_dismantle.c`: Discard on a gun or armor in Aya's menu or Wayne's storage reads
+  Dismantle and confirms with what it pays (PE_HOOK_ITEM_ACTIONS); the equipped gear and the last
+  Club keep the plain Discard. F1 > Economy > Discard dismantles.
 
 ## Tests
 

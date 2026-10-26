@@ -23,6 +23,7 @@ typedef enum PeHookId {
     PE_HOOK_SAVE_READ,   /* u8 *: the 8 KB card block of a save being loaded */
     PE_HOOK_ITEM_COUNT,  /* int **: Script_CountItemsByValue ({&item, &result}); nonzero uses supplied result */
     PE_HOOK_SLOT_ROW,    /* u8 **: an item row's name (Menu_DrawSlotRow), before it is printed */
+    PE_HOOK_TOOL_TRANSFER, /* PeHookToolTransfer: Inv_TransferItemBetweenLists entry (Tools) */
     PE_HOOK_PAD_READ,    /* NULL: Field_HandleStateTransition, before it reads g_PadPackets */
     PE_HOOK_LIST_ROWS,   /* PeHookListRows: Draw_SetPrimCallback entry; the row count may change */
     PE_HOOK_MAIN_MENU_ACTION, /* PeHookMenuAction: Aya's main menu confirm; replaceable */
@@ -59,6 +60,13 @@ typedef struct PeHookInvCommand {
     int command, value;
     int result; /* a handler returning nonzero replaces the command with this result */
 } PeHookInvCommand;
+
+typedef struct PeHookToolTransfer {
+    unsigned selection; /* the donor's saved selection; the target is the other one */
+    int modifier;       /* >= 0: that mod moves; < 0: the + bonuses move */
+    int flags;          /* bit 0: Super Tool (the donor survives) */
+    int cost;
+} PeHookToolTransfer;
 
 typedef struct PeHookSpell {
     unsigned spell;           /* Parasite Energy power index */

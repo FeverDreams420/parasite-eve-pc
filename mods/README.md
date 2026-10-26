@@ -137,7 +137,11 @@ twice; the bag is checked again before consuming anything.
 
 In Aya's item menu a medicine whose partner is in the bag gets a fourth
 action, Combine, under Use / Move / Discard; it combines at once and closes
-the list (Combine items / Combine in item menu). It uses PE_HOOK_ITEM_ACTIONS:
+the list (Combine items / Combine in item menu). Items with an available Combine
+recipe remain white in Aya's bag even at full health; Use keeps its native
+availability and dimming. The Combine module owns this presentation through
+PE_HOOK_INVENTORY_ROW without changing selection bits. Checks:
+tests/run_pe_combine_colour_test.ps1. It uses PE_HOOK_ITEM_ACTIONS:
 the action list just opened, whose row count, row drawer and panel input step
 a mod may replace. Text helpers for the game's glyph code are in
 host/pe_gametext.h.

@@ -20,6 +20,8 @@
 #include "pe1/menu_draw_list.h"
 #include "pe1/menu_equipment.h"
 #include "pe1/menu_sound.h"
+#include "pe1/menu_state.h"
+#include "pe1/menu_inventory.h"
 #include "pe1/menu_widget.h"
 
 void Menu_ContextPick(int row);   /* lists.c: draws one of the game's action rows */
@@ -105,6 +107,26 @@ static int pe_partner(int slot, int *result) {
     return -1;
 }
 
+/* The row colour advertises either available action, not just healing.
+ * This does not change the game's selection bits or make Use available. */
+static int pe_combine_available(void) {
+    const PeJunkApi *junk = pe_service_get("junk", 1);
+    return s_menu_row && pe_game_loaded() && !pe_in_battle() && junk && junk->enabled();
+}
+static int pe_inventory_row(void *ctx, void *user) {
+    PeHookInventoryRow *row = ctx;
+    MenuWidgetNode *list = row->node;
+    (void)user;
+    if (!pe_combine_available() || !list || list->draw != Menu_DrawSelectableEquipSlotList ||
+        g_MenuSelectionLocked || g_InvSelectedItemIndex >= 0 || list->appearance.cursorTargetX >= 0) return 0;
+    MenuWidgetNode *panel = list->parent;
+    if (!panel || panel->mode != 1 || panel->selected_base != 1 ||
+        panel->update != Menu_InventoryInputHandler || !panel->parent ||
+        panel->parent->draw != Menu_DrawItemList) return 0;
+    int result = 0;
+    if (pe_partner(row->slot, &result) >= 0) *row->dimmed = 0;
+    return 0;
+}
 static void pe_action_row(int row) {
     if (row != PE_COMBINE_ROW) { Menu_ContextPick(row); return; }
     MenuWidget_DrawCenteredText(s_label);
@@ -140,7 +162,7 @@ static int pe_on_item_actions(void *ctx, void *user) {
     const PeJunkApi *junk = pe_service_get("junk", 1);
     int result = 0, partner;
     (void)user;
-    if (!s_menu_row || a->context != 0 || a->list_id != 0 || pe_in_battle() || !junk || !junk->enabled()) return 0;
+    if (!pe_combine_available() || a->context != 0 || a->list_id != 0) return 0;
     if ((partner = pe_partner(a->slot, &result)) < 0) return 0;
     if (!s_label[0]) pe_text_from_ascii(s_label, sizeof s_label, "Combine");
     s_menu_slot = a->slot;
@@ -163,6 +185,7 @@ static void pe_disarm_tick(void) { s_armed = -1; }
 void pe_combine_register(const char *mod_id) {
     pe_menu_register_toggle(PE_PAGE_COMBINE, "Combine in item menu",
         "A medicine with its partner in Aya's bag gets a Combine action.", &s_menu_row, NULL);
+    pe_hook_add(PE_HOOK_INVENTORY_ROW, pe_inventory_row, NULL, PE_PRIORITY_NORMAL, mod_id);
     pe_hook_add(PE_HOOK_ITEM_ACTIONS, pe_on_item_actions, NULL, PE_PRIORITY_NORMAL, mod_id);
     pe_menu_register_dynamic_choice(PE_PAGE_COMBINE, "Recipe", "Combines two carried medicines, outside battle.",
         &s_recipe, 4, pe_recipe_count, pe_recipe_name);

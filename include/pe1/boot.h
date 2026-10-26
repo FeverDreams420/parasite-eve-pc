@@ -14,6 +14,9 @@ typedef struct BootHostHealthEvent { u32 vblank; u16 expected,value; } BootHostH
 extern BootHostHealthEvent *g_BootHostHealthEvents;
 extern unsigned g_BootHostHealthEventCount,g_BootHostHealthApplied;
 extern int g_BootHostActive;
+/* Asks whether to skip the story movie, with the movie paused; nonzero skips.
+ * Without a host prompt the skip button skips at once. */
+extern int (*g_BootMovieSkipConfirm)(void);
 extern u32 g_BootHostVBlankLimit,g_BootHostVBlankCount;
 /* Headless diagnostic boundary; stdin controls input and graphics settings. */
 extern u32 g_BootHostControlAt;

@@ -45,7 +45,12 @@ enum {
     OVERLAY_VALUE_W = 250,
     OVERLAY_TAB_TOP = 62,
     OVERLAY_TAB_H = 34,
-    OVERLAY_REFERENCE_H = 820
+    OVERLAY_REFERENCE_H = 820,
+
+    PROMPT_PANEL_W = 460,
+    PROMPT_HEADER_H = 112,
+    PROMPT_ROWS = 2, /* Yes, No */
+    PROMPT_FOOTER_H = 60
 };
 
 typedef struct OverlaySurface {
@@ -76,6 +81,8 @@ typedef struct HostOverlayState {
     int quit;
     int dirty;
     const char *status;
+    int prompt; /* the skip-movie question instead of the settings panel */
+    int skip;   /* the question's answer */
 } HostOverlayState;
 
 static const Color kPanel = {0.075f, 0.082f, 0.102f, 0.96f};
@@ -431,12 +438,10 @@ static int OverlayDesignHeight(int rowCount) {
            OVERLAY_FOOTER_H;
 }
 
-static void OverlayComputeLayout(int page, int windowW, int windowH,
-                                 OverlayLayout *layout) {
-    int rowCount = Host_SettingsVisibleRowCount(page);
-    int designH = OverlayDesignHeight(rowCount);
+static void OverlayFitLayout(int designW, int designH, int windowW, int windowH,
+                             OverlayLayout *layout) {
     float scale = (float)windowH / (float)OVERLAY_REFERENCE_H;
-    float widthLimit = (float)windowW * 0.94f / (float)OVERLAY_PANEL_W;
+    float widthLimit = (float)windowW * 0.94f / (float)designW;
     float heightLimit = (float)windowH * 0.94f / (float)designH;
 
     if (scale > widthLimit) scale = widthLimit;
@@ -445,10 +450,37 @@ static void OverlayComputeLayout(int page, int windowW, int windowH,
     if (scale < 0.5f) scale = 0.5f;
     scale = floorf(scale * 8.0f) / 8.0f; /* no repaint on every resize pixel */
     layout->scale = scale;
-    layout->w = (int)ceilf((float)OVERLAY_PANEL_W * scale);
+    layout->w = (int)ceilf((float)designW * scale);
     layout->h = (int)ceilf((float)designH * scale);
     layout->x = (windowW - layout->w) / 2;
     layout->y = (windowH - layout->h) / 2;
+}
+
+static void OverlayComputeLayout(int page, int windowW, int windowH,
+                                 OverlayLayout *layout) {
+    OverlayFitLayout(OVERLAY_PANEL_W, OverlayDesignHeight(Host_SettingsVisibleRowCount(page)),
+                     windowW, windowH, layout);
+}
+
+static int OverlayPromptDesignHeight(void) {
+    return PROMPT_HEADER_H + PROMPT_ROWS * OVERLAY_ROW_H + PROMPT_FOOTER_H;
+}
+
+static OverlayRect OverlayPromptRowRect(int row) {
+    return (OverlayRect){(float)(OVERLAY_PAD / 2),
+                         (float)(PROMPT_HEADER_H + row * OVERLAY_ROW_H),
+                         (float)(PROMPT_PANEL_W - OVERLAY_PAD),
+                         (float)OVERLAY_ROW_H};
+}
+
+static void OverlayComputeStateLayout(const HostOverlayState *state, int windowW,
+                                      int windowH, OverlayLayout *layout) {
+    if (state->prompt) {
+        OverlayFitLayout(PROMPT_PANEL_W, OverlayPromptDesignHeight(), windowW, windowH,
+                         layout);
+    } else {
+        OverlayComputeLayout(state->page, windowW, windowH, layout);
+    }
 }
 
 static float OverlayRowTop(int settingCount, int row) {
@@ -731,6 +763,55 @@ static void OverlayPaint(OverlaySurface *surface, const HostOverlayState *state,
     PaintHeader(&painter);
     PaintRows(&painter);
     PaintFooter(&painter, visibleRows);
+    solid = surface->pixels + (size_t)(surface->h - 1) * (size_t)surface->w * 4u;
+    solid[3] = 255;
+}
+
+/* The skip-movie question, drawn like the settings panel. */
+static void OverlayPaintPrompt(OverlaySurface *surface, const HostOverlayState *state,
+                               const OverlayLayout *layout) {
+    static const char *const kAnswers[PROMPT_ROWS] = {"Yes", "No"};
+    Painter painter = {surface, state, layout->scale};
+    const float s = layout->scale;
+    float footerTop = (float)(OverlayPromptDesignHeight() - PROMPT_FOOTER_H) * s;
+    uint8_t *solid;
+    int row;
+
+    memset(surface->pixels, 0, (size_t)surface->w * (size_t)surface->h * 4u);
+    PaintFrame(&painter, (float)PROMPT_PANEL_W * s, (float)OverlayPromptDesignHeight() * s);
+    DrawText(surface, (float)OVERLAY_PAD * s, 40.0f * s, 26.0f * s, "Skip cutscene",
+             kText, ALIGN_LEFT);
+    DrawText(surface, (float)(PROMPT_PANEL_W - OVERLAY_PAD) * s, 38.0f * s, 14.0f * s,
+             "MOVIE PAUSED", kMuted, ALIGN_RIGHT);
+    DrawText(surface, (float)OVERLAY_PAD * s, 80.0f * s, 17.0f * s,
+             "Do you want to skip the cutscene?", WithAlpha(kText, 0.82f), ALIGN_LEFT);
+    FillRoundRect(surface, (float)OVERLAY_PAD * s, (float)(PROMPT_HEADER_H - 12) * s,
+                  (float)(PROMPT_PANEL_W - 2 * OVERLAY_PAD) * s, 1.0f, 0.0f,
+                  WithAlpha(kText, 0.10f));
+
+    for (row = 0; row < PROMPT_ROWS; row++) {
+        OverlayRect rect = OverlayPromptRowRect(row);
+        float top = rect.y * s;
+        float mid = top + (float)OVERLAY_ROW_H * 0.5f * s;
+        int selected = row == state->row;
+
+        if (selected) {
+            FillRoundRect(surface, rect.x * s, top + 3.0f * s, rect.w * s,
+                          (float)(OVERLAY_ROW_H - 6) * s, 9.0f * s,
+                          WithAlpha(kAccent, 0.16f));
+            FillRoundRect(surface, rect.x * s + 4.0f * s, mid - 10.0f * s, 3.0f * s,
+                          20.0f * s, 1.5f * s, kAccent);
+        }
+        DrawText(surface, (float)OVERLAY_PAD * s, mid + 6.0f * s, 17.0f * s,
+                 kAnswers[row], selected ? kText : WithAlpha(kText, 0.82f), ALIGN_LEFT);
+    }
+
+    FillRoundRect(surface, (float)OVERLAY_PAD * s, footerTop,
+                  (float)(PROMPT_PANEL_W - 2 * OVERLAY_PAD) * s, 1.0f, 0.0f,
+                  WithAlpha(kText, 0.10f));
+    DrawText(surface, (float)OVERLAY_PAD * s, footerTop + 36.0f * s, 13.0f * s,
+             "Up/Down select   Enter confirm   Esc keep watching",
+             WithAlpha(kMuted, 0.7f), ALIGN_LEFT);
     solid = surface->pixels + (size_t)(surface->h - 1) * (size_t)surface->w * 4u;
     solid[3] = 255;
 }
@@ -1088,7 +1169,7 @@ static void Host_OverlayRefreshGPU(
     if (w <= 0 || h <= 0 || !OverlayFontReady()) {
         return;
     }
-    OverlayComputeLayout(state->page, w, h, &layout);
+    OverlayComputeStateLayout(state, w, h, &layout);
     if (w != s_overlayWindowW || h != s_overlayWindowH || layout.w != s_overlayLayout.w ||
         layout.h != s_overlayLayout.h) {
         state->dirty = 1;
@@ -1102,7 +1183,11 @@ static void Host_OverlayRefreshGPU(
     if (!OverlaySurfaceResize(&s_overlaySurface, layout.w, layout.h)) {
         return;
     }
-    OverlayPaint(&s_overlaySurface, state, &layout);
+    if (state->prompt) {
+        OverlayPaintPrompt(&s_overlaySurface, state, &layout);
+    } else {
+        OverlayPaint(&s_overlaySurface, state, &layout);
+    }
     if (Host_EnsureOverlayPipeline(device, SDL_GetGPUSwapchainTextureFormat(device, window))) {
         Host_UploadOverlaySurfaceAndVertices(device);
     }

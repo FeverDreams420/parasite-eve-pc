@@ -180,6 +180,116 @@ static void DiscImages(void) {
     pe_disc_close(&images[1]);
 }
 
+static HostOverlayState PromptState(int row) {
+    return (HostOverlayState){.open = 1, .row = row, .prompt = 1};
+}
+
+static void PromptEvent(HostOverlayState *state, Uint32 type, int code) {
+    SDL_Event e;
+    SDL_zero(e);
+    e.type = type;
+    if (type == SDL_EVENT_GAMEPAD_BUTTON_DOWN) {
+        e.gbutton.button = (Uint8)code;
+    } else {
+        e.key.scancode = (SDL_Scancode)code;
+        e.key.down = true;
+    }
+    Host_ProcessSettingsEvent(state, &e, NULL, NULL);
+}
+
+static void PromptClick(HostOverlayState *state, float x, float y) {
+    SDL_Event e;
+    SDL_zero(e);
+    e.type = SDL_EVENT_MOUSE_BUTTON_DOWN;
+    e.button.button = SDL_BUTTON_LEFT;
+    e.button.x = x;
+    e.button.y = y;
+    Host_ProcessSettingsEvent(state, &e, NULL, NULL);
+}
+
+/* Skip-movie question: No is preselected, Yes skips, every other way out
+ * keeps watching, and the panel paints. */
+static void PromptAnswers(void) {
+    HostOverlayState state = PromptState(1);
+    PromptEvent(&state, SDL_EVENT_KEY_DOWN, SDL_SCANCODE_RETURN);
+    assert(!state.open && !state.skip);
+
+    state = PromptState(1);
+    PromptEvent(&state, SDL_EVENT_KEY_DOWN, SDL_SCANCODE_UP);
+    assert(state.open && state.row == 0 && state.dirty);
+    SDL_Event held;
+    SDL_zero(held);
+    held.type = SDL_EVENT_KEY_DOWN;
+    held.key.scancode = SDL_SCANCODE_RETURN;
+    held.key.down = true;
+    held.key.repeat = true;
+    Host_ProcessSettingsEvent(&state, &held, NULL, NULL);
+    assert(state.open);
+    PromptEvent(&state, SDL_EVENT_KEY_DOWN, SDL_SCANCODE_KP_ENTER);
+    assert(!state.open && state.skip);
+
+    state = PromptState(0);
+    PromptEvent(&state, SDL_EVENT_KEY_DOWN, SDL_SCANCODE_ESCAPE);
+    assert(!state.open && !state.skip);
+
+    state = PromptState(0);
+    PromptEvent(&state, SDL_EVENT_GAMEPAD_BUTTON_DOWN, SDL_GAMEPAD_BUTTON_EAST);
+    assert(!state.open && !state.skip);
+
+    state = PromptState(1);
+    PromptEvent(&state, SDL_EVENT_GAMEPAD_BUTTON_DOWN, SDL_GAMEPAD_BUTTON_DPAD_DOWN);
+    assert(state.open && state.row == 0);
+    PromptEvent(&state, SDL_EVENT_GAMEPAD_BUTTON_DOWN, SDL_GAMEPAD_BUTTON_START);
+    assert(!state.open && state.skip);
+
+    state = PromptState(0);
+    PromptEvent(&state, SDL_EVENT_GAMEPAD_BUTTON_DOWN, SDL_GAMEPAD_BUTTON_SOUTH);
+    assert(!state.open && state.skip);
+
+    /* Settings keys mean nothing here. */
+    state = PromptState(1);
+    PromptEvent(&state, SDL_EVENT_KEY_DOWN, SDL_SCANCODE_TAB);
+    assert(state.open && state.page == 0 && state.row == 1);
+
+    state = PromptState(1);
+    SDL_Event quit;
+    SDL_zero(quit);
+    quit.type = SDL_EVENT_QUIT;
+    Host_ProcessSettingsEvent(&state, &quit, NULL, NULL);
+    assert(!state.open && state.quit && !state.skip);
+
+    OverlayLayout saved = s_overlayLayout;
+    OverlayFitLayout(PROMPT_PANEL_W, OverlayPromptDesignHeight(), 1280, 960, &s_overlayLayout);
+    float scale = s_overlayLayout.scale;
+    OverlayRect yes = OverlayPromptRowRect(0);
+    OverlayRect no = OverlayPromptRowRect(1);
+    state = PromptState(1);
+    PromptClick(&state, s_overlayLayout.x + (yes.x + 20.0f) * scale,
+                s_overlayLayout.y + (yes.y + yes.h * 0.5f) * scale);
+    assert(!state.open && state.skip);
+    state = PromptState(0);
+    PromptClick(&state, s_overlayLayout.x + (no.x + 20.0f) * scale,
+                s_overlayLayout.y + (no.y + no.h * 0.5f) * scale);
+    assert(!state.open && !state.skip);
+    state = PromptState(0);
+    PromptClick(&state, 1.0f, 1.0f);
+    assert(!state.open && !state.skip);
+
+    OverlaySurface surface = {0};
+    state = PromptState(1);
+    assert(OverlayFontReady());
+    assert(OverlaySurfaceResize(&surface, s_overlayLayout.w, s_overlayLayout.h));
+    OverlayPaintPrompt(&surface, &state, &s_overlayLayout);
+    unsigned opaque = 0;
+    for (int i = 0; i < surface.w * (surface.h - 1); ++i) {
+        opaque += surface.pixels[i * 4 + 3] > 200;
+    }
+    assert(opaque > (unsigned)(surface.w * (surface.h - 1)) / 2);
+    OverlaySurfaceRelease(&surface);
+    s_overlayLayout = saved;
+    fprintf(stderr, "host-settings: skip-movie question passed\n");
+}
+
 static int SDLCALL ClosePanel(void *unused) {
     (void)unused;
     WaitPanel();
@@ -485,9 +595,10 @@ int main(int argc, char **argv) {
     assert(quits == 1 && !SDL_HasEvent(SDL_EVENT_QUIT));
     Psyz_AudioDestroy();
     fprintf(stderr, "host-settings: paused settings completed; checking disc images\n");
+    PromptAnswers();
     DiscImages();
     SDL_Quit();
-    puts("PASS: both image identities, missing-image checks, additive mounting, TOML roundtrip, invalid values, modal graphics/controls/audio, persistence, ESC consumption, multi-disc callback");
+    puts("PASS: both image identities, missing-image checks, additive mounting, TOML roundtrip, invalid values, modal graphics/controls/audio, persistence, ESC consumption, multi-disc callback, skip-movie question");
     return 0;
 }
 

@@ -1,7 +1,9 @@
 #include "common.h"
+#include "pe1/akao_send.h"
 #include "pe1/battle_runtime.h"
 #include "pe1/battle_status.h"
 #include "pe1/boot_disc_check.h"
+#include "pe1/draw_state.h"
 #include "pe1/field_movement.h"
 #include "pe1/game_state.h"
 #include "pe1/geom_state.h"
@@ -73,6 +75,35 @@ void Boot_FlushSceneFast(void) {
 #define GAME_STATE_OF_SCENE_FLAGS(flagsByte) \
     ((Pe1GameState *)((flagsByte) - PE1_OFFSETOF(Pe1GameState, bank_state_12)))
 
+/* Controller packet bit (active low) that asks to skip a story movie;
+ * Enter is bound to Start by default. */
+#define MOVIE_SKIP_START 0x0008u
+
+int (*g_BootMovieSkipConfirm)(void);
+
+/* The original story movie player has no skip button (the title movies stop
+ * on Start in MenuCard_PlayVideo). A new Start press while one
+ * plays asks the host, which keeps the movie paused until it answers. */
+static int Boot_MovieSkipChosen(const Pe1GameState *state) {
+    static u16 previous;
+    u16 held = 0;
+    int chosen = 0;
+
+    if ((g_PadPackets[0].header & 0xFF) == 0) {
+        held = (u16)~g_PadPackets[0].buttons & MOVIE_SKIP_START;
+    }
+    if ((held & ~previous) && !(g_GameStateFlags & 1) && !(state->flags & 0x100) &&
+        g_DrawEnabled.bits >= 2 && Draw_CheckDrawStatus() != 0) {
+        chosen = g_BootMovieSkipConfirm ? g_BootMovieSkipConfirm() : 1;
+        /* The press only answers the question: no pause toggle, and the
+         * buttons must be released before they ask again. */
+        g_FieldPadPressed = 0;
+        held = 0xFFFF;
+    }
+    previous = held;
+    return chosen;
+}
+
 int Boot_RunFrame(void)
 {
     RECT clear_rect;
@@ -81,6 +112,7 @@ int Boot_RunFrame(void)
     Pe1GameState *state;
     u8 *scene_flags;
     RenderTintTargetView *fade;
+    int skip_movie;
 
     int startup=Draw_InitPipeline();
     if (startup < 0) return startup;
@@ -99,6 +131,7 @@ int Boot_RunFrame(void)
             PE_HOOK(PE_HOOK_FRAME, NULL);
             flags = g_GameStateFlags;
             g_GameStateFlags = flags & ~0x30u;
+            skip_movie = Boot_MovieSkipChosen(state);
 
             if (!(GAME_STATE_OF_SCENE_FLAGS(scene_flags)->flags & 0x8000) && g_GlobalFrameCounter[0] &&
                 (g_FieldPadPressed & 4) &&
@@ -119,7 +152,15 @@ int Boot_RunFrame(void)
 
             if (!(state->flags & 0x100)) {
                 if ((s8)Draw_CheckDrawStatus() != 0) {
-                    if ((s8)MenuCardFirst_StepVideo() == 0) {
+                    s8 playing = (s8)MenuCardFirst_StepVideo();
+
+                    /* A chosen skip ends the movie as its last frame would. */
+                    if (playing && skip_movie) {
+                        MenuCardFirst_StopVideo();
+                        Script_StopMovieMusic();
+                        playing = 0;
+                    }
+                    if (playing == 0) {
                         MenuCardFirst_ResetDisplayState();
                         Draw_ClearOnFlag();
                         continue;

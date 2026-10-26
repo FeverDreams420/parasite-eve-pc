@@ -9,4 +9,7 @@ typedef int *AkaoCommandArgs[6]; /* opcode, arg1..arg4, result */
 
 int Akao_ProcessCommand(AkaoCommandArgs args);
 
+/* Stops the music a script started during a movie that is being skipped. */
+void Script_StopMovieMusic(void);
+
 #endif

@@ -78,6 +78,67 @@ static int original_native_graphics_controls(const char *executable)
     return 0;
 }
 
+/* Use the actual New Game piano sequence and PCM mixer. Checking only the
+ * video state missed music continuing after the film had already stopped. */
+static int original_native_movie_skip(const char *executable)
+{
+    const char *disc=getenv("PE_TEST_DISC");
+    if(!disc || !*disc)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
+    if(!SDL_Init(SDL_INIT_EVENTS))return 1;
+    char resolved[2][4096];const char *paths[]={executable,disc};
+    char *cwd=SDL_GetCurrentDirectory();if(!cwd)return 1;
+    for(unsigned i=0;i<2;++i){
+        bool absolute=paths[i][0]=='/' || paths[i][0]=='\\' || (paths[i][0] && paths[i][1]==':');
+        int n=snprintf(resolved[i],sizeof(resolved[i]),"%s%s",absolute?"":cwd,paths[i]);
+        if(n<0 || (size_t)n>=sizeof(resolved[i])){SDL_free(cwd);return 1;}
+    }
+    SDL_free(cwd);
+    for(unsigned skip=0;skip<2;++skip){
+        char directory[4096],capture[4200];
+        snprintf(directory,sizeof(directory),"%spe-movie-skip-%llx-%u",SDL_GetBasePath(),
+                 (unsigned long long)SDL_GetPerformanceCounter(),skip);
+        if(!SDL_CreateDirectory(directory))return 1;
+        snprintf(capture,sizeof(capture),"%s/audio.pcm",directory);
+        const char *args[40]={resolved[0],"--disc",resolved[1],"--headless","--frame-limit","15008",
+            "--dump-audio",capture,"--pad-at","10000:8","--pad-at","10010:0",
+            "--pad-at","11000:16","--pad-at","11010:0","--pad-at","11500:16384","--pad-at","11510:0"};
+        if(skip){args[20]="--pad-at";args[21]="14000:8";args[22]="--pad-at";args[23]="14008:0";}
+        SDL_Environment *env=SDL_CreateEnvironment(true);if(!env)return 1;
+        SDL_SetEnvironmentVariable(env,"PSYZ_AUDIO_CLOCK","video",true);
+        SDL_SetEnvironmentVariable(env,"SDL_AUDIO_DRIVER","dummy",true);
+        SDL_PropertiesID props=SDL_CreateProperties();
+        SDL_SetPointerProperty(props,SDL_PROP_PROCESS_CREATE_ARGS_POINTER,(void *)args);
+        SDL_SetPointerProperty(props,SDL_PROP_PROCESS_CREATE_ENVIRONMENT_POINTER,env);
+        SDL_SetStringProperty(props,SDL_PROP_PROCESS_CREATE_WORKING_DIRECTORY_STRING,directory);
+        SDL_SetNumberProperty(props,SDL_PROP_PROCESS_CREATE_STDOUT_NUMBER,SDL_PROCESS_STDIO_APP);
+        SDL_SetBooleanProperty(props,SDL_PROP_PROCESS_CREATE_STDERR_TO_STDOUT_BOOLEAN,true);
+        SDL_Process *child=SDL_CreateProcessWithProperties(props);
+        SDL_DestroyProperties(props);SDL_DestroyEnvironment(env);if(!child)return 1;
+        int status=-1;size_t bytes=0;char *output=SDL_ReadProcess(child,&bytes,&status);
+        SDL_DestroyProcess(child);
+        int ok=output && status==0 && strstr(output,"\"event\":\"frame_limit\"") &&
+            strstr(output,skip?"\"video_state\":0":"\"video_state\":2") &&
+            strstr(output,skip?"\"scene\":2818576456":"\"scene\":2819109064") &&
+            !strstr(output,"runtime error:") && !strstr(output,"AddressSanitizer");
+        /* The final second is beyond the release/reverb tail. The unskipped
+         * control must be audible, so silence cannot pass with broken audio. */
+        FILE *audio=fopen(capture,"rb");unsigned nonzero=0;
+        unsigned char tail[44100*4];
+        if(!audio)ok=0;
+        else{
+            if(fseek(audio,-(long)sizeof(tail),SEEK_END) || fread(tail,1,sizeof(tail),audio)!=sizeof(tail))ok=0;
+            else for(size_t i=0;i<sizeof(tail);i+=2)nonzero+=(tail[i]!=0 || tail[i+1]!=0);
+            if(fclose(audio))ok=0;
+        }
+        if(skip?nonzero!=0:nonzero<44100)ok=0;
+        if(!ok)fprintf(stderr,"Movie skip %u failed: status=%d nonzero samples=%u (artifacts %s)\n%s\n",
+                       skip,status,nonzero,directory,output?output:SDL_GetError());
+        SDL_free(output);if(!ok)return 1;
+        printf("Story movie %s: %u nonzero samples in final second\n",skip?"skipped":"playing",nonzero);
+    }
+    return 0;
+}
+
 static int original_native_control(const char *executable)
 {
     const char *disc=getenv("PE_TEST_DISC");if(!disc || !*disc)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

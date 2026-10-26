@@ -9,9 +9,10 @@
  *   below  what is known, by tier: basics, weaknesses, loot; a locked tier says how to unlock it
  *
  * Unmet creatures (decisions, plan section 9): in an area the player has reached, a black silhouette;
- * in areas not reached, and bosses, nothing (their shapes are reveals). Triangle pauses the
- * animation, Select shows the next form (parts, phases), Circle goes back. Buying, NEW markers and
- * title-bar help come in the next step.
+ * in areas not reached, and bosses, nothing (their shapes are reveals). Cross shows the model full
+ * screen (Cross or Circle back), Triangle pauses the animation, Select shows the next form (parts,
+ * phases), Circle goes back. The model on show is a host stage (pe_model_stage.h). Buying, NEW
+ * markers and title-bar help come in the next step.
  */
 #include <stdio.h>
 #include <string.h>
@@ -20,9 +21,7 @@
 #include "pe_gametext.h"
 #include "pe_main_menu.h"
 #include "pe_mod_host.h"
-#include "pe_model.h"
-#include "pe_model_view.h"
-#include "pe_present.h"
+#include "pe_model_stage.h"
 #include "pe1/draw_state.h"
 #include "pe1/menu_draw_list.h"
 #include "pe1/menu_sound.h"
@@ -35,12 +34,10 @@
 #define PE_INFO_ROWS      4
 #define PE_LIST_W         124     /* the creature list; the model's frame takes the rest */
 #define PE_GAP            4
-#define PE_PICTURE        128     /* largest model picture */
+#define PE_PICTURE        128     /* largest model picture in the box */
 #define PE_SLOT           2       /* presenter slot (the viewer test uses 0 and 1) */
 #define PE_BOX_RGB        0x101828u
-#define PE_SILHOUETTE_RGB 0x080810u
-#define PE_TURN_AUTO      10      /* 4096 a turn */
-#define PE_TURN_HAND      96
+#define PE_TURN_HAND      96      /* 4096 a turn */
 #define PE_MENU_L1        0x4u
 #define PE_MENU_R1        0x8u
 #define PE_MENU_LEFT      0x8000u
@@ -58,12 +55,9 @@ static int s_areas, s_area, s_member[PE_MAX], s_members;
 static int s_cursor[PE_AREAS];                      /* remembered per area */
 
 /* the model on show */
-static int s_shown = -1, s_shown_form = -1, s_shown_mode = -1, s_form, s_paused, s_manual;
-static int s_yaw, s_tick, s_drawn_tick, s_frame_tick;
-static const PeModel *s_model;
-static PeViewFit s_fit;
-static uint8_t s_rgba[PE_PICTURE * PE_PICTURE * 4];
-static int s_box_x, s_box_y, s_box_w, s_box_h;
+static PeModelStage s_stage;
+static int s_shown = -1, s_shown_form = -1, s_shown_mode = -1, s_form, s_paused;
+static int s_tick, s_drawn_tick;
 
 static const PeBestiaryApi *pe_b(void) { return &g_pe_bestiary_api; }
 
@@ -126,33 +120,19 @@ static void pe_row(int row) {
 }
 
 /* ---- the model ---- */
-static void pe_show_blank(void) {
-    memset(s_rgba, 0, sizeof s_rgba);
-    pe_present_show(PE_SLOT, s_box_x, s_box_y, &(PeImage){s_box_w, s_box_h, s_rgba}, PE_PRESENT_BOX, PE_BOX_RGB);
-}
-
 static void pe_update_model(void) {
     const int h = pe_current(), mode = h >= 0 ? pe_view_mode(h) : 0;
-    PeImage img = {s_box_w, s_box_h, s_rgba};
-    PeView view = {s_box_w, s_box_h, 0, 0, mode == 1, PE_SILHOUETTE_RGB};
     s_drawn_tick = s_tick;
     if (h != s_shown || s_form != s_shown_form || mode != s_shown_mode) {
         PeModelSource src;
-        if (h != s_shown) { s_form = 0; s_manual = 0; s_yaw = 0; }
+        if (h != s_shown) s_form = 0;
         s_shown = h;
         s_shown_form = s_form;
         s_shown_mode = mode;
-        s_model = NULL;
-        if (mode && pe_b()->model(h, s_form, &src) && (s_model = pe_model_load(&src)) && !pe_model_fit(s_model, &s_fit))
-            s_model = NULL;
+        pe_stage_show(&s_stage, mode && pe_b()->model(h, s_form, &src) ? &src : NULL, mode == 1);
     }
-    if (!s_model) { pe_show_blank(); return; }
-    view.yaw = s_yaw;
-    view.frame = s_frame_tick / 2;                  /* the game animates at 30 frames a second */
-    if (!s_manual) s_yaw = (s_yaw + PE_TURN_AUTO) & 4095;
-    if (!s_paused) ++s_frame_tick;
-    if (pe_model_render(s_model, &s_fit, &view, &img))
-        pe_present_show(PE_SLOT, s_box_x, s_box_y, &img, PE_PRESENT_BOX, PE_BOX_RGB);
+    pe_stage_pause(&s_stage, s_paused);
+    pe_stage_draw(&s_stage);
 }
 
 static void pe_draw_list(MenuWidgetNode *node) {
@@ -215,7 +195,7 @@ static void pe_set_area(int area) {
 }
 
 static void pe_close(void) {
-    pe_present_hide(PE_SLOT);
+    pe_stage_hide(&s_stage);
     s_cursor[s_area] = MenuWidget_GridCellIndex(s_screen.list);
     pe_screen_close(&s_screen);
     s_frame = s_info = NULL;
@@ -225,15 +205,25 @@ static void pe_close(void) {
 static int pe_input(MenuWidgetNode *panel, unsigned int buttons) {
     const int h = pe_current();
     if (panel != s_screen.panel) return 0;
+    if (s_stage.fullscreen && (buttons & (PE_MENU_CIRCLE | PE_MENU_CROSS))) {   /* back from full screen */
+        pe_stage_fullscreen(&s_stage, 0);
+        Menu_PlayCancelSound();
+        return 1;
+    }
     if (buttons & PE_MENU_CIRCLE) { pe_close(); Menu_PlayCancelSound(); return 1; }
+    if (buttons & PE_MENU_CROSS) {                  /* the model full screen */
+        if (h < 0 || !pe_view_mode(h)) { Menu_PlayErrorSound(); return 1; }
+        pe_stage_fullscreen(&s_stage, 1);
+        Menu_PlayConfirmSound();
+        return 1;
+    }
     if (buttons & (PE_MENU_L1 | PE_MENU_R1)) {
         pe_set_area(s_area + ((buttons & PE_MENU_R1) ? 1 : -1));
         Menu_PlayMoveSound();
         return 1;
     }
     if (buttons & (PE_MENU_LEFT | PE_MENU_RIGHT)) {
-        s_manual = 1;
-        s_yaw = (s_yaw + ((buttons & PE_MENU_RIGHT) ? PE_TURN_HAND : -PE_TURN_HAND)) & 4095;
+        pe_stage_turn(&s_stage, (buttons & PE_MENU_RIGHT) ? PE_TURN_HAND : -PE_TURN_HAND);
         return 1;
     }
     if (buttons & PE_MENU_TRIANGLE) { s_paused = !s_paused; Menu_PlayMoveSound(); return 1; }
@@ -244,7 +234,7 @@ static int pe_input(MenuWidgetNode *panel, unsigned int buttons) {
         Menu_PlayMoveSound();
         return 1;
     }
-    if (buttons & ~(0x20000u | PE_MENU_CROSS)) pe_log("bestiary", "screen buttons=0x%X (unhandled)", buttons);
+    if (buttons & ~0x20000u) pe_log("bestiary", "screen buttons=0x%X (unhandled)", buttons);
     return 0;
 }
 
@@ -266,14 +256,14 @@ static int pe_on_frame(void *ctx, void *user) {
     (void)ctx;
     (void)user;
     ++s_tick;
-    if (s_shown >= 0 && s_tick - s_drawn_tick > 2) { pe_present_hide(PE_SLOT); s_shown = -1; }
+    if (s_shown >= 0 && s_tick - s_drawn_tick > 2) { pe_stage_hide(&s_stage); s_shown = -1; }
     return 0;
 }
 
 static void pe_open(MenuWidgetNode *main_list) {
     const MenuWidgetSimpleDescriptor *d = MenuWidget_LookupSimpleDescriptor(1);   /* the game's screen area */
     const int x = d && d->x > 0 ? d->x : 28, y = d && d->y > 0 ? d->y : 24, width = d && d->width > 0 ? d->width : 252;
-    int ix, iy, iw, ih;
+    int ix, iy, iw, ih, bx, by, bw, bh;
     pe_build_areas();
     if (!s_areas) return;
     if (s_area >= s_areas) s_area = 0;
@@ -281,10 +271,11 @@ static void pe_open(MenuWidgetNode *main_list) {
     s_frame = pe_screen_panel(&s_screen, x + PE_LIST_W + PE_GAP, y, width - PE_LIST_W - PE_GAP, PE_LIST_ROWS, NULL);
     pe_screen_inside(s_screen.list, &ix, &iy, &iw, &ih);
     s_info = pe_screen_panel(&s_screen, x, iy + ih + 3 * PE_GAP, width, PE_INFO_ROWS, pe_draw_info);
-    pe_screen_inside(s_frame, &s_box_x, &s_box_y, &s_box_w, &s_box_h);
-    if (s_box_w > PE_PICTURE) s_box_x += (s_box_w - PE_PICTURE) / 2, s_box_w = PE_PICTURE;
-    if (s_box_h > PE_PICTURE) s_box_y += (s_box_h - PE_PICTURE) / 2, s_box_h = PE_PICTURE;
-    pe_log("bestiary", "screen: list %d,%d %dx%d  model box %d,%d %dx%d", ix, iy, iw, ih, s_box_x, s_box_y, s_box_w, s_box_h);
+    pe_screen_inside(s_frame, &bx, &by, &bw, &bh);
+    if (bw > PE_PICTURE) bx += (bw - PE_PICTURE) / 2, bw = PE_PICTURE;
+    if (bh > PE_PICTURE) by += (bh - PE_PICTURE) / 2, bh = PE_PICTURE;
+    pe_stage_place(&s_stage, bx, by, bw, bh);
+    pe_log("bestiary", "screen: list %d,%d %dx%d  model box %d,%d %dx%d", ix, iy, iw, ih, bx, by, bw, bh);
     s_shown = -1;
     pe_build_members();
     pe_screen_rows(&s_screen, s_members ? s_members : 1, s_cursor[s_area]);
@@ -309,6 +300,7 @@ static void pe_icon(PeHookMainMenuIcon *icon) {
 static const PeMainMenuRow s_row = { "Bestiary", 0, pe_row_shown, pe_open, pe_icon };
 
 void pe_bestiary_menu_register(const char *mod_id) {
+    pe_stage_init(&s_stage, PE_SLOT, PE_BOX_RGB);
     pe_main_menu_add(&s_row, 25);                   /* between Key Items and the Wardrobe */
     pe_hook_add(PE_HOOK_HELP_TEXT, pe_on_help_text, NULL, PE_PRIORITY_LATE, mod_id);
     pe_hook_add(PE_HOOK_FRAME, pe_on_frame, NULL, PE_PRIORITY_NORMAL, mod_id);

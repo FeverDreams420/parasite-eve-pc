@@ -10,8 +10,8 @@
  *     textures and palettes are exact; at internal resolution > 1 anything the GPU drew -- the
  *     framebuffers, the menu's text cache at x 320 y 0 -- is stale there).
  *   - Info rows: the buffer pasted into, video settings, the paste cost.
- *   - Creature: any Bestiary creature's model (form, silhouette) through the model view and the
- *     presenter, turning slowly with its idle animation, at the card's place.
+ *   - Creature: any Bestiary creature's model (form, silhouette, full screen) through a host model
+ *     stage (pe_model_stage.h), turning slowly with its idle animation, at the card's place.
  *   - PE_VIEWER_FORMS=<file.bmp> (timing / check runs): every creature's every form drawn into one
  *     contact sheet at the first frame drawn (the title screens too), then nothing else changes.
  * (A pink test of VRAM pages was removed after its run: restoring a page from a read-back corrupted
@@ -27,6 +27,7 @@
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
 #include "pe_model.h"
+#include "pe_model_stage.h"
 #include "pe_model_view.h"
 #include "pe_pages.h"
 #include "pe_present.h"
@@ -38,8 +39,6 @@
 #define PE_CARD        128
 #define PE_SLOT_TEST   0
 #define PE_SLOT_MODEL  1
-#define PE_TURN_STEP   12           /* model turn a frame, 4096 a full turn */
-#define PE_SILHOUETTE  0x101018u
 #define PE_BOX_RGB     0x182038u    /* a dark viewer-screen blue */
 
 #define PE_HOME_X      176          /* the right-hand panel of Aya's menu */
@@ -152,13 +151,11 @@ static void pe_dump_vram(void) {
     pe_toast(msg);
 }
 
-/* ---- creature models ---- */
-static int s_model_on, s_model_pick, s_model_form, s_model_silhouette;
+/* ---- creature models (through a host model stage, pe_model_stage.h) ---- */
+static int s_model_on, s_model_pick, s_model_form, s_model_silhouette, s_model_fullscreen;
 static int s_shown_pick = -1, s_shown_form = -1, s_shown_silhouette = -1;
-static const PeModel *s_model;
-static PeViewFit s_fit;
-static int s_yaw, s_frame_tick;
-static uint8_t s_model_rgba[PE_CARD * PE_CARD * 4];
+static PeModelStage s_stage;
+static PeViewFit s_fit;                       /* the contact sheet's */
 static char s_model_status[96] = "-";
 static char s_creature_names[512][40];
 
@@ -196,39 +193,28 @@ static const char *pe_form_name(unsigned i) {
 
 static void pe_model_tick(void) {
     const PeBestiaryApi *b = pe_bestiary();
-    PeImage img = {PE_CARD, PE_CARD, s_model_rgba};
-    PeView view = {PE_CARD, PE_CARD, 0, 0, 0, PE_SILHOUETTE};
     if (!s_model_on || !b) {
-        if (s_shown_pick >= 0) { pe_present_hide(PE_SLOT_MODEL); s_shown_pick = -1; s_model = NULL; }
+        if (s_shown_pick >= 0) { pe_stage_hide(&s_stage); s_shown_pick = -1; }
         return;
     }
     if (s_model_pick != s_shown_pick || s_model_form != s_shown_form || s_model_silhouette != s_shown_silhouette) {
         PeModelSource src;
+        const int found = b->model(s_model_pick, s_model_form, &src);
         s_shown_pick = s_model_pick;
         s_shown_form = s_model_form;
         s_shown_silhouette = s_model_silhouette;
-        s_yaw = 0;
-        s_frame_tick = 0;
-        s_model = b->model(s_model_pick, s_model_form, &src) ? pe_model_load(&src) : NULL;
-        if (!s_model || !pe_model_fit(s_model, &s_fit)) {
-            s_model = NULL;
+        if (!pe_stage_show(&s_stage, found ? &src : NULL, s_model_silhouette) || !found) {
             snprintf(s_model_status, sizeof s_model_status, "%s: form %d did not load", pe_creature_name((unsigned)s_model_pick), s_model_form + 1);
             pe_log("viewer", "creature %s form %d: did not load", pe_creature_name((unsigned)s_model_pick), s_model_form);
-            pe_present_hide(PE_SLOT_MODEL);
-            return;
+        } else {
+            snprintf(s_model_status, sizeof s_model_status, "M%03d slot %d: %d parts, %d faces, %d frames",
+                     src.map, src.actor, s_stage.model->parts, s_stage.model->faces, pe_model_frames(s_stage.model));
+            pe_log("viewer", "creature %s form %d: %s", pe_creature_name((unsigned)s_model_pick), s_model_form, s_model_status);
         }
-        snprintf(s_model_status, sizeof s_model_status, "M%03d slot %d: %d parts, %d faces, %d frames",
-                 src.map, src.actor, s_model->parts, s_model->faces, pe_model_frames(s_model));
-        pe_log("viewer", "creature %s form %d: %s", pe_creature_name((unsigned)s_model_pick), s_model_form, s_model_status);
     }
-    if (!s_model) return;
-    view.yaw = s_yaw;
-    view.frame = s_frame_tick / 2;               /* the game animates at 30 frames a second */
-    view.silhouette = s_model_silhouette;
-    s_yaw = (s_yaw + PE_TURN_STEP) & 4095;
-    ++s_frame_tick;
-    if (pe_model_render(s_model, &s_fit, &view, &img))
-        pe_present_show(PE_SLOT_MODEL, s_x, s_y, &img, PE_PRESENT_BOX, PE_BOX_RGB);
+    pe_stage_place(&s_stage, s_x, s_y, PE_CARD, PE_CARD);
+    pe_stage_fullscreen(&s_stage, s_model_fullscreen);
+    pe_stage_draw(&s_stage);
 }
 
 static void pe_model_info(char *out, unsigned size) { snprintf(out, size, "%s", s_model_status); }
@@ -316,6 +302,7 @@ static void pe_tick(void) {
         const char *env = getenv("PE_VIEWER_TEST");   /* ... unless a timing run asks: box / strips */
         started = 1;
         s_model_on = 0;
+        s_model_fullscreen = 0;
         s_on = env && (!strcmp(env, "box") || !strcmp(env, "strips"));
         if (s_on) s_method = !strcmp(env, "strips");
     }
@@ -340,7 +327,9 @@ void pe_viewer_test_register(const char *mod_id) {
     pe_menu_register_dynamic_choice(page, "Form", "Its body, then its parts or phases (only the ones it has).", &s_model_form,
                                     PE_BESTIARY_MAX_FORMS, pe_form_count, pe_form_name);
     pe_menu_register_toggle(page, "Silhouette", "Draw the shape only, as an unmet creature.", &s_model_silhouette, NULL);
+    pe_menu_register_toggle(page, "Full screen", "Show the creature over the whole game screen.", &s_model_fullscreen, NULL);
     pe_menu_register_info(page, "Model", "The model shown: its room, slot and size.", pe_model_info);
+    pe_stage_init(&s_stage, PE_SLOT_MODEL, PE_BOX_RGB);
     pe_menu_register_tick(pe_tick);
     pe_hook_add(PE_HOOK_FRAME_DRAWN, pe_on_scene, NULL, PE_PRIORITY_LATE, mod_id);   /* runs on the title screens too */
     if (getenv("PE_VIEWER_TEST")) {            /* timing runs: show it from the first frame */

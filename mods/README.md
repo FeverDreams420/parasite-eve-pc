@@ -42,6 +42,8 @@ mods/
     pe_disc_assets.*     read-only game data from the player's disc (a room's blobs)
     pe_model.*           decoded game models: geometry, textures (private VRAM), idle animation
     pe_model_view.*      a model posed, turned, fitted and drawn into a picture (no game state)
+    pe_model_stage.*     a model on show for a screen: turning, idle animation, pause, silhouette,
+                         its box or full screen, through the presenter (Bestiary, test pages)
     ui/                  drawing (pe_ui_raster), the overlay quad (pe_ui_gpu), toasts
   pe_qol/              quality of life: movement, encounters, key item pocket, bag sort, Key Items menu
   pe_rebalance/        mod effects, Parasite Energy balance, half-bar turns / Quick powers, Combine

@@ -16,6 +16,7 @@ set(pe_host_sources
     host/pe_disc_assets.c   # read-only game data from the player's disc (rooms)
     host/pe_model.c         # decoded game models: geometry, textures, idle animation
     host/pe_model_view.c    # a model posed, turned and drawn into a picture
+    host/pe_model_stage.c   # a model on show: turning, idle animation, box or full screen
     host/ui/pe_ui_raster.c  # drawing: boxes and text
     host/ui/pe_ui_gpu.c     # the overlay quad
     host/ui/pe_toast.c)     # one-line messages

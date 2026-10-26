@@ -46,6 +46,12 @@ Open **F1 → PE Enhancements** to configure them.
 - **Combat rules** (`pe_rebalance`): Vanilla, Rebalanced and Custom rules for gun and armor
   effects: Heat/Frost, Rate of Fire, gun progression bonuses, Attack All crowd damage, status
   chances, Critical Up, Quickdraw and armor tradeoffs; weapon DPS in the help text.
+- **Parasite Energy rules** (`pe_rebalance`): Vanilla, Rebalanced and Custom healing amounts and
+  power costs.
+- **Half-bar turns** (`pe_rebalance`): items, Quick PE powers and weapon changes on half a bar,
+  with a gauge indicator; attacks and other powers still need a full bar.
+- **Medicine combining and Panacea** (`pe_rebalance`): two Medicine 1/2/3 become the next tier;
+  Medicine 4 and Full Cure become Panacea (400 HP and cures ailments).
 
 Mod builds are experimental; a passing build or test does not establish full in-game compatibility.
 

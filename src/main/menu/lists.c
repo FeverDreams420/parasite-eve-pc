@@ -386,6 +386,7 @@ void Menu_DrawSelectableEquipSlotRow(int slot) {
         dimmed = 1;
     }
 
+    PE_HOOK(PE_HOOK_INVENTORY_ROW, (&(PeHookInventoryRow){g_MenuActiveWidget, slot, &dimmed}));
     Draw_SetTextDimmed(dimmed);
     Menu_DrawActiveListSlot(slot);
     if (Inv_IsAyaInventorySlotReserved(slot) != 0) {

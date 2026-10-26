@@ -6,6 +6,8 @@
 #include "pe_main_menu.h"
 #include "pe_mod_host.h"
 #include "pe1/inventory_slots.h"
+#include "pe1/menu_dialog.h"
+#include "pe1/text.h"
 #include "pe1/menu_scroll_cursor.h"
 #include "pe1/menu_state.h"
 #include "pe1/menu_widget.h"
@@ -228,6 +230,47 @@ void pe_screen_rows(PeScreen *s, int rows, int cursor) {
 }
 
 int pe_screen_title_base(void) { return PE_TITLE_BASE; }
+
+/* ---- Yes / No: the game's item-detail confirmation (Menu_StepItemDetailPanel), our question ---- */
+static MenuWidgetNode *s_confirm_from, *s_confirm_choice;
+static void (*s_confirm_answer)(int yes);
+
+static void pe_confirm_done(MenuWidgetNode *dialog, int yes) {
+    void (*answer)(int) = s_confirm_answer;
+    (void)dialog;
+    s_confirm_answer = NULL;
+    s_confirm_choice = NULL;
+    if (s_confirm_from) MenuWidget_SetCurrentNode(s_confirm_from);
+    if (answer) answer(yes);
+}
+
+void pe_confirm(const char *question, int default_yes, void (*answer)(int yes)) {
+    MenuWidgetNode *panel, *choice;
+    int width;
+    s_confirm_from = MenuWidget_GetCurrentNode();
+    panel = MenuWidget_CreateSimpleNode(0x29, s_confirm_from, 0, 1);
+    choice = MenuWidget_CreateNode(0x29, panel, panel);
+    panel->draw = Menu_DrawItemLabel;                    /* prints g_MenuItemLabelBuffer */
+    panel->update = Menu_ConfirmDialogHandler;
+    choice->draw = Menu_DrawActionOptionList;
+    g_MenuActionTextBase = 5;                            /* Yes / No */
+    MenuWidget_SetCurrentNode(choice);
+    choice->cursor_x = default_yes ? 0 : 1;
+    pe_text_from_ascii(g_MenuItemLabelBuffer, sizeof g_MenuItemLabelBuffer, question);
+    g_MenuItemPrimListHandles[0] = 0;
+    width = Draw_MeasureTextWidth(g_MenuItemLabelBuffer);
+    if (width < 120) width = 120;                        /* the game's layout */
+    panel->grid_width = width + 20;
+    panel->visible_rows = 50;
+    panel->x = (300 - width) >> 1;
+    choice->x = (panel->grid_width - 128) >> 1;
+    choice->y = panel->visible_rows - 20;
+    s_confirm_choice = choice;
+    s_confirm_answer = answer;
+    g_MenuConfirmCallback = pe_confirm_done;
+}
+
+int pe_confirm_open(void) { return s_confirm_choice && MenuWidget_GetCurrentNode() == s_confirm_choice; }
 
 void pe_main_menu_init(void) {
     pe_hook_add(PE_HOOK_LIST_ROWS, pe_on_list_rows, NULL, PE_PRIORITY_NORMAL, PE_HOST_ID);

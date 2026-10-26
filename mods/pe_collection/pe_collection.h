@@ -16,7 +16,7 @@
 
 /* ---- profile (pe_profile.c) ----
  * pe_collection.ini beside the preferences, a line per record:
- *   creature <key> <bits> <kills>
+ *   creature <key> <bits> <kills> <seen>   (seen: tiers looked at in the Bestiary; optional)
  *   costume <key>            (owned)
  *   worn <key>
  * Records of packs that aren't loaded are kept as read. The psxrecomp build's pe_collection.dat
@@ -27,7 +27,9 @@ void pe_profile_changed(void);            /* at the next field frame */
 void pe_profile_tick(void);
 void pe_profile_clear(void);
 unsigned pe_profile_creature(const char *key, unsigned *kills);   /* bits */
-void pe_profile_set_creature(const char *key, unsigned bits, unsigned kills);
+void pe_profile_set_creature(const char *key, unsigned bits, unsigned kills);   /* keeps seen within bits */
+unsigned pe_profile_creature_seen(const char *key);
+void pe_profile_set_creature_seen(const char *key, unsigned seen);
 int pe_profile_owned(const char *key);
 void pe_profile_own(const char *key);
 int pe_profile_forget_costume(const char *key); /* costume ownership only */
@@ -53,6 +55,12 @@ void pe_bestiary_register(const char *mod_id);
 void pe_wardrobe_register(const char *mod_id);
 void pe_bestiary_reset(void);
 void pe_wardrobe_reset(void);
+
+/* Bestiary purchases and NEW markers, shared by the F1 page and the screen in Aya's menu. */
+unsigned pe_bestiary_next_price(int h, unsigned *bit);   /* bit 0: nothing left to buy */
+int pe_bestiary_buy(int h);                              /* says why not; 1 bought */
+unsigned pe_bestiary_new(int h);                         /* tiers known but not looked at yet */
+void pe_bestiary_seen(int h);                            /* looked at: no longer NEW */
 
 /* For the Wardrobe screen in Aya's menu (pe_wardrobe_menu.c): costumes owned and wearable now. */
 int pe_wardrobe_owned_count(void);

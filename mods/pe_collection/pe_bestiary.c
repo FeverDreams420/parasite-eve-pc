@@ -290,7 +290,8 @@ static void pe_steal_row(char *out, unsigned size) {
     snprintf(out, size, "%s", c && (pe_state(h) & PE_BESTIARY_LOOT) ? (c->steal ? c->steal : "nothing") : "-");
 }
 
-static unsigned pe_next_price(int h, unsigned *bit) {
+/* Buying: the next locked tier, weaknesses then loot, of a met creature. */
+unsigned pe_bestiary_next_price(int h, unsigned *bit) {
     const unsigned s = pe_state(h);
     const PeCreatureInfo *c = pe_info(h);
     *bit = 0;
@@ -300,27 +301,35 @@ static unsigned pe_next_price(int h, unsigned *bit) {
     return 0;
 }
 
-static void pe_buy(void) {
-    const int h = pe_current();
+int pe_bestiary_buy(int h) {
     char msg[96];
     unsigned bit, price;
-    if (h < 0) return;
-    price = pe_next_price(h, &bit);
-    if (!bit) { pe_col_say("Already complete"); return; }
-    if (!pe_col_junk_ready(msg, sizeof msg)) { pe_col_say(msg); return; }
+    if (!pe_valid(h)) return 0;
+    if (!(pe_state(h) & PE_BESTIARY_MET)) { pe_col_say("Meet it first"); return 0; }
+    price = pe_bestiary_next_price(h, &bit);
+    if (!bit) { pe_col_say("Already complete"); return 0; }
+    if (!pe_col_junk_ready(msg, sizeof msg)) { pe_col_say(msg); return 0; }
     if (!pe_col_spend(price)) {
         snprintf(msg, sizeof msg, "Need %u Junk (have %u)", price, pe_col_junk());
         pe_col_say(msg);
-        return;
+        return 0;
     }
     pe_unlock_why(h, bit, "junk");
+    pe_bestiary_seen(h);                                   /* bought while looking at it */
     pe_profile_save();
+    return 1;
 }
+
+/* NEW: tiers known but not looked at in the Bestiary yet. */
+unsigned pe_bestiary_new(int h) { return pe_valid(h) ? pe_state(h) & ~pe_profile_creature_seen(s_creature[h]->key) & 7u : 0u; }
+void pe_bestiary_seen(int h) { if (pe_valid(h)) pe_profile_set_creature_seen(s_creature[h]->key, pe_state(h)); }
+
+static void pe_buy(void) { const int h = pe_current(); if (h >= 0) (void)pe_bestiary_buy(h); }
 
 static void pe_buy_label(char *out, unsigned size) {
     const int h = pe_current();
     unsigned bit = 0;
-    const unsigned price = h >= 0 ? pe_next_price(h, &bit) : 0;
+    const unsigned price = h >= 0 ? pe_bestiary_next_price(h, &bit) : 0;
     if (!bit) snprintf(out, size, "Complete");
     else snprintf(out, size, "%s for %u Junk (have %u)", bit == PE_BESTIARY_WEAK ? "Weaknesses" : "Loot", price, pe_col_junk());
 }
@@ -361,14 +370,104 @@ static void pe_reset_all(void) {
         if (pe_state(h) || pe_kills(h)) pe_profile_set_creature(s_creature[h]->key, 0, 0);
     pe_bestiary_reset(); /* discard pre-reset enemy HP tracking */
     pe_profile_save();
-    pe_col_say("Bestiary reset: discoveries and kill counts cleared");
+    pe_col_say("Bestiary reset: discoveries, kill counts and NEW marks cleared");
 }
+
+/* One creature at a time, for trying the screen's tiers, buying and NEW marks (any creature,
+ * met or not, whatever the F1 Bestiary page's filters are). */
+static int s_test;
+static char s_test_name[80];
+
+static int pe_test(void) { return pe_valid(s_test) ? s_test : -1; }
+static unsigned pe_test_count(void) { return s_creatures ? (unsigned)s_creatures : 1u; }
+static const char *pe_test_name(unsigned i) {
+    const PeCreatureInfo *c = pe_info((int)i);
+    if (!c) return "None";
+    snprintf(s_test_name, sizeof s_test_name, "%s%s  (%u/%d)", c->ex ? "EX " : "", c->name, i + 1, s_creatures);
+    return s_test_name;
+}
+
+static void pe_tiers(char *out, unsigned size, unsigned bits) {
+    snprintf(out, size, "%s%s%s%s", bits & PE_BESTIARY_MET ? "met " : "", bits & PE_BESTIARY_WEAK ? "weak " : "",
+             bits & PE_BESTIARY_LOOT ? "loot" : "", bits ? "" : "none");
+}
+
+static void pe_test_state(char *out, unsigned size) {
+    const int h = pe_test();
+    char known[24], fresh[24];
+    if (h < 0) { snprintf(out, size, "-"); return; }
+    pe_tiers(known, sizeof known, pe_state(h));
+    pe_tiers(fresh, sizeof fresh, pe_bestiary_new(h));
+    snprintf(out, size, "Known: %s  Kills %u  NEW: %s", known, pe_kills(h), fresh);
+}
+
+static void pe_test_tier(void) {
+    const int h = pe_test();
+    unsigned bit;
+    if (h < 0) return;
+    if (!(pe_state(h) & PE_BESTIARY_MET)) bit = PE_BESTIARY_MET;
+    else (void)pe_bestiary_next_price(h, &bit);
+    if (!bit) { pe_col_say("Already complete"); return; }
+    pe_unlock_why(h, bit, "debug");
+    pe_profile_save();
+}
+
+static void pe_test_kill(void) {
+    const int h = pe_test();
+    char msg[80];
+    if (h < 0) return;
+    pe_kill(h);                                            /* the real kill path: 5 and 15 unlock */
+    pe_profile_save();
+    snprintf(msg, sizeof msg, "%s: %u kills", s_creature[h]->name, pe_kills(h));
+    pe_col_say(msg);
+}
+
+static void pe_test_reset(void) {
+    const int h = pe_test();
+    char msg[80];
+    if (h < 0) return;
+    pe_profile_set_creature(s_creature[h]->key, 0, 0);
+    pe_profile_save();
+    snprintf(msg, sizeof msg, "%s: back to never met", s_creature[h]->name);
+    pe_col_say(msg);
+}
+
+static void pe_test_new(void) {
+    const int h = pe_test();
+    if (h < 0) return;
+    if (!pe_state(h)) { pe_col_say("Nothing known to mark NEW"); return; }
+    pe_profile_set_creature_seen(s_creature[h]->key, 0);
+    pe_profile_save();
+    pe_col_say("Marked NEW");
+}
+
+static void pe_all_seen(int seen) {
+    for (int h = 0; h < s_creatures; ++h) pe_profile_set_creature_seen(s_creature[h]->key, seen ? pe_state(h) : 0);
+    pe_profile_save();
+    pe_col_say(seen ? "NEW marks cleared" : "Everything known is NEW again");
+}
+static void pe_clear_new(void) { pe_all_seen(1); }
+static void pe_make_new(void) { pe_all_seen(0); }
 void pe_bestiary_register(const char *mod_id) {
     s_event = pe_event_id("bestiary.unlock");
     pe_menu_register_action(PE_PAGE_DEBUG_COLLECTION, "Unlock all Bestiary",
         "Testing: reveal every registered creature, weakness and loot entry. Keep kill counts.", pe_unlock_all);
     pe_menu_register_action(PE_PAGE_DEBUG_COLLECTION, "Reset Bestiary",
-        "Testing: clear discoveries and kill counts only. Keep costumes and Junk.", pe_reset_all);
+        "Testing: clear discoveries, kill counts and NEW marks. Keep costumes and Junk.", pe_reset_all);
+    pe_menu_register_dynamic_choice(PE_PAGE_DEBUG_COLLECTION, "Test creature",
+        "Testing: the creature the actions below change. Left / right.", &s_test, PE_MAX_CREATURES, pe_test_count, pe_test_name);
+    pe_menu_register_info(PE_PAGE_DEBUG_COLLECTION, "Test state", "Its tiers, kills and NEW marks.", pe_test_state);
+    pe_menu_register_action(PE_PAGE_DEBUG_COLLECTION, "Unlock next tier",
+        "Testing: met, then weaknesses, then loot. Free.", pe_test_tier);
+    pe_menu_register_action(PE_PAGE_DEBUG_COLLECTION, "Add a kill",
+        "Testing: count a kill as a battle would (5 kills: weaknesses, 15: loot).", pe_test_kill);
+    pe_menu_register_action(PE_PAGE_DEBUG_COLLECTION, "Reset creature",
+        "Testing: this creature back to never met: tiers, kills, NEW.", pe_test_reset);
+    pe_menu_register_action(PE_PAGE_DEBUG_COLLECTION, "Mark creature NEW",
+        "Testing: show what is known about it as NEW again.", pe_test_new);
+    pe_menu_register_action(PE_PAGE_DEBUG_COLLECTION, "Clear all NEW", "Testing: mark everything known as looked at.", pe_clear_new);
+    pe_menu_register_action(PE_PAGE_DEBUG_COLLECTION, "Make all NEW", "Testing: mark everything known as NEW.", pe_make_new);
+    pe_menu_register_info(PE_PAGE_DEBUG_COLLECTION, "Result", "What the last action did.", pe_result);
     pe_menu_register_dynamic_choice(PE_PAGE_BESTIARY, "Area", "Which creatures to browse.", &s_area, PE_MAX_SECTIONS + 1,
                                     pe_area_count, pe_area_name);
     pe_menu_register_choice(PE_PAGE_BESTIARY, "Show", "All, met only, or not complete.", &s_show, s_show_names, 3);

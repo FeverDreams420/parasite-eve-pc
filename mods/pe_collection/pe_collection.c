@@ -36,6 +36,24 @@ void pe_col_say(const char *text) {
 }
 const char *pe_col_last_said(void) { return s_said[0] ? s_said : "-"; }
 
+/* ---- testing Junk, beside the Bestiary's and the Wardrobe's testing rows ---- */
+static int pe_junk_get(void) { return (int)pe_col_junk(); }
+static int pe_junk_set(int n) {
+    const PeJunkApi *j = pe_junk();
+    const unsigned have = pe_col_junk();
+    if (!j || !pe_game_loaded() || n < 0) return 0;
+    if ((unsigned)n > have) j->give((unsigned)n - have);
+    else if ((unsigned)n < have) (void)j->spend(have - (unsigned)n);
+    return 1;
+}
+static void pe_junk_give(void) {
+    char msg[64];
+    if (!pe_col_junk_ready(msg, sizeof msg)) { pe_col_say(msg); return; }
+    pe_junk()->give(1000);
+    snprintf(msg, sizeof msg, "Junk %u", pe_col_junk());
+    pe_col_say(msg);
+}
+
 /* ---- the mod ---- */
 static void pe_reset(void) {
     pe_profile_clear();
@@ -49,6 +67,9 @@ static int collection_init(void) {
     pe_profile_load();
     pe_service_publish("bestiary", 1, &g_pe_bestiary_api, MOD_ID);
     pe_service_publish("costumes", 1, &g_pe_costumes_api, MOD_ID);
+    pe_menu_register_live_int(PE_PAGE_DEBUG_COLLECTION, "Junk", "Testing: Junk for buying Bestiary tiers and costumes.",
+                              0, 99999, 100, pe_junk_get, pe_junk_set);
+    pe_menu_register_action(PE_PAGE_DEBUG_COLLECTION, "Give 1000 Junk", "Testing: add 1000 Junk (Junk economy on).", pe_junk_give);
     pe_bestiary_register(MOD_ID);
     pe_wardrobe_register(MOD_ID);
     pe_wardrobe_menu_register(MOD_ID);

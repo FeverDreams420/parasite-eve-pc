@@ -13,7 +13,7 @@
 
 enum { R_CREATURE, R_COSTUME };
 
-typedef struct { uint8_t type; char key[PE_KEY_MAX]; uint8_t bits, kills; } PeRecord;
+typedef struct { uint8_t type; char key[PE_KEY_MAX]; uint8_t bits, kills, seen; } PeRecord;   /* seen: tiers looked at */
 
 static PeRecord s_rec[PE_MAX];
 static int s_count, s_dirty;
@@ -42,6 +42,19 @@ void pe_profile_set_creature(const char *key, unsigned bits, unsigned kills) {
     if (!r) return;
     r->bits = (uint8_t)(bits & 7u);
     r->kills = (uint8_t)(kills > 255 ? 255 : kills);
+    r->seen &= r->bits;
+    s_dirty = 1;
+}
+
+unsigned pe_profile_creature_seen(const char *key) {
+    const PeRecord *r = pe_find(R_CREATURE, key, 0);
+    return r ? r->seen : 0;
+}
+
+void pe_profile_set_creature_seen(const char *key, unsigned seen) {
+    PeRecord *r = pe_find(R_CREATURE, key, 0);
+    if (!r || r->seen == (seen & r->bits)) return;
+    r->seen = (uint8_t)(seen & r->bits);
     s_dirty = 1;
 }
 
@@ -71,10 +84,10 @@ void pe_profile_save(void) {
     s_dirty = 0;
     if (pe_mod_path(path, sizeof path, PE_FILE) != 0 || !(f = fopen(path, "w"))) return;
     fprintf(f, "# Parasite Eve Collection: unlocks kept across every game.\n"
-               "# creature <key> <bits: 1 met, 2 weaknesses, 4 loot> <kills>; costume <key> = owned; worn <key>\n");
+               "# creature <key> <bits: 1 met, 2 weaknesses, 4 loot> <kills> <bits looked at>; costume <key> = owned; worn <key>\n");
     if (s_worn[0]) fprintf(f, "worn %s\n", s_worn);
     for (i = 0; i < s_count; ++i) {
-        if (s_rec[i].type == R_CREATURE) fprintf(f, "creature %s %u %u\n", s_rec[i].key, s_rec[i].bits, s_rec[i].kills);
+        if (s_rec[i].type == R_CREATURE) fprintf(f, "creature %s %u %u %u\n", s_rec[i].key, s_rec[i].bits, s_rec[i].kills, s_rec[i].seen);
         else fprintf(f, "costume %s\n", s_rec[i].key);
     }
     fclose(f);
@@ -115,7 +128,7 @@ static int pe_import_v1(void) {
 
 void pe_profile_load(void) {
     char path[1100], line[256], type[16], key[PE_KEY_MAX];
-    unsigned bits, kills;
+    unsigned bits, kills, seen;
     FILE *f;
     s_count = 0;
     s_worn[0] = 0;
@@ -130,7 +143,12 @@ void pe_profile_load(void) {
         else if (strcmp(type, "costume") == 0) (void)pe_find(R_COSTUME, key, 1);
         else if (strcmp(type, "creature") == 0 && sscanf(line, "%*s %*s %u %u", &bits, &kills) == 2) {
             PeRecord *r = pe_find(R_CREATURE, key, 1);
-            if (r) { r->bits = (uint8_t)(bits & 7u); r->kills = (uint8_t)(kills > 255 ? 255 : kills); }
+            if (sscanf(line, "%*s %*s %*u %*u %u", &seen) != 1) seen = bits;   /* older files: nothing new */
+            if (r) {
+                r->bits = (uint8_t)(bits & 7u);
+                r->kills = (uint8_t)(kills > 255 ? 255 : kills);
+                r->seen = (uint8_t)(seen & r->bits);
+            }
         }
     }
     fclose(f);

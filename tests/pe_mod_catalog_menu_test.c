@@ -9,6 +9,14 @@ const char *pe_mod_current(void) { return NULL; }
 int pe_mod_active(const char *m) { (void)m; return 1; }
 int g_MenuItemContextFlag, g_MenuBattleStatusOverlayActive;
 MenuWidgetNode *g_MenuWidgetActiveListHead;
+/* the host's Yes / No (pe_confirm): not used by the Catalog */
+u8 g_MenuItemLabelBuffer[128];
+int g_MenuItemPrimListHandles[2], g_MenuActionTextBase;
+MenuConfirmCallback g_MenuConfirmCallback;
+void Menu_DrawItemLabel(MenuWidgetNode *n) { (void)n; }
+void Menu_DrawActionOptionList(MenuWidgetNode *n) { (void)n; }
+int Menu_ConfirmDialogHandler(MenuWidgetNode *n, unsigned int f) { (void)n; (void)f; return 1; }
+int Draw_MeasureTextWidth(u8 *t) { (void)t; return 0; }
 static MenuWidgetNode panel, list;
 static int next_row, next_top, next_adjust;
 int Menu_StepScrollCursor(MenuWidgetNode *n, unsigned int b) {

@@ -9,10 +9,15 @@
  *   below  what is known, by tier: basics, weaknesses, loot; a locked tier says how to unlock it
  *
  * Unmet creatures (decisions, plan section 9): in an area the player has reached, a black silhouette;
- * in areas not reached, and bosses, nothing (their shapes are reveals). Cross shows the model full
- * screen (Cross or Circle back), Triangle pauses the animation, Select shows the next form (parts,
- * phases), Circle goes back. The model on show is a host stage (pe_model_stage.h). Buying, NEW
- * markers and title-bar help come in the next step.
+ * in areas not reached, and bosses, nothing (their shapes are reveals). Triangle shows the model full
+ * screen (Triangle, Cross or Circle back), Square pauses the animation, Select shows the next form
+ * (parts, phases), Circle goes back. The model on show is a host stage (pe_model_stage.h).
+ *
+ * Cross buys the next tier of a met creature with Junk, after the game's Yes / No (pe_confirm).
+ * NEW: a creature with tiers not looked at yet is listed in the game's yellow; looking at it for a
+ * moment clears that, and its new tiers stay yellow in the info panel while it is selected. The
+ * title bar takes turns showing the area's count and the controls. F1 Debug/Collection has the
+ * testing tools (a creature's tiers, kills, NEW marks, resets).
  */
 #include <stdio.h>
 #include <string.h>
@@ -30,7 +35,7 @@
 
 #define PE_MAX            512
 #define PE_AREAS          32
-#define PE_LIST_ROWS      8
+#define PE_LIST_ROWS      6       /* with the info panel's 4 rows, the screen's 224 lines */
 #define PE_INFO_ROWS      4
 #define PE_LIST_W         124     /* the creature list; the model's frame takes the rest */
 #define PE_GAP            4
@@ -44,6 +49,14 @@
 #define PE_MENU_RIGHT     0x2000u
 #define PE_MENU_TRIANGLE  0x10u
 #define PE_MENU_SELECT    0x100u
+#define PE_MENU_SQUARE    0x80u
+#define PE_MENU_PRESS     0x20u           /* Cross down (PE_MENU_CROSS comes on its release) */
+#define PE_MENU_REPEAT    0x20000u        /* a held button's repeat */
+#define PE_COLOR_NEW      0x408080        /* the game's yellow (a better stat) */
+#define PE_COLOR_TEXT     0x808080
+#define PE_LOOK_TICKS     30              /* selected this long: looked at, no longer NEW */
+#define PE_HELP_TICKS     150             /* each title-bar page */
+#define PE_SAID_TICKS     150             /* a purchase's result stays in the title bar */
 
 static PeScreen s_screen;
 static MenuWidgetNode *s_frame, *s_info;
@@ -58,6 +71,13 @@ static int s_cursor[PE_AREAS];                      /* remembered per area */
 static PeModelStage s_stage;
 static int s_shown = -1, s_shown_form = -1, s_shown_mode = -1, s_form, s_paused;
 static int s_tick, s_drawn_tick;
+
+/* NEW marks and buying */
+static unsigned s_fresh;                            /* the selected creature's NEW tiers when reached */
+static int s_look_tick, s_looked;
+static int s_buying = -1;                           /* the creature the Yes / No is about */
+static int s_said_tick = -1000;
+static char s_said[96];
 
 static const PeBestiaryApi *pe_b(void) { return &g_pe_bestiary_api; }
 
@@ -115,14 +135,35 @@ static void pe_row(int row) {
     const PeCreatureInfo *c = h >= 0 ? pe_b()->info(h) : NULL;
     if (!c) return;
     if (!pe_met(h)) Draw_SetTextDimmed(1);
+    else if (pe_bestiary_new(h)) Draw_SetColor(PE_COLOR_NEW);
     Draw_PrintRawText(pe_text_from_ascii(s_text, sizeof s_text, pe_met(h) ? c->name : "???"));
     Draw_SetTextDimmed(0);
+    Draw_SetColor(PE_COLOR_TEXT);
+}
+
+/* The selection's NEW tiers are kept while it stays selected; after a moment it counts as looked at. */
+static void pe_update_new(int h, int changed) {
+    if (changed) {
+        s_fresh = h >= 0 ? pe_bestiary_new(h) : 0;
+        s_look_tick = s_tick;
+        s_looked = 0;
+    }
+    if (h >= 0 && !s_looked && s_tick - s_look_tick >= PE_LOOK_TICKS) {
+        s_looked = 1;
+        if (pe_bestiary_new(h)) pe_bestiary_seen(h);
+    }
 }
 
 /* ---- the model ---- */
 static void pe_update_model(void) {
     const int h = pe_current(), mode = h >= 0 ? pe_view_mode(h) : 0;
     s_drawn_tick = s_tick;
+    pe_update_new(h, h != s_shown);
+    if (pe_confirm_open()) {                        /* the Yes / No sits where the model would paste over it */
+        pe_stage_hide(&s_stage);
+        s_shown_mode = -1;                          /* shown again once it closes */
+        return;
+    }
     if (h != s_shown || s_form != s_shown_form || mode != s_shown_mode) {
         PeModelSource src;
         if (h != s_shown) s_form = 0;
@@ -161,7 +202,7 @@ static void pe_info_row(int row) {
         if (row == 0) snprintf(line, sizeof line, "???");
         if (row == 1) snprintf(line, sizeof line, "%s", c->boss ? "Not met yet" : "Not met yet: defeat one to learn about it");
     } else if (row == 0) {
-        snprintf(line, sizeof line, "%s   HP %u   Def %u   Kills %u", c->name, c->hp, c->defense, pe_b()->kills(h));
+        snprintf(line, sizeof line, "%s  HP %u  Def %u  Kills %u", c->name, c->hp, c->defense, pe_b()->kills(h));
     } else if (row == 1) {
         if (state & PE_BESTIARY_WEAK) {
             pe_elements(a, sizeof a, c->weak);
@@ -177,11 +218,15 @@ static void pe_info_row(int row) {
     } else if (row == 3 && (state & PE_BESTIARY_LOOT)) {
         snprintf(line, sizeof line, "Steal: %s", c->steal ? c->steal : "-");
     }
-    if (!(state & PE_BESTIARY_MET) || row == 0 || (row == 1 && (state & PE_BESTIARY_WEAK)) || (row >= 2 && (state & PE_BESTIARY_LOOT)))
-        Draw_SetTextDimmed(0);
-    else Draw_SetTextDimmed(1);                     /* locked tiers read dimmer */
+    {
+        const unsigned tier = row == 0 ? PE_BESTIARY_MET : row == 1 ? PE_BESTIARY_WEAK : PE_BESTIARY_LOOT;
+        if (!(state & PE_BESTIARY_MET) || (state & tier)) Draw_SetTextDimmed(0);
+        else Draw_SetTextDimmed(1);                 /* locked tiers read dimmer */
+        if ((state & PE_BESTIARY_MET) && (s_fresh & tier)) Draw_SetColor(PE_COLOR_NEW);
+    }
     Draw_PrintRawText(pe_text_from_ascii(s_text, sizeof s_text, line));
     Draw_SetTextDimmed(0);
+    Draw_SetColor(PE_COLOR_TEXT);
 }
 
 static void pe_draw_info(MenuWidgetNode *node) { MenuWidget_DrawList(node, pe_info_row); }
@@ -202,16 +247,61 @@ static void pe_close(void) {
     s_shown = -1;
 }
 
+static void pe_say(const char *text) {
+    snprintf(s_said, sizeof s_said, "%s", text);
+    s_said_tick = s_tick;
+}
+
+/* The Yes / No's answer: Yes spends the Junk. */
+static void pe_buy_answer(int yes) {
+    const int h = s_buying;
+    unsigned bit;
+    char msg[96];
+    s_buying = -1;
+    if (!yes || h < 0) return;
+    (void)pe_bestiary_next_price(h, &bit);
+    if (pe_bestiary_buy(h)) {
+        if (h == pe_current()) s_fresh |= bit;
+        snprintf(msg, sizeof msg, "Learned its %s   Junk %u", bit == PE_BESTIARY_WEAK ? "weaknesses" : "loot", pe_col_junk());
+        pe_say(msg);
+    } else {
+        pe_say(pe_col_last_said());
+        Menu_PlayErrorSound();
+    }
+}
+
+/* Cross: the next tier, if it can be bought now, after a Yes / No. */
+static void pe_buy(int h) {
+    char msg[96];
+    unsigned bit = 0, price;
+    if (h < 0 || !pe_met(h)) { pe_say("Meet it first"); Menu_PlayErrorSound(); return; }
+    price = pe_bestiary_next_price(h, &bit);
+    if (!bit) { pe_say("Everything about it is known"); Menu_PlayErrorSound(); return; }
+    if (!pe_col_junk_ready(msg, sizeof msg)) { pe_say(msg); Menu_PlayErrorSound(); return; }
+    if (pe_col_junk() < price) {
+        snprintf(msg, sizeof msg, "Need %u Junk (have %u)", price, pe_col_junk());
+        pe_say(msg);
+        Menu_PlayErrorSound();
+        return;
+    }
+    snprintf(msg, sizeof msg, "Learn its %s for %u Junk?", bit == PE_BESTIARY_WEAK ? "weaknesses" : "loot", price);
+    s_buying = h;
+    pe_confirm(msg, 1, pe_buy_answer);
+    Menu_PlayConfirmSound();
+}
+
 static int pe_input(MenuWidgetNode *panel, unsigned int buttons) {
     const int h = pe_current();
     if (panel != s_screen.panel) return 0;
-    if (s_stage.fullscreen && (buttons & (PE_MENU_CIRCLE | PE_MENU_CROSS))) {   /* back from full screen */
+    if (s_stage.fullscreen && (buttons & (PE_MENU_CIRCLE | PE_MENU_CROSS | PE_MENU_TRIANGLE))) {   /* back */
         pe_stage_fullscreen(&s_stage, 0);
         Menu_PlayCancelSound();
         return 1;
     }
     if (buttons & PE_MENU_CIRCLE) { pe_close(); Menu_PlayCancelSound(); return 1; }
-    if (buttons & PE_MENU_CROSS) {                  /* the model full screen */
+    if (buttons & PE_MENU_PRESS) return 1;          /* Cross down: acted on at its release */
+    if (buttons & PE_MENU_CROSS) { pe_buy(h); return 1; }
+    if (buttons & PE_MENU_TRIANGLE) {               /* the model full screen */
         if (h < 0 || !pe_view_mode(h)) { Menu_PlayErrorSound(); return 1; }
         pe_stage_fullscreen(&s_stage, 1);
         Menu_PlayConfirmSound();
@@ -226,7 +316,7 @@ static int pe_input(MenuWidgetNode *panel, unsigned int buttons) {
         pe_stage_turn(&s_stage, (buttons & PE_MENU_RIGHT) ? PE_TURN_HAND : -PE_TURN_HAND);
         return 1;
     }
-    if (buttons & PE_MENU_TRIANGLE) { s_paused = !s_paused; Menu_PlayMoveSound(); return 1; }
+    if ((buttons & PE_MENU_SQUARE) && !(buttons & PE_MENU_REPEAT)) { s_paused = !s_paused; Menu_PlayMoveSound(); return 1; }
     if (buttons & PE_MENU_SELECT) {
         if (h >= 0 && pe_view_mode(h) && pe_b()->model(h, s_form + 1, NULL)) ++s_form;
         else if (s_form) s_form = 0;
@@ -234,19 +324,29 @@ static int pe_input(MenuWidgetNode *panel, unsigned int buttons) {
         Menu_PlayMoveSound();
         return 1;
     }
-    if (buttons & ~0x20000u) pe_log("bestiary", "screen buttons=0x%X (unhandled)", buttons);
+    if (buttons & ~PE_MENU_REPEAT) pe_log("bestiary", "screen buttons=0x%X (unhandled)", buttons);
     return 0;
 }
 
-/* ---- the title bar: the area and how much of it is met ---- */
+/* ---- the title bar: a purchase just made or refused; else, in turn, the area's count and the controls ---- */
 static int pe_on_help_text(void *ctx, void *user) {
     u8 **text = (u8 **)ctx;
     char line[96];
     int i, met = 0;
     (void)user;
     if (!s_screen.list || MenuWidget_GetCurrentNode() != s_screen.list) return 0;
-    for (i = 0; i < s_members; ++i) met += pe_met(s_member[i]);
-    snprintf(line, sizeof line, "%s   %d / %d", s_areas ? s_area_name[s_area] : "", met, s_members);
+    if (s_tick - s_said_tick < PE_SAID_TICKS) {
+        snprintf(line, sizeof line, "%s", s_said);
+    } else {
+        switch ((s_tick / PE_HELP_TICKS) % 3) {
+        case 0:
+            for (i = 0; i < s_members; ++i) met += pe_met(s_member[i]);
+            snprintf(line, sizeof line, "%s   %d / %d   Junk %u", s_areas ? s_area_name[s_area] : "", met, s_members, pe_col_junk());
+            break;
+        case 1: snprintf(line, sizeof line, "L1 R1: Area   Left Right: Turn"); break;
+        default: snprintf(line, sizeof line, "X: Buy   Triangle: View   Square: Pause"); break;
+        }
+    }
     *text = pe_text_from_ascii(s_text, sizeof s_text, line);
     return 0;
 }

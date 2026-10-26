@@ -54,6 +54,11 @@ struct MenuWidgetNode *pe_screen_panel(PeScreen *s, int x, int y, int width, int
 void pe_screen_inside(const struct MenuWidgetNode *list, int *x, int *y, int *w, int *h);
 void pe_screen_rows(PeScreen *s, int rows, int cursor);   /* the list's row count and cursor */
 int pe_screen_title_base(void);     /* a selected_base whose title bar always prints */
+/* The game's Yes / No dialog (as its Discard asks) over the current screen: `question` on one line
+ * (ASCII), the cursor on Yes or No; `answer` gets 1 for Yes, 0 for No or Circle, after the dialog
+ * closes and the screen has its cursor back. pe_confirm_open: the dialog is up. */
+void pe_confirm(const char *question, int default_yes, void (*answer)(int yes));
+int pe_confirm_open(void);
 
 void pe_main_menu_init(void);       /* the host, at start-up */
 

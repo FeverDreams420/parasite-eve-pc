@@ -69,6 +69,9 @@ int pe_menu_register_dynamic_choice(const char *s, const char *l, const char *d,
 }
 int pe_menu_register_info(const char *s, const char *l, const char *d, PeMenuText t) { (void)s; (void)l; (void)d; (void)t; return 0; }
 int pe_menu_register_tick(PeMenuPerFrame f) { (void)f; return 0; }
+int pe_menu_register_live_int(const char *s, const char *l, const char *d, int lo, int hi, int st, PeMenuGet g, PeMenuSet t) {
+    (void)s; (void)l; (void)d; (void)lo; (void)hi; (void)st; (void)g; (void)t; return 0;
+}
 void pe_wardrobe_menu_register(const char *m) { (void)m; }   /* the menu screen: drawing only */
 void pe_bestiary_menu_register(const char *m) { (void)m; }   /* the Bestiary screen: drawing only */
 void pe_skin_register(const char *m) { (void)m; }            /* the loader: game buffers, VRAM */
@@ -281,6 +284,26 @@ int main(void) {
     assert(pe_profile_creature("ff7/cactuar", &kills) == 7 && kills == 3 && s_junk == junk_before);
     kill_once(0, 0x99);
     assert(b->state(zombie) == 1 && b->kills(zombie) == 1);
+
+    /* NEW marks: an older line (no seen number) is all looked at; a new tier is NEW until looked at,
+     * and kept across a save. Buying: met creatures only, the next tier, paid in Junk. */
+    assert(pe_profile_creature_seen("ff7/cactuar") == 7);
+    assert(pe_bestiary_new(zombie) == PE_BESTIARY_MET);
+    pe_bestiary_seen(zombie);
+    assert(pe_bestiary_new(zombie) == 0);
+    {
+        unsigned bit, price = pe_bestiary_next_price(zombie, &bit), junk = s_junk = 5000;
+        assert(bit == PE_BESTIARY_WEAK && price == b->info(zombie)->price_weak);
+        assert(pe_bestiary_buy(zombie) && s_junk == junk - price);
+        assert(b->state(zombie) == 3 && pe_bestiary_new(zombie) == 0);   /* bought while looking */
+        pe_profile_set_creature_seen("re2/zombie", 1);
+        assert(pe_bestiary_new(zombie) == PE_BESTIARY_WEAK);
+        pe_profile_save();
+        pe_profile_load();
+        assert(pe_bestiary_new(zombie) == PE_BESTIARY_WEAK);
+        pe_profile_set_creature("re2/zombie", 0, 0);
+        assert(!pe_bestiary_buy(zombie) && s_junk == junk - price);       /* never met: no sale */
+    }
     remove(path);
     /* The psxrecomp build's pe_collection.dat (by index) is imported once through the PE keys. */
     {

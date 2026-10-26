@@ -207,7 +207,7 @@ static const OverlaySetting *OverlayPageSettings(int page, int *count) {
 
 static int Host_SettingsPureRowCount(int page) {
     if (page == OVERLAY_PAGE_GRAPHICS) return COUNT_OF(kGraphics);
-    if (page == OVERLAY_PAGE_CONTROLS) return 17;
+    if (page == OVERLAY_PAGE_CONTROLS) return 1 + HOST_BINDING_COUNT;
     if (page == OVERLAY_PAGE_AUDIO) return COUNT_OF(kAudio);
     return 2;
 }
@@ -217,7 +217,7 @@ static int Host_SettingsTotalRowCount(int page) {
 }
 
 enum {
-    OVERLAY_CONTROLS_BINDING_COUNT = 16,
+    OVERLAY_CONTROLS_BINDING_COUNT = HOST_BINDING_COUNT,
     OVERLAY_CONTROLS_VISIBLE_BINDINGS = OVERLAY_VISIBLE_CONTROLS - 1,
     OVERLAY_CONTROLS_MAX_SCROLL = OVERLAY_CONTROLS_BINDING_COUNT - OVERLAY_CONTROLS_VISIBLE_BINDINGS
 };
@@ -668,8 +668,8 @@ static void PaintRows(const Painter *p) {
                     const char *val = capturing
                                           ? "Press key or button..."
                                           : Host_ControlBindingValueName(p->state, idx);
-                    PaintValueRow(p, host_button_names[idx], val, mid, baseline,
-                                  selected, capturing, label);
+                    PaintValueRow(p, idx == HOST_SPEED_BINDING ? "2x speed" : host_button_names[idx],
+                                  val, mid, baseline, selected, capturing, label);
                 }
             } else if (page == OVERLAY_PAGE_DISCS) {
                 char discLabel[32];
@@ -724,6 +724,9 @@ static const char *OverlayRowHelp(const HostOverlayState *state) {
     if (state->page == OVERLAY_PAGE_CONTROLS) {
         if (state->row == 0) {
             return "Choose whether to inspect and rebind keyboard or controller inputs.";
+        }
+        if (state->row == HOST_SPEED_BINDING + 1) {
+            return "Hold for 2x game speed. Enter or South binds; Delete or West unbinds.";
         }
         return "Press Enter or South button to rebind. Duplicate bindings swap automatically.";
     }

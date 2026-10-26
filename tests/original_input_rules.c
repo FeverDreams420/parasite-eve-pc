@@ -362,7 +362,20 @@ int main(int argc, char **argv) {
     assert((unsigned)Psyz_VideoVSync(-1) == frozen);
     Psyz_PauseHostClock_SDL3(false);
     assert((unsigned)Psyz_VideoVSync(-1) - frozen <= 1);
-    assert(Psyz_SetKeyboardBinding_SDL3(16, SDL_SCANCODE_A) == -1);
+    /* 2x speed: the blank count carries on without a jump, then runs at
+     * twice the NTSC rate; back at 1x it carries on again. */
+    assert(Psyz_VideoSetSpeed(0) == -1 && Psyz_VideoSetSpeed(PSYZ_SPEED_MAX + 1) == -1);
+    for (unsigned speed = 2; speed >= 1; --speed) {
+        unsigned before = (unsigned)Psyz_VideoVSync(-1);
+        assert(Psyz_VideoSetSpeed(speed) == 0 && Psyz_VideoGetSpeed() == speed);
+        Uint64 start = SDL_GetTicksNS();
+        unsigned counted = (unsigned)Psyz_VideoVSync(-1);
+        assert(counted - before <= 1);
+        SDL_Delay(150);
+        double expected = (double)(SDL_GetTicksNS() - start) / 1e9 * 59.94 * speed;
+        double blanks = (double)((unsigned)Psyz_VideoVSync(-1) - counted);
+        assert(blanks > expected - 2.0 && blanks < expected + 2.0);
+    }
     assert(Psyz_SetKeyboardBinding_SDL3(0, SDL_SCANCODE_ESCAPE) == -1);
     assert(Psyz_SetGamepadBinding_SDL3(16, 0) == -1);
     assert(Psyz_SetGamepadBinding_SDL3(0, -1) == -1);
@@ -496,6 +509,55 @@ int main(int argc, char **argv) {
     assert(!Host_SettingsEvent(&ignored));
     assert(Psyz_SetOverlayEventFilter_SDL3(Host_SettingsEvent) == NULL);
     assert(Psyz_SetOverlayEventFilter_SDL3(NULL) == Host_SettingsEvent);
+
+    /* 2x speed hold: unbound by default (and after a save/load), a key a
+     * pad button uses is refused, 2x lasts while the bound key is held, the
+     * binding is remembered and can be cleared again. */
+    assert(host_options.keys[HOST_SPEED_BINDING] == HOST_UNBOUND_KEY);
+    assert(host_options.buttons[HOST_SPEED_BINDING] == HOST_UNBOUND_BUTTON);
+    SDL_Event speed_key;
+    SDL_zero(speed_key);
+    speed_key.type = SDL_EVENT_KEY_DOWN;
+    speed_key.key.scancode = SDL_SCANCODE_G;
+    speed_key.key.down = true;
+    assert(!Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == 1);
+    HostOverlayState speed_state = {
+        .open = 1,
+        .page = OVERLAY_PAGE_CONTROLS,
+        .row = HOST_SPEED_BINDING + 1,
+        .capturing_binding = 1
+    };
+    SDL_Event used = speed_key;
+    used.key.scancode = (SDL_Scancode)host_options.keys[4];
+    Host_ProcessSettingsEvent(&speed_state, &used, NULL, NULL);
+    assert(host_options.keys[HOST_SPEED_BINDING] == HOST_UNBOUND_KEY);
+    assert(!strcmp(speed_state.status, "Already used by Triangle.") && !speed_state.capturing_binding);
+    speed_state.capturing_binding = 1;
+    Host_ProcessSettingsEvent(&speed_state, &speed_key, NULL, NULL);
+    assert(host_options.keys[HOST_SPEED_BINDING] == SDL_SCANCODE_G);
+    assert(Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == 2);
+    speed_key.key.repeat = true;
+    assert(Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == 2);
+    speed_key.key.repeat = false;
+    speed_key.type = SDL_EVENT_KEY_UP;
+    speed_key.key.down = false;
+    assert(Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == 1);
+    speed_key.type = SDL_EVENT_KEY_DOWN;
+    speed_key.key.down = true;
+    assert(Host_SaveOptions());
+    host_options.keys[HOST_SPEED_BINDING] = HOST_UNBOUND_KEY;
+    Host_LoadOptions(host_options.user_file);
+    assert(host_options.keys[HOST_SPEED_BINDING] == SDL_SCANCODE_G);
+    assert(host_options.buttons[HOST_SPEED_BINDING] == HOST_UNBOUND_BUTTON);
+    SDL_Event clear = speed_key;
+    clear.key.scancode = SDL_SCANCODE_DELETE;
+    Host_ProcessSettingsEvent(&speed_state, &clear, NULL, NULL);
+    assert(host_options.keys[HOST_SPEED_BINDING] == HOST_UNBOUND_KEY);
+    assert(!Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == 1);
+    assert(Host_SaveOptions());
+    host_options.keys[HOST_SPEED_BINDING] = SDL_SCANCODE_G;
+    Host_LoadOptions(host_options.user_file);
+    assert(host_options.keys[HOST_SPEED_BINDING] == HOST_UNBOUND_KEY);
 
     /* Issue #2: All settings tabs share a fixed panel height and top Y anchor. */
     OverlayLayout base_layout = {0};

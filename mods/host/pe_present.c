@@ -128,6 +128,7 @@ static int pe_on_frame_drawn(void *ctx, void *user) {
     (void)user;
     for (i = 0; i < PE_PRESENT_SLOTS; ++i) any |= s_slot[i].shown;
     if (!any) return 0;
+    if (g_RenderDispEnvArray[g_ActiveDrawSlot & 1].isrgb24) return 0;   /* 24-bit display (movies): 15-bit pixels would garble */
     t0 = SDL_GetPerformanceCounter();
     frame = &g_RenderDrawEnvArray[1 - (g_ActiveDrawSlot & 1)].clip;
     for (i = 0; i < PE_PRESENT_SLOTS; ++i) {

@@ -9,7 +9,10 @@
  *   BOX     one opaque rectangle pasted into the finished frame (PE_HOOK_FRAME_DRAWN): see-through
  *           pixels show the box colour.
  *   STRIPS  only the picture's covered pixels (alpha >= 128) pasted, row by row, at the same hook:
- *           what the game drew stays visible around it. Hard edges.
+ *           what the game drew stays visible around it. Hard edges. Slow: each strip is one PsyZ
+ *           upload (~50 us each; ~11 ms a frame for a 128 x 128 card at 2x), so not for real use
+ *           until the engine offers a masked or batched upload.
+ * Nothing is pasted while the display is in 24-bit mode (movies).
  * Both sit on top of everything the game drew that frame (cursor, pop-ups included). Nothing is
  * read back from the screen (PsyZ's read-back is stale at internal resolution > 1), and nothing is
  * left behind: a pasted picture exists only in the frame it was pasted into.

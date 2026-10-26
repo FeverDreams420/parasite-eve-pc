@@ -162,7 +162,12 @@ static void pe_cost_info(char *out, unsigned size) {
 
 static void pe_tick(void) {
     static int started;
-    if (!started) { started = 1; s_on = 0; }   /* a saved row: the test always starts off */
+    if (!started) {                            /* a saved row: the test always starts off ... */
+        const char *env = getenv("PE_VIEWER_TEST");   /* ... unless a timing run asks: box / strips */
+        started = 1;
+        s_on = env && (!strcmp(env, "box") || !strcmp(env, "strips"));
+        if (s_on) s_method = !strcmp(env, "strips");
+    }
     pe_card_tick();
 }
 
@@ -178,4 +183,10 @@ void pe_viewer_test_register(const char *mod_id) {
     pe_menu_register_info(page, "Paste cost", "Average time of a frame's pastes, and how many.", pe_cost_info);
     pe_menu_register_action(page, "Dump VRAM", "Writes pe_vram_dump_mNNN_K.bmp beside the preferences.", pe_dump_vram);
     pe_menu_register_tick(pe_tick);
+    if (getenv("PE_VIEWER_TEST")) {            /* timing runs: show it from the first frame */
+        PeImage card = {PE_CARD, PE_CARD, s_card_rgba};
+        pe_card_build();
+        pe_present_show(PE_SLOT_TEST, s_x, s_y, &card,
+                        !strcmp(getenv("PE_VIEWER_TEST"), "strips") ? PE_PRESENT_STRIPS : PE_PRESENT_BOX, PE_BOX_RGB);
+    }
 }

@@ -195,6 +195,7 @@ void pe_screen_open(PeScreen *s, MenuWidgetNode *from, int x, int y, int width, 
                     void (*draw)(MenuWidgetNode *), int (*input)(MenuWidgetNode *, unsigned int)) {
     pe_hide_panels();
     s->from = from;
+    s->extras = 0;
     s->panel = MenuWidget_CreateSimpleNode(PE_DESC_PANEL, from, 0, 0);
     s->list = MenuWidget_CreateNode(PE_DESC_PANEL, s->panel, s->panel);
     s->panel->update = input;
@@ -222,6 +223,9 @@ void pe_screen_open_game(PeScreen *s, MenuWidgetNode *from, int rows_visible,
 }
 
 void pe_screen_close(PeScreen *s) {
+    /* Extra panels hang off the screen's panel without a child slot (CreateSimpleNode's slot
+     * parent is 0), so destroying the panel doesn't reach them. */
+    while (s->extras > 0) MenuWidget_DestroyNode(s->extra[--s->extras]);
     if (s->panel) MenuWidget_DestroyNode(s->panel);
     s->panel = s->list = NULL;
     pe_show_panels();
@@ -232,9 +236,10 @@ static void pe_draw_nothing(MenuWidgetNode *node) { (void)node; }
 
 MenuWidgetNode *pe_screen_panel(PeScreen *s, int x, int y, int width, int rows, void (*draw)(MenuWidgetNode *)) {
     MenuWidgetNode *panel, *list;
-    if (!s->panel) return NULL;
+    if (!s->panel || s->extras == PE_SCREEN_EXTRA) return NULL;
     panel = MenuWidget_CreateSimpleNode(PE_DESC_PANEL, s->panel, 0, 0);
     if (!panel) return NULL;
+    s->extra[s->extras++] = panel;
     list = MenuWidget_CreateNode(PE_DESC_PANEL, panel, panel);
     if (!list) return NULL;
     panel->update = NULL;

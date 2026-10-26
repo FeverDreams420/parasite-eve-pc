@@ -43,8 +43,11 @@ void pe_main_menu_add(const PeMainMenuRow *row, int order);   /* row must outliv
 
 /* A screen: panel at (x, y), `width` wide, list of `rows_visible` rows (longer lists scroll).
  * The list's draw and the panel's update are the caller's; the list is made current. */
+#define PE_SCREEN_EXTRA 4
 typedef struct PeScreen {
     struct MenuWidgetNode *panel, *list, *from;
+    struct MenuWidgetNode *extra[PE_SCREEN_EXTRA];   /* pe_screen_panel's, closed with the screen */
+    int extras;
 } PeScreen;
 
 void pe_screen_open(PeScreen *s, struct MenuWidgetNode *from, int x, int y, int width, int rows_visible,

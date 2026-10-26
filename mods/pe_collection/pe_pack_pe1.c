@@ -94,6 +94,15 @@ void pe_pack_pe1_register(void) {
         const PeCreatureKey *k = &g_pe_creature_keys[i];
         if (k->creature < PE_CREATURES && handle[k->creature] >= 0) b->map(k->map, k->id, handle[k->creature]);
     }
+    {
+        int form[PE_CREATURES] = {0};             /* model forms, main body first (generated order) */
+        for (i = 0; i < PE_CREATURE_MODELS; ++i) {
+            const PeCreatureModel *m = &g_pe_creature_models[i];
+            PeModelSource src = {PE_MODEL_ROOM, m->actor, m->map, NULL, NULL, NULL};
+            if (m->creature < PE_CREATURES && handle[m->creature] >= 0 && form[m->creature] < PE_BESTIARY_MAX_FORMS)
+                b->set_model(handle[m->creature], form[m->creature]++, &src);
+        }
+    }
     for (i = 1; i < PE_SKINS; ++i) {
         const PeSkin *k = &g_pe_skins[i];
         if (k->kind == 0 && k->area != 10 && k->area != 13) continue;   /* no full moveset */

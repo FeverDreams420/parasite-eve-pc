@@ -84,6 +84,7 @@ static const char *last_filter(const char *label) {
 
 /* ---- what another mod would do ---- */
 static const PeCreatureInfo s_zombie = { "re2/zombie", "Zombie", "Resident Evil 2", 0, 0, 60, 10, 1, 0, "Handgun ammo 50%", "nothing", 5, 10 };
+static struct PeModel *zombie_model(void *user) { (void)user; return NULL; }   /* an import's own decoder */
 static const PeCreatureInfo s_zombie_rnd = { "re2/zombie", "Zombie", "Resident Evil 2", 0, 0, 60, 10, 2, 0, "Medicine 1 100%", "nothing", 5, 10 };
 static const PeCreatureInfo s_impostor = { "re2/licker", "Licker", "Resident Evil 2", 0, 0, 60, 10, 0, 0, "", "", 5, 10 };
 static int s_rnd_handle = -1;
@@ -144,9 +145,30 @@ int main(void) {
         for (j = 0; j < i; ++j) assert(strcmp(pe_pack_pe1_creature_key(i), pe_pack_pe1_creature_key(j)) != 0);
     assert(i == 75);
 
+    /* The PE pack's model forms: every creature has a main body (form 0); Eve has three bodies, the
+     * Crab's body comes before its claws, and Ultimate Being's 5-vertex script helper is left out. */
+    {
+        PeModelSource src;
+        int eve = b->find("pe1/eve"), crab = b->find("pe1/crab"), ub = b->find("pe1/ultimate_being");
+        for (i = 0; pe_pack_pe1_creature_key(i); ++i) assert(b->model(b->find(pe_pack_pe1_creature_key(i)), 0, NULL));
+        assert(eve >= 0 && b->model(eve, 0, &src) && src.kind == PE_MODEL_ROOM && src.map == 23 && src.actor == 2);
+        assert(b->model(eve, 2, NULL) && !b->model(eve, 3, NULL));
+        assert(crab >= 0 && b->model(crab, 0, &src) && src.map == 269 && src.actor == 3);
+        assert(ub >= 0 && b->model(ub, 4, NULL) && !b->model(ub, 5, NULL));
+    }
+
     /* An import pack: its own creature, area and mapping; a taken key is refused. */
     assert((zombie = b->add(&s_zombie)) >= 0);
     assert(b->add(&s_zombie) < 0);
+    {   /* its own model: another game's decoder; bad sources are refused */
+        PeModelSource own = {PE_MODEL_CALLBACK, 0, 0, NULL, zombie_model, NULL}, got;
+        PeModelSource no_load = {PE_MODEL_CALLBACK, 0, 0, NULL, NULL, NULL};
+        PeModelSource no_folder = {PE_MODEL_SKIN, 0, 0, NULL, NULL, NULL};
+        assert(!b->model(zombie, 0, NULL));
+        assert(b->set_model(zombie, 0, &own) && b->model(zombie, 0, &got) && got.load == zombie_model);
+        assert(!b->set_model(zombie, 1, &no_load) && !b->set_model(zombie, 1, &no_folder));
+        assert(!b->set_model(zombie, PE_BESTIARY_MAX_FORMS, &own) && !b->set_model(9999, 0, &own));
+    }
     assert(b->map(999, 0x42, zombie));
     s_room = 999;
     for (i = 0; i < 5; ++i) kill_once(0, 0x42);

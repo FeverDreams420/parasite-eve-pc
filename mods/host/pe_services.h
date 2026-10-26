@@ -74,6 +74,24 @@ typedef struct PeCreatureInfo {
     uint16_t price_weak, price_loot;   /* Junk */
 } PeCreatureInfo;
 
+/* Where a creature's (or later a costume's) 3D model comes from, for the Bestiary's model viewer. The
+ * viewer reads it at run time; packs only say where. Kinds:
+ *   PE_MODEL_ROOM      an appearance on the Parasite Eve disc: the room (map) and bank slot (actor)
+ *                      it stands in; read from the player's own disc (its colours are that room's)
+ *   PE_MODEL_SKIN      a skin folder in the game's player formats, pe_skins/<folder>/
+ *   PE_MODEL_CALLBACK  the providing mod decodes it itself (another game's formats): load(user) */
+enum { PE_MODEL_NONE, PE_MODEL_ROOM, PE_MODEL_SKIN, PE_MODEL_CALLBACK };
+#define PE_BESTIARY_MAX_FORMS 8          /* forms per creature: form 0 the main body, then parts / phases */
+struct PeModel;
+typedef struct PeModelSource {
+    uint8_t kind;
+    uint8_t actor;                       /* PE_MODEL_ROOM */
+    uint16_t map;                        /* PE_MODEL_ROOM */
+    const char *folder;                  /* PE_MODEL_SKIN */
+    struct PeModel *(*load)(void *user); /* PE_MODEL_CALLBACK */
+    void *user;
+} PeModelSource;
+
 /* Which creature is this enemy? (room number, the enemy's identity, its battle record); a creature
  * handle, or -1 to leave it to the next resolver and finally the mapped table. */
 struct EnemyCombatant;
@@ -89,6 +107,9 @@ typedef struct PeBestiaryApi {
     unsigned (*state)(int handle);                       /* PE_BESTIARY_* bits */
     unsigned (*kills)(int handle);
     void (*unlock)(int handle, unsigned bits);           /* also announces it */
+    /* Added to v1 (packs built before keep working): a creature's model forms for the viewer. */
+    int (*set_model)(int handle, int form, const PeModelSource *src);   /* copied; 0 if refused */
+    int (*model)(int handle, int form, PeModelSource *out);              /* 1 if that form exists */
 } PeBestiaryApi;
 
 /* ---- Costumes ----

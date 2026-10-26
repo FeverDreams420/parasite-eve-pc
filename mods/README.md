@@ -351,7 +351,10 @@ Writing a pack (another mod):
    (static `PeCreatureInfo`, a key under your own prefix: "re2/zombie") and `b->map(room, identity,
    handle)` for where it appears, or `b->add_resolver(fn)` to decide per enemy (a randomizer that
    shuffles enemies). `b->replace(handle, &info)` swaps in new info under the same key (randomized
-   drops or weaknesses).
+   drops or weaknesses). `b->set_model(handle, form, &src)` says where its 3D model comes from for
+   the Bestiary viewer (form 0 the main body, then parts or phases): a room and bank slot on the
+   Parasite Eve disc, a `pe_skins` folder, or your own decoder (`PE_MODEL_CALLBACK`). The PE pack
+   gives all 75 creatures their forms from the generated table (`g_pe_creature_models`).
 3. `const PeCostumesApi *c = pe_service_get("costumes", 1);` then `c->add(&costume)`: `bank` for one
    of the game's outfits, `bank = -1` with `bundle` for a skin folder in the game's player formats
    (the Wardrobe loads it), or `bank = -1` with `load` (and `available`) for a model your mod puts

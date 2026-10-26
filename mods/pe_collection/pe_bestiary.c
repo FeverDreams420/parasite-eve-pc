@@ -127,8 +127,26 @@ static void pe_kill(int h) {
     pe_unlock_why(h, bits, "kill");
 }
 
+/* ---- model forms (for the viewer) ---- */
+static PeModelSource s_model[PE_MAX_CREATURES][PE_BESTIARY_MAX_FORMS];
+
+static int pe_set_model(int h, int form, const PeModelSource *src) {
+    if (!pe_valid(h) || form < 0 || form >= PE_BESTIARY_MAX_FORMS || !src || src->kind == PE_MODEL_NONE ||
+        src->kind > PE_MODEL_CALLBACK || (src->kind == PE_MODEL_SKIN && (!src->folder || !*src->folder)) ||
+        (src->kind == PE_MODEL_CALLBACK && !src->load)) return 0;
+    s_model[h][form] = *src;
+    return 1;
+}
+
+static int pe_model(int h, int form, PeModelSource *out) {
+    if (!pe_valid(h) || form < 0 || form >= PE_BESTIARY_MAX_FORMS || s_model[h][form].kind == PE_MODEL_NONE) return 0;
+    if (out) *out = s_model[h][form];
+    return 1;
+}
+
 const PeBestiaryApi g_pe_bestiary_api = {
     pe_add, pe_find, pe_info, pe_replace, pe_map, pe_add_resolver, pe_state, pe_kills, pe_unlock,
+    pe_set_model, pe_model,
 };
 
 /* ---- kills and Scan ---- */

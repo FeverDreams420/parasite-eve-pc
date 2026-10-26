@@ -5,7 +5,7 @@
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
 #include "pe_panacea.h"
-#include "../pe_economy/pe_economy.h"
+#include "pe_services.h"
 #include "pe1/game_state.h"
 #include "pe1/item_ids.h"
 

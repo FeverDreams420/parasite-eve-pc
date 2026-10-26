@@ -1,6 +1,7 @@
 /* PE Enhancements: quality of life (movement; more as they are ported), from the psxrecomp
  * build. Rows at the top of F1 > PE Enhancements. */
 #include "pe_mod_host.h"
+#include "pe_pages.h"
 #include "pe_inventory.h"
 
 #define MOD_ID "pe_qol"
@@ -26,4 +27,4 @@ static int qol_init(void) {
     return 0;
 }
 
-const PeMod pe_mod_pe_qol = {MOD_ID, "PE Enhancements: quality of life", "0.1", NULL, qol_init, pe_inventory_menu_shutdown};
+const PeMod pe_mod_pe_qol = {MOD_ID, "PE Enhancements: quality of life", PE_ENHANCEMENTS_VERSION, NULL, qol_init, pe_inventory_menu_shutdown};

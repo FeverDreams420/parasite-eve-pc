@@ -293,7 +293,7 @@ static void pe_host_start(const PeHookInit *init) {
     }
     if (pe_mod_path(log_path, sizeof(log_path), "pe_mods.log") == 0)
         s_log = fopen(log_path, "w");
-    pe_mod_log(NULL, "mod host started (%s)", s_interactive ? "interactive" : "headless");
+    pe_mod_log(NULL, "mod host started (mod API %d, %s)", PE_MOD_API_VERSION, s_interactive ? "interactive" : "headless");
     pe_menu_load_settings();
     pe_pages_describe();
     pe_start_mods();

@@ -61,4 +61,4 @@ static int collection_init(void) {
 
 static void collection_shutdown(void) { pe_profile_tick(); }
 
-const PeMod pe_mod_pe_collection = {MOD_ID, "PE Enhancements: collection", "0.2", NULL, collection_init, collection_shutdown};
+const PeMod pe_mod_pe_collection = {MOD_ID, "PE Enhancements: collection", PE_ENHANCEMENTS_VERSION, NULL, collection_init, collection_shutdown};

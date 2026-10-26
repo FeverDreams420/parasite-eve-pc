@@ -18,6 +18,10 @@
 #include <stddef.h>
 #include "pe_hooks.h"
 
+/* The mod API's version: raised when something here, in pe_hooks.h, pe_mod_menu.h or
+ * pe_services.h changes in a way that breaks mods written for the previous one. */
+#define PE_MOD_API_VERSION 1
+
 typedef struct PeMod {
     const char *id;               /* short, unique: "pe_rebalance" */
     const char *name;             /* shown in the Mods panel */

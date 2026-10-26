@@ -36,7 +36,6 @@ mods/
     pe_main_menu.*       extra rows in Aya's main menu, and screens from the game's own widgets
     pe_equip_sync.c      edited equipment reaches the next battle
     pe_gametext.h        text in the game's glyph code; pe_item_table.h the game's item names
-    pe_ps1.*             PS1-address access for ported code (fixed-layout objects only; unused today)
     ui/                  drawing (pe_ui_raster), the overlay quad (pe_ui_gpu), toasts
   pe_qol/              quality of life: movement, encounters, key item pocket, bag sort, Key Items menu
   pe_rebalance/        mod effects, Parasite Energy balance, half-bar turns / Quick powers, Combine
@@ -54,6 +53,10 @@ A folder with `.c` files, one of which defines its descriptor:
 const PeMod pe_mod_<folder> = {"<folder>", "Readable name", "0.1", requires, init, shutdown};
 ```
 
+Versions: the mod API is `PE_MOD_API_VERSION` (pe_mod_host.h, now 1), raised only when a change
+would break existing mods; the PE Enhancements suite is `PE_ENHANCEMENTS_VERSION` (pe_pages.h,
+now 0.9.0), one version for its five mods.
+
 `init` registers the mod's rows, hooks and services. Each feature lives in its own file with
 one `pe_<feature>_register(mod_id)` function that the mod's main file calls, so a feature can be
 moved, disabled or updated without touching the others. Add the folder name to `PE_MOD_LIST`;
@@ -65,10 +68,8 @@ moved, disabled or updated without touching the others. Add the folder name to `
   context struct (`include/pe_hooks.h` lists them). Handlers run in priority order; a handler
   that changes a value sees the previous one's result. Add a hook only where a mod needs one,
   and keep it a single line.
-- **Game state**: use the game's own globals and structs (`pe_game.h` has the common ones).
-  Code ported from the psxrecomp build may use `psx_mod_read/write_*` through `pe_ps1.h`, which
-  only maps objects whose layout is the PS1 one (the save block, the resident data pack, the
-  card buffer, script variables); other addresses read 0 and are logged once.
+- **Game state**: use the game's own globals and structs (`pe_game.h` has the common ones),
+  never PS1 addresses: native structs hold host pointers and their own layouts.
 - **Shared game facts live once, in the host** (`pe_game.h`): `pe_free_field()` (no battle, menu,
   transition or event), `pe_save_loaded()` (also mid room load, when Aya's actor is rebuilt),
   `pe_room_number()`, `pe_wayne_count()` / `pe_set_wayne_count()`, `pe_mod_effect_name()` /

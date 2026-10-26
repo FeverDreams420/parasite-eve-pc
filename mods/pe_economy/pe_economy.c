@@ -1,6 +1,7 @@
 /* PE Enhancements: economy, ported from the psxrecomp build. F1 > PE Enhancements > Economy.
  * One file per feature; each registers its own rows, hooks and services. */
 #include "pe_mod_host.h"
+#include "pe_pages.h"
 #include "pe_requisition.h"
 
 #define MOD_ID "pe_economy"
@@ -35,4 +36,4 @@ static int economy_init(void) {
     return 0;
 }
 
-const PeMod pe_mod_pe_economy = {MOD_ID, "PE Enhancements: economy", "0.1", NULL, economy_init, pe_smoke_shutdown};
+const PeMod pe_mod_pe_economy = {MOD_ID, "PE Enhancements: economy", PE_ENHANCEMENTS_VERSION, NULL, economy_init, pe_smoke_shutdown};

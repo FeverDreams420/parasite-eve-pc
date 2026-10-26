@@ -17,6 +17,10 @@
  * The sub-page strings are passed as `sub` to pe_menu_register_* while PE_MENU_PAGE is the
  * current page; pe_pages_describe() gives each page its description and order. */
 
+/* The PE Enhancements suite's version, one for all five of its mods (qol, rebalance, economy,
+ * collection, tools): they are released together. */
+#define PE_ENHANCEMENTS_VERSION "0.9.0"
+
 #define PE_PAGE_MOVEMENT       "Movement"
 #define PE_PAGE_COMBAT         "Combat"
 #define PE_PAGE_MOD_EFFECTS    "Combat/Mod effects"

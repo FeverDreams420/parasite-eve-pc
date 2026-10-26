@@ -6,6 +6,7 @@
  *   pe_debug_tools.c    give item, unlock Parasite Energy, bonus points (pe_debug_menu.c)
  *   pe_play_logger.c    the detailed play log, pe_play_log.csv (pe_loot_logger.c) */
 #include "pe_mod_host.h"
+#include "pe_pages.h"
 
 #define MOD_ID "pe_tools"
 
@@ -23,4 +24,4 @@ static int tools_init(void) {
     return 0;
 }
 
-const PeMod pe_mod_pe_tools = {MOD_ID, "PE Enhancements: tools", "0.1", NULL, tools_init, pe_play_logger_shutdown};
+const PeMod pe_mod_pe_tools = {MOD_ID, "PE Enhancements: tools", PE_ENHANCEMENTS_VERSION, NULL, tools_init, pe_play_logger_shutdown};

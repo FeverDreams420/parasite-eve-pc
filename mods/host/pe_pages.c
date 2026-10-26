@@ -24,5 +24,9 @@ void pe_pages_describe(void) {
     pe_menu_page(PE_PAGE_DEBUG_LOOT, "Junk amounts, rare drop chances, debug Junk.", 10);
     pe_menu_page(PE_PAGE_DEBUG_CATALOG, "Prices, unlock-all and test gear.", 20);
     pe_menu_page(PE_PAGE_DEBUG_COLLECTION, "Reset Bestiary and Wardrobe unlocks.", 30);
+    pe_menu_page(PE_PAGE_DEBUG_STATS, "Aya's level and stat levels, kept consistent.", 40);
+    pe_menu_page(PE_PAGE_DEBUG_EQUIP, "The equipped gun and armor: bonuses, ammo, mods.", 50);
+    pe_menu_page(PE_PAGE_DEBUG_ITEMS, "Give items, unlock Parasite Energy, bonus points.", 60);
+    pe_menu_page(PE_PAGE_DEBUG_PLAY_LOG, "Battle, enemy and pickup rows in pe_play_log.csv.", 70);
     pe_menu_begin(0);
 }

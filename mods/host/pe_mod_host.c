@@ -65,20 +65,25 @@ void pe_mod_log(const char *mod_id, const char *fmt, ...) {
 
 void pe_log(const char *tag, const char *fmt, ...) {
     static FILE *play;
-    static int tried;
-    char path[1100];
+    static int tried, event = -1;
+    char path[1100], text[1100];
     va_list args;
+    PeLogLine line;
+    va_start(args, fmt);
+    vsnprintf(text, sizeof(text), fmt, args);
+    va_end(args);
     if (!play && !tried) {
         tried = 1;
         if (pe_mod_path(path, sizeof(path), "pe_play.log") == 0) play = fopen(path, "a");
     }
-    if (!play) return;
-    fprintf(play, "%s ", tag);
-    va_start(args, fmt);
-    vfprintf(play, fmt, args);
-    va_end(args);
-    fputc('\n', play);
-    fflush(play);
+    if (play) {
+        fprintf(play, "%s %s\n", tag, text);
+        fflush(play);
+    }
+    if (event < 0) event = pe_event_id(PE_EVENT_LOG_LINE);
+    line.tag = tag;
+    line.text = text;
+    pe_event_emit(event, &line);                 /* e.g. the detailed play log copies it */
 }
 
 int pe_mod_interactive(void) { return s_interactive; }

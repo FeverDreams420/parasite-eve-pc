@@ -11,7 +11,8 @@
  *                         Rebuild
  *     Inventory           key item pocket, bag sorting              (pe_qol)
  *     Collection          Bestiary, Wardrobe                        (pe_collection)
- *     Debug              tuning and test rows of every mod
+ *     Debug              tuning and test rows of every mod; editors, give item and the
+ *                        detailed play log                          (pe_tools)
  *
  * The sub-page strings are passed as `sub` to pe_menu_register_* while PE_MENU_PAGE is the
  * current page; pe_pages_describe() gives each page its description and order. */
@@ -35,6 +36,10 @@
 #define PE_PAGE_WARDROBE        "Collection/Wardrobe"
 #define PE_PAGE_DEBUG          "Debug"
 #define PE_PAGE_DEBUG_COLLECTION "Debug/Collection"
+#define PE_PAGE_DEBUG_STATS      "Debug/Stats editor"
+#define PE_PAGE_DEBUG_EQUIP      "Debug/Equipment editor"
+#define PE_PAGE_DEBUG_ITEMS      "Debug/Items and abilities"
+#define PE_PAGE_DEBUG_PLAY_LOG   "Debug/Play log"
 #define PE_PAGE_DEBUG_LOOT     "Debug/Loot tuning"
 #define PE_PAGE_DEBUG_CATALOG  "Debug/Mod Catalog"
 

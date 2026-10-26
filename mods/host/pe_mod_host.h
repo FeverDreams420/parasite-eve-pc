@@ -44,8 +44,11 @@ int pe_mod_interactive(void);
 int pe_mod_path(char *out, size_t size, const char *file);
 void pe_mod_log(const char *mod_id, const char *fmt, ...);
 /* Play log (pe_play.log beside the preferences): one "tag key=value ..." row,
- * the same rows as the psxrecomp build's play log, for the analysis tools. */
+ * the same rows as the psxrecomp build's play log, for the analysis tools. Each row is also
+ * announced as the PE_EVENT_LOG_LINE event (PeLogLine *), for loggers of their own. */
 void pe_log(const char *tag, const char *fmt, ...);
+#define PE_EVENT_LOG_LINE "play.log"
+typedef struct PeLogLine { const char *tag, *text; } PeLogLine;
 /* A one-line message over the game for a few seconds (interactive runs). */
 void pe_toast(const char *text);
 

@@ -6,13 +6,12 @@
  *     or as strips, at a chosen place. A 1-pixel border, colour bars, gradients, a 1-pixel
  *     checkerboard, red corner squares and a see-through hole and corners, so position, scaling,
  *     filtering and transparency show at a glance. Open Aya's menu to see it over the game's own.
- *   - Pink test: fills one 64 x 256 VRAM page with pink (saved first) to see whether anything on
- *     screen uses it; choosing Off puts the page back. A room change or a battle while it is on ends
- *     it without putting it back (the game may have reloaded the page): reload the save then if
- *     anything stays pink. Loading a save puts it back first.
- *   - Dump VRAM: the native VRAM copy to pe_vram_dump.bmp beside the preferences (texture and
- *     palette areas are exact; at internal resolution > 1 the framebuffers there are stale).
+ *   - Dump VRAM: the native VRAM copy to pe_vram_dump_mNNN_K.bmp beside the preferences (uploaded
+ *     textures and palettes are exact; at internal resolution > 1 anything the GPU drew -- the
+ *     framebuffers, the menu's text cache at x 320 y 0 -- is stale there).
  *   - Info rows: the buffer pasted into, video settings, the paste cost.
+ * (A pink test of VRAM pages was removed after its run: restoring a page from a read-back corrupted
+ * the menu's text cache at 2x, since PsyZ keeps GPU-drawn texture areas only in its upscaled copy.)
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,22 +31,12 @@
 #define PE_CARD        128
 #define PE_SLOT_TEST   0
 #define PE_BOX_RGB     0x182038u    /* a dark viewer-screen blue */
-#define PE_PAGE_W      64
-#define PE_PAGE_H      256
-#define PE_PINK        0x7C1Fu      /* 15-bit r = 31, b = 31 */
-#define PE_PAGES       22           /* x 320, 384 .. 960; y 0 and 256 */
 
-static int s_on, s_method, s_x = 176, s_y = 48, s_pink;
+static int s_on, s_method, s_x = 176, s_y = 48;
 static int s_shown_method = -1, s_shown_x = -1, s_shown_y = -1;
 static uint8_t s_card_rgba[PE_CARD * PE_CARD * 4];
-static int s_card_ready, s_logged;
+static int s_card_ready, s_logged, s_dumps;
 static const char *const kMethods[] = {"Box", "Strips"};
-
-static char s_pink_names[PE_PAGES + 1][16];
-static const char *s_pink_list[PE_PAGES + 1];
-static int s_pink_active = -1, s_pink_room = -1;
-static uint16_t s_pink_saved[PE_PAGE_W * PE_PAGE_H];
-static char s_pink_status[80] = "Off";
 
 /* ---- the test card ---- */
 static void pe_card_pixel(int x, int y, uint8_t *p) {
@@ -114,74 +103,19 @@ static void pe_card_tick(void) {
     }
 }
 
-/* ---- pink test ---- */
-static RECT pe_page_rect(int n) {             /* n = 1 .. PE_PAGES */
-    RECT r;
-    r.x = (short)(320 + ((n - 1) % 11) * PE_PAGE_W);
-    r.y = (short)(((n - 1) / 11) * PE_PAGE_H);
-    r.w = PE_PAGE_W;
-    r.h = PE_PAGE_H;
-    return r;
-}
-
-static void pe_pink_restore(void) {
-    RECT r;
-    if (s_pink_active <= 0) return;
-    r = pe_page_rect(s_pink_active);
-    LoadImage(&r, s_pink_saved);
-    pe_log("viewer", "pink test: page %s put back", s_pink_names[s_pink_active]);
-    s_pink_active = -1;
-}
-
-static void pe_pink_tick(void) {
-    if (s_pink_active > 0 && (pe_room_number() != s_pink_room || pe_in_battle())) {
-        snprintf(s_pink_status, sizeof s_pink_status, "Ended by %s; reload the save if pink stays",
-                 pe_in_battle() ? "a battle" : "a room change");
-        pe_log("viewer", "pink test: page %s dropped (%s)", s_pink_names[s_pink_active], s_pink_status);
-        pe_toast(s_pink_status);
-        s_pink_active = -1;
-        s_pink = 0;
-        return;
-    }
-    if (s_pink == (s_pink_active < 0 ? 0 : s_pink_active)) return;
-    pe_pink_restore();
-    if (s_pink > 0) {
-        static uint16_t fill[PE_PAGE_W * PE_PAGE_H];
-        RECT r = pe_page_rect(s_pink);
-        int i;
-        StoreImage(&r, s_pink_saved);         /* texture areas: the native copy is exact */
-        for (i = 0; i < PE_PAGE_W * PE_PAGE_H; ++i) fill[i] = PE_PINK;
-        LoadImage(&r, fill);
-        s_pink_active = s_pink;
-        s_pink_room = pe_room_number();
-        snprintf(s_pink_status, sizeof s_pink_status, "Page %s is pink", s_pink_names[s_pink]);
-        pe_log("viewer", "pink test: page %s filled (room %d)", s_pink_names[s_pink], s_pink_room);
-    } else {
-        snprintf(s_pink_status, sizeof s_pink_status, "Off");
-    }
-}
-
-static int pe_on_save_read(void *ctx, void *user) {
-    (void)ctx;
-    (void)user;
-    pe_pink_restore();
-    s_pink = 0;
-    snprintf(s_pink_status, sizeof s_pink_status, "Off");
-    return 0;
-}
-
 /* ---- VRAM dump ---- */
 static void pe_put32(uint8_t *p, uint32_t v) { p[0] = (uint8_t)v; p[1] = (uint8_t)(v >> 8); p[2] = (uint8_t)(v >> 16); p[3] = (uint8_t)(v >> 24); }
 
 static void pe_dump_vram(void) {
     enum { W = 1024, H = 512 };
-    char path[1200];
+    char name[64], path[1200], msg[96];
     RECT all = {0, 0, W, H};
     uint16_t *vram = malloc((size_t)W * H * 2);
     uint8_t *row = malloc((size_t)W * 3), header[54] = {'B', 'M'};
-    FILE *f;
+    FILE *f = NULL;
     int x, y;
-    if (!vram || !row || pe_mod_path(path, sizeof path, "pe_vram_dump.bmp") != 0 || !(f = fopen(path, "wb"))) {
+    snprintf(name, sizeof name, "pe_vram_dump_m%03d_%d.bmp", pe_room_number(), ++s_dumps);
+    if (!vram || !row || pe_mod_path(path, sizeof path, name) != 0 || !(f = fopen(path, "wb"))) {
         free(vram); free(row); pe_toast("VRAM dump failed"); return;
     }
     StoreImage(&all, vram);
@@ -201,8 +135,9 @@ static void pe_dump_vram(void) {
     fclose(f);
     free(vram);
     free(row);
-    pe_log("viewer", "VRAM dumped to pe_vram_dump.bmp (room %d)", pe_room_number());
-    pe_toast("VRAM dumped to pe_vram_dump.bmp");
+    pe_log("viewer", "VRAM dumped to %s", name);
+    snprintf(msg, sizeof msg, "VRAM dumped to %s", name);
+    pe_toast(msg);
 }
 
 /* ---- info rows ---- */
@@ -225,24 +160,15 @@ static void pe_cost_info(char *out, unsigned size) {
     snprintf(out, size, "%.1f us a frame, %u pastes", st.avg_us, st.pastes);
 }
 
-static void pe_pink_info(char *out, unsigned size) { snprintf(out, size, "%s", s_pink_status); }
-
 static void pe_tick(void) {
     static int started;
-    if (!started) { started = 1; s_on = 0; s_pink = 0; }   /* saved rows: the test always starts off */
+    if (!started) { started = 1; s_on = 0; }   /* a saved row: the test always starts off */
     pe_card_tick();
-    pe_pink_tick();
 }
 
 void pe_viewer_test_register(const char *mod_id) {
     const char *page = PE_PAGE_DEBUG_VIEWER;
-    int n;
-    snprintf(s_pink_names[0], sizeof s_pink_names[0], "Off");
-    for (n = 1; n <= PE_PAGES; ++n) {
-        RECT r = pe_page_rect(n);
-        snprintf(s_pink_names[n], sizeof s_pink_names[n], "x%d y%d", r.x, r.y);
-    }
-    for (n = 0; n <= PE_PAGES; ++n) s_pink_list[n] = s_pink_names[n];
+    (void)mod_id;
     pe_menu_register_toggle(page, "Test card", "Show a 128 x 128 test card through the image presenter. Off by default.", &s_on, NULL);
     pe_menu_register_choice(page, "Method", "Box: one opaque paste. Strips: only the card's pixels, row by row.", &s_method, kMethods, 2);
     pe_menu_register_int(page, "X", "Card's left edge on the 320 x 224 game screen.", &s_x, 0, 320 - PE_CARD, 4);
@@ -250,10 +176,6 @@ void pe_viewer_test_register(const char *mod_id) {
     pe_menu_register_info(page, "Frame", "The buffer the card was pasted into last.", pe_frame_info);
     pe_menu_register_info(page, "Video", "Internal resolution and filters (change them in Escape > Graphics).", pe_video_info);
     pe_menu_register_info(page, "Paste cost", "Average time of a frame's pastes, and how many.", pe_cost_info);
-    pe_menu_register_choice(page, "Pink test page", "Fill a VRAM page with pink to see what uses it; Off puts it back.",
-                            &s_pink, s_pink_list, PE_PAGES + 1);
-    pe_menu_register_info(page, "Pink test", "What the pink test is doing.", pe_pink_info);
-    pe_menu_register_action(page, "Dump VRAM", "Writes pe_vram_dump.bmp beside the preferences.", pe_dump_vram);
+    pe_menu_register_action(page, "Dump VRAM", "Writes pe_vram_dump_mNNN_K.bmp beside the preferences.", pe_dump_vram);
     pe_menu_register_tick(pe_tick);
-    pe_hook_add(PE_HOOK_SAVE_READ, pe_on_save_read, NULL, PE_PRIORITY_NORMAL, mod_id);
 }

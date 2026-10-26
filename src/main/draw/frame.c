@@ -24,14 +24,13 @@ static inline DRAWENV *DrawAddress(int index) {
 }
 
 /* Highest ordering-table entry of the 2D layers widescreen keeps centred:
- * 2 while a dialogue is shown (its backdrop links there), 1 while a menu is
- * open, else 0. */
+ * 2 when a dialogue was drawn this frame (its backdrop links there), 1 while
+ * a menu is open, else 0. */
 static int Draw_WidescreenOverlayEntry(void) {
-    int i;
+    int drawn = g_TextboxDrawnThisFrame;
 
-    for (i = 0; i < 4; ++i) {
-        if (g_TextboxEntries[i].state != 0) return 2;
-    }
+    g_TextboxDrawnThisFrame = 0;
+    if (drawn) return 2;
     return g_MenuWidgetCurrentNode != 0;
 }
 

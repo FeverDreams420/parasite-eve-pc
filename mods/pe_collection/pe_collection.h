@@ -30,6 +30,7 @@ unsigned pe_profile_creature(const char *key, unsigned *kills);   /* bits */
 void pe_profile_set_creature(const char *key, unsigned bits, unsigned kills);
 int pe_profile_owned(const char *key);
 void pe_profile_own(const char *key);
+int pe_profile_forget_costume(const char *key); /* costume ownership only */
 const char *pe_profile_worn(void);        /* "" = Aya's own */
 void pe_profile_set_worn(const char *key);
 

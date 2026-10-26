@@ -321,8 +321,36 @@ static void pe_result(char *out, unsigned size) { snprintf(out, size, "%s", pe_c
 
 void pe_bestiary_reset(void) { memset(s_slot, 0, sizeof s_slot); s_sel = 0; }
 
+/* Testing actions change only creatures registered by the loaded packs.
+ * Keep real kill counts on unlock; reset clears both discovery and kills. */
+static void pe_unlock_all(void) {
+    int changed = 0;
+    for (int h = 0; h < s_creatures; ++h) {
+        unsigned gained = 7u & ~pe_state(h);
+        if (!gained) continue;
+        pe_profile_set_creature(s_creature[h]->key, 7u, pe_kills(h));
+        PeBestiaryEvent e = { h, gained, "debug" };
+        pe_event_emit(s_event, &e);
+        ++changed;
+    }
+    pe_profile_save();
+    char msg[80];
+    snprintf(msg, sizeof msg, "Unlocked %d Bestiary entries", changed);
+    pe_col_say(msg);
+}
+static void pe_reset_all(void) {
+    for (int h = 0; h < s_creatures; ++h)
+        if (pe_state(h) || pe_kills(h)) pe_profile_set_creature(s_creature[h]->key, 0, 0);
+    pe_bestiary_reset(); /* discard pre-reset enemy HP tracking */
+    pe_profile_save();
+    pe_col_say("Bestiary reset: discoveries and kill counts cleared");
+}
 void pe_bestiary_register(const char *mod_id) {
     s_event = pe_event_id("bestiary.unlock");
+    pe_menu_register_action(PE_PAGE_DEBUG_COLLECTION, "Unlock all Bestiary",
+        "Testing: reveal every registered creature, weakness and loot entry. Keep kill counts.", pe_unlock_all);
+    pe_menu_register_action(PE_PAGE_DEBUG_COLLECTION, "Reset Bestiary",
+        "Testing: clear discoveries and kill counts only. Keep costumes and Junk.", pe_reset_all);
     pe_menu_register_dynamic_choice(PE_PAGE_BESTIARY, "Area", "Which creatures to browse.", &s_area, PE_MAX_SECTIONS + 1,
                                     pe_area_count, pe_area_name);
     pe_menu_register_choice(PE_PAGE_BESTIARY, "Show", "All, met only, or not complete.", &s_show, s_show_names, 3);

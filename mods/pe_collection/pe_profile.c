@@ -47,6 +47,16 @@ void pe_profile_set_creature(const char *key, unsigned bits, unsigned kills) {
 
 int pe_profile_owned(const char *key) { return pe_find(R_COSTUME, key, 0) != NULL; }
 void pe_profile_own(const char *key) { if (pe_find(R_COSTUME, key, 1)) s_dirty = 1; }
+/* Forget one costume only: Bestiary and unloaded packs' records stay intact. */
+int pe_profile_forget_costume(const char *key) {
+    PeRecord *r = pe_find(R_COSTUME, key, 0);
+    if (!r) return 0;
+    int at = (int)(r - s_rec);
+    memmove(r, r + 1, (size_t)(s_count - at - 1) * sizeof *r);
+    --s_count;
+    s_dirty = 1;
+    return 1;
+}
 const char *pe_profile_worn(void) { return s_worn; }
 void pe_profile_set_worn(const char *key) { snprintf(s_worn, sizeof s_worn, "%s", key ? key : ""); s_dirty = 1; }
 

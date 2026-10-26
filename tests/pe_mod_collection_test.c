@@ -51,7 +51,15 @@ void pe_mod_log(const char *m, const char *f, ...) { (void)m; (void)f; }
 void pe_log(const char *t, const char *f, ...) { (void)t; (void)f; }
 void pe_toast(const char *t) { (void)t; }
 int pe_menu_register_toggle(const char *s, const char *l, const char *d, int *f, PeMenuPerFrame p) { (void)s; (void)l; (void)d; (void)f; (void)p; return 0; }
-int pe_menu_register_action(const char *s, const char *l, const char *d, PeMenuAction a) { (void)s; (void)l; (void)d; (void)a; return 0; }
+static PeMenuAction unlock_costumes, lock_costumes, unlock_bestiary, reset_bestiary;
+int pe_menu_register_action(const char *s, const char *l, const char *d, PeMenuAction a) {
+    (void)s; (void)d;
+    if (!strcmp(l, "Unlock all Bestiary")) unlock_bestiary = a;
+    if (!strcmp(l, "Reset Bestiary")) reset_bestiary = a;
+    if (!strcmp(l, "Unlock all costumes")) unlock_costumes = a;
+    if (!strcmp(l, "Lock all costumes")) lock_costumes = a;
+    return 0;
+}
 int pe_menu_register_choice(const char *s, const char *l, const char *d, int *i, const char *const *n, unsigned c) { (void)s; (void)l; (void)d; (void)i; (void)n; (void)c; return 0; }
 static struct { const char *label; PeMenuChoiceCount count; PeMenuChoiceName name; } s_dyn[8];
 static int s_ndyn;
@@ -194,6 +202,62 @@ int main(void) {
     assert(strcmp(pe_profile_worn(), w->worn()->key) == 0);
     remove(path);
 
+    /* Testing buttons affect registered costume ownership only, persist it,
+     * and never spend Junk or bypass missing-asset checks. */
+    assert(unlock_costumes && lock_costumes);
+    uint32_t junk_before = s_junk;
+    unlock_costumes();
+    assert(pe_profile_owned("re2/claire") && pe_profile_owned("x/skin") && pe_profile_owned("x/nofiles"));
+    assert(find_shop(shop, "No files") < 0 && s_junk == junk_before);
+    int owned_before = pe_wardrobe_owned_count();
+    unlock_costumes();
+    assert(pe_wardrobe_owned_count() == owned_before && s_junk == junk_before);
+    pe_profile_load();
+    assert(pe_profile_owned("x/skin") && pe_profile_owned("x/nofiles"));
+    assert(pe_profile_creature("re2/zombie", &kills) == 3 && kills == 6);
+    lock_costumes();
+    assert(!*pe_profile_worn() && !w->worn());
+    assert(!pe_profile_owned("re2/claire") && !pe_profile_owned("x/skin") && !pe_profile_owned("x/nofiles"));
+    assert(pe_profile_owned("ff7/cloud")); /* unloaded pack is preserved */
+    assert(pe_profile_creature("re2/zombie", &kills) == 3 && kills == 6 && s_junk == junk_before);
+    pe_profile_load();
+    assert(!pe_profile_owned("re2/claire") && !*pe_profile_worn());
+    lock_costumes(); /* idempotent */
+    assert(s_junk == junk_before && pe_profile_owned("ff7/cloud"));
+    remove(path);
+    /* Bestiary testing actions persist discovery independently of costumes,
+     * keep true kills on unlock, and clear stale battle tracking on reset. */
+    assert(unlock_bestiary && reset_bestiary);
+    pe_profile_own("re2/claire");
+    pe_profile_set_worn("re2/claire");
+    unsigned kills_before = b->kills(zombie);
+    junk_before = s_junk;
+    unlock_bestiary();
+    assert(b->state(zombie) == 7 && b->kills(zombie) == kills_before && b->state(rat) == 7);
+    int events_before = s_unlock_events;
+    unlock_bestiary();
+    assert(s_unlock_events == events_before);
+    pe_profile_load();
+    assert(b->state(zombie) == 7 && b->kills(zombie) == kills_before);
+    assert(pe_profile_owned("re2/claire") && !strcmp(pe_profile_worn(), "re2/claire"));
+    g_BattleEnemySlots[0].active = 1;
+    g_BattleEnemySlots[0].combatant.lowAndEntityId.bytes.entityId = 1;
+    g_BattleEnemySlots[0].combatant.field04.fieldId04 = 0x99;
+    g_BattleEnemySlots[0].combatant.hpAlive = 10;
+    s_hook[PE_HOOK_BATTLE_UPDATE](NULL, NULL);
+    reset_bestiary();
+    assert(b->state(zombie) == 0 && b->kills(zombie) == 0 && b->state(rat) == 0 && b->kills(rat) == 0);
+    g_BattleEnemySlots[0].combatant.hpAlive = 0;
+    s_hook[PE_HOOK_BATTLE_UPDATE](NULL, NULL);
+    assert(b->kills(zombie) == 0); /* death started before reset is not credited */
+    reset_bestiary();
+    pe_profile_load();
+    assert(b->state(zombie) == 0 && b->kills(zombie) == 0);
+    assert(pe_profile_owned("re2/claire") && !strcmp(pe_profile_worn(), "re2/claire"));
+    assert(pe_profile_creature("ff7/cactuar", &kills) == 7 && kills == 3 && s_junk == junk_before);
+    kill_once(0, 0x99);
+    assert(b->state(zombie) == 1 && b->kills(zombie) == 1);
+    remove(path);
     /* The psxrecomp build's pe_collection.dat (by index) is imported once through the PE keys. */
     {
         typedef struct { uint32_t magic, version; uint64_t skins; uint8_t worn, reserved[7]; uint8_t creature[128]; uint32_t checksum; } PeProfile;

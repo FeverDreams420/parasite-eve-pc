@@ -400,3 +400,19 @@ Checks: tests/run_pe_tools_test.ps1 (level-up, thresholds, guards, ammo, mod gro
 `tests/run_pe_*_test.ps1` (Windows, after configuring build-mods) build and run each mod's checks
 against the production files, with the game and host stubbed where they don't matter.
 
+
+Debug / Collection has Unlock all costumes and Lock all costumes testing
+actions. They save ownership changes immediately for all registered costume
+keys, including costumes with missing assets; asset availability is still
+required to wear them. Lock returns a registered worn costume to story
+clothes. Free outfits remain available, and Bestiary progress, Junk and
+records from unloaded packs are preserved. Ownership handling stays in
+pe_wardrobe.c and pe_profile.c; Collection regression checks cover both actions.
+
+Debug / Collection also provides Unlock all Bestiary and Reset Bestiary.
+Unlock reveals basics, weaknesses and loot for every registered creature
+without inventing kills or spending Junk. Reset clears those discoveries
+and kill counts and discards old enemy HP tracking. Both save immediately;
+costume ownership, the worn outfit, Junk and unloaded packs' records remain
+unchanged. The actions live in pe_bestiary.c and use the existing profile
+API. Collection checks cover persistence, repeat use and post-reset kills.

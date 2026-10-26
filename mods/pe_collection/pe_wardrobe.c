@@ -279,10 +279,40 @@ static void pe_reload_tick(void) {
     (void)pe_reload();
 }
 
+/* Testing actions operate on registered keys, including costumes whose assets
+ * are currently missing. Availability checks still apply before wearing. */
+static void pe_unlock_all(void) {
+    int unlocked = 0;
+    for (int i = 0; i < s_costumes; ++i) {
+        const char *key = s_costume[i]->key;
+        if (!pe_profile_owned(key)) {
+            pe_profile_own(key);
+            unlocked += pe_profile_owned(key);
+        }
+    }
+    pe_profile_save();
+    char msg[80];
+    snprintf(msg, sizeof msg, "Unlocked %d costumes", unlocked);
+    pe_col_say(msg);
+}
+static void pe_lock_all(void) {
+    int locked = 0;
+    if (pe_find(pe_profile_worn()) >= 0) pe_set_worn(NULL, 1);
+    for (int i = 0; i < s_costumes; ++i)
+        locked += pe_profile_forget_costume(s_costume[i]->key);
+    pe_profile_save();
+    char msg[80];
+    snprintf(msg, sizeof msg, "Cleared %d costume unlocks; free outfits remain available", locked);
+    pe_col_say(msg);
+}
 void pe_wardrobe_reset(void) { s_sel = 0; }
 
 void pe_wardrobe_register(const char *mod_id) {
     s_event = pe_event_id("wardrobe.worn");
+    pe_menu_register_action(PE_PAGE_DEBUG_COLLECTION, "Unlock all costumes",
+        "Testing: own every registered costume for free, saved across games.", pe_unlock_all);
+    pe_menu_register_action(PE_PAGE_DEBUG_COLLECTION, "Lock all costumes",
+        "Testing: clear costume unlocks and return to story clothes. Free outfits stay available.", pe_lock_all);
     pe_menu_register_dynamic_choice(PE_PAGE_WARDROBE, "Group", "Which costumes to browse.", &s_group, PE_MAX_GROUPS,
                                     pe_group_count, pe_group_name);
     pe_menu_register_dynamic_choice(PE_PAGE_WARDROBE, "Costume", "Left / right to browse.", &s_sel, PE_MAX_COSTUMES, pe_count, pe_name);

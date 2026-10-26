@@ -8,7 +8,16 @@ cmake -S . -B build-mods -G Ninja -DPE_MODS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build build-mods
 ```
 
-`PE_MOD_LIST` (CMake cache) picks the mods, by folder name. Default: `pe_qol;pe_rebalance;pe_economy`.
+`PE_MOD_LIST` (CMake cache) picks the mods, by folder name. Default:
+`pe_qol;pe_rebalance;pe_economy;pe_collection;pe_tools` (add `pe_hello` for the example).
+
+Two switches, so a modded build is safe to hand out:
+- **Build**: `PE_MODS` off (the default) leaves no mod code in the game at all.
+- **Runtime**: F1 > Manage mods > **All mods**, **off by default**. Until a player turns it on and
+  restarts, no mod starts and nothing but the F1 panel touches the game. Below it, one toggle per
+  mod; a mod turned off doesn't start, nor do the mods that need it. Changes apply at the next start.
+
+The upstream test suite (`-DBUILD_TESTING=ON`) gives the same results with `PE_MODS` on and off.
 
 ## Layout
 
@@ -16,17 +25,24 @@ cmake --build build-mods
 include/pe_hooks.h     hook ids and context structs: the only file the game includes
 mods/
   host/                the mod host, shared by every mod
-    pe_mod_host.*        mod registry (start order by requirements), hooks, services, events,
-                         pe_mods.log, pe_play.log, pe_toast
+    pe_mod_host.*        mod registry (start order by requirements, Manage mods), hooks, services,
+                         events, pe_mods.log, pe_play.log (each row also the "play.log" event), pe_toast
     pe_mod_menu.*        rows of the Mods panel and pe_mods.ini
-    pe_mod_panel.c       the F1 panel: pages, navigation, input
-    pe_pages.*           where PE Enhancements rows live (one layout for all mods)
-    pe_game.*            game access: Aya's actor and Combatant, equipped records, base items
+    pe_mod_panel.c       the F1 panel: the list of mods, pages, navigation, input
+    pe_pages.*           where PE Enhancements rows live (one layout for the whole suite)
+    pe_services.h        every service struct mods share (no mod includes another's headers)
+    pe_game.*            game access and the game facts every mod shares (see below)
+    pe_game_facts.c      those facts as tables: mod effect names and groups, power tags
+    pe_main_menu.*       extra rows in Aya's main menu, and screens from the game's own widgets
+    pe_equip_sync.c      edited equipment reaches the next battle
+    pe_gametext.h        text in the game's glyph code; pe_item_table.h the game's item names
     pe_ps1.*             PS1-address access for ported code (fixed-layout objects only; unused today)
     ui/                  drawing (pe_ui_raster), the overlay quad (pe_ui_gpu), toasts
-  pe_qol/              quality of life: movement, encounter switch, Debug God mode and ammo (off by default)
-  pe_rebalance/        mod effects, Parasite Energy balance, half-bar turns / Quick powers, weapon power (DPS)
-  pe_economy/          Junk and loot, Mod Catalog / Dismantle / Rebuild, vanilla Wayne craft refund
+  pe_qol/              quality of life: movement, encounters, key item pocket, bag sort, Key Items menu
+  pe_rebalance/        mod effects, Parasite Energy balance, half-bar turns / Quick powers, Combine
+  pe_economy/          Junk and loot, Mod Catalog / Dismantle / Rebuild, Requisition, Wayne and Warner
+  pe_collection/       Bestiary and Wardrobe registries, skins, Wardrobe menu (packs register here)
+  pe_tools/            Debug: stats and equipment editors, give item / abilities, the detailed play log
   pe_hello/            example mod (not built by default)
 ```
 
@@ -40,7 +56,8 @@ const PeMod pe_mod_<folder> = {"<folder>", "Readable name", "0.1", requires, ini
 
 `init` registers the mod's rows, hooks and services. Each feature lives in its own file with
 one `pe_<feature>_register(mod_id)` function that the mod's main file calls, so a feature can be
-moved, disabled or updated without touching the others.
+moved, disabled or updated without touching the others. Add the folder name to `PE_MOD_LIST`;
+`pe_hello` is the smallest complete example (rows, a hook, a service, an event, its own top page).
 
 ## Talking to the game
 
@@ -52,6 +69,10 @@ moved, disabled or updated without touching the others.
   Code ported from the psxrecomp build may use `psx_mod_read/write_*` through `pe_ps1.h`, which
   only maps objects whose layout is the PS1 one (the save block, the resident data pack, the
   card buffer, script variables); other addresses read 0 and are logged once.
+- **Shared game facts live once, in the host** (`pe_game.h`): `pe_free_field()` (no battle, menu,
+  transition or event), `pe_save_loaded()` (also mid room load, when Aya's actor is rebuilt),
+  `pe_room_number()`, `pe_wayne_count()` / `pe_set_wayne_count()`, `pe_mod_effect_name()` /
+  `pe_mod_effect_group()`, `pe_power_tag()`. Never copy one of these into a mod.
 
 ## Talking to other mods
 
@@ -60,12 +81,17 @@ moved, disabled or updated without touching the others.
 - **Events**: `pe_event_id("name")` and `pe_event_emit(id, ctx)` for announcements.
 
 Service definitions live in `host/pe_services.h`, never in a mod's folder: `junk` v1 and
-`catalog` v1 (pe_economy), `keys` v1 (pe_qol), `wardrobe` v1 (for the Collection port).
+`catalog` v1 (pe_economy), `keys` v1 (pe_qol), `wardrobe`, `bestiary` and `costumes` v1
+(pe_collection). Events: `play.log` (every pe_log row), `bestiary.unlock`, `wardrobe.worn`.
+A mod that registers into another mod's service at init lists that mod in its `requires`.
 
 ## The Mods panel
 
-- PE Enhancements rows go on the pages in `host/pe_pages.h` (Movement, Combat, Economy, Debug);
-  tuning and test rows always go under Debug.
+- F1 always opens on the list of mods: each mod's top page (`pe_menu_begin("My Mod")`, described
+  and ordered with `pe_menu_top_page`), then the host's Manage mods. Our five mods share one top
+  page, PE Enhancements, laid out by topic.
+- PE Enhancements rows go on the pages in `host/pe_pages.h` (Movement, Combat, Economy, Inventory,
+  Collection, Debug); tuning and test rows always go under Debug.
 - Values the player sets: `toggle`, `choice`, `int` rows (saved in `pe_mods.ini` by page and
   label: renaming a row resets it). Values read from the game: `live_*` rows (not saved).
 - Read-only values (Junk, prices, results) are `info` rows, never live rows that refuse changes.
@@ -99,12 +125,14 @@ Each feature has its own file and registration function in pe_qol.
 Combat / Parasite Energy includes the recomp's half-bar ATB rules. Rebalanced
 allows Items, Quick PE powers and weapon changes at half a bar; armor changes
 and escape remain full-bar by default. Quick powers default to Heal 1/2,
-Detox, Medic, Scan, Slow and Confuse. Cancelling refunds the borrowed gauge;
-full powers and attacks still pay a full bar through refill debt. Vanilla
-disables half-bar actions. The gold gauge indicator uses native HUD quads.
+Detox, Medic, Scan, Slow and Confuse. On a half bar every other power shows
+dimmed in the PE menu, like a power Aya can't afford (PE_HOOK_POWER_AVAILABLE),
+so Energy Shot and the rest need a full bar. Cancelling refunds the borrowed
+gauge; attacks still pay a full bar through refill debt. Vanilla disables
+half-bar actions. The gold gauge indicator uses native HUD quads.
 
 Runtime turn accounting lives in pe_rebalance/pe_atb_items.c; settings remain
-on the PE rules page. No new game hooks or card-save blocks are required.
+on the PE rules page. No card-save blocks are required.
 
 Regression coverage is retained in tests/pe_mod_atb_test.c. It links only the
 half-bar and PE-balance feature sources against native headers, with test-owned
@@ -182,16 +210,20 @@ Square on Aya's Use Item list opens the native Sort screen. Sort is hidden
 from the main menu; Wayne's storage is untouched by automatic sorting.
 pe_qol/pe_inventory_menu.c owns the shortcut and transient row hiding, separate
 from sorting policy. It restores the original menu mask on save and menu exit.
+Inventory tips (on by default) say so: the title bar on the main menu's Items
+row and on an empty bag slot, and a message the first time the bag opens each
+session, including whether Auto sort is on.
 
 Key Items in Aya's main menu (pe_qol/pe_key_menu.c, while the pocket is on): a row with the
 Dressing Room Key's icon opens a view-only list of the pocket, each key with its icon and name and
 the highlighted key's game description in the title bar. Circle or Cross goes back.
 
 Extra main-menu rows and screens are a host service (host/pe_main_menu.h): a mod adds a row
-(title, icon item, shown test, open callback, order) and builds its screen with pe_screen_open /
-pe_screen_rows / pe_screen_close, which also hide Aya's status panels and keep scrolling inside
-the list. The host owns the main-menu hooks (LIST_ROWS, MAIN_MENU_ICON, HELP_TEXT for the row
-names, MAIN_MENU_ACTION). Order: Mod Catalog 10, Key Items 20.
+(title, icon item or its own icon drawer, shown test, open callback, order) and builds its screen
+with pe_screen_open_game (flush where the game's own screens sit) / pe_screen_rows /
+pe_screen_close, which also hide Aya's status panels and keep scrolling inside the list. The host
+owns the main-menu hooks (LIST_ROWS, MAIN_MENU_ICON, HELP_TEXT for the row names,
+MAIN_MENU_ACTION). Order: Mod Catalog 10, Key Items 20, Wardrobe 30.
 
 pe_qol/pe_key_items.c and pe_bag_sort.c each own their state, hooks and rows.
 pe_inventory.h holds private save/field helpers. PKEY and SORT use the exact
@@ -206,7 +238,8 @@ game paths are isolated by explicit test stubs.
 Inventory Junk counter (pe_economy/pe_junk_counter.c): enabled by default;
 F1 / PE Enhancements / Inventory / Junk counter saves its visibility in pe_mods.ini.
 Draws the live economy balance in the free box left of Quantity, following the
-native header when bag height or scrolling changes. Hidden when Junk economy
+native header when bag height or scrolling changes (on an odd bag's last page the
+header moves up beside the last item; the counter keeps the row it left). Hidden when Junk economy
 is off. The native header provides one draw hook; all presentation stays in
 the feature file. It never changes inventory capacity, balances or save data.
 
@@ -224,8 +257,8 @@ F1 / PE Enhancements / Economy / Requisition offers Medicine 1-4, Cure-P/D/C/M,
 Full Cure, Bullets x15/x30, Rockets, Smoke Grenades, Revive and Tools. The four
 economy effects are sold as direct Catalog unlocks and leave the list once
 unlocked; they require no bag slot. Tools disappear if either Tool Kit is in
-Aya's bag or Wayne's storage. This ports the F1 shop; Wayne's dialogue menu
-is a separate future integration.
+Aya's bag or Wayne's storage. The same shop is in Wayne's (and Warner's) own
+dialogue menu, under Workshop.
 
 Goods use recomp prices (Medicine 3 = 35, Medicine 4 = 80). Tools start at 40,
 increase by 10 per purchase and cap at 100 after difficulty/Bargain pricing.
@@ -263,8 +296,9 @@ now) and a Wardrobe row while a mod publishes the `wardrobe` v1 service. Mod Per
 one mod slot after a Yes / No. Circle goes back. While his box is the counter the shop allows
 buying though the field is busy (pe_shop_at_counter). Messages use pe_gametext.h.
 
-pe_economy/pe_equip_sync.c reruns the game's equipment rebuild in free field whenever the
-equipped gun or armor record changes, so Catalog, Tool and editor changes reach the next battle.
+host/pe_equip_sync.c (a host feature, so it works whichever mods are loaded) reruns the game's
+equipment rebuild in free field whenever the equipped gun or armor record changes, so Catalog,
+Tool, Rebuild and editor changes reach the next battle.
 
 
 ## Collection (pe_collection)
@@ -281,15 +315,25 @@ without touching these files.
   5 kills or Scan show weaknesses, 15 kills the loot (bosses: defeat shows weaknesses, loot is Junk
   only); each tier can be bought. Announces "bestiary.unlock".
 - `pe_wardrobe.c`: the costume registry. A costume is one of the game's player bundles (bank 10 /
-  12 / 13, rewritten at the start of Aya's model load, PE_HOOK_PLAYER_BANK) or a provider's own
-  model (its load(1) / load(0) at that moment). Wearing from F1 reloads the room. Publishes
-  `wardrobe` v1 for shops (Wayne's Workshop); announces "wardrobe.worn". F1 groups and Bestiary
-  areas come from whatever packs register.
+  12 / 13, rewritten at the start of Aya's model load, PE_HOOK_PLAYER_BANK), a skin folder
+  (`bundle`, loaded by pe_skin_loader.c), or a provider's own model (its load(1) / load(0) at that
+  moment). The room reloads when a costume needs it. Costumes that can't be worn now (files
+  missing) are hidden. Publishes `wardrobe` v1 for shops (Wayne's Workshop); announces
+  "wardrobe.worn". F1 groups and Bestiary areas come from whatever packs register.
+- `pe_skin_loader.c`: skins in the game's own player formats, from pe_skins/<folder>/ beside the
+  preferences (texture.bin, model.bin, day1-8.bin, optional rooms.bin and meta.bin; the bridge's
+  build_skin.py makes them from the player's disc). Kept in host memory: Aya's textures are swapped
+  at the game's upload (PE_HOOK_PLAYER_TEXTURES, the game's own kept for changing back), and
+  bank_slots[0] and her rows point at the skin before her actor takes them (PE_HOOK_PLAYER_ROWS) and
+  every frame; the weapon follows the skin's hand, room animations use retargeted copies. Instant
+  swap (Wardrobe, experimental, off) changes skins in place without a room reload.
+- `pe_wardrobe_menu.c`: a Wardrobe row in Aya's main menu (icon: the Equip Armor icon, twice) once a
+  costume is owned: pick an owned costume like armor; it shows when the menu closes.
 - `pe_profile.c`: unlocks by key in pe_collection.ini beside the preferences, kept across every
   game; records of packs that aren't loaded are kept untouched. The recomp's pe_collection.dat is
   imported once.
-- `pe_pack_pe1.c`: the 75 creatures (pe_collection_data.h, generated by the bridge) and the outfits;
-  the character skins are listed as "soon" until their loader is ported.
+- `pe_pack_pe1.c`: the 75 creatures (pe_collection_data.h, generated by the bridge), the outfits
+  and the 31 character skins (each hidden while its pe_skins folder is missing).
 - `pe_collection.c`: the mod, Junk, messages; Debug > Collection resets the profile.
 
 Writing a pack (another mod):
@@ -300,8 +344,9 @@ Writing a pack (another mod):
    shuffles enemies). `b->replace(handle, &info)` swaps in new info under the same key (randomized
    drops or weaknesses).
 3. `const PeCostumesApi *c = pe_service_get("costumes", 1);` then `c->add(&costume)`: `bank` for one
-   of the game's outfits, or `bank = -1` with `load` (and `available` while its files are missing)
-   for your own model; add the hooks your loader needs.
+   of the game's outfits, `bank = -1` with `bundle` for a skin folder in the game's player formats
+   (the Wardrobe loads it), or `bank = -1` with `load` (and `available`) for a model your mod puts
+   in itself; add the hooks your loader needs.
 4. Keys are saved in players' profiles: never rename one once released.
 `tests/run_pe_collection_test.ps1` drives the registries the way such a pack would.
 
@@ -325,4 +370,32 @@ and our menu opens in a dialogue box of its own near the screen centre (PE_HOOK_
 of pe_wayne_menu.c, which adds Mod Permit Card and Workshop). Closing it unlocks the field (0xFF);
 a storage choice then opens the game's storage screen. Nothing in his script is patched. F1 >
 Economy > Warner helps out.
+
+## Tools (pe_tools)
+
+Development and testing aids under F1 > PE Enhancements > Debug; each tool is its own file.
+
+- `pe_stats_editor.c` (Stats editor): level and the six editable stat levels, as the status screen
+  numbers them, applied when F1 closes. Raising the level is a real level-up (10 stat EXP a level,
+  banked bonus points paid out to 99999, abilities unlocked); stat levels write their growth-table
+  threshold and the game's Inv_RecalcSlotStats derives max HP and battle values. Item capacity is
+  not editable (it would strand items).
+- `pe_equip_editor.c` (Equipment editor): the equipped gun's and armor's + bonuses, loaded ammo
+  (capped at capacity) and mods per slot, live; one mod per group; a smaller bag mod is refused
+  while it would strand an item.
+- `pe_debug_tools.c` (Items and abilities): give any item through the game's own Inv_AddItem (key
+  items go to the pocket), unlock one or every Parasite Energy, add 1000 bonus points.
+- `pe_play_logger.c` (Play log, on): pe_play_log.csv beside the preferences, the recomp's columns
+  (kind, battle, day, map, scene, play_s, level, exp, hp, max_hp, junk, wayne, detail): session,
+  enemy, battle (outcome, rewards, combat summary, snapshot), pickup, steal / add, invcmd, itemcheck,
+  wayne, levelup, newgame, cardload, save, room, store / withdraw; Combat detail (off) adds a row
+  per hit, turn, spell, reload, kill and weapon swap. Every other mod's pe_log row is copied in
+  through the "play.log" event.
+
+Checks: tests/run_pe_tools_test.ps1 (level-up, thresholds, guards, ammo, mod groups, bag guard).
+
+## Tests
+
+`tests/run_pe_*_test.ps1` (Windows, after configuring build-mods) build and run each mod's checks
+against the production files, with the game and host stubbed where they don't matter.
 

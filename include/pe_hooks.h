@@ -46,6 +46,8 @@ typedef enum PeHookId {
     PE_HOOK_PLAYER_TEXTURES, /* SceneAssetBlob *: Aya's texture blob just read, before its TIMs go to VRAM;
                               * replaceable (nonzero: the game skips its upload) */
     PE_HOOK_RENDER_STATS, /* PeHookRenderStats: native face submission, diagnostics only */
+    PE_HOOK_FRAME_DRAWN, /* NULL: Draw_RenderFrame, the previous frame finished drawing (DrawSync)
+                          * and not yet shown; its buffer is g_RenderDrawEnvArray[1 - g_ActiveDrawSlot] */
     PE_HOOK_COUNT
 } PeHookId;
 

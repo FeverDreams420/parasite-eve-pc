@@ -44,6 +44,7 @@
 #define PE_PAGE_DEBUG_EQUIP      "Debug/Equipment editor"
 #define PE_PAGE_DEBUG_ITEMS      "Debug/Items and abilities"
 #define PE_PAGE_DEBUG_PLAY_LOG   "Debug/Play log"
+#define PE_PAGE_DEBUG_VIEWER     "Debug/Viewer test"
 #define PE_PAGE_DEBUG_LOOT     "Debug/Loot tuning"
 #define PE_PAGE_DEBUG_CATALOG  "Debug/Mod Catalog"
 

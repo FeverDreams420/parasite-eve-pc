@@ -30,5 +30,6 @@ void pe_pages_describe(void) {
     pe_menu_page(PE_PAGE_DEBUG_EQUIP, "The equipped gun and armor: bonuses, ammo, mods.", 50);
     pe_menu_page(PE_PAGE_DEBUG_ITEMS, "Give items, unlock Parasite Energy, bonus points.", 60);
     pe_menu_page(PE_PAGE_DEBUG_PLAY_LOG, "Battle, enemy and pickup rows in pe_play_log.csv.", 70);
+    pe_menu_page(PE_PAGE_DEBUG_VIEWER, "Test the Bestiary viewer's ways of drawing into the game.", 80);
     pe_menu_begin(0);
 }

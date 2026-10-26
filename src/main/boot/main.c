@@ -61,7 +61,7 @@ static const char *const host_button_names[HOST_BINDING_COUNT] = {
 static unsigned host_speed = 1;
 
 static void Host_SetSpeed(unsigned speed) {
-    if (speed != host_speed) {
+    if (speed != host_speed || speed != Psyz_VideoGetSpeed()) {
         host_speed = speed;
         Psyz_VideoSetSpeed(speed);
     }
@@ -1314,6 +1314,7 @@ static int Host_ConfirmMovieSkip(void) {
 
     Psyz_PauseHostClock_SDL3(true);
     Psyz_AudioPause();
+    Host_SetSpeed(1);
     if (game != NULL && s_overlayGpuDevice != NULL) {
         s_overlayState = (HostOverlayState){
             .open = 1,

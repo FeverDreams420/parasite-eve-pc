@@ -26,11 +26,18 @@ int pe_hook_add(int id, PeHookFn fn, void *u, int p, const char *m) {
 }
 void pe_battle_frequency_register(const char *);
 static unsigned word(const unsigned char *p) { unsigned v; memcpy(&v,p,4); return v; }
+static int seek64(FILE *f, long long offset) {
+#ifdef _WIN32
+    return _fseeki64(f, offset, SEEK_SET);
+#else
+    return fseeko(f, (off_t)offset, SEEK_SET);
+#endif
+}
 static void user_data(FILE *f, unsigned lba, void *out, size_t bytes) {
     unsigned char *p = out;
     while (bytes) {
         size_t n = bytes > 2048 ? 2048 : bytes;
-        assert(!_fseeki64(f, (long long)lba * 2352 + 24, SEEK_SET));
+        assert(!seek64(f, (long long)lba * 2352 + 24));
         assert(fread(p,1,n,f) == n); p += n; bytes -= n; ++lba;
     }
 }

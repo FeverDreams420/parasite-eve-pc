@@ -304,9 +304,13 @@ static void pe_host_start(const PeHookInit *init) {
     }
 }
 
+int pe_host_init(const PeHookInit *init) {
+    if (!s_started) pe_host_start(init);
+    return 0;
+}
+
 int pe_hook_dispatch(int id, void *ctx) {
     int i, handled = 0;
-    if (id == PE_HOOK_INIT && !s_started) pe_host_start((const PeHookInit *)ctx);
     if (!s_started) return 0;
     for (i = 0; i < s_handler_count; i++) {
         if (s_handlers[i].id < id) continue;

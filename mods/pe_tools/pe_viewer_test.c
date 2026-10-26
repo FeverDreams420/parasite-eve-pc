@@ -42,7 +42,9 @@
 #define PE_SILHOUETTE  0x101018u
 #define PE_BOX_RGB     0x182038u    /* a dark viewer-screen blue */
 
-static int s_on, s_method, s_x = 176, s_y = 48;
+#define PE_HOME_X      176          /* the right-hand panel of Aya's menu */
+#define PE_HOME_Y      48
+static int s_on, s_method, s_x = PE_HOME_X, s_y = PE_HOME_Y;
 static int s_shown_method = -1, s_shown_x = -1, s_shown_y = -1;
 static uint8_t s_card_rgba[PE_CARD * PE_CARD * 4];
 static int s_card_ready, s_logged, s_dumps;
@@ -177,6 +179,21 @@ static const char *pe_creature_name(unsigned i) {
     return s_creature_names[i];
 }
 
+/* The picked creature's forms, so only existing ones can be chosen. */
+static unsigned pe_form_count(void) {
+    const PeBestiaryApi *b = pe_bestiary();
+    unsigned n = 0;
+    while (b && n < PE_BESTIARY_MAX_FORMS && b->model(s_model_pick, (int)n, NULL)) ++n;
+    return n ? n : 1;
+}
+
+static const char *pe_form_name(unsigned i) {
+    static char names[PE_BESTIARY_MAX_FORMS][16];
+    if (i >= PE_BESTIARY_MAX_FORMS) return "";
+    snprintf(names[i], sizeof names[i], i ? "Form %u" : "Body", i + 1);
+    return names[i];
+}
+
 static void pe_model_tick(void) {
     const PeBestiaryApi *b = pe_bestiary();
     PeImage img = {PE_CARD, PE_CARD, s_model_rgba};
@@ -195,7 +212,8 @@ static void pe_model_tick(void) {
         s_model = b->model(s_model_pick, s_model_form, &src) ? pe_model_load(&src) : NULL;
         if (!s_model || !pe_model_fit(s_model, &s_fit)) {
             s_model = NULL;
-            snprintf(s_model_status, sizeof s_model_status, "%s: no form %d", pe_creature_name((unsigned)s_model_pick), s_model_form);
+            snprintf(s_model_status, sizeof s_model_status, "%s: form %d did not load", pe_creature_name((unsigned)s_model_pick), s_model_form + 1);
+            pe_log("viewer", "creature %s form %d: did not load", pe_creature_name((unsigned)s_model_pick), s_model_form);
             pe_present_hide(PE_SLOT_MODEL);
             return;
         }
@@ -286,6 +304,12 @@ static void pe_cost_info(char *out, unsigned size) {
     snprintf(out, size, "%.1f us a frame, %u pastes", st.avg_us, st.pastes);
 }
 
+static void pe_reset_position(void) {
+    s_x = PE_HOME_X;
+    s_y = PE_HOME_Y;
+    pe_toast("Viewer test: position reset");
+}
+
 static void pe_tick(void) {
     static int started;
     if (!started) {                            /* a saved row: the test always starts off ... */
@@ -306,13 +330,15 @@ void pe_viewer_test_register(const char *mod_id) {
     pe_menu_register_choice(page, "Method", "Box: one opaque paste. Strips: only the card's pixels, row by row.", &s_method, kMethods, 2);
     pe_menu_register_int(page, "X", "Card's left edge on the 320 x 224 game screen.", &s_x, 0, 320 - PE_CARD, 4);
     pe_menu_register_int(page, "Y", "Card's top edge on the 320 x 224 game screen.", &s_y, 0, 224 - PE_CARD, 4);
+    pe_menu_register_action(page, "Reset position", "Put the card / creature back at its starting place.", pe_reset_position);
     pe_menu_register_info(page, "Frame", "The buffer the card was pasted into last.", pe_frame_info);
     pe_menu_register_info(page, "Video", "Internal resolution and filters (change them in Escape > Graphics).", pe_video_info);
     pe_menu_register_info(page, "Paste cost", "Average time of a frame's pastes, and how many.", pe_cost_info);
     pe_menu_register_action(page, "Dump VRAM", "Writes pe_vram_dump_mNNN_K.bmp beside the preferences.", pe_dump_vram);
     pe_menu_register_toggle(page, "Creature", "Show a Bestiary creature's model, turning, at the card's place. Off by default.", &s_model_on, NULL);
     pe_menu_register_dynamic_choice(page, "Which creature", "Left / right picks the creature.", &s_model_pick, 512, pe_creature_count, pe_creature_name);
-    pe_menu_register_int(page, "Form", "Its body (0), then parts or phases.", &s_model_form, 0, PE_BESTIARY_MAX_FORMS - 1, 1);
+    pe_menu_register_dynamic_choice(page, "Form", "Its body, then its parts or phases (only the ones it has).", &s_model_form,
+                                    PE_BESTIARY_MAX_FORMS, pe_form_count, pe_form_name);
     pe_menu_register_toggle(page, "Silhouette", "Draw the shape only, as an unmet creature.", &s_model_silhouette, NULL);
     pe_menu_register_info(page, "Model", "The model shown: its room, slot and size.", pe_model_info);
     pe_menu_register_tick(pe_tick);

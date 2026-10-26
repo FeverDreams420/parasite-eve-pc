@@ -14,6 +14,9 @@
 #define PE_DIR_MODELS 0x0C               /* container directory: model records */
 #define PE_DIR_ROWS   0x10               /*                      animation rows */
 #define PE_DIR_TIMS   0x28               /*                      TIM records */
+/* Enemy animation rows: 0 / 1 are hit reactions, 2 the idle (little motion, loops, no travel),
+ * 4 the walk, 6 and up attacks (measured over the Bestiary's rooms). */
+#define PE_IDLE_ROW   2
 
 typedef struct { const uint8_t *p; uint32_t n; } PeBuf;
 
@@ -165,10 +168,11 @@ int pe_model_decode(const PeRoomBlobs *room, int slot, PeModel *out) {
     if (!out->vram) { pe_model_free(out); return 0; }
     pe_upload_tims(out->vram, (PeBuf){room->scratch, room->scratch_size});
     pe_upload_tims(out->vram, (PeBuf){room->texture, room->texture_size});
-    if (pe_records(data, PE_DIR_ROWS, &at, &n))        /* the idle row: this slot's lowest row id */
+    if (pe_records(data, PE_DIR_ROWS, &at, &n))        /* the idle row; else this slot's lowest row */
         for (i = 0; i < n; ++i) {
-            const uint32_t w = pe_u32(data, at + 12 * i + 4), group = pe_u8(data, at + 12 * i + 11);
-            if ((int)group == slot && (w >> 24) < row_id) { row_id = w >> 24; row = w & 0xFFFFFFu; }
+            const uint32_t w = pe_u32(data, at + 12 * i + 4), group = pe_u8(data, at + 12 * i + 11), id = w >> 24;
+            if ((int)group != slot || row_id == PE_IDLE_ROW) continue;
+            if (id == PE_IDLE_ROW || id < row_id) { row_id = id; row = w & 0xFFFFFFu; }
         }
     if (row_id != 0xFFFFFFFFu) {
         const uint32_t len = pe_row_length(data, row);

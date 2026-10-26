@@ -57,6 +57,10 @@ int pe_menu_register_info(const char *sub, const char *label, const char *descri
 /* Describe sub-page `sub` of the current page: the footer line when its link is selected,
  * and its place among its sibling pages (lower first; pages without one keep their order). */
 int pe_menu_page(const char *sub, const char *description, int order);
+/* The same for a mod's top page as the list of mods shows it (F1's first screen). Mods without
+ * one are listed after those that have one, in start-up order. */
+int pe_menu_top_page(const char *page, const char *description, int order);
+#define PE_MENU_MANAGE "Manage mods"   /* the host's page, last on the list */
 
 /* ---- for the panel ---- */
 

@@ -3,8 +3,8 @@
  * Navigation: each page lists its own rows first, then links to its sub-pages (in the order
  * pe_menu_page gives them). The header shows where you are ("PE Enhancements / Economy"); the
  * footer the selected row's description and the keys that apply to it. The panel reopens on the
- * page and row it was closed on, every page remembers its row, and with a single mod installed
- * it opens straight on that mod's page.
+ * page and row it was closed on and every page remembers its row. The top is always the list of
+ * mods (each mod's top page, then Manage mods), even with one mod installed.
  *
  * It sits beside the game's Escape settings panel without touching it: the event filter
  * returns the previous one and passes everything on while closed. Like the settings panel it is
@@ -126,30 +126,14 @@ static void pe_go(const char *path, int cursor) {
     pe_clamp_cursor();
 }
 
-/* The page to open on: the last one, or with a single mod, its page. */
+/* The page to open on: the last one, else the list of mods (always shown, even with one). */
 static void pe_open_page(void) {
     pe_build_entries();
     if (s_panel.path[0] && s_panel.count) { pe_clamp_cursor(); return; }
     pe_go("", -1);
-    if (s_panel.count == 1 && s_panel.entries[0].row < 0) pe_go(s_panel.entries[0].page, -1);
 }
 
-static int pe_at_top(void) {
-    /* The top: the mod list, or the only mod's page. */
-    if (!s_panel.path[0]) return 1;
-    if (strchr(s_panel.path, '/')) return 0;
-    {
-        char saved[96];
-        int count;
-        snprintf(saved, sizeof saved, "%s", s_panel.path);
-        s_panel.path[0] = '\0';
-        pe_build_entries();
-        count = s_panel.count;
-        snprintf(s_panel.path, sizeof s_panel.path, "%s", saved);
-        pe_build_entries();
-        return count == 1;
-    }
-}
+static int pe_at_top(void) { return !s_panel.path[0]; }   /* the list of mods */
 
 static void pe_go_up(void) {
     char parent[96], came_from[96], *slash;

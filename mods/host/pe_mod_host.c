@@ -12,6 +12,7 @@
 #include "pe_game.h"
 #include "pe_main_menu.h"
 #include "pe_mod_host.h"
+#include "pe_mod_menu.h"
 #include "pe_pages.h"
 
 extern const PeMod *const g_pe_mods[]; /* generated: pe_mod_list.c */
@@ -163,10 +164,52 @@ static void pe_shutdown_mods(void) {
     s_log = NULL;
 }
 
+/* ---- Manage mods (F1): every built-in mod, on or off from the next start ----
+ * A toggle per mod on the host's page, saved in pe_mods.ini like any row; it is read before the
+ * mods start, so a mod turned off doesn't start at all (nor do the mods that need it). */
+static int s_mod_on[PE_MAX_MODS];
+static char s_mod_note[PE_MAX_MODS][160];
+
+static void pe_manage_register(int mod_count) {
+    int i;
+    pe_menu_top_page(PE_MENU_MANAGE, "Turn mods on or off. Changes apply the next time the game starts.", 100000);
+    pe_menu_begin(PE_MENU_MANAGE);
+    for (i = 0; i < mod_count; i++) {
+        s_mod_on[i] = 1;
+        pe_menu_register_toggle(0, g_pe_mods[i]->name, s_mod_note[i], &s_mod_on[i], NULL);
+    }
+    pe_menu_begin(0);
+}
+
+/* Each row's footer: what the mod is, what it needs, and how it is now. */
+static void pe_manage_notes(int mod_count, const int *state) {
+    static const char *const states[] = {
+        "Running.", "Off: starts with the game again once turned on.", "Not running: a mod it needs is off or missing.",
+        "Not running: it failed to start (see pe_mods.log).",
+    };
+    int i;
+    for (i = 0; i < mod_count; i++) {
+        const PeMod *mod = g_pe_mods[i];
+        const char *const *req;
+        size_t n = (size_t)snprintf(s_mod_note[i], sizeof s_mod_note[0], "%s %s. %s", mod->id, mod->version, states[state[i]]);
+        for (req = mod->requires; req && *req && n < sizeof s_mod_note[0]; req++)
+            n += (size_t)snprintf(s_mod_note[i] + n, sizeof s_mod_note[0] - n, "%s %s", req == mod->requires ? " Needs" : ",", *req);
+    }
+}
+
+enum { PE_MOD_RUNNING, PE_MOD_OFF, PE_MOD_NEEDS, PE_MOD_FAILED };
+
 static void pe_start_mods(void) {
-    int mod_count = 0, tried[PE_MAX_MODS] = {0}, progress = 1, i;
+    int mod_count = 0, tried[PE_MAX_MODS] = {0}, state[PE_MAX_MODS] = {0}, progress = 1, i;
 
     while (g_pe_mods[mod_count] && mod_count < PE_MAX_MODS) mod_count++;
+    pe_manage_register(mod_count);
+    for (i = 0; i < mod_count; i++)
+        if (!s_mod_on[i]) {
+            tried[i] = 1;
+            state[i] = PE_MOD_OFF;
+            pe_mod_log(g_pe_mods[i]->id, "off (Manage mods)");
+        }
     /* Start every mod whose requirements run, until no more can start. */
     while (progress) {
         progress = 0;
@@ -175,6 +218,7 @@ static void pe_start_mods(void) {
             if (tried[i] || !pe_requires_met(mod)) continue;
             tried[i] = progress = 1;
             if (mod->init && mod->init() != 0) {
+                state[i] = PE_MOD_FAILED;
                 pe_mod_log(mod->id, "init failed, mod off");
                 continue;
             }
@@ -183,7 +227,11 @@ static void pe_start_mods(void) {
         }
     }
     for (i = 0; i < mod_count; i++)
-        if (!tried[i]) pe_mod_log(g_pe_mods[i]->id, "missing a required mod, mod off");
+        if (!tried[i]) {
+            state[i] = PE_MOD_NEEDS;
+            pe_mod_log(g_pe_mods[i]->id, "missing a required mod, mod off");
+        }
+    pe_manage_notes(mod_count, state);
     atexit(pe_shutdown_mods);
 }
 

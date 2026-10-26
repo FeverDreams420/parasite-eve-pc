@@ -2,6 +2,7 @@
 #include "pe_pages.h"
 
 void pe_pages_describe(void) {
+    pe_menu_top_page(PE_MENU_PAGE, "Quality of life, rebalance, economy, collection and tools, by topic.", 10);
     pe_menu_begin(PE_MENU_PAGE);
     pe_menu_page(PE_PAGE_MOVEMENT, "Always run and how fast Aya moves.", 10);
     pe_menu_page(PE_PAGE_COMBAT, "Damage rules, gun mods and Parasite Energy.", 20);

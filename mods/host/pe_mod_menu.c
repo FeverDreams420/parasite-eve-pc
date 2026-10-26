@@ -205,12 +205,22 @@ enum { PE_MAX_PAGES = 64 };
 static PeMenuPageInfo s_pages[PE_MAX_PAGES];
 static int s_page_count;
 
+static int pe_page_info_set(const char *path, const char *description, int order);
+
 int pe_menu_page(const char *sub, const char *description, int order) {
-    PeMenuPageInfo *p;
     char path[96];
-    int i;
     if (!sub || !*sub) return -1;
     snprintf(path, sizeof path, "%s/%s", s_page, sub);
+    return pe_page_info_set(path, description, order);
+}
+
+int pe_menu_top_page(const char *page, const char *description, int order) {
+    return page && *page ? pe_page_info_set(page, description, order) : -1;
+}
+
+static int pe_page_info_set(const char *path, const char *description, int order) {
+    PeMenuPageInfo *p;
+    int i;
     for (i = 0; i < s_page_count && strcmp(s_pages[i].path, path) != 0; ++i) {}
     if (i == s_page_count) {
         if (s_page_count >= PE_MAX_PAGES) return -1;

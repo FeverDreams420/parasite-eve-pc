@@ -96,8 +96,11 @@ static PeMenuRow *pe_row_new(PeRowKind kind, const char *sub, const char *label,
     else snprintf(row->page, sizeof(row->page), "%s", s_page);
     row->label = label;
     row->description = description ? description : "";
+    row->mod_id = pe_mod_current();               /* NULL: the host's own */
     return row;
 }
+
+int pe_menu_row_active(const PeMenuRow *row) { return pe_mod_active(row->mod_id); }
 
 static void pe_row_restore(PeMenuRow *row) {
     char key[192];
@@ -244,17 +247,21 @@ int pe_menu_row_adjustable(const PeMenuRow *row) {
     return row->kind != PE_ROW_ACTION && row->kind != PE_ROW_INFO;
 }
 
+static const char *s_tick_mod[PE_MAX_TICKS];   /* each tick's mod: inactive mods' are skipped */
+
 static int pe_menu_tick(void *ctx, void *user) {
     int i;
     (void)ctx;
     (void)user;
-    for (i = 0; i < s_tick_count; i++) s_ticks[i]();
+    for (i = 0; i < s_tick_count; i++)
+        if (pe_mod_active(s_tick_mod[i])) s_ticks[i]();
     return 0;
 }
 
 int pe_menu_register_tick(PeMenuPerFrame fn) {
     if (!fn || s_tick_count >= PE_MAX_TICKS) return -1;
     if (s_tick_count == 0) pe_hook_add(PE_HOOK_FRAME, pe_menu_tick, NULL, PE_PRIORITY_NORMAL, "menu");
+    s_tick_mod[s_tick_count] = pe_mod_current();
     s_ticks[s_tick_count++] = fn;
     return 0;
 }
@@ -277,6 +284,12 @@ static unsigned pe_dynamic_count(PeMenuRow *row) {
 
 void pe_menu_row_value_text(PeMenuRow *row, char *out, unsigned size) {
     int v;
+    /* An inactive mod's rows that read the game show that it is off, not stale numbers. */
+    if (!pe_menu_row_active(row) && (row->kind == PE_ROW_LIVE_INT || row->kind == PE_ROW_LIVE_CHOICE ||
+                                     row->kind == PE_ROW_ACTION)) {
+        snprintf(out, size, "Off");
+        return;
+    }
     switch (row->kind) {
     case PE_ROW_TOGGLE:
         snprintf(out, size, "%s", *row->value ? "On" : "Off");
@@ -312,6 +325,8 @@ static int pe_clamp(int v, int lo, int hi) { return v < lo ? lo : v > hi ? hi : 
 
 void pe_menu_row_step(PeMenuRow *row, int direction) {
     unsigned count;
+    /* An inactive mod's settings can be set up (saved); what writes the game can't run. */
+    if (!pe_menu_row_active(row) && (row->kind == PE_ROW_LIVE_INT || row->kind == PE_ROW_LIVE_CHOICE)) return;
     switch (row->kind) {
     case PE_ROW_TOGGLE:
         *row->value = !*row->value;
@@ -342,6 +357,10 @@ void pe_menu_row_step(PeMenuRow *row, int direction) {
 void pe_menu_row_accept(PeMenuRow *row) {
     switch (row->kind) {
     case PE_ROW_ACTION:
+        if (!pe_menu_row_active(row)) {
+            pe_toast("This mod is off: turn it on in Manage mods, then restart");
+            break;
+        }
         pe_mod_log(NULL, "action %s/%s", row->page, row->label);
         row->action();
         break;

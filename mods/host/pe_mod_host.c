@@ -24,6 +24,7 @@ typedef struct {
     PeHookFn fn;
     void *user;
     const char *mod_id;
+    int active;      /* its mod is active (set when the mods have started) */
 } PeHandler;
 
 typedef struct {
@@ -102,7 +103,7 @@ int pe_hook_add(int id, PeHookFn fn, void *user, int priority, const char *mod_i
         if (prev->id < id || (prev->id == id && prev->priority <= priority)) break;
         s_handlers[i] = *prev;
     }
-    s_handlers[i] = (PeHandler){id, priority, s_handler_order++, fn, user, mod_id};
+    s_handlers[i] = (PeHandler){id, priority, s_handler_order++, fn, user, mod_id, 1};
     s_handler_count++;
     return 0;
 }
@@ -131,21 +132,54 @@ int pe_service_publish(const char *name, int version, const void *api, const cha
     return 0;
 }
 
+/* An inactive mod's services aren't offered: its code must not run through another mod. */
 const void *pe_service_get(const char *name, int version) {
     int i;
     for (i = 0; i < s_service_count; i++)
         if (s_services[i].version == version && strcmp(s_services[i].name, name) == 0)
-            return s_services[i].api;
+            return pe_mod_active(s_services[i].mod_id) ? s_services[i].api : NULL;
     return NULL;
 }
 
-/* ---- start-up ---- */
+/* ---- start-up ----
+ * Every mod's init runs, so its F1 pages are there to browse and set up; but only ACTIVE mods
+ * touch the game: the handlers, per-frame ticks, services and main-menu rows of an inactive mod
+ * (off in Manage mods, All mods off, or a mod it needs inactive) are skipped. Mods' inits only
+ * register, so the game plays as the original with every mod inactive. */
+static const char *s_inited_ids[PE_MAX_MODS];
+static int s_inited_count;
+static const char *s_current_mod;          /* the mod whose init is running */
 
 int pe_mod_is_running(const char *mod_id) {
     int i;
+    if (!mod_id) return 0;
     for (i = 0; i < s_running_count; i++)
         if (strcmp(s_running[i]->id, mod_id) == 0) return 1;
     return 0;
+}
+
+const char *pe_mod_current(void) { return s_current_mod; }
+
+/* The host's own (NULL, "host", "menu") are always active; a mod while it is starting too. */
+int pe_mod_active(const char *mod_id) {
+    int i;
+    if (!mod_id || !s_started) return 1;
+    for (i = 0; i < s_inited_count; i++)
+        if (strcmp(s_inited_ids[i], mod_id) == 0) return pe_mod_is_running(mod_id);
+    return 1;
+}
+
+static int pe_inited(const char *mod_id) {
+    int i;
+    for (i = 0; i < s_inited_count; i++) if (strcmp(s_inited_ids[i], mod_id) == 0) return 1;
+    return 0;
+}
+
+static int pe_requires_inited(const PeMod *mod) {
+    const char *const *req;
+    for (req = mod->requires; req && *req; req++)
+        if (!pe_inited(*req)) return 0;
+    return 1;
 }
 
 static int pe_requires_met(const PeMod *mod) {
@@ -210,27 +244,30 @@ static void pe_start_mods(void) {
 
     while (g_pe_mods[mod_count] && mod_count < PE_MAX_MODS) mod_count++;
     pe_manage_register(mod_count);
-    if (!s_all_on) pe_mod_log(NULL, "All mods off (Manage mods): the game plays as the original");
-    for (i = 0; i < mod_count; i++)
-        if (!s_all_on || !s_mod_on[i]) {
-            tried[i] = 1;
-            state[i] = s_all_on ? PE_MOD_OFF : PE_MOD_ALL_OFF;
-            if (s_all_on) pe_mod_log(g_pe_mods[i]->id, "off (Manage mods)");
-        }
-    /* Start every mod whose requirements run, until no more can start. */
+    if (!s_all_on) pe_mod_log(NULL, "All mods off (Manage mods): pages browsable, the game plays as the original");
+    /* Init every mod once the mods it needs have, in that order; active only if on and every mod
+     * it needs is active. */
     while (progress) {
         progress = 0;
         for (i = 0; i < mod_count; i++) {
             const PeMod *mod = g_pe_mods[i];
-            if (tried[i] || !pe_requires_met(mod)) continue;
+            int ok;
+            if (tried[i] || !pe_requires_inited(mod)) continue;
             tried[i] = progress = 1;
-            if (mod->init && mod->init() != 0) {
-                state[i] = PE_MOD_FAILED;
-                pe_mod_log(mod->id, "init failed, mod off");
+            s_current_mod = mod->id;
+            ok = !mod->init || mod->init() == 0;
+            s_current_mod = NULL;
+            if (!ok) { state[i] = PE_MOD_FAILED; pe_mod_log(mod->id, "init failed, mod off"); continue; }
+            s_inited_ids[s_inited_count++] = mod->id;
+            if (!s_all_on) state[i] = PE_MOD_ALL_OFF;
+            else if (!s_mod_on[i]) state[i] = PE_MOD_OFF;
+            else if (!pe_requires_met(mod)) state[i] = PE_MOD_NEEDS;
+            else {
+                s_running[s_running_count++] = mod;
+                pe_mod_log(mod->id, "started %s %s", mod->name, mod->version);
                 continue;
             }
-            s_running[s_running_count++] = mod;
-            pe_mod_log(mod->id, "started %s %s", mod->name, mod->version);
+            pe_mod_log(mod->id, "inactive (%s): pages only", state[i] == PE_MOD_NEEDS ? "a mod it needs is off" : "off");
         }
     }
     for (i = 0; i < mod_count; i++)
@@ -266,6 +303,10 @@ static void pe_host_start(const PeHookInit *init) {
     }
     if (s_interactive) pe_panel_install();
     s_started = 1;
+    {                                            /* inactive mods' handlers stay registered, skipped */
+        int i;
+        for (i = 0; i < s_handler_count; i++) s_handlers[i].active = pe_mod_active(s_handlers[i].mod_id);
+    }
 }
 
 int pe_hook_dispatch(int id, void *ctx) {
@@ -275,7 +316,7 @@ int pe_hook_dispatch(int id, void *ctx) {
     for (i = 0; i < s_handler_count; i++) {
         if (s_handlers[i].id < id) continue;
         if (s_handlers[i].id > id) break;
-        if (s_handlers[i].fn(ctx, s_handlers[i].user)) handled = 1;
+        if (s_handlers[i].active && s_handlers[i].fn(ctx, s_handlers[i].user)) handled = 1;
     }
     return handled;
 }

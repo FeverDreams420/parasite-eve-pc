@@ -19,7 +19,7 @@ void Menu_DrawItemList(MenuWidgetNode *node);
 
 /* ---- extra rows ---- */
 
-static struct { const PeMainMenuRow *row; int order; } s_rows[PE_ROWS_MAX];
+static struct { const PeMainMenuRow *row; int order; const char *mod_id; } s_rows[PE_ROWS_MAX];
 static int s_row_count;
 static u8 s_row_title[64];
 
@@ -29,12 +29,13 @@ void pe_main_menu_add(const PeMainMenuRow *row, int order) {
     for (i = s_row_count; i > 0 && s_rows[i - 1].order > order; --i) s_rows[i] = s_rows[i - 1];
     s_rows[i].row = row;
     s_rows[i].order = order;
+    s_rows[i].mod_id = pe_mod_current();          /* an inactive mod's row isn't shown */
     ++s_row_count;
 }
 
 static int pe_menu_open_here(void) { return pe_game_loaded() && !pe_in_battle() && !Menu_GetBattleEquipMode(); }
 
-static int pe_shown(int i) { return !s_rows[i].row->shown || s_rows[i].row->shown(); }
+static int pe_shown(int i) { return pe_mod_active(s_rows[i].mod_id) && (!s_rows[i].row->shown || s_rows[i].row->shown()); }
 
 /* The game's rows: one per set action bit. */
 static int pe_game_rows(void) {

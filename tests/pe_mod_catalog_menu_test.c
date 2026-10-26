@@ -5,6 +5,8 @@
 #include "../mods/host/pe_main_menu.c"
 #include "../mods/pe_economy/pe_catalog_menu.c"
 int pe_in_battle(void) { return 0; }
+const char *pe_mod_current(void) { return NULL; }
+int pe_mod_active(const char *m) { (void)m; return 1; }
 int g_MenuItemContextFlag, g_MenuBattleStatusOverlayActive;
 MenuWidgetNode *g_MenuWidgetActiveListHead;
 static MenuWidgetNode panel, list;

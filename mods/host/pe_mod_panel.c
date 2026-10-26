@@ -169,13 +169,38 @@ static const Entry *pe_selected(void) {
     return s_panel.count ? &s_panel.entries[s_panel.cursor] : NULL;
 }
 
+/* Does page `page` (or a page below it) have a row of an active mod? */
+static int pe_page_active(const char *page) {
+    const size_t n = strlen(page);
+    int i;
+    for (i = 0; i < pe_menu_row_count(); ++i) {
+        const PeMenuRow *row = pe_menu_row(i);
+        if (strncmp(row->page, page, n) == 0 && (row->page[n] == '\0' || row->page[n] == '/') && pe_menu_row_active(row))
+            return 1;
+    }
+    return 0;
+}
+
+#define PE_OFF_NOTE "Off: turn it on in Manage mods, then restart. "
+
 static const char *pe_help_text(void) {
+    static char text[320];
     const Entry *e = pe_selected();
     const PeMenuPageInfo *info;
+    const char *description;
+    int off;
     if (!e) return "Nothing here yet.";
-    if (e->row >= 0) return pe_menu_row(e->row)->description;
-    info = pe_menu_page_info(e->page);
-    return info && info->description ? info->description : "Open this page.";
+    if (e->row >= 0) {
+        description = pe_menu_row(e->row)->description;
+        off = !pe_menu_row_active(pe_menu_row(e->row));
+    } else {
+        info = pe_menu_page_info(e->page);
+        description = info && info->description ? info->description : "Open this page.";
+        off = !pe_page_active(e->page);
+    }
+    if (!off) return description;
+    snprintf(text, sizeof text, "%s%s", PE_OFF_NOTE, description);   /* browse and set up, nothing runs */
+    return text;
 }
 
 static const char *pe_key_hints(void) {
@@ -200,12 +225,15 @@ static void pe_breadcrumb(char *out, size_t size) {
         else out[o++] = *p;
     }
     out[o] = '\0';
+    if (!pe_page_active(s_panel.path) && o + 7 < size) snprintf(out + o, size - o, "  (off)");
 }
 
 static void pe_paint_row(const Entry *e, int slot, int selected) {
     const float s = s_scale, top = (HEADER_H + slot * ROW_H) * s, mid = top + ROW_H * 0.5f * s, base = mid + 6 * s;
     const float value_x = (PANEL_W - PANEL_PAD - VALUE_W * 0.5f) * s;
-    const PeColor label = selected ? pe_ui_text : pe_ui_alpha(pe_ui_text, 0.82f);
+    /* An inactive mod's rows and pages read dimmer: browsable, not running. */
+    const int off = e->row >= 0 ? !pe_menu_row_active(pe_menu_row(e->row)) : !pe_page_active(e->page);
+    const PeColor label = pe_ui_alpha(pe_ui_text, (selected ? 1.0f : 0.82f) * (off ? 0.55f : 1.0f));
     char value[96];
     if (selected) {
         pe_ui_fill_round_rect(&s_surface, PANEL_PAD / 2 * s, top + 3 * s, (PANEL_W - PANEL_PAD) * s, (ROW_H - 6) * s, 9 * s,
@@ -222,7 +250,8 @@ static void pe_paint_row(const Entry *e, int slot, int selected) {
         PeMenuRow *row = pe_menu_row(e->row);
         pe_ui_draw_text(&s_surface, PANEL_PAD * s, base, 17 * s, row->label, label, PE_ALIGN_LEFT);
         if (row->kind == PE_ROW_ACTION) {
-            if (selected) pe_ui_draw_text(&s_surface, value_x, base, 15 * s, "Press Enter", pe_ui_accent, PE_ALIGN_CENTRE);
+            if (selected) pe_ui_draw_text(&s_surface, value_x, base, 15 * s, off ? "Off" : "Press Enter", off ? pe_ui_muted : pe_ui_accent,
+                                          PE_ALIGN_CENTRE);
             return;
         }
         pe_menu_row_value_text(row, value, sizeof value);

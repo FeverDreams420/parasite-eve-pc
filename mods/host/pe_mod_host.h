@@ -40,6 +40,12 @@ int pe_service_publish(const char *name, int version, const void *api, const cha
 const void *pe_service_get(const char *name, int version);
 
 int pe_mod_is_running(const char *mod_id);
+/* Every mod's init runs (its F1 pages exist), but only active mods touch the game: off in Manage
+ * mods, with All mods off, or needing an inactive mod, a mod's handlers, ticks, services and
+ * main-menu rows are skipped. pe_mod_current(): the mod whose init is running (owner of what it
+ * registers), else NULL. pe_mod_active(): NULL and the host's own are always active. */
+const char *pe_mod_current(void);
+int pe_mod_active(const char *mod_id);
 int pe_mod_interactive(void);
 int pe_mod_path(char *out, size_t size, const char *file);
 void pe_mod_log(const char *mod_id, const char *fmt, ...);

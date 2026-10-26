@@ -83,7 +83,12 @@ typedef struct PeMenuRow {
     PeMenuChoiceCount count_fn;
     PeMenuChoiceName name_fn;
     PeMenuText text_fn;
+    const char *mod_id;  /* the mod that registered it (NULL: the host) */
 } PeMenuRow;
+
+/* The row's mod is active: settings of an inactive mod can still be set (saved), but its live
+ * rows and actions don't run. */
+int pe_menu_row_active(const PeMenuRow *row);
 
 /* Page metadata (pe_menu_page), by full path, or NULL. */
 typedef struct PeMenuPageInfo {

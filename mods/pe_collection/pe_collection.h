@@ -60,6 +60,7 @@ const PeCostume *pe_wardrobe_owned(int k);
 const PeCostume *pe_wardrobe_worn(void);         /* NULL: Aya's own clothes */
 void pe_wardrobe_wear_later(const PeCostume *c); /* worn from the next room load (the menu's close) */
 void pe_wardrobe_menu_register(const char *mod_id);
+void pe_bestiary_menu_register(const char *mod_id);   /* pe_bestiary_menu.c: the Bestiary in Aya's menu */
 
 /* ---- skins (pe_skin_loader.c): costumes with a `bundle` folder ---- */
 int pe_skin_available(const char *folder);       /* its files are there */

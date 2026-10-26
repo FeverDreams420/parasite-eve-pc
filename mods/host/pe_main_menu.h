@@ -44,7 +44,14 @@ void pe_screen_open(PeScreen *s, struct MenuWidgetNode *from, int x, int y, int 
 /* The same, flush where the game's own screens sit (the inventory panel's layout, descriptor 1). */
 void pe_screen_open_game(PeScreen *s, struct MenuWidgetNode *from, int rows_visible,
                          void (*draw)(struct MenuWidgetNode *), int (*input)(struct MenuWidgetNode *, unsigned int));
-void pe_screen_close(PeScreen *s);   /* back to `from` */
+void pe_screen_close(PeScreen *s);   /* back to `from` (extra panels go with it) */
+/* An extra panel on an open screen: a framed box at (x, y), `width` wide and `rows` rows tall, its
+ * rows drawn by `draw` (NULL: an empty frame, e.g. for a picture the image presenter puts inside).
+ * Not selectable; destroyed with the screen. Returns its list node (for pe_screen_inside), or NULL. */
+struct MenuWidgetNode *pe_screen_panel(PeScreen *s, int x, int y, int width, int rows,
+                                       void (*draw)(struct MenuWidgetNode *));
+/* A list's inside on the game screen (320 x 224): where its rows draw. */
+void pe_screen_inside(const struct MenuWidgetNode *list, int *x, int *y, int *w, int *h);
 void pe_screen_rows(PeScreen *s, int rows, int cursor);   /* the list's row count and cursor */
 int pe_screen_title_base(void);     /* a selected_base whose title bar always prints */
 

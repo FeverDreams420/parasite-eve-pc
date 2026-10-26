@@ -188,6 +188,36 @@ void pe_screen_close(PeScreen *s) {
     if (s->from) MenuWidget_SetCurrentNode(s->from);
 }
 
+static void pe_draw_nothing(MenuWidgetNode *node) { (void)node; }
+
+MenuWidgetNode *pe_screen_panel(PeScreen *s, int x, int y, int width, int rows, void (*draw)(MenuWidgetNode *)) {
+    MenuWidgetNode *panel, *list;
+    if (!s->panel) return NULL;
+    panel = MenuWidget_CreateSimpleNode(PE_DESC_PANEL, s->panel, 0, 0);
+    if (!panel) return NULL;
+    list = MenuWidget_CreateNode(PE_DESC_PANEL, panel, panel);
+    if (!list) return NULL;
+    panel->update = NULL;
+    panel->x = x;
+    panel->y = y;
+    panel->grid_width = width;
+    list->draw_state = width - 2 * list->x;
+    list->draw = (void (*)())(draw ? draw : pe_draw_nothing);
+    list->update = NULL;
+    list->selected_base = PE_TITLE_BASE;
+    list->visible_rows_mirror = rows;
+    Draw_SetPrimCallback(list, rows);
+    return list;
+}
+
+void pe_screen_inside(const MenuWidgetNode *list, int *x, int *y, int *w, int *h) {
+    const MenuWidgetNode *panel = list ? list->parent : NULL;
+    *x = (panel ? panel->x : 0) + (list ? list->x : 0);
+    *y = (panel ? panel->y : 0) + (list ? list->y : 0);
+    *w = list ? list->draw_state : 0;
+    *h = list ? list->disabled * list->visible_rows_mirror : 0;   /* row height x rows */
+}
+
 void pe_screen_rows(PeScreen *s, int rows, int cursor) {
     const int visible = s->list->visible_rows_mirror;
     s->list->scroll_adjust = 0;

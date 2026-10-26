@@ -52,6 +52,7 @@ static int collection_init(void) {
     pe_bestiary_register(MOD_ID);
     pe_wardrobe_register(MOD_ID);
     pe_wardrobe_menu_register(MOD_ID);
+    pe_bestiary_menu_register(MOD_ID);
     pe_skin_register(MOD_ID);
     pe_animation_audit_register(MOD_ID);
     pe_pack_pe1_register();

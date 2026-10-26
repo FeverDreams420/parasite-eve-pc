@@ -31,6 +31,17 @@ This tree can also build with a mod host (`-DPE_MODS=ON`). A standard build is u
 mods start only after **F1 → Manage mods → All mods** is turned on and the game restarted.
 Settings are saved in `pe_mods.ini`. See [the mod guide](mods/README.md) for writing a mod.
 
+### PE Enhancements
+
+Open **F1 → PE Enhancements** to configure them.
+
+- **Movement** (`pe_qol`): Always Run and configurable walk, run, combat and battle-entry speeds
+  (walking and running default to 1.75×).
+- **Encounters** (`pe_qol`): no random battles, or Normal, 2×, 4× or Every Check frequency. Story
+  and room rules still apply; this changes how often fights happen, not their size.
+
+Mod builds are experimental; a passing build or test does not establish full in-game compatibility.
+
 ## Build
 
 Requires Git, CMake 3.21 or newer and a C11 compiler.
@@ -53,6 +64,6 @@ cmake --build build-mods --parallel
 ./build-mods/parasite-eve-pc
 ```
 
-`PE_MOD_LIST` picks the mods by folder name (default: none (add `pe_hello` for the example)).
+`PE_MOD_LIST` picks the mods by folder name (default: `pe_qol`).
 
 For development details, see [code organization](docs/CODE_ORGANIZATION.md).

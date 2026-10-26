@@ -11,8 +11,23 @@ typedef enum PeHookId {
     PE_HOOK_INIT,        /* PeHookInit: once, before the first scene */
     PE_HOOK_SCENE_START, /* NULL: a field scene finished loading, before its first frame */
     PE_HOOK_FRAME,       /* NULL: every field frame, after pad input is read */
+    PE_HOOK_INV_COMMAND, /* PeHookInvCommand: Inv_DispatchCommand entry; replaceable */
+    PE_HOOK_SAVE_READ,   /* u8 *: the 8 KB card block of a save being loaded */
+    PE_HOOK_PAD_READ,    /* NULL: Field_HandleStateTransition, before it reads g_PadPackets */
+    PE_HOOK_SCRIPT_RANDOM, /* PeHookScriptRandom: local RNG bounds, before a script roll */
     PE_HOOK_COUNT
 } PeHookId;
+
+/* next points just past the current instruction in native loaded bytecode. */
+typedef struct PeHookScriptRandom {
+    int *start, *end;
+    const unsigned int *next;
+} PeHookScriptRandom;
+
+typedef struct PeHookInvCommand {
+    int command, value;
+    int result; /* a handler returning nonzero replaces the command with this result */
+} PeHookInvCommand;
 
 typedef struct PeHookInit {
     int interactive;        /* 0 for headless runs: no window, no menus */

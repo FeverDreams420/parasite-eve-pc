@@ -1,4 +1,5 @@
 #include "common.h"
+#include "pe_hooks.h"
 #include "pe1/game_timers.h"
 #include "pe1/geom_state.h"
 #include "pe1/inventory_slots.h"
@@ -84,6 +85,7 @@ int Save_SerializeTail(void) {
 
 int Save_DeserializeTail(void) {
     u32 links[2];
+    PE_HOOK(PE_HOOK_SAVE_READ, g_MemCardFileBuffer);
     memcpy(links, g_SaveIoCursor + 0x818 + 0x68, sizeof(links));
     if ((links[0] && links[0] != 0x800B0CB0u) ||
         (links[1] && links[1] != 0x8009D1B0u)) return -1;

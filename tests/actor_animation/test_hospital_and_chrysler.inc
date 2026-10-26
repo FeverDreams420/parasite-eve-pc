@@ -837,7 +837,11 @@ done:
  * the same place both times, and the span the renderer reports must reach
  * at least 0..320 and be covered by the linked tiles, column by column, in
  * every 16-line band the screen's own edge columns are covered (read back
- * from the ordering table, not the renderer's record). */
+ * from the ordering table, not the renderer's record). With PsyZ's VRAM copy
+ * on, the renderer also drops tile columns whose texels hold no picture; the
+ * positions where that ends the picture short of the whole tiles are
+ * counted. */
+#include <psyz/gpu.h>
 #include <psyz/video.h>
 #include "pe1/geom_state.h"
 #include "pe1/render_camera.h"
@@ -864,6 +868,14 @@ static u16 widescreen_bands(const WidescreenTile *tiles,unsigned n,int column){
     for(unsigned i=0;i<n;++i)if(column>=tiles[i].x && column<tiles[i].x+16)
         for(int band=0;band<14;++band)if(band*16+8>=tiles[i].y && band*16+8<tiles[i].y+16)rows|=(u16)(1u<<band);
     return rows;
+}
+/* The span from whole linked tiles: what the renderer reports without texels. */
+static void widescreen_tile_span(const WidescreenTile *tiles,unsigned n,int *left,int *right){
+    u16 edge=0xFFFF;*left=0;*right=320;
+    for(int c=0;c<8;++c)edge&=widescreen_bands(tiles,n,c);
+    while(edge && *left>-RENDER_WIDESCREEN_MARGIN && (widescreen_bands(tiles,n,*left-1)&edge)==edge)--*left;
+    edge=0xFFFF;for(int c=312;c<320;++c)edge&=widescreen_bands(tiles,n,c);
+    while(edge && *right<320+RENDER_WIDESCREEN_MARGIN && (widescreen_bands(tiles,n,*right)&edge)==edge)++*right;
 }
 /* Black game pixels in the presenter's 16:9 view (199 each side of the
  * centre at 320x224) for a picture span, with the span limited to cap past
@@ -892,7 +904,8 @@ static int original_widescreen_rooms(void)
     size_t buffer_size=16u<<20;void *buffer=malloc(buffer_size);int result=1;
     unsigned rooms=0,full=0,classic=0,partial=0,positions=0;
     unsigned barred_before=0,barred_now=0,rooms_barred_before=0,rooms_barred_now=0;
-    if(!buffer || Asset_OpenPeImage()!=0)goto done;
+    unsigned trimmed=0,rooms_trimmed=0;
+    if(!buffer || Asset_OpenPeImage()!=0 || Psyz_GpuSetVramCopy(1)!=0)goto done;
     Boot_InitGameState();D_8009CDC8='m';fx_image_io=1;
     g_ActiveDrawSlot=0;D_800B0E38.ordering[0]=ordering;
     for(unsigned map=1;map<=SCENE_ROOM_COUNT;++map){
@@ -907,7 +920,7 @@ static int original_widescreen_rooms(void)
         unsigned groups=0;
         for(unsigned i=0;i<state->entry_count06;++i)groups|=1u<<(address.entry[i].group&31);
         int least=-RENDER_WIDESCREEN_MARGIN,most=320+RENDER_WIDESCREEN_MARGIN,widest=0,narrowest=0;
-        int room_black_before=0,room_black_now=0;
+        int room_black_before=0,room_black_now=0,room_trimmed=0;
         for(unsigned group=0;group<32;++group){
             if(!(groups&(1u<<group)))continue;
             g_GeomScroll.state.position.groupSelect=(u8)group;void *end=NULL;
@@ -936,6 +949,11 @@ static int original_widescreen_rooms(void)
                             fprintf(stderr,"Widescreen M%03u group%u x%d: hole at column %d inside %d..%d\n",map,group,x,c,left,right);goto done;}
                     }
                 }
+                int tile_left,tile_right;widescreen_tile_span(on,n_on,&tile_left,&tile_right);
+                if(left<tile_left || right>tile_right){
+                    fprintf(stderr,"Widescreen M%03u group%u x%d: span %d..%d past the tiles %d..%d\n",map,group,x,left,right,tile_left,tile_right);goto done;}
+                if(left!=tile_left || right!=tile_right){++trimmed;room_trimmed=1;
+                    if(getenv("PE_WS_TRIMMED"))printf("Widescreen M%03u group%u x%d: texels %d..%d, tiles %d..%d\n",map,group,x,left,right,tile_left,tile_right);}
                 /* before: picture to 54 past the screen, view slid 14 at most */
                 int black_before=widescreen_black(left,right,54,14,0);
                 int black_now=widescreen_black(left,right,RENDER_WIDESCREEN_MARGIN,39,1);
@@ -954,7 +972,7 @@ static int original_widescreen_rooms(void)
         }
         ++rooms;
         if(narrowest==320+2*RENDER_WIDESCREEN_MARGIN)++full;else if(widest==320)++classic;else ++partial;
-        rooms_barred_before+=room_black_before>0;rooms_barred_now+=room_black_now>0;
+        rooms_barred_before+=room_black_before>0;rooms_barred_now+=room_black_now>0;rooms_trimmed+=room_trimmed;
         printf("Widescreen M%03u: %d..%d at every position, widest %d, most black %d (was %d)\n",
             map,least,most,widest,room_black_now,room_black_before);
     }
@@ -962,9 +980,10 @@ static int original_widescreen_rooms(void)
         rooms,positions,full,classic,partial);
     printf("Widescreen bars: %u positions in %u rooms (was %u in %u)\n",
         barred_now,rooms_barred_now,barred_before,rooms_barred_before);
+    printf("Widescreen texels: picture ends inside a tile at %u positions in %u rooms\n",trimmed,rooms_trimmed);
     result=rooms==0;
 done:
-    Psyz_VideoSetWidescreen(0);free(buffer);
+    Psyz_VideoSetWidescreen(0);Psyz_GpuSetVramCopy(0);free(buffer);
     fx_image_io=0;CdRom_BindImage(NULL,NULL);g_CdImageVolumes[0]=NULL;pe_disc_close(&disc);
     return result;
 }

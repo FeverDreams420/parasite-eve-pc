@@ -44,27 +44,91 @@ typedef union RenderLinkAddress {
  * width allows. The presenter shows past the screen's edges only the columns
  * the linked tiles cover as fully as the screen's own edge columns (per
  * 16-line band of the 224 lines), contiguous from the edge outwards; any gap
- * or end of the stored picture stays black. */
+ * or end of the stored picture stays black. A tile counts only from its first
+ * to its last column holding picture: the stored picture can stop inside a
+ * tile (a wall's last tiles hold a few columns of picture and the rest
+ * transparent), which showed as a black strip at that side. The edge
+ * columns' bands come from the whole tiles, so the picture never reaches past
+ * them. */
 #define WS_FIRST_X (-112)
 #define WS_COLUMNS 544
 #define WS_BANDS 14
 static struct {
-    u16 bands[WS_COLUMNS];
+    u16 bands[WS_COLUMNS]; /* picture: from the tiles' texels */
+    u16 tiled[WS_COLUMNS]; /* whole linked tiles: for the screen's edge */
     int tiles;
 } s_WidescreenCover[2];
 
-static void Render_AddWidescreenTile(int slot, int x, int y) {
-    u16 rows = 0;
+/* Whether the tile's texel (i, j) holds picture (is not transparent), read
+ * from PsyZ's VRAM copy; -1 when the copy cannot tell (not uploaded, drawn
+ * over, 15-bit page...). Opaque black counts as picture: dark rooms store
+ * real black past the screen. */
+static int Render_WidescreenTexel(const RenderTilePacket *sprite, const RenderTexturePagePacket *page,
+                                  int i, int j) {
+    const unsigned char *known;
+    const unsigned short *vram = Psyz_GpuGetVramCopy(&known);
+    u32 tp = page->command;
+    int bx = (tp & 0xF) * 64;
+    int by = ((tp >> 4) & 1) * 256;
+    int depth = (tp >> 7) & 3;
+    int cx = (sprite->clut & 0x3F) * 16;
+    int cy = (sprite->clut >> 6) & 0x1FF;
+    int tu = (sprite->u + i) & 0xFF;
+    int tv = (sprite->v + j) & 0xFF;
+    int at;
+    u16 c;
+
+    if (vram == NULL || depth == 3) return -1;
+    if (depth == 0) {
+        at = (by + tv) * 1024 + ((bx + tu / 4) & 1023);
+        if (!known[at]) return -1;
+        at = cy * 1024 + ((cx + ((vram[at] >> ((tu & 3) * 4)) & 0xF)) & 1023);
+    } else if (depth == 1) {
+        at = (by + tv) * 1024 + ((bx + tu / 2) & 1023);
+        if (!known[at]) return -1;
+        at = cy * 1024 + ((cx + ((vram[at] >> ((tu & 1) * 8)) & 0xFF)) & 1023);
+    } else {
+        at = (by + tv) * 1024 + ((bx + tu) & 1023);
+    }
+    if (!known[at]) return -1;
+    c = vram[at];
+    return c != 0;
+}
+
+static void Render_AddWidescreenTile(int slot, int x, int y, const RenderTilePacket *sprite,
+                                     const RenderTexturePagePacket *page) {
+    int first = 16;
+    int last = 0;
     int band;
     int column;
+    int i;
+    int j;
 
+    /* The tile's picture runs from its first to its last column holding any
+     * picture, on any row; transparent texels between them are part of it. */
+    for (i = 0; i < 16; ++i) {
+        for (j = 0; j < 16; ++j) {
+            int texel = Render_WidescreenTexel(sprite, page, i, j);
+            if (texel < 0) {
+                first = 0;
+                last = 16;
+                i = j = 16;
+            } else if (texel) {
+                first = i < first ? i : first;
+                last = i + 1;
+                break;
+            }
+        }
+    }
     for (band = 0; band < WS_BANDS; ++band) {
         int middle = band * 16 + 8;
-        if (middle >= y && middle < y + 16) rows |= (u16)(1u << band);
-    }
-    for (column = x; column < x + 16; ++column) {
-        if (column >= WS_FIRST_X && column < WS_FIRST_X + WS_COLUMNS)
-            s_WidescreenCover[slot].bands[column - WS_FIRST_X] |= rows;
+        if (middle < y || middle >= y + 16) continue;
+        for (column = x; column < x + 16; ++column) {
+            if (column < WS_FIRST_X || column >= WS_FIRST_X + WS_COLUMNS) continue;
+            s_WidescreenCover[slot].tiled[column - WS_FIRST_X] |= (u16)(1u << band);
+            if (column >= x + first && column < x + last)
+                s_WidescreenCover[slot].bands[column - WS_FIRST_X] |= (u16)(1u << band);
+        }
     }
     s_WidescreenCover[slot].tiles++;
 }
@@ -74,7 +138,7 @@ static u16 Render_WidescreenEdgeBands(int slot, int first) {
     int column;
 
     for (column = first; column < first + 8; ++column)
-        rows &= s_WidescreenCover[slot].bands[column - WS_FIRST_X];
+        rows &= s_WidescreenCover[slot].tiled[column - WS_FIRST_X];
     return rows;
 }
 
@@ -275,7 +339,8 @@ int Render_DrawSpriteEntry(GeomEntry *input)
                                 (sprite_cursor)->y = draw_y;
                                 LINK_PACKET_PRELOADED(sprite_cursor, ot.bytes, sprite_tag, mask24, maskTop);
                                 LINK_PAGE(page_cursor, ot.bytes, mask24, maskTop);
-                                if (margin != 0) Render_AddWidescreenTile(active, (s16)draw_x, (s16)draw_y);
+                                if (margin != 0)
+                                    Render_AddWidescreenTile(active, (s16)draw_x, (s16)draw_y, sprite_cursor, page_cursor);
                             }
                         }
                 }
@@ -321,7 +386,8 @@ int Render_DrawSpriteEntry(GeomEntry *input)
                             (sprite_cursor)->y = draw_y;
                             LINK_PACKET_PRELOADED(sprite_cursor, ot.bytes, sprite_tag, mask24, maskTop);
                             LINK_PAGE(page_cursor, ot.bytes, mask24, maskTop);
-                            if (margin != 0) Render_AddWidescreenTile(active, (s16)draw_x, (s16)draw_y);
+                            if (margin != 0)
+                                Render_AddWidescreenTile(active, (s16)draw_x, (s16)draw_y, sprite_cursor, page_cursor);
                         }
                     }
                     }

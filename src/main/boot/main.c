@@ -7,6 +7,7 @@
 #include <string.h>
 #include <SDL3/SDL.h>
 #include <psyz/audio.h>
+#include <psyz/gpu.h>
 #include <psyz/overlay_sdl3.h>
 #include <psyz/system.h>
 #include <psyz/video.h>
@@ -1732,6 +1733,9 @@ images_ready:;
         Psyz_VideoSetModelFiltering(host_options.model_filtering);
         Psyz_VideoSetWidescreen(host_options.widescreen);
     }
+    /* Widescreen reads background texels to find where a room's picture
+     * ends (mesh_list.c); kept on so switching it on mid-game works. */
+    Psyz_GpuSetVramCopy(1);
     Boot_InitSystem();
     if (Psyz_VideoGetInternalResolution() != internal_resolution) {
         fprintf(stderr, "Requested internal resolution unavailable\n");

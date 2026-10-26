@@ -60,6 +60,10 @@ Open **F1 → PE Enhancements** to configure them.
 - **Requisition and Wayne's Workshop** (`pe_economy`): buy medicine, ammo, Smoke Grenades,
   Revive and Tools with Junk, from F1 or Wayne's own menu (also Mod Permit Cards); Warner offers
   storage and the Workshop where he stands guard on Day 4. Smoke Grenades escape ordinary battles.
+- **Bestiary and Wardrobe** (`pe_collection`): 75 creatures revealed by kills, Scan or Junk;
+  Aya's outfits and character skins to unlock and wear. Skins are built from your own disc with
+  the decomp bridge tools and stay hidden until present. Unlocks are kept across games in
+  `pe_collection.ini`; other mods can register their own creatures and costumes.
 
 Mod builds are experimental; a passing build or test does not establish full in-game compatibility.
 
@@ -85,6 +89,6 @@ cmake --build build-mods --parallel
 ./build-mods/parasite-eve-pc
 ```
 
-`PE_MOD_LIST` picks the mods by folder name (default: `pe_qol;pe_rebalance;pe_economy`).
+`PE_MOD_LIST` picks the mods by folder name (default: `pe_qol;pe_rebalance;pe_economy;pe_collection`).
 
 For development details, see [code organization](docs/CODE_ORGANIZATION.md).

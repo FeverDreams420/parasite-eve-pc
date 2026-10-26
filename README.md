@@ -57,6 +57,9 @@ Open **F1 → PE Enhancements** to configure them.
   bag's Quantity, and four economy armor effects (Bargain, Scavenger, Lucky Find, Salvager).
 - **Mod Catalog** (`pe_economy`): dismantle equipment to unlock effects, then install, remove or
   replace them on equipped gear, from Aya's main menu or F1; Rebuild buys dismantled gear back.
+- **Requisition and Wayne's Workshop** (`pe_economy`): buy medicine, ammo, Smoke Grenades,
+  Revive and Tools with Junk, from F1 or Wayne's own menu (also Mod Permit Cards); Warner offers
+  storage and the Workshop where he stands guard on Day 4. Smoke Grenades escape ordinary battles.
 
 Mod builds are experimental; a passing build or test does not establish full in-game compatibility.
 

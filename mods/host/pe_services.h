@@ -8,6 +8,7 @@
  *   "junk"      v1  pe_economy  the Junk counter
  *   "catalog"   v1  pe_economy  armor effects unlocked in the Mod Catalog
  *   "keys"      v1  pe_qol      the key item pocket
+ *   "wardrobe"  v1  pe_collection  costumes that can be worn now (for shops such as Wayne's)
  *
  * Providers (an import pack, a randomizer) register at their init, so they list "pe_collection"
  * in their PeMod requires. Keys are stable names saved in the player's profile ("pe1/rat",
@@ -43,5 +44,14 @@ typedef struct PeCatalogApi {
 typedef struct PeKeysApi {
     int (*take)(uint16_t item);        /* pocket a key; 1 means handled */
 } PeKeysApi;
+
+/* state: 0 for sale, 1 owned, 2 worn. Wayne's Workshop shows a Wardrobe row while published. */
+typedef struct PeWardrobeApi {
+    int (*count)(void);
+    const char *(*name)(int k);
+    unsigned (*price)(int k);
+    int (*state)(int k);
+    int (*pick)(int k, char *msg, size_t size);   /* buy or wear; msg says what happened */
+} PeWardrobeApi;
 
 #endif

@@ -1,4 +1,5 @@
 #include "common.h"
+#include "pe_hooks.h"
 #include "pe1/draw_state.h"
 #include "pe1/boot_disc_check.h"
 #include "pe1/field_pad.h"
@@ -280,6 +281,7 @@ void Menu_DrawTextboxEntries(void) {
     TextboxGlyphPacket *packetLimit;
     TextboxNumber *numberStart;
 
+    PE_HOOK(PE_HOOK_TEXTBOXES, NULL);
     if ((unsigned)g_ActiveDrawSlot >= 2) return;
     sectionIndex = 0;
     backgroundDrawn = 0;

@@ -33,6 +33,7 @@ typedef enum PeHookId {
     PE_HOOK_INVENTORY_SORTED, /* NULL: Aya's native bag sort completed */
     PE_HOOK_INVENTORY_HEADER, /* MenuWidgetNode *: after Aya's Quantity header is drawn */
     PE_HOOK_EQUIP_EFFECT, /* PeHookEquipEffect: effect icon draw; nonzero replaces sprite */
+    PE_HOOK_TEXTBOXES,   /* NULL: Menu_DrawTextboxEntries entry, before the dialogue boxes draw */
     PE_HOOK_ITEM_ACTIONS, /* PeHookItemActions: an item's action list (Use / Move / Discard ...) just opened */
     PE_HOOK_MAIN_MENU_ICON, /* PeHookMainMenuIcon: a main menu row's icon, before it is drawn */
     PE_HOOK_INVENTORY_ROW, /* PeHookInventoryRow: inventory row dimming, presentation only */

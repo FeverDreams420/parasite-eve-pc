@@ -102,6 +102,7 @@ inside the game's CRC, at the same offsets as the psxrecomp build so saves move 
 |---|---|---|
 | +0x000 | `PELT` Junk, rare pity, difficulty | pe_economy/pe_loot.c |
 | +0x040 | `PECT` Mod Catalog unlocks, Rebuild list | pe_economy/pe_catalog.c |
+| +0x1C0 | `PESH` Requisition | pe_economy/pe_requisition.c |
 | +0x200 | `PKEY` key item pocket | pe_qol/pe_key_items.c |
 | +0x260 | `SORT` bag sort | pe_qol/pe_bag_sort.c |
 
@@ -172,6 +173,19 @@ owns recipes and confirmation. They share only their feature header and
 use the versioned Junk service for the optional economy dependency. Existing
 item IDs use the normal game save; no new save block is needed.
 
+## Smoke Grenades
+
+Combat / Smoke Grenades sells the recomp's escape item for 15 Junk before
+difficulty/Bargain pricing. Purchase in the field with a free bag slot; press
+Buy twice. Junk economy must be enabled to buy, but carried grenades remain
+usable when it is off. The item is battle-only, guarantees an ordinary escape,
+and is disabled when any living active enemy forbids escape. A blocked item
+that reaches resolution is returned to the bag slot freed by its consumption.
+
+pe_economy/pe_smoke.c owns the effects, labels, availability and purchase rows.
+It uses the existing ITEM_USE and TEXT_LOOKUP hooks. Normal inventory saves
+carry item 0x18; no new hook or save block is needed.
+
 ## Inventory convenience
 
 Inventory / Key item pocket moves story keys and Chrysler elevator keys out
@@ -231,6 +245,56 @@ Original armor and all weapon effects retain native icons. One replaceable
 equipment-effect draw hook keeps presentation in the economy feature file.
 Checks: tests/run_pe_armor_effect_display_test.ps1.
 
+## Requisition
+
+F1 / PE Enhancements / Economy / Requisition offers Medicine 1-4, Cure-P/D/C/M,
+Full Cure, Bullets x15/x30, Rockets, Smoke Grenades, Revive and Tools. The four
+economy effects are sold as direct Catalog unlocks and leave the list once
+unlocked; they require no bag slot. Tools disappear if either Tool Kit is in
+Aya's bag or Wayne's storage. The same shop is in Wayne's (and Warner's) own
+dialogue menu, under Workshop.
+
+Goods use recomp prices (Medicine 3 = 35, Medicine 4 = 80). Tools start at 40,
+increase by 10 per purchase and cap at 100 after difficulty/Bargain pricing.
+Revive costs 300 on the first playthrough or 500 in EX Game, before those
+adjustments. Tuning lives under Debug / Loot tuning. The Tool purchase count
+uses the exact recomp PESH v1 save block, checksum and offset; loading an old
+save without that block or starting a new game resets the count.
+
+Buy requires two presses with the same stable goods identity, price and bag.
+Returning to gameplay or loading/changing scenes cancels confirmation.
+Purchase rechecks the balance, bag space, current unlocks and ammo capacity.
+Ammo merges into native shared pools; it needs a new bag slot only when its
+pool is not already carried. Purchases are restricted to the free field with
+Junk economy enabled, outside battles, cutscenes and native game menus.
+
+Rescue matches the recomp: if no weapon in Aya's bag or Wayne's storage can
+attack (melee, loaded rounds, or ammunition in its matching pool), Bullets x15
+are free and Spare Club can issue a free Club 1 after confirmation. Spare Club
+requires both a bag slot and a free equipment record. A field reminder points
+to this page once per episode; no usable weapons are replaced.
+
+pe_requisition.c owns rules, native inventory access, tuning and persistence;
+pe_requisition_menu.c owns the shared F1 page, confirmation and rescue reminder.
+pe_requisition.h exposes stable goods IDs for future menu clients. No native
+engine hooks were added. Deferred custom-content ideas remain unimplemented.
+
+Run tests/run_pe_requisition_test.ps1 for focused purchase, ammo, unlock,
+Tool-price, rescue/storage, confirmation, guard and save-layout checks.
+
+## Wayne's Workshop
+
+pe_economy/pe_wayne_menu.c rewrites Wayne's own choice box (PE_HOOK_TEXTBOXES, before the
+boxes draw): Mod Permit Card and Workshop above Cancel, Junk and his count on Discard junk.
+Workshop opens Requisition, Rebuild (5 a page, Left/Right pages, dimmed rows can't be bought
+now) and a Wardrobe row while a mod publishes the `wardrobe` v1 service. Mod Permit Card adds
+one mod slot after a Yes / No. Circle goes back. While his box is the counter the shop allows
+buying though the field is busy (pe_shop_at_counter). Messages use pe_gametext.h.
+
+host/pe_equip_sync.c (a host feature, so it works whichever mods are loaded) reruns the game's
+equipment rebuild in free field whenever the equipped gun or armor record changes, so Catalog,
+Tool, Rebuild and editor changes reach the next battle.
+
 ## Mod Catalog files
 
 - `pe_catalog.c`: effects, prices, install / remove rules, unlocks, the PECT save block, the
@@ -241,6 +305,16 @@ Checks: tests/run_pe_armor_effect_display_test.ps1.
 - `pe_discard_dismantle.c`: Discard on a gun or armor in Aya's menu or Wayne's storage reads
   Dismantle and confirms with what it pays (PE_HOOK_ITEM_ACTIONS); the equipped gear and the last
   Club keep the plain Discard. F1 > Economy > Discard dismantles.
+
+## Warner's services
+
+pe_economy/pe_field_wayne.c: wherever Warner stands guard (map 374) he offers Store equipment,
+Store item and the Workshop. His retail talk task (checked word for word, read-only) plays
+untouched; when it ends, the field is locked again the way his script does it (field event 0xFE)
+and our menu opens in a dialogue box of its own near the screen centre (PE_HOOK_TEXTBOXES, ahead
+of pe_wayne_menu.c, which adds Mod Permit Card and Workshop). Closing it unlocks the field (0xFF);
+a storage choice then opens the game's storage screen. Nothing in his script is patched. F1 >
+Economy > Warner helps out.
 
 ## Tests
 

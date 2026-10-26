@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Added optional 16:9 widescreen as the third Aspect ratio choice in Graphics settings (off by default). Rooms show more of their background where it is wider than the original screen, and the view stops at the background's edge at a room's end; rooms with only a 4:3 background keep even black bars, and movies stay 4:3.
+
 ## 0.4
 
 - Press Start during a story movie to pause it and choose whether to skip. Skipping also stops music started for that movie.

@@ -73,4 +73,15 @@ typedef union RenderBufferSlotAddress {
     ((RenderBufferPrefix *)((char *)(pointer) - \
         PE1_OFFSETOF(RenderBufferPrefix, other_buffers[1])))
 
+/* Widescreen: game pixels drawn past each side of the 320-pixel screen (0.3
+ * of it: the presenter's 3/4 squeeze holds a sixth past each side, plus up
+ * to 39 more on the side the view slides to at a room's end). */
+#define RENDER_WIDESCREEN_MARGIN 96
+/* The span of the background picture, in screen x, that the tiles linked
+ * into a draw slot's ordering table cover without a gap (always at least
+ * 0..320). Commit hands it to the presenter for the buffer at VRAM row
+ * buffer_y and starts the slot's next frame; buffer_y < 0 only discards it. */
+void Render_GetWidescreenPicture(int slot, int *left, int *right);
+void Render_CommitWidescreenPicture(int slot, int buffer_y);
+
 #endif

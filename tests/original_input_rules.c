@@ -425,6 +425,24 @@ int main(int argc, char **argv) {
     assert(host_options.antialiasing == 1 && host_options.model_filtering == 1);
     host_options.antialiasing = host_options.model_filtering = 0;
 
+    assert(!host_options.widescreen);
+    assert(Host_ParseOptionValue("graphics", "widescreen", enabled_effect));
+    assert(Host_SaveOptions());
+    host_options.widescreen = 0;
+    Host_LoadOptions(host_options.user_file);
+    assert(host_options.widescreen == 1);
+    assert(!Host_ParseOptionValue("graphics", "widescreen", invalid_effect));
+    assert(host_options.widescreen == 1);
+    /* Widescreen is the third Aspect ratio choice. */
+    assert(kGraphics[2].get == GetAspect && kGraphics[2].count == 3 && kGraphics[2].get() == 2);
+    kGraphics[2].set(1);
+    assert(!host_options.widescreen && host_options.aspect == 1 && kGraphics[2].get() == 1);
+    kGraphics[2].set(2);
+    assert(host_options.widescreen && !host_options.aspect && kGraphics[2].get() == 2);
+    kGraphics[2].set(0);
+    assert(!host_options.widescreen && !host_options.aspect && kGraphics[2].get() == 0);
+    assert(COUNT_OF(kGraphics) <= OVERLAY_VISIBLE_CONTROLS);
+
     char invalid[4096];
     snprintf(invalid, sizeof(invalid), "%s/invalid.toml", test_directory);
     FILE *f = fopen(invalid, "w");

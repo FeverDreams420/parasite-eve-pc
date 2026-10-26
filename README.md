@@ -22,7 +22,8 @@ Keep each CUE file next to its BIN file.
 
 **Enter** is START and skips movies; in a story movie, START pauses it and asks whether to skip. View or change all bindings in **Escape → Controls**.
 Settings and selected disc paths are saved automatically.
-Optional geometry correction, antialiasing and model texture filtering are in **Escape → Graphics**.
+Optional widescreen, geometry correction, antialiasing and model texture filtering are in **Escape → Graphics**.
+Widescreen (the third **Aspect ratio** choice) shows 16:9 where a room's background is wider than the original screen; at a room's end the view stops at the background's edge, and a room with only a 4:3 background keeps even black bars. Movies stay 4:3.
 
 ## Build
 

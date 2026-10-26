@@ -50,6 +50,7 @@ void Draw_RenderFrame(void) {
     if ((status & 0xff) != 0 || (state & 0x200) != 0) {
         idx = g_ActiveDrawSlot;
         PutDrawEnv(DrawAddress(idx));
+        Render_CommitWidescreenPicture(idx, -1);
         g_ActiveDrawSlot = g_ActiveDrawSlot < 1U;
         return;
     }
@@ -60,6 +61,7 @@ draw_buffer:
 
         drawSlot = g_ActiveDrawSlot;
         orderingTable = (RenderNativeTag *)g_GameState.shared_buffers.ordering_tables[drawSlot];
+        Render_CommitWidescreenPicture(drawSlot, g_RenderDrawEnvArray[drawSlot].clip.y);
         DrawOTagEnv(orderingTable + 4095, &g_RenderDrawEnvArray[drawSlot]);
     }
 

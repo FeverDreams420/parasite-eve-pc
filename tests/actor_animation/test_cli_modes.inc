@@ -1,4 +1,5 @@
     if(argc==2 && !strcmp(argv[1],"--all-room-loads"))return original_all_room_loads();
+    if(argc==2 && !strcmp(argv[1],"--widescreen-rooms"))return original_widescreen_rooms();
     if(argc==2 && !strcmp(argv[1],"--anim-event-completion")){
         RenderAnimationDataHeader animation={0};animation.frame_count=8;
         void *old_animation=g_GameState.bank_rows[0][2];

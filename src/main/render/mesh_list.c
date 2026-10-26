@@ -13,6 +13,8 @@
 #include "pe1/render_prim.h"
 #include "pe1/render_shadow.h"
 #include "pe1/room_floor.h"
+#include <psyz/video.h>
+#include <string.h>
 
 /* Matching debt: fixed-pins and scheduling constraints preserve the stock PSYQ instruction schedule. */
 
@@ -34,6 +36,72 @@ typedef union RenderLinkAddress {
 #define LINK_PAGE(packet, ordering, mask24, maskTop) \
     LINK_PACKET_PRELOADED(packet, ordering, 0, 0, 0)
 
+/* Widescreen: background tiles are kept up to RENDER_WIDESCREEN_MARGIN past
+ * each side of the 320-pixel screen; the stored backgrounds of scrolling rooms
+ * are wider than the screen. A repeating layer (flags 4) places each tile once
+ * inside a window as wide as the layer, so it is widened only as far as its
+ * width allows. The presenter shows past the screen's edges only the columns
+ * the linked tiles cover as fully as the screen's own edge columns (per
+ * 16-line band of the 224 lines), contiguous from the edge outwards; any gap
+ * or end of the stored picture stays black. */
+#define WS_FIRST_X (-112)
+#define WS_COLUMNS 544
+#define WS_BANDS 14
+static struct {
+    u16 bands[WS_COLUMNS];
+    int tiles;
+} s_WidescreenCover[2];
+
+static void Render_AddWidescreenTile(int slot, int x, int y) {
+    u16 rows = 0;
+    int band;
+    int column;
+
+    for (band = 0; band < WS_BANDS; ++band) {
+        int middle = band * 16 + 8;
+        if (middle >= y && middle < y + 16) rows |= (u16)(1u << band);
+    }
+    for (column = x; column < x + 16; ++column) {
+        if (column >= WS_FIRST_X && column < WS_FIRST_X + WS_COLUMNS)
+            s_WidescreenCover[slot].bands[column - WS_FIRST_X] |= rows;
+    }
+    s_WidescreenCover[slot].tiles++;
+}
+
+static u16 Render_WidescreenEdgeBands(int slot, int first) {
+    u16 rows = 0xFFFF;
+    int column;
+
+    for (column = first; column < first + 8; ++column)
+        rows &= s_WidescreenCover[slot].bands[column - WS_FIRST_X];
+    return rows;
+}
+
+void Render_GetWidescreenPicture(int slot, int *left, int *right) {
+    u16 edge;
+
+    *left = 0;
+    *right = 320;
+    if (s_WidescreenCover[slot].tiles == 0) return;
+    edge = Render_WidescreenEdgeBands(slot, 0);
+    while (edge != 0 && *left > -RENDER_WIDESCREEN_MARGIN &&
+           (s_WidescreenCover[slot].bands[*left - 1 - WS_FIRST_X] & edge) == edge)
+        --*left;
+    edge = Render_WidescreenEdgeBands(slot, 312);
+    while (edge != 0 && *right < 320 + RENDER_WIDESCREEN_MARGIN &&
+           (s_WidescreenCover[slot].bands[*right - WS_FIRST_X] & edge) == edge)
+        ++*right;
+}
+
+void Render_CommitWidescreenPicture(int slot, int buffer_y) {
+    if (buffer_y >= 0) {
+        int left, right;
+        Render_GetWidescreenPicture(slot, &left, &right);
+        Psyz_VideoSetWidescreenPicture(buffer_y, left, right);
+    }
+    memset(&s_WidescreenCover[slot], 0, sizeof(s_WidescreenCover[slot]));
+}
+
 int Render_DrawSpriteEntry(GeomEntry *input)
 {
     u32 *position_cursor;
@@ -54,8 +122,10 @@ int Render_DrawSpriteEntry(GeomEntry *input)
     s32 raw_x;
     s32 raw_y;
     s32 screen_src;
+    s32 margin;
     char frame_pad[9];
 
+    margin = Psyz_VideoGetWidescreen() ? RENDER_WIDESCREEN_MARGIN : 0;
     active = g_ActiveDrawSlot;
     entry = input;
     sprite = entry->u30.prim;
@@ -104,8 +174,12 @@ int Render_DrawSpriteEntry(GeomEntry *input)
         s32 remainder_y;
         s32 signed_x;
         s32 base_y;
+        s32 wrap_margin;
         signed_x = (s16)raw_x;
         mod_x = entry->anim_mod_x;
+        wrap_margin = ((s32)(mod_x & 0xFFFF) - 0x14F) / 2;
+        if (wrap_margin > margin) wrap_margin = margin;
+        if (wrap_margin < 0) wrap_margin = 0;
         signed_x -= 320;
         divisor_x = mod_x & 0xFFFF;
         signed_x += divisor_x;
@@ -133,15 +207,15 @@ int Render_DrawSpriteEntry(GeomEntry *input)
                     u32 word_x = *position_cursor;
                     s32 x = scroll_x + (word_x >> 22);
                     draw_x = x;
-                    if ((s16)x >= 320) {
+                    if ((s16)x >= 320 + wrap_margin) {
                         s32 modulus_x = entry->anim_mod_x;
                         draw_x = x - modulus_x;
-                    } else if ((s16)x < -15) {
+                    } else if ((s16)x < -15 - wrap_margin) {
                         s32 modulus_x = entry->anim_mod_x;
                         draw_x = modulus_x + x;
                     }
                 }
-                if ((u16)(draw_x + 15) < 0x14F) {
+                if ((u16)(draw_x + 15 + wrap_margin) < 0x14F + 2 * wrap_margin) {
                         s32 draw_y;
                         {
                             u32 word_y = *position_cursor;
@@ -167,6 +241,7 @@ int Render_DrawSpriteEntry(GeomEntry *input)
                                 (sprite_cursor)->y = draw_y;
                                 LINK_PACKET_PRELOADED(sprite_cursor, ot.bytes, sprite_tag, mask24, maskTop);
                                 LINK_PAGE(page_cursor, ot.bytes, mask24, maskTop);
+                                if (margin != 0) Render_AddWidescreenTile(active, (s16)draw_x, (s16)draw_y);
                             }
                         }
                 }
@@ -193,7 +268,7 @@ int Render_DrawSpriteEntry(GeomEntry *input)
             s32 draw_x;
             workValue = scroll_x + (word >> 22);
             draw_x = workValue;
-            if ((u16)(workValue + 15) < 0x14F) {
+            if ((u16)(workValue + 15 + margin) < 0x14F + 2 * margin) {
                     {
                     s32 y;
                     s32 draw_y;
@@ -212,6 +287,7 @@ int Render_DrawSpriteEntry(GeomEntry *input)
                             (sprite_cursor)->y = draw_y;
                             LINK_PACKET_PRELOADED(sprite_cursor, ot.bytes, sprite_tag, mask24, maskTop);
                             LINK_PAGE(page_cursor, ot.bytes, mask24, maskTop);
+                            if (margin != 0) Render_AddWidescreenTile(active, (s16)draw_x, (s16)draw_y);
                         }
                     }
                     }

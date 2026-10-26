@@ -43,6 +43,10 @@ enum {
     OVERLAY_ACTION_GAP = 14,
     OVERLAY_FOOTER_H = 74,
     OVERLAY_VALUE_W = 250,
+    /* "< 2x >" stepper in front of the speed row's label */
+    OVERLAY_SPEED_STEP_CENTRE = 22,
+    OVERLAY_SPEED_STEP_REACH = 18,
+    OVERLAY_SPEED_STEP_W = 54,
     OVERLAY_TAB_TOP = 62,
     OVERLAY_TAB_H = 34,
     OVERLAY_REFERENCE_H = 820,
@@ -207,7 +211,7 @@ static const OverlaySetting *OverlayPageSettings(int page, int *count) {
 
 static int Host_SettingsPureRowCount(int page) {
     if (page == OVERLAY_PAGE_GRAPHICS) return COUNT_OF(kGraphics);
-    if (page == OVERLAY_PAGE_CONTROLS) return 17;
+    if (page == OVERLAY_PAGE_CONTROLS) return 1 + HOST_BINDING_COUNT;
     if (page == OVERLAY_PAGE_AUDIO) return COUNT_OF(kAudio);
     return 2;
 }
@@ -217,7 +221,7 @@ static int Host_SettingsTotalRowCount(int page) {
 }
 
 enum {
-    OVERLAY_CONTROLS_BINDING_COUNT = 16,
+    OVERLAY_CONTROLS_BINDING_COUNT = HOST_BINDING_COUNT,
     OVERLAY_CONTROLS_VISIBLE_BINDINGS = OVERLAY_VISIBLE_CONTROLS - 1,
     OVERLAY_CONTROLS_MAX_SCROLL = OVERLAY_CONTROLS_BINDING_COUNT - OVERLAY_CONTROLS_VISIBLE_BINDINGS
 };
@@ -599,6 +603,27 @@ static void PaintValueRow(const Painter *p, const char *labelText,
              ALIGN_CENTRE);
 }
 
+/* "< 3x > speed": the arrows step the hold's speed; a dim arrow is the limit. */
+static void PaintSpeedLabel(const Painter *p, float mid, float baseline,
+                            int selected, Color label) {
+    const float s = p->s;
+    float centre = (float)(OVERLAY_PAD + OVERLAY_SPEED_STEP_CENTRE) * s;
+    float reach = (float)OVERLAY_SPEED_STEP_REACH * s;
+    unsigned factor = host_options.speed_factor;
+    Color chevron = selected ? kAccent : WithAlpha(kMuted, 0.75f);
+    Color limit = WithAlpha(kMuted, 0.3f);
+    char text[8];
+
+    snprintf(text, sizeof(text), "%ux", factor);
+    DrawChevron(p->surface, centre - reach, mid, 5.0f * s, -1, 2.0f * s,
+                factor > 2 ? chevron : limit);
+    DrawChevron(p->surface, centre + reach, mid, 5.0f * s, 1, 2.0f * s,
+                factor < PSYZ_SPEED_MAX ? chevron : limit);
+    DrawText(p->surface, centre, baseline, 17.0f * s, text, label, ALIGN_CENTRE);
+    DrawText(p->surface, (float)(OVERLAY_PAD + OVERLAY_SPEED_STEP_W) * s,
+             baseline, 17.0f * s, "speed", label, ALIGN_LEFT);
+}
+
 static void PaintSettingRow(const Painter *p, const OverlaySetting *setting,
                             float mid, float baseline, int selected,
                             Color label) {
@@ -668,8 +693,12 @@ static void PaintRows(const Painter *p) {
                     const char *val = capturing
                                           ? "Press key or button..."
                                           : Host_ControlBindingValueName(p->state, idx);
-                    PaintValueRow(p, host_button_names[idx], val, mid, baseline,
-                                  selected, capturing, label);
+                    int speed = idx == HOST_SPEED_BINDING;
+                    PaintValueRow(p, speed ? "" : host_button_names[idx],
+                                  val, mid, baseline, selected, capturing, label);
+                    if (speed) {
+                        PaintSpeedLabel(p, mid, baseline, selected, label);
+                    }
                 }
             } else if (page == OVERLAY_PAGE_DISCS) {
                 char discLabel[32];
@@ -724,6 +753,9 @@ static const char *OverlayRowHelp(const HostOverlayState *state) {
     if (state->page == OVERLAY_PAGE_CONTROLS) {
         if (state->row == 0) {
             return "Choose whether to inspect and rebind keyboard or controller inputs.";
+        }
+        if (state->row == HOST_SPEED_BINDING + 1) {
+            return "Hold to speed up. Left/Right: 2x-4x. Enter/South binds; Del/West unbinds.";
         }
         return "Press Enter or South button to rebind. Duplicate bindings swap automatically.";
     }

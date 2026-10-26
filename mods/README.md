@@ -232,7 +232,10 @@ Extra main-menu rows and screens are a host service (host/pe_main_menu.h): a mod
 with pe_screen_open_game (flush where the game's own screens sit) / pe_screen_rows /
 pe_screen_close, which also hide Aya's status panels and keep scrolling inside the list. The host
 owns the main-menu hooks (LIST_ROWS, MAIN_MENU_ICON, HELP_TEXT for the row names,
-MAIN_MENU_ACTION). Order: Mod Catalog 10, Key Items 20, Wardrobe 30.
+MAIN_MENU_ACTION). Order: Mod Catalog 10, Key Items 20, Bestiary 25, Wardrobe 30. An icon drawer
+may draw the icon itself (pe_icon_sprite, or pe_icon_part for part of a sprite at any size) and
+set the hook's sprite to -1 so the game draws nothing more; pe_confirm asks Yes / No on the game's
+own dialog.
 
 pe_qol/pe_key_items.c and pe_bag_sort.c each own their state, hooks and rows.
 pe_inventory.h holds private save/field helpers. PKEY and SORT use the exact
@@ -323,7 +326,7 @@ without touching these files.
   resolves to: mods' resolvers first (newest first), then the mapped (room, identity) table.
   5 kills or Scan show weaknesses, 15 kills the loot (bosses: defeat shows weaknesses, loot is Junk
   only); each tier can be bought. Announces "bestiary.unlock".
-- `pe_bestiary_menu.c`: a Bestiary row in Aya's main menu (the P.E. icon, twice) once a creature is
+- `pe_bestiary_menu.c`: a Bestiary row in Aya's main menu (icon: the B of the BP icon) once a creature is
   met: the area's creatures (L1 / R1 change area; unmet ones "???"), the model turning with its idle
   animation in a game panel (host pe_model_stage; Left / Right turn it, Triangle full screen, Square
   pause, Select the next form), and what is known by tier below. Unmet creatures of a reached area

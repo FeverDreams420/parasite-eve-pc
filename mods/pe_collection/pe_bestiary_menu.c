@@ -388,13 +388,18 @@ static int pe_row_shown(void) {
     return 0;
 }
 
-/* The row's icon: the menu's own P.E. icon twice, the second a few pixels up and right. */
+/* The row's icon: the "B" of the menu's own BP icon (its texels at 2,1, 6 x 8), drawn 9 x 12 (one
+ * and a half times) and centred in the icon's spot. */
+#define PE_B_U 2
+#define PE_B_V 1
+#define PE_B_W 6
+#define PE_B_H 8
+#define PE_B_DRAW_W 9
+#define PE_B_DRAW_H 12
 static void pe_icon(PeHookMainMenuIcon *icon) {
-    const int pe = PE_MAIN_MENU_SPRITE + 1;
-    Draw_OffsetCursor(3, -2);
-    Draw_AllocSprite(pe);
-    Draw_OffsetCursor(-3, 2);
-    icon->sprite = pe;
+    pe_icon_part(PE_MAIN_MENU_SPRITE + PE_ACTION_BONUS_POINTS, PE_B_U, PE_B_V, PE_B_W, PE_B_H,
+                 (PE_ICON_SIZE - PE_B_DRAW_W) / 2, (PE_ICON_SIZE - PE_B_DRAW_H) / 2, PE_B_DRAW_W, PE_B_DRAW_H);
+    icon->sprite = -1;
 }
 
 static const PeMainMenuRow s_row = { "Bestiary", 0, pe_row_shown, pe_open, pe_icon };

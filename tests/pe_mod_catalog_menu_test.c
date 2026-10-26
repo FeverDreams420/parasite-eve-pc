@@ -17,6 +17,13 @@ void Menu_DrawItemLabel(MenuWidgetNode *n) { (void)n; }
 void Menu_DrawActionOptionList(MenuWidgetNode *n) { (void)n; }
 int Menu_ConfirmDialogHandler(MenuWidgetNode *n, unsigned int f) { (void)n; (void)f; return 1; }
 int Draw_MeasureTextWidth(u8 *t) { (void)t; return 0; }
+/* the host's icon helpers: not used by the Catalog */
+unsigned char *g_DrawPacketCursor, *g_DrawPacketArenaBase;
+unsigned int g_DrawPrimColor, g_DrawColorShaded, *g_DrawOrderingTableEntry;
+int g_DrawTextDimmed, g_TextCursorX, g_TextCursorY;
+DrawGlyphDescriptor *Draw_LookupGlyphDescriptor(int i) { (void)i; return NULL; }
+void Draw_OffsetCursor(int x, int y) { (void)x; (void)y; }
+void Draw_AllocSprite(int i) { (void)i; }
 static MenuWidgetNode panel, list;
 static int next_row, next_top, next_adjust;
 int Menu_StepScrollCursor(MenuWidgetNode *n, unsigned int b) {

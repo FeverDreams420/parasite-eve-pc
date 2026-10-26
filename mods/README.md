@@ -33,7 +33,7 @@ mods/
     pe_services.h        every service struct mods share (no mod includes another's headers)
     pe_game.*            game access and the game facts every mod shares (see below)
     pe_game_facts.c      those facts as tables: mod effect names and groups, power tags
-    pe_main_menu.*       extra rows in Aya's main menu, and screens from the game's own widgets
+    pe_main_menu.*       extra rows in Aya's main menu, screens from the game's own widgets, Yes / No
     pe_equip_sync.c      edited equipment reaches the next battle
     pe_gametext.h        text in the game's glyph code; pe_item_table.h the game's item names
     pe_image.h           the picture type the image code shares (RGBA, straight alpha)
@@ -323,6 +323,14 @@ without touching these files.
   resolves to: mods' resolvers first (newest first), then the mapped (room, identity) table.
   5 kills or Scan show weaknesses, 15 kills the loot (bosses: defeat shows weaknesses, loot is Junk
   only); each tier can be bought. Announces "bestiary.unlock".
+- `pe_bestiary_menu.c`: a Bestiary row in Aya's main menu (the P.E. icon, twice) once a creature is
+  met: the area's creatures (L1 / R1 change area; unmet ones "???"), the model turning with its idle
+  animation in a game panel (host pe_model_stage; Left / Right turn it, Triangle full screen, Square
+  pause, Select the next form), and what is known by tier below. Unmet creatures of a reached area
+  show as a silhouette; others and bosses show nothing. Cross buys the next tier after the game's
+  Yes / No (host `pe_confirm`). NEW: tiers not looked at yet (profile `seen`) list in the game's
+  yellow. Debug > Collection: Junk, Give 1000 Junk, Test creature (its tiers, kills, NEW), Unlock
+  next tier, Add a kill, Reset creature, Mark creature NEW, Clear / Make all NEW.
 - `pe_wardrobe.c`: the costume registry. A costume is one of the game's player bundles (bank 10 /
   12 / 13, rewritten at the start of Aya's model load, PE_HOOK_PLAYER_BANK), a skin folder
   (`bundle`, loaded by pe_skin_loader.c), or a provider's own model (its load(1) / load(0) at that

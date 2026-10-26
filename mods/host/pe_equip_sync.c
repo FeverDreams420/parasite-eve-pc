@@ -14,10 +14,11 @@
  *
  * One guard: a smaller Bag+ (an armor mod removed) never strands items in slots past the new bag
  * size; the bag stays as large as it was until those slots are emptied.
+ *
+ * A host feature (pe_equip_sync_init, pe_game.h): every mod that edits the equipped records needs it.
  */
 #include <string.h>
 
-#include "pe_economy.h"
 #include "pe_game.h"
 #include "pe_mod_host.h"
 #include "pe1/battle_modifiers.h"
@@ -32,8 +33,6 @@ typedef struct {
 
 static PeEquipSignature s_built;
 static int s_have_built;
-
-static int pe_free_field(void) { return !(g_GameStateFlags & 0x2006u) && !(g_GameStateFlagsWord & 0xB600u); }
 
 static void pe_signature(PeEquipSignature *sig) {
     const ItemDataRecord *weapon = pe_equipped(0), *armor = pe_equipped(1);
@@ -96,8 +95,8 @@ static int pe_on_frame(void *ctx, void *user) {
     return 0;
 }
 
-void pe_equip_sync_register(const char *mod_id) {
-    pe_hook_add(PE_HOOK_FRAME, pe_on_frame, NULL, PE_PRIORITY_LATE, mod_id);  /* after this frame's edits */
-    pe_hook_add(PE_HOOK_SCENE_START, pe_on_reset, NULL, PE_PRIORITY_NORMAL, mod_id);
-    pe_hook_add(PE_HOOK_SAVE_READ, pe_on_reset, NULL, PE_PRIORITY_NORMAL, mod_id);
+void pe_equip_sync_init(void) {
+    pe_hook_add(PE_HOOK_FRAME, pe_on_frame, NULL, PE_PRIORITY_LATE + 50, "host");   /* after every mod's edits */
+    pe_hook_add(PE_HOOK_SCENE_START, pe_on_reset, NULL, PE_PRIORITY_NORMAL, "host");
+    pe_hook_add(PE_HOOK_SAVE_READ, pe_on_reset, NULL, PE_PRIORITY_NORMAL, "host");
 }

@@ -57,7 +57,6 @@
 #define PE_STORAGE        100
 #define PE_ENEMY_SLOTS    7
 #define PE_GAUGE_FULL     9000u
-#define PE_WAYNE_VAR      48       /* Wayne's Junk count toward his next gun */
 #define PE_CMD_NEW_GAME   1117
 #define PE_ESCAPE_PHASE   4
 #define PE_MIN_FRAMES     3u       /* shorter: the blip after a load */
@@ -79,10 +78,6 @@ static int s_room_token, s_room_valid;
 static s16 s_prev_bag[PE_BAG], s_prev_store[PE_STORAGE];
 static int s_lists_valid;
 
-static const char *const s_spells[20] = {
-    "Heal1", "Heal2", "Heal3", "Detox", "Medic", "Barrier", "EnergyShot", "Scan", "Slow", "Haste", "Confuse",
-    "GeneHeal", "Preraise", "Mito14", "Mito15", "Mito16", "Mito17", "Mito18", "FullRecover", "Liberate",
-};
 
 /* Item ids whose count is watched for field pickups: Junk, Tools, kits, Mod Permit, trading cards. */
 static const u16 s_watch[] = {
@@ -159,7 +154,7 @@ static void pe_row(const char *kind, const char *fmt, ...) {
     if (pe_save_loaded())
         fprintf(s_log, "%u,%u,%u,%u,%u,%u,%u,", (unsigned)(g_PlayTimeFrameCounter / 60u), g_AyaSaveState.level + 1u,
                 (unsigned)g_AyaSaveState.total_exp, g_AyaSaveState.current_hp, g_AyaSaveState.max_hp, pe_junk(),
-                (unsigned)(u16)g_ScriptVariableBank[PE_WAYNE_VAR]);
+                pe_wayne_count());
     else fprintf(s_log, ",,,,,,,");
     fprintf(s_log, "%s\n", detail);
     fflush(s_log);
@@ -363,7 +358,7 @@ static void pe_battle_end(void) {
         n += (size_t)snprintf(combat + n, sizeof combat - n, " pe=%d->%d spent=%d regained=%d casts=", s_cb.pe_start,
                               s_cb.pe_last, s_cb.pe_spent, s_cb.pe_gained);
     for (k = 0; k < 20 && n < sizeof combat; ++k)
-        if (s_cb.casts[k]) n += (size_t)snprintf(combat + n, sizeof combat - n, "%s:%u/", s_spells[k], s_cb.casts[k]);
+        if (s_cb.casts[k]) n += (size_t)snprintf(combat + n, sizeof combat - n, "%s:%u/", pe_power_tag(k), s_cb.casts[k]);
     if (n < sizeof combat)
         n += (size_t)snprintf(combat + n, sizeof combat - n,
                               " dealt=%u taken=%u healed=%u hp_min=%d kills=%u first_kill=%u shots=%u reloads=%u wswaps=%u used=",
@@ -388,7 +383,7 @@ static int pe_count_item(u16 id) {
 }
 
 static void pe_track_wayne(void) {
-    const unsigned now = (u16)g_ScriptVariableBank[PE_WAYNE_VAR];
+    const unsigned now = pe_wayne_count();
     if (!s_wayne_valid) { s_wayne_valid = 1; s_wayne_prev = now; return; }
     if (now != s_wayne_prev) {
         if (!s_wayne_moving) { s_wayne_moving = 1; s_wayne_from = s_wayne_prev; }
@@ -548,7 +543,7 @@ static int pe_on_spell(void *ctx, void *user) {
     (void)user;
     if (!s_in_battle || spell->spell >= 20) return 0;
     ++s_cb.casts[spell->spell];
-    if (s_detail) pe_row("spell", "tech=%s t=%u", s_spells[spell->spell], pe_secs());
+    if (s_detail) pe_row("spell", "tech=%s t=%u", pe_power_tag(spell->spell), pe_secs());
     return 0;
 }
 

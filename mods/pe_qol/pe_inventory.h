@@ -6,9 +6,6 @@
 
 /* Feature-private helpers. These blocks retain the recomp's exact disk
  * layout; native pointers never enter a memory-card save. */
-static inline int pe_inventory_free_field(void) {
-    return !(g_GameStateFlags & 0x2006u) && !(g_GameStateFlagsWord & 0xB600u);
-}
 static inline int pe_inventory_limit(void) {
     int n = Inv_GetAyaSlotLimit();
     return n < 0 ? 0 : n > 50 ? 50 : n;

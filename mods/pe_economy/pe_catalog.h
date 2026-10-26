@@ -43,7 +43,6 @@ const char *pe_cat_effect_name(int which, int effect);    /* "RATE OF FIRE 5" */
 const char *pe_cat_effect_short(int which, int effect);   /* "ROF 5" */
 int pe_cat_effect_tier(int which, int effect);            /* 0 common, 1 mid, 2 premium (+ Tool) */
 int pe_cat_tier_price(int tier);                          /* after the preset and Bargain */
-int pe_cat_group(int which, int effect);                  /* one mod per group on an item */
 int pe_cat_rebuild_markup(void);                          /* percent of the payout */
 
 /* ---- gear ---- */

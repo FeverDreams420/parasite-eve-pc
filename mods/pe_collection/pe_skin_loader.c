@@ -412,7 +412,7 @@ static int pe_on_frame(void *ctx, void *user) {
     if (!pe_game_loaded()) return 0;
     k = pe_can_apply() ? pe_wanted() : NULL;
     if (!s_tex_known && !k) return 0;                   /* nothing to put on; the next load tells us */
-    if (s_instant && (k != s_tex || !s_tex_known) && !pe_in_battle() && !(g_GameStateFlags & 0x2006u) && g_PlayerEntity && pe_textures(k)) {
+    if (s_instant && (k != s_tex || !s_tex_known) && !pe_in_battle() && pe_free_field() && g_PlayerEntity && pe_textures(k)) {
         pe_keep(k);
         pe_rebind_player();
         pe_log("skin", "wearing %s (instant)", k ? k->folder : "Aya's own");

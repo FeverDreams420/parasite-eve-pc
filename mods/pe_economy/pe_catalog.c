@@ -50,18 +50,9 @@ int pe_catalog_is_unlocked(int which, int effect) {
 
 /* ---- effects ---- */
 
-static const char *const s_gun_names[21] = {
-    "EMPTY", "RATE OF FIRE 2", "RATE OF FIRE 3", "RATE OF FIRE 5", "RATE OF FIRE 7", "RATE OF FIRE 10",
-    "RANDOM FIRE 1-5", "BURST SPRAY", "ATTACK ALL", "HEAT BULLETS", "FROST BULLETS", "CYANIDE BULLETS",
-    "ACID BULLETS", "TRANQUILIZER", "COUNTERATTACK", "QUICKDRAW", "STEAL (HALF ATK)", "STEAL ON ATTACK",
-    "CRITICAL UP", "2 COMMANDS", "3 COMMANDS",
-};
-static const char *const s_armor_names[21] = {
-    "EMPTY", "RESIST POISON", "RESIST STIFFNESS", "RESIST DARKNESS", "LESS STOLEN", "RESIST CONFUSION",
-    "AUTO MEDICINE", "AUTO CURE", "BAG +1", "BAG +2", "BAG +4", "MAX HP UP", "ATTACK UP", "SLOWER ACTIVE TIME",
-    "PE BURDEN DOWN", "ATTACK DOWN", "", "LOWERS SHOP PRICES", "INCREASES JUNK FOUND",
-    "FINDS RARE ITEMS MORE OFTEN", "MORE JUNK FROM DISMANTLING",
-};
+/* The game's effects are named by the host (pe_mod_effect_name); these are the economy's own, in
+ * armor effects 17-20. */
+static const char *const s_economy_names[4] = { "Bargain", "Scavenger", "Lucky Find", "Salvager" };
 /* Board tiles fit 7 characters. */
 static const char *const s_gun_short[21] = {
     "", "ROF 2", "ROF 3", "ROF 5", "ROF 7", "ROF 10", "RND ROF", "BURST", "ATK ALL", "HEAT", "FROST",
@@ -85,8 +76,11 @@ static int s_rebuild_markup = 150;
 static int pe_valid(int which, int e) { return e >= 0 && e <= (which == PE_GUN ? PE_GUN_EFFECTS : PE_ARMOR_EFFECTS); }
 
 const char *pe_cat_effect_name(int which, int e) {
+    const char *name;
     if (!pe_valid(which, e)) return "?";
-    return which == PE_GUN ? s_gun_names[e] : s_armor_names[e];
+    if (which == PE_ARMOR && e >= PE_FX_BARGAIN) return s_economy_names[e - PE_FX_BARGAIN];
+    name = pe_mod_effect_name(which == PE_ARMOR, e);
+    return name ? name : "";
 }
 const char *pe_cat_effect_short(int which, int e) {
     if (!pe_valid(which, e)) return "?";
@@ -95,15 +89,6 @@ const char *pe_cat_effect_short(int which, int e) {
 int pe_cat_effect_tier(int which, int e) { return pe_valid(which, e) ? (which == PE_GUN ? s_gun_tier[e] : s_armor_tier[e]) : 0; }
 int pe_cat_tier_price(int tier) { return (int)pe_loot_price((uint32_t)s_price[tier]); }
 int pe_cat_rebuild_markup(void) { return s_rebuild_markup; }
-
-int pe_cat_group(int which, int e) {
-    if (which == PE_ARMOR) return (e >= 8 && e <= 10) ? 5 : 0;   /* bag capacity */
-    if (e >= 1 && e <= 5) return 1;     /* rate of fire */
-    if (e >= 6 && e <= 8) return 2;     /* multi-shot */
-    if (e == 19 || e == 20) return 3;   /* extra commands */
-    if (e == 16 || e == 17) return 4;   /* steal */
-    return 0;
-}
 
 static int pe_is_bag_mod(int which, int e) { return which == PE_ARMOR && e >= 8 && e <= 10; }
 
@@ -219,7 +204,7 @@ int pe_cat_install(int which, int slot, int e, int dry_run) {
     current = rec->tailData[slot] & 0x1F;
     if (current == e) return PE_CAT_ALREADY;
     if (pe_is_bag_mod(which, current)) return PE_CAT_BAG;
-    group = pe_cat_group(which, e);
+    group = pe_mod_effect_group(which == PE_ARMOR, e);
     for (m = 0; group && m < n; ++m)       /* a bag mod in the group would be replaced */
         if (m != slot && (rec->tailData[m] & 0x1F) && (rec->tailData[m] >> 5) == group && pe_is_bag_mod(which, rec->tailData[m] & 0x1F))
             return PE_CAT_BAG;
@@ -259,7 +244,7 @@ int pe_cat_remove(int which, int slot, int dry_run) {
 /* Effects installing e into `slot` would take out: the slot's own mod and a same-group mod. */
 int pe_cat_replaces(int which, int slot, int e, int *out, int max) {
     const ItemDataRecord *rec = pe_equipped_record(which);
-    const int n = rec ? pe_cat_mod_count(rec) : 0, group = pe_cat_group(which, e);
+    const int n = rec ? pe_cat_mod_count(rec) : 0, group = pe_mod_effect_group(which == PE_ARMOR, e);
     int k = 0, current, m;
     if (slot < 0 || slot >= n) return 0;
     current = rec->tailData[slot] & 0x1F;

@@ -39,6 +39,7 @@ static const PeKeysApi *keys;
 static struct { int id; PeHookFn fn; } hooks[24];
 static int hook_count;
 int pe_game_loaded(void) { return loaded; }
+int pe_free_field(void) { return !(g_GameStateFlags & 0x2006u) && !(g_GameStateFlagsWord & 0xB600u); }   /* as host/pe_game.c */
 int pe_in_battle(void) { return (g_GameStateFlags & 2) != 0; }
 int Inv_GetAyaSlotLimit(void) { return 10; }
 ItemDataRecord *Item_LookupBaseData(unsigned index) { return index < 255 ? &s_base[index+1] : NULL; }

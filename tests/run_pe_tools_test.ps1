@@ -11,7 +11,7 @@ $compileArgs=@('-D__psyz','-DPE_MODS=1','-std=c11','-O1','-fno-strict-aliasing',
 foreach ($path in @('include','mods/host','mods/pe_tools','third_party/psyz/psyz/include','third_party/psyz/external/SDL/include')) {
     $compileArgs+='-I'; $compileArgs+=Join-Path $root $path
 }
-foreach ($file in @('tests/pe_mod_tools_test.c','mods/pe_tools/pe_stats_editor.c','mods/pe_tools/pe_equip_editor.c')) {
+foreach ($file in @('tests/pe_mod_tools_test.c','mods/pe_tools/pe_stats_editor.c','mods/pe_tools/pe_equip_editor.c','mods/host/pe_game_facts.c')) {
     $compileArgs+=Join-Path $root $file
 }
 $compileArgs+='-o'; $compileArgs+=$output

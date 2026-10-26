@@ -57,7 +57,6 @@ static int pe_is_boost_value(int32_t mf) {
     return 0;
 }
 static int32_t pe_speed(int choice) { return s_speed_factor[choice >= 0 && choice < PE_SPEED_CHOICES ? choice : 0]; }
-static int pe_free_field(void) { return !(g_GameStateFlags & 0x2006u) && !(g_GameStateFlagsWord & 0xB600u); }
 
 /* The raw pad as the game's internal button bits (Circle/Cross swapped) and the left stick. */
 typedef struct { uint32_t bits; int analog, x, y, stick; } PePad;

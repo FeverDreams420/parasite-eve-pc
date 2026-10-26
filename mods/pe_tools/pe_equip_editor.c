@@ -27,27 +27,9 @@
 
 enum { PE_GUN = 0, PE_ARMOR = 1 };
 
-static const char *const s_gun_mods[21] = {
-    "Empty", "Rate of Fire 2", "Rate of Fire 3", "Rate of Fire 5", "Rate of Fire 7", "Rate of Fire 10",
-    "Random Fire 1-5", "Burst Spray", "Attack All", "Heat Bullets", "Frost Bullets", "Cyanide Bullets",
-    "Acid Bullets", "Tranquilizer", "Counterattack", "Quickdraw", "Steal (half attack)", "Steal on Attack",
-    "Critical Up", "2 Commands", "3 Commands",
-};
-/* Armor effects 16-20 are unused in the game's own table (the economy's are its own). */
-static const char *const s_armor_mods[16] = {
-    "Empty", "Resist Poison", "Resist Stiffness", "Resist Darkness", "Less Stolen", "Resist Confusion",
-    "Auto Medicine", "Auto Cure", "Bag +1", "Bag +2", "Bag +4", "Max HP Up", "Attack Up", "Slower Active Time",
-    "PE Burden Down", "Attack Down",
-};
-
-static int pe_mod_group(int which, int effect) {
-    if (which == PE_ARMOR) return effect >= 8 && effect <= 10 ? 5 : 0;
-    if (effect >= 1 && effect <= 5) return 1;     /* rate of fire */
-    if (effect >= 6 && effect <= 8) return 2;     /* multi-shot */
-    if (effect == 19 || effect == 20) return 3;   /* extra commands */
-    if (effect == 16 || effect == 17) return 4;   /* steal */
-    return 0;
-}
+/* The game's own effects, named by the host; filled at registration. */
+static const char *s_gun_mods[PE_GUN_EFFECTS_GAME + 1];
+static const char *s_armor_mods[PE_ARMOR_EFFECTS_GAME + 1];
 
 static const char *pe_item_name(int id) {
     unsigned i;
@@ -127,7 +109,7 @@ static int pe_get_mod(int which) {
     int effect;
     if (!rec || s_slot[which] >= pe_mod_count(rec)) return 0;
     effect = rec->tailData[s_slot[which]] & 0x1F;
-    return effect <= (which == PE_GUN ? 20 : 15) ? effect : 0;
+    return effect <= (which == PE_GUN ? PE_GUN_EFFECTS_GAME : PE_ARMOR_EFFECTS_GAME) ? effect : 0;
 }
 
 /* The bag slots +1/+2/+4 armor mods give (effects 8/9/10). */
@@ -148,7 +130,7 @@ static int pe_set_mod(int which, int effect) {
     if (!rec || n == 0) return 0;
     if (s_slot[which] >= n) s_slot[which] = 0;
     for (i = 0; i < n; ++i) next[i] = rec->tailData[i];
-    group = effect ? pe_mod_group(which, effect) : 0;
+    group = effect ? pe_mod_effect_group(which == PE_ARMOR, effect) : 0;
     if (group)                                     /* one mod per group */
         for (i = 0; i < n; ++i)
             if (i != s_slot[which] && (next[i] & 0x1F) && (next[i] >> 5) == group) next[i] = 0;
@@ -174,18 +156,21 @@ static int sam(int v) { return pe_set_mod(PE_ARMOR, v); }
 
 void pe_equip_editor_register(const char *mod_id) {
     const char *page = PE_PAGE_DEBUG_EQUIP;
+    int e;
     (void)mod_id;
+    for (e = 0; e <= PE_GUN_EFFECTS_GAME; ++e) s_gun_mods[e] = pe_mod_effect_name(0, e);
+    for (e = 0; e <= PE_ARMOR_EFFECTS_GAME; ++e) s_armor_mods[e] = pe_mod_effect_name(1, e);
     pe_menu_register_dynamic_choice(page, "Gun", "The equipped weapon.", &s_gun_header, 1, pe_one, pe_gun_name);
     pe_menu_register_live_int(page, "Gun: attack +", "Attack bonus. Applies now.", -PE_BONUS_MAX, PE_BONUS_MAX, 1, g0, sg0);
     pe_menu_register_live_int(page, "Gun: range +", "Range bonus. Applies now.", -PE_BONUS_MAX, PE_BONUS_MAX, 1, g1, sg1);
     pe_menu_register_live_int(page, "Gun: bullets +", "Bullet capacity bonus. Applies now.", -PE_BONUS_MAX, PE_BONUS_MAX, 1, g2, sg2);
     pe_menu_register_live_int(page, "Gun: ammo loaded", "Capped at bullet capacity.", 0, PE_BONUS_MAX, 1, pe_get_ammo, pe_set_ammo);
     pe_menu_register_dynamic_choice(page, "Gun: mod slot", "Pick a slot, then set its mod below.", &s_slot[PE_GUN], PE_MAX_MODS, gsc, gsn);
-    pe_menu_register_live_choice(page, "Gun: mod", "One per kind; replaces a match.", s_gun_mods, 21, ggm, sgm);
+    pe_menu_register_live_choice(page, "Gun: mod", "One per kind; replaces a match.", s_gun_mods, PE_GUN_EFFECTS_GAME + 1, ggm, sgm);
     pe_menu_register_dynamic_choice(page, "Armor", "The equipped armor.", &s_armor_header, 1, pe_one, pe_armor_name);
     pe_menu_register_live_int(page, "Armor: defense +", "Defense bonus. Applies now.", -PE_BONUS_MAX, PE_BONUS_MAX, 1, a0, sa0);
     pe_menu_register_live_int(page, "Armor: PE defense +", "PE defense bonus. Applies now.", -PE_BONUS_MAX, PE_BONUS_MAX, 1, a1, sa1);
     pe_menu_register_live_int(page, "Armor: crit evasion +", "Critical evasion bonus. Applies now.", -PE_BONUS_MAX, PE_BONUS_MAX, 1, a2, sa2);
     pe_menu_register_dynamic_choice(page, "Armor: mod slot", "Pick a slot, then set its mod below.", &s_slot[PE_ARMOR], PE_MAX_MODS, asc, asn);
-    pe_menu_register_live_choice(page, "Armor: mod", "Bag mods can't shrink a full bag.", s_armor_mods, 16, agm, sam);
+    pe_menu_register_live_choice(page, "Armor: mod", "Bag mods can't shrink a full bag.", s_armor_mods, PE_ARMOR_EFFECTS_GAME + 1, agm, sam);
 }

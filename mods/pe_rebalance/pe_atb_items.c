@@ -27,11 +27,6 @@ int g_pe_half_allow[ACT_COUNT] = { 1, 1, 1, 0, 0 };
 uint32_t g_pe_quick_mask = 0x59Bu;              /* Heal 1/2, Detox, Medic, Scan, Slow, Confuse */
 #define s_enabled g_pe_half_enabled
 #define s_allow g_pe_half_allow
-static const char *const s_power_names[20] = {
-    "Heal1", "Heal2", "Heal3", "Detox", "Medic", "Barrier", "EnergyShot", "Scan", "Slow",
-    "Haste", "Confuse", "GeneHeal", "Preraise", "Mito14", "Mito15", "Mito16", "Mito17",
-    "Mito18", "FullRecover", "Liberate",
-};
 
 /* Transient native battle bookkeeping; never written to a card save. */
 static struct {
@@ -156,7 +151,7 @@ static int pe_action_allowed(int act) {
 
 static void pe_log_pe_turn(const char *cost, unsigned from, unsigned to) {
     if (s_st.pe_index < 0 || s_st.pe_index >= 20) return;   /* a PE power was queued (Energy Shot shoots) */
-    pe_log("pe_turn", "power=%s cost=%s gauge=%u->%u", s_power_names[s_st.pe_index], cost, from, to);
+    pe_log("pe_turn", "power=%s cost=%s gauge=%u->%u", pe_power_tag(s_st.pe_index), cost, from, to);
 }
 
 static void pe_restore_tabs(void) {

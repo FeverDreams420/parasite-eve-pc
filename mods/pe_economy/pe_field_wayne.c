@@ -78,8 +78,6 @@ static TextboxEntry *s_menu_box;  /* the box showing our menu */
 static int s_pending = -1;        /* storage screen to open: PE_STORE_*, or -1 */
 static int s_pending_wait;        /* frames left before it opens */
 
-static int pe_free_field(void) { return !(g_GameStateFlags & 0x2006u) && !(g_GameStateFlagsWord & 0xB600u); }
-
 /* Is `e` Warner, with his retail contact task? */
 static int pe_is_warner(BattleEntity *e) {
     return e->modelIndex == PE_WARNER_MODEL && e->scriptBase &&

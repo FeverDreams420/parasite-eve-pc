@@ -274,7 +274,7 @@ void pe_wardrobe_wear_later(const PeCostume *c) {
 
 /* Once Aya's menu has closed, the room reloads so the costume picked there shows. */
 static void pe_reload_tick(void) {
-    if (!s_reload_after_menu || !pe_game_loaded() || (g_GameStateFlags & 0x2006u)) return;
+    if (!s_reload_after_menu || !pe_game_loaded() || !pe_free_field()) return;
     s_reload_after_menu = 0;
     (void)pe_reload();
 }

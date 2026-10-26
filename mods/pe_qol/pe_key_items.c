@@ -51,7 +51,7 @@ static void pe_key_tick(void) {
         for (int i = 0; i < n; ++i)
             if (pe_keys_take((uint16_t)g_InvActiveListItems[i])) g_InvActiveListItems[i] = 0;
     }
-    if (!pe_inventory_free_field()) return;
+    if (!pe_free_field()) return;
     if (s_enabled) {
         for (int i = 0; i < 50; ++i)
             if (pe_keys_take((uint16_t)g_AyaInventoryItems[i])) g_AyaInventoryItems[i] = 0;

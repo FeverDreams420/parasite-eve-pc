@@ -9,7 +9,7 @@
 #include "pe_pages.h"
 #include "pe1/game_timers.h"
 
-enum { PE_WAYNE_VAR = 48, PE_CRAFT_COST = 300, PE_NEW_GAME = 1117 };
+enum { PE_CRAFT_COST = 300, PE_NEW_GAME = 1117 };
 static int s_enabled; /* Off by default: Super/Duper Junk provide the partial refund. */
 static int s_valid, s_armed;
 static unsigned s_prev_counter, s_junk_before;
@@ -43,7 +43,7 @@ static void pe_refund_tick(void) {
         s_valid = s_armed = 0;
         return;
     }
-    counter = (u16)g_ScriptVariableBank[PE_WAYNE_VAR];
+    counter = pe_wayne_count();
     if (!s_valid) {
         s_valid = 1;
         s_armed = 0;
@@ -54,7 +54,7 @@ static void pe_refund_tick(void) {
         s_armed = 0;
         if (pe_bad_roll_count() > s_junk_before) {
             counter += PE_CRAFT_COST;
-            g_ScriptVariableBank[PE_WAYNE_VAR] = counter;
+            pe_set_wayne_count(counter);
             pe_log("wayne_refund", "back=%u", (unsigned)PE_CRAFT_COST);
         }
     }

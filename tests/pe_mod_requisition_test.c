@@ -24,6 +24,7 @@ static PeMenuSet set_tools;
 static PeMenuGet get_tools;
 static char message[128];
 int pe_game_loaded(void) { return loaded; }
+int pe_free_field(void) { return !(g_GameStateFlags & 0x2006u) && !(g_GameStateFlagsWord & 0xB600u); }   /* as host/pe_game.c */
 int pe_loot_enabled(void) { return economy; }
 int Inv_GetAyaSlotLimit(void) { return limit; }
 ItemDataRecord *pe_base_item(unsigned id) { return id>0 && id<256?&bases[id]:NULL; }

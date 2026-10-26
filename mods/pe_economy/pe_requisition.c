@@ -207,7 +207,7 @@ void pe_shop_at_counter(int on) { s_at_counter = on; }
 static const char *pe_shop_closed(void) {
     if (!pe_game_loaded()) return "Load a game first";
     if (!pe_loot_enabled()) return "Junk economy is off";
-    if (!s_at_counter && ((g_GameStateFlags & 0x2006u) || (g_GameStateFlagsWord & 0xB600u)))
+    if (!s_at_counter && !pe_free_field())
         return "Use Requisition in the field, outside battle and game menus";
     return NULL;
 }

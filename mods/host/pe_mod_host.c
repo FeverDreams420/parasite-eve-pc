@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "pe_game.h"
 #include "pe_main_menu.h"
 #include "pe_mod_host.h"
 #include "pe_pages.h"
@@ -204,6 +205,7 @@ static void pe_host_start(const PeHookInit *init) {
     pe_menu_load_settings();
     pe_pages_describe();
     pe_main_menu_init();
+    pe_equip_sync_init();
     pe_start_mods();
     if (s_interactive) pe_panel_install();
     s_started = 1;

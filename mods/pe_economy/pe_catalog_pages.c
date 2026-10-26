@@ -78,7 +78,7 @@ static const char *pe_grid_name(unsigned i) {
  * first free slot, else the chosen slot. */
 static int pe_install_slot(int e) {
     const ItemDataRecord *rec = pe_target();
-    const int n = rec ? pe_cat_mod_count(rec) : 0, group = pe_cat_group(s_target, e);
+    const int n = rec ? pe_cat_mod_count(rec) : 0, group = pe_mod_effect_group(s_target == PE_ARMOR, e);
     int chosen, m;
     if (n <= 0) return -1;
     for (m = 0; group && m < n; ++m)

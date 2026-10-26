@@ -80,7 +80,7 @@ static void pe_sort_tick(void) {
         }
         pe_snapshot(); return;
     }
-    if (!pe_inventory_free_field()) return;
+    if (!pe_free_field()) return;
     if (!s_sort.mode || (s_seen && !changed)) { pe_snapshot(); return; }
     int slot = g_AyaSaveState.equipped_weapon_slot;
     /* The stock sorter dereferences this slot before sorting. */

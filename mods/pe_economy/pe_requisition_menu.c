@@ -40,7 +40,6 @@ static char s_result[96], s_label[80];
 static unsigned s_frames;
 static int s_rescue_warned;
 
-static int pe_in_free_field(void) { return !(g_GameStateFlags & 0x2006u) && !(g_GameStateFlagsWord & 0xB600u); }
 
 static void pe_result(const char *text) {
     snprintf(s_result, sizeof s_result, "%s", text);
@@ -104,7 +103,7 @@ static void pe_buy(void) {
 
 static void pe_spare_club(void) {
     char msg[96];
-    if (!pe_game_loaded() || !pe_loot_enabled() || !pe_in_free_field()) {
+    if (!pe_game_loaded() || !pe_loot_enabled() || !pe_free_field()) {
         s_armed.what = ARMED_NONE;
         pe_result("Use Requisition in the field with Junk economy on");
         return;
@@ -128,7 +127,7 @@ static void pe_spare_club(void) {
 
 static void pe_tick(void) {
     s_armed.what = ARMED_NONE;    /* the game ran a frame: F1 was left, so the confirmation lapses */
-    if (++s_frames % PE_RESCUE_CHECK_FRAMES || !pe_game_loaded() || !pe_loot_enabled() || !pe_in_free_field()) return;
+    if (++s_frames % PE_RESCUE_CHECK_FRAMES || !pe_game_loaded() || !pe_loot_enabled() || !pe_free_field()) return;
     if (!pe_shop_rescue_needed()) {
         s_rescue_warned = 0;
         return;

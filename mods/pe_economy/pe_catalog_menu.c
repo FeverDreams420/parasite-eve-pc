@@ -55,22 +55,8 @@ static u8 s_row_text[PE_TEXT_MAX + 1];
 /* Menu text in the game's glyph code (pe_gametext.h), into a 0xFF-terminated buffer. */
 static u8 *pe_game_text(u8 *out, const char *ascii) { return pe_text_from_ascii(out, PE_TEXT_MAX + 1, ascii); }
 
-/* Effect names as the Catalog shows them (title case for the menu font). */
-static const char *const s_gun_names[21] = {
-    "Empty", "Rate of Fire 2", "Rate of Fire 3", "Rate of Fire 5", "Rate of Fire 7", "Rate of Fire 10",
-    "Random Fire", "Burst Spray", "Attack All", "Heat Bullets", "Frost Bullets", "Cyanide Bullets",
-    "Acid Bullets", "Tranquilizer", "Counterattack", "Quickdraw", "Steal, half attack", "Steal on Attack",
-    "Critical Up", "2 Commands", "3 Commands",
-};
-static const char *const s_armor_names[21] = {
-    "Empty", "Resist Poison", "Resist Stiffness", "Resist Darkness", "Less Stolen", "Resist Confusion",
-    "Auto Medicine", "Auto Cure", "Bag +1", "Bag +2", "Bag +4", "Max HP Up", "Attack Up", "Slower Active Time",
-    "PE Burden Down", "Attack Down", "", "Bargain", "Scavenger", "Lucky Find", "Salvager",
-};
-static const char *pe_effect_name(int which, int e) {
-    if (e < 0 || e > 20) return "?";
-    return which ? s_armor_names[e] : s_gun_names[e];
-}
+/* Effect names: the Catalog's own (the game's from the host, the economy's 17-20). */
+static const char *pe_effect_name(int which, int e) { return pe_cat_effect_name(which, e); }
 
 /* ---- rows ---- */
 static int pe_row_count(int step) {

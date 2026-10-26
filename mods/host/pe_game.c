@@ -1,5 +1,7 @@
 #include "pe_game.h"
 #include "pe1/asset_table.h"
+#include "pe1/game_state.h"
+#include "pe1/game_timers.h"
 #include "pe1/scene_dispatch.h"
 
 int pe_room_number(void) {
@@ -25,6 +27,14 @@ int pe_game_loaded(void) { return g_AyaSaveState.max_hp != 0 && D_8009D254 != NU
 int pe_save_loaded(void) { return g_AyaSaveState.max_hp != 0; }
 
 int pe_in_battle(void) { return (g_GameStateFlags & 2) != 0; }
+
+int pe_free_field(void) { return !(g_GameStateFlags & 0x2006u) && !(g_GameStateFlagsWord & 0xB600u); }
+
+/* ---- facts about the game ---- */
+#define PE_SCRIPT_VAR_WAYNE 48
+
+unsigned pe_wayne_count(void) { return (u16)g_ScriptVariableBank[PE_SCRIPT_VAR_WAYNE]; }
+void pe_set_wayne_count(unsigned count) { g_ScriptVariableBank[PE_SCRIPT_VAR_WAYNE] = count; }
 
 ItemDataRecord *pe_equipped(int armor) {
     int slot = armor ? g_AyaSaveState.equipped_armor_slot : g_AyaSaveState.equipped_weapon_slot;

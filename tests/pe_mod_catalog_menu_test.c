@@ -43,6 +43,7 @@ uint32_t pe_loot_junk(void) { return 100; }
 static ItemDataRecord equipped_record = { .iconId = 1, .itemId = 0x45, .kind = 1, .tailCount = 3 };
 ItemDataRecord *pe_cat_record(int w) { (void)w;return &equipped_record; }
 const char *pe_cat_item_name(int id) { (void)id;return "M9"; }
+const char *pe_cat_effect_name(int w,int e) { (void)w;(void)e;return "Rate of Fire 2"; }
 int pe_cat_slots(int w) { (void)w;return 3; }
 int pe_cat_slot_effect(int w,int s) { (void)w;(void)s;return 0; }
 int pe_cat_board_count(int w) { (void)w;return 20; }

@@ -51,7 +51,6 @@
 #define PE_ITEM_SUPER_JUNK  0x0B
 #define PE_ITEM_DUPER_JUNK  0x0C
 #define PE_ITEM_MOD_PERMIT  0x37
-#define PE_WAYNE_VAR        48      /* script variable 48 (0x800A78B0): Wayne's Junk count */
 #define PE_WAYNE_CRAFT_COST 300u
 #define PE_BAG_SLOTS        50
 #define PE_STORAGE_SLOTS    100
@@ -117,8 +116,6 @@ static uint16_t s_steal_item;
 static uint32_t s_steal_frame;
 
 /* ---- small helpers ---- */
-static int pe_free_field(void) { return !(g_GameStateFlagsWord & 0xB600u) && !(g_GameStateFlags & 0x2006u); }
-static unsigned pe_wayne_count(void) { return (u16)g_ScriptVariableBank[PE_WAYNE_VAR]; }
 static int pe_bag_limit(void) {
     int limit = g_AyaSaveState.inventory_slot_count + g_InvBonusSlotCount;
     return limit > PE_BAG_SLOTS ? PE_BAG_SLOTS : limit;

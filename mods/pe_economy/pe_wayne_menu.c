@@ -44,7 +44,6 @@
 #define PE_IN_RIGHT         0x0010u
 #define PE_PAGE_SIZE        5
 #define PE_CHOICE_MAX       7
-#define PE_WAYNE_VAR        48     /* Wayne's Junk count toward his next gun */
 #define PE_ITEM_MOD_PERMIT  0x37
 #define PE_BAG_SLOTS        50
 #define PE_STORAGE_SLOTS    100
@@ -75,7 +74,6 @@ static unsigned s_orig_len;
 static struct { int saved; u8 r, g, b; } s_highlight;
 
 static const PeWardrobeApi *pe_wardrobe(void) { return (const PeWardrobeApi *)pe_service_get("wardrobe", 1); }
-static unsigned pe_wayne_count(void) { return (u16)g_ScriptVariableBank[PE_WAYNE_VAR]; }
 
 /* ---- Wayne's menu ---- */
 

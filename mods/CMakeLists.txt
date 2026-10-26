@@ -1,7 +1,7 @@
 # Mod host and mods, built only with -DPE_MODS=ON. See mods/README.md.
 # Each mod is a folder here holding .c files and defining `const PeMod pe_mod_<folder>`.
 # pe_hello is the example mod; add it to the list to build it.
-set(PE_MOD_LIST pe_qol CACHE STRING "Mods built into the game (folder names)")
+set(PE_MOD_LIST pe_qol pe_rebalance CACHE STRING "Mods built into the game (folder names)")
 
 set(pe_host_sources
     host/pe_mod_host.c      # registry, hooks, services, events, logs
@@ -9,6 +9,7 @@ set(pe_host_sources
     host/pe_mod_panel.c     # the F1 panel: navigation and input
     host/pe_pages.c         # PE Enhancements page layout
     host/pe_game.c          # game access helpers
+    host/pe_game_facts.c    # game facts as tables: effect names and groups, power tags
     host/pe_main_menu.c     # extra rows in Aya's main menu, screens from game widgets
     host/ui/pe_ui_raster.c  # drawing: boxes and text
     host/ui/pe_ui_gpu.c     # the overlay quad

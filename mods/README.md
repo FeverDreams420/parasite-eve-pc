@@ -9,7 +9,7 @@ cmake --build build-mods
 ```
 
 `PE_MOD_LIST` (CMake cache) picks the mods, by folder name. Default:
-`pe_qol` (add `pe_hello` for the example).
+`pe_qol;pe_rebalance` (add `pe_hello` for the example).
 
 Two switches, so a modded build is safe to hand out:
 - **Build**: `PE_MODS` off (the default) leaves no mod code in the game at all.
@@ -32,10 +32,12 @@ mods/
     pe_pages.*           where PE Enhancements rows live (one layout for the whole suite)
     pe_services.h        every service struct mods share (no mod includes another's headers)
     pe_game.*            game access and the game facts every mod shares (see below)
+    pe_game_facts.c      those facts as tables: mod effect names and groups, power tags
     pe_main_menu.*       extra rows in Aya's main menu, and screens from the game's own widgets
     pe_gametext.h        text in the game's glyph code; pe_item_table.h the game's item names
     ui/                  drawing (pe_ui_raster), the overlay quad (pe_ui_gpu), toasts
   pe_qol/              quality of life: movement, encounters, key item pocket, bag sort, Key Items menu
+  pe_rebalance/        mod effects, Parasite Energy balance, half-bar turns / Quick powers, Combine
   pe_hello/            example mod (not built by default)
 ```
 
@@ -66,7 +68,8 @@ moved, disabled or updated without touching the others. Add the folder name to `
   never PS1 addresses: native structs hold host pointers and their own layouts.
 - **Shared game facts live once, in the host** (`pe_game.h`): `pe_free_field()` (no battle, menu,
   transition or event), `pe_save_loaded()` (also mid room load, when Aya's actor is rebuilt),
-  `pe_room_number()`, `pe_wayne_count()` / `pe_set_wayne_count()`. Never copy one of these into a mod.
+  `pe_room_number()`, `pe_wayne_count()` / `pe_set_wayne_count()`, `pe_mod_effect_name()` /
+  `pe_mod_effect_group()`, `pe_power_tag()`. Never copy one of these into a mod.
 
 ## Talking to other mods
 

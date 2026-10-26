@@ -6,5 +6,7 @@ void pe_pages_describe(void) {
     pe_menu_begin(PE_MENU_PAGE);
     pe_menu_page(PE_PAGE_MOVEMENT, "Always run and how fast Aya moves.", 10);
     pe_menu_page(PE_PAGE_COMBAT, "Random battles and how often they happen.", 20);
+    pe_menu_page(PE_PAGE_INVENTORY, "Key-item pocket, remembered bag sorting and inventory counters.", 40);
+    pe_menu_page(PE_PAGE_KEYS, "Browse pocketed keys and story items.", 10);
     pe_menu_begin(0);
 }

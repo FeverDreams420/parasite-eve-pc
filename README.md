@@ -39,6 +39,10 @@ Open **F1 → PE Enhancements** to configure them.
   (walking and running default to 1.75×).
 - **Encounters** (`pe_qol`): no random battles, or Normal, 2×, 4× or Every Check frequency. Story
   and room rules still apply; this changes how often fights happen, not their size.
+- **Key-item pocket** (`pe_qol`): story keys and Chrysler elevator keys stay out of the bag but
+  still count for story checks; browse them through **Key Items** in Aya's main menu.
+- **Remembered sorting** (`pe_qol`): Auto keeps the game's own sort settings; moving items by hand
+  switches back to Manual. Square in the Use Item list opens sorting.
 
 Mod builds are experimental; a passing build or test does not establish full in-game compatibility.
 

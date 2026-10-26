@@ -4,6 +4,7 @@
 #include "pe1/draw_buffers.h"
 #include "pe1/game_state.h"
 #include "pe1/menu_background.h"
+#include "pe1/menu_widget.h"
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_packets.h"
 
@@ -62,6 +63,7 @@ draw_buffer:
         drawSlot = g_ActiveDrawSlot;
         orderingTable = (RenderNativeTag *)g_GameState.shared_buffers.ordering_tables[drawSlot];
         Render_CommitWidescreenPicture(drawSlot, g_RenderDrawEnvArray[drawSlot].clip.y);
+        Render_CentreWidescreenMenu(drawSlot, orderingTable, g_MenuWidgetCurrentNode != 0);
         DrawOTagEnv(orderingTable + 4095, &g_RenderDrawEnvArray[drawSlot]);
     }
 

@@ -867,13 +867,15 @@ static u16 widescreen_bands(const WidescreenTile *tiles,unsigned n,int column){
 }
 /* Black game pixels in the presenter's 16:9 view (199 each side of the
  * centre at 320x224) for a picture span, with the span limited to cap past
- * the screen and the view's shift to max_shift; same rule as PsyZ's
- * Psyz_VideoSetWidescreenPicture. */
-static int widescreen_black(int left,int right,int cap,int max_shift){
+ * the screen and the view's shift to max_shift. classic: a span narrower
+ * than the view shows the 4:3 screen unshifted (PsyZ's current
+ * Psyz_VideoSetWidescreenPicture); otherwise it is centred (the old rule). */
+static int widescreen_black(int left,int right,int cap,int max_shift,int classic){
     const int centre=160,half=199;int shift=0;
     if(left<-cap)left=-cap;if(right>320+cap)right=320+cap;
     int twice=left+right-2*centre; /* rounded half, away from zero like SDL_roundf */
-    if(right-left<=2*half)shift=twice>=0?(twice+1)/2:-((1-twice)/2);
+    if(classic&&right-left<2*half){left=0;right=320;}
+    else if(right-left<=2*half)shift=twice>=0?(twice+1)/2:-((1-twice)/2);
     else if(centre-half<left)shift=left-(centre-half);
     else if(centre+half>right)shift=right-(centre+half);
     if(shift<-max_shift)shift=-max_shift;if(shift>max_shift)shift=max_shift;
@@ -935,11 +937,12 @@ static int original_widescreen_rooms(void)
                     }
                 }
                 /* before: picture to 54 past the screen, view slid 14 at most */
-                int black_before=widescreen_black(left,right,54,14);
-                int black_now=widescreen_black(left,right,RENDER_WIDESCREEN_MARGIN,39);
-                if(black_now>black_before){
-                    fprintf(stderr,"Widescreen M%03u group%u x%d: %d black, was %d (span %d..%d)\n",
-                        map,group,x,black_now,black_before,left,right);goto done;}
+                int black_before=widescreen_black(left,right,54,14,0);
+                int black_now=widescreen_black(left,right,RENDER_WIDESCREEN_MARGIN,39,1);
+                /* now either the full 16:9 view or the plain 4:3 screen */
+                if(black_now!=0 && black_now!=2*(199-160)){
+                    fprintf(stderr,"Widescreen M%03u group%u x%d: %d black, neither 16:9 nor 4:3 (span %d..%d)\n",
+                        map,group,x,black_now,left,right);goto done;}
                 barred_before+=black_before>0;barred_now+=black_now>0;
                 room_black_before=black_before>room_black_before?black_before:room_black_before;
                 room_black_now=black_now>room_black_now?black_now:room_black_now;

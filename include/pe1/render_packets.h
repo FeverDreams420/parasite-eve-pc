@@ -83,5 +83,10 @@ typedef union RenderBufferSlotAddress {
  * buffer_y and starts the slot's next frame; buffer_y < 0 only discards it. */
 void Render_GetWidescreenPicture(int slot, int *left, int *right);
 void Render_CommitWidescreenPicture(int slot, int buffer_y);
+/* While a menu is open, draws the 2D layer (ordering-table entry 1, where the
+ * menu and text code link) centred in the 16:9 view instead of following the
+ * view's shift at a room's end, so the menu sits in the middle while the room
+ * keeps filling the view. Call after the frame's packets are linked. */
+void Render_CentreWidescreenMenu(int slot, RenderNativeTag *ordering, int menu_open);
 
 #endif

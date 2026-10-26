@@ -13,6 +13,7 @@
 #include "pe1/render_prim.h"
 #include "pe1/render_shadow.h"
 #include "pe1/room_floor.h"
+#include <psyz/gpu.h>
 #include <psyz/video.h>
 #include <string.h>
 
@@ -100,6 +101,39 @@ void Render_CommitWidescreenPicture(int slot, int buffer_y) {
         Psyz_VideoSetWidescreenPicture(buffer_y, left, right);
     }
     memset(&s_WidescreenCover[slot], 0, sizeof(s_WidescreenCover[slot]));
+}
+
+/* A custom GP0 command switches centred drawing on at the head of entry 1
+ * and off at the head of entry 0, in the ordering table's own order. */
+#define WS_CENTRED_OPCODE 0x1Eu
+static struct {
+    RenderNativeTag tag;
+    uintptr_t code;
+} s_WidescreenCentred[2][2];
+
+static int Render_WidescreenCentredCommand(const u_long *words, int available, void *userdata) {
+    (void)available;
+    (void)userdata;
+    Psyz_VideoSetWidescreenCentred((int)(words[0] & 1));
+    return 1;
+}
+
+void Render_CentreWidescreenMenu(int slot, RenderNativeTag *ordering, int menu_open) {
+    static int registered;
+    int i;
+
+    if (!menu_open || !Psyz_VideoGetWidescreen()) return;
+    if (!registered) {
+        Psyz_GpuRegisterCommandHandler(WS_CENTRED_OPCODE, Render_WidescreenCentredCommand, NULL);
+        registered = 1;
+    }
+    for (i = 0; i < 2; ++i) {
+        RenderNativeTag *entry = ordering + 1 - i;
+        s_WidescreenCentred[slot][i].tag.length = 1;
+        s_WidescreenCentred[slot][i].code = (WS_CENTRED_OPCODE << 24) | (i == 0);
+        s_WidescreenCentred[slot][i].tag.address = entry->address;
+        entry->address = (uintptr_t)&s_WidescreenCentred[slot][i];
+    }
 }
 
 int Render_DrawSpriteEntry(GeomEntry *input)

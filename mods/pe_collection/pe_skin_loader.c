@@ -75,6 +75,7 @@ static int s_game_tex_bank = -1;
 static PeSkin *s_tex;                   /* whose textures are in VRAM: NULL the game's */
 static int s_tex_known;
 static PeSkin *s_pointed;               /* the skin bank_slots / rows point at, or NULL */
+static PeSkin *s_room_pack;             /* the room pack whose rows are in, with the game's model */
 static void *s_replaced[PE_ROWS_PER_BANK];   /* the game's row each pointed slot held */
 static int s_gun_written = -1;
 static int s_instant;                   /* F1: swap in place (off until it is proven in game) */
@@ -318,12 +319,37 @@ static int pe_ours(const PeSkin *k, const void *p) {
     return 0;
 }
 
+/* A row drives exactly as many bones as the model Aya wears has parts; more would write past her
+ * matrices. */
+static int pe_fits(const void *row) {
+    const RenderObjectHeader *h = g_GameState.bank_slots[0];
+    return h && ((const u8 *)row)[1] + 1u == h->part_count;
+}
+
+static int pe_any_ours(const void *p) {
+    int i;
+    for (i = 0; i < s_skins; ++i) if (s_skin[i].ok && pe_ours(&s_skin[i], p)) return 1;
+    return 0;
+}
+
+/* Put the game's own row back in every slot still pointing at a skin's or room pack's copy, before
+ * another goes on: a copy is matched by Aya's original's fingerprint, never by another copy's, so
+ * one left in place would play on the next model (a 31-bone evening row on 29-part Harlequin).
+ * A slot the room load has refilled since is the game's already and stays. */
+static void pe_restore_rows(void) {
+    int slot;
+    for (slot = 0; slot < PE_ROWS_PER_BANK; ++slot)
+        if (s_replaced[slot] && pe_any_ours(g_GameState.bank_rows[0][slot])) g_GameState.bank_rows[0][slot] = s_replaced[slot];
+    memset(s_replaced, 0, sizeof s_replaced);
+    s_room_pack = NULL;
+}
+
 static void pe_room_rows(const PeSkin *k) {
     int slot;
     if (!k->nrooms) return;
     for (slot = PE_ROOM_SLOT0; slot < PE_ROOM_SLOT0 + PE_ROOM_SLOTS; ++slot) {
         void *p = g_GameState.bank_rows[0][slot], *copy;
-        if (!p || pe_ours(k, p) || !(copy = pe_room_copy(k, p))) continue;
+        if (!p || pe_ours(k, p) || !(copy = pe_room_copy(k, p)) || !pe_fits(copy)) continue;
         s_replaced[slot] = p;
         g_GameState.bank_rows[0][slot] = copy;
     }
@@ -339,7 +365,7 @@ static void pe_running_row(const PeSkin *k) {
     for (slot = 0; slot < PE_ROWS_PER_BANK && !copy; ++slot)
         if (s_replaced[slot] == a && pe_ours(k, g_GameState.bank_rows[0][slot])) copy = g_GameState.bank_rows[0][slot];
     if (!copy && k->nrooms) copy = pe_room_copy(k, a);
-    if (copy && ((u8 *)copy)[2] == ((u8 *)a)[2]) player->action_data = copy;
+    if (copy && ((u8 *)copy)[2] == ((u8 *)a)[2] && pe_fits(copy)) player->action_data = copy;
 }
 
 /* The weapon model follows the player's part animation_id (0x12, Aya's hand). */
@@ -357,15 +383,15 @@ static void pe_gun_part(const PeSkin *k) {
 /* Keep the pointers on `k` (NULL: the game's own, from its buffers). */
 static void pe_keep(PeSkin *k) {
     if (k) {
-        if (s_pointed != k) memset(s_replaced, 0, sizeof s_replaced);
+        if (s_pointed != k) pe_restore_rows();
         pe_point_bundle(k->model.data);
         pe_point_day(k->day[pe_day()].data, 1);
         pe_room_rows(k);
         pe_running_row(k);
     } else if (s_pointed) {
+        pe_restore_rows();
         pe_point_bundle(g_GameState.voice_bank_base_1400);
         pe_point_day((u8 *)g_GameState.entity_texture_blob, 0);
-        memset(s_replaced, 0, sizeof s_replaced);
         pe_log("skin", "the game's own model and rows back");
     }
     pe_gun_part(k);
@@ -376,7 +402,11 @@ static void pe_keep(PeSkin *k) {
  * are swapped for the pack's copies, retargeted to the outfit's (the model stays the game's). */
 static void pe_keep_rooms(void) {
     PeSkin *r;
-    if (s_pointed || !pe_can_apply() || !(r = pe_wanted_rooms())) return;
+    if (s_pointed) return;
+    r = pe_can_apply() ? pe_wanted_rooms() : NULL;
+    if (s_room_pack && s_room_pack != r) pe_restore_rows();     /* that outfit came off */
+    if (!r) return;
+    s_room_pack = r;
     pe_room_rows(r);
     pe_running_row(r);
 }
@@ -473,7 +503,7 @@ static int pe_on_load(void *ctx, void *user) {
     (void)ctx;
     (void)user;
     s_tex_known = 0;
-    s_tex = s_pointed = NULL;
+    s_tex = s_pointed = s_room_pack = NULL;
     s_gun_written = -1;
     memset(s_replaced, 0, sizeof s_replaced);
     return 0;

@@ -1,3 +1,4 @@
+#include "pe_hooks.h"
 #include "common.h"
 #include <math.h>
 #include "pe1/entity_frame_update.h"
@@ -1365,6 +1366,9 @@ typedef union RenderPacketAddress {
  * packet classes are walked in turn through one shared descriptor cursor.
  * The room overlays carry a copy that keeps the negative winding instead. */
 void Render_DrawTexturedQuads(RenderObjectEntity *entity) {
+#ifdef PE_MODS
+    PeHookRenderStats stats = {entity, {0}};
+#endif
     int i;
     s32 clip_area;
     s32 *area = &clip_area;
@@ -1404,6 +1408,9 @@ void Render_DrawTexturedQuads(RenderObjectEntity *entity) {
                 RenderPacket34 *pkt = (RenderPacket34 *)packet.bytes;
                 u32 xy3 = xy[d];
                 RENDER_ADDPRIM(&ordering[depth], packet);
+#ifdef PE_MODS
+                ++stats.submitted[0];
+#endif
                 pkt->sxy0 = xy0;
                 pkt->sxy1 = xy1;
                 pkt->sxy2 = xy2;
@@ -1443,6 +1450,9 @@ void Render_DrawTexturedQuads(RenderObjectEntity *entity) {
             if (depth < 0x1000) {
                 RenderPacket28 *pkt = (RenderPacket28 *)packet.bytes;
                 RENDER_ADDPRIM(&ordering[depth], packet);
+#ifdef PE_MODS
+                ++stats.submitted[1];
+#endif
                 pkt->sxy0 = xy0;
                 pkt->sxy1 = xy1;
                 pkt->sxy2 = xy2;
@@ -1484,6 +1494,9 @@ void Render_DrawTexturedQuads(RenderObjectEntity *entity) {
                 RenderPacket24 *pkt = (RenderPacket24 *)packet.bytes;
                 u32 xy3 = xy[d];
                 RENDER_ADDPRIM(&ordering[depth], packet);
+#ifdef PE_MODS
+                ++stats.submitted[2];
+#endif
                 pkt->sxy0 = xy0;
                 pkt->sxy1 = xy1;
                 pkt->sxy2 = xy2;
@@ -1523,6 +1536,9 @@ void Render_DrawTexturedQuads(RenderObjectEntity *entity) {
             if (depth < 0x1000) {
                 RenderPacket1C *pkt = (RenderPacket1C *)packet.bytes;
                 RENDER_ADDPRIM(&ordering[depth], packet);
+#ifdef PE_MODS
+                ++stats.submitted[3];
+#endif
                 pkt->sxy0 = xy0;
                 pkt->sxy1 = xy1;
                 pkt->sxy2 = xy2;
@@ -1537,6 +1553,7 @@ void Render_DrawTexturedQuads(RenderObjectEntity *entity) {
         i++;
         record++;
     }
+    PE_HOOK(PE_HOOK_RENDER_STATS, &stats);
 }
 
 

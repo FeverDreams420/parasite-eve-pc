@@ -327,7 +327,15 @@ without touching these files.
   at the game's upload (PE_HOOK_PLAYER_TEXTURES, the game's own kept for changing back), and
   bank_slots[0] and her rows point at the skin before her actor takes them (PE_HOOK_PLAYER_ROWS) and
   every frame; the weapon follows the skin's hand, room animations use retargeted copies. Instant
-  swap (Wardrobe, experimental, off) changes skins in place without a room reload.
+  swap (Wardrobe, experimental, off) changes skins in place without a room reload. A game outfit
+  may carry a room pack (rooms.bin alone: pe_skins/outfit_evening, outfit_tshirt, made by the
+  bridge's build_outfit_rooms.py): rooms install Aya's animations for the outfit the story has her
+  in (29, 31 or 23 parts), so the evening dress worn on a jacket day gets them retargeted to its own.
+- `pe_animation_audit.c`: Debug > Collection "Log costume frames" (off) and "Audit current costume"
+  write pe_animation_audit.csv: bone-count mismatches, render allocation, visible parts, faces drawn.
+- `../tools/animation_sweep.c` (`-DPE_ANIMATION_SWEEP=ON`, pe-animation-sweep) decodes every frame
+  of every row through the game's own animation and render code, headless;
+  `../tools/run_animation_sweep.ps1` sweeps every pe_skins folder and writes summary.csv.
 - `pe_wardrobe_menu.c`: a Wardrobe row in Aya's main menu (icon: the Equip Armor icon, twice) once a
   costume is owned: pick an owned costume like armor; it shows when the menu closes.
 - `pe_profile.c`: unlocks by key in pe_collection.ini beside the preferences, kept across every

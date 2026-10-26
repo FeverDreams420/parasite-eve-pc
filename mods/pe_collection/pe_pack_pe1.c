@@ -8,7 +8,8 @@
  * must never change: they come from the generated names, in table order, and a repeated name gets
  * "_2", "_3".
  *
- * Costumes: the evening dress (bank 10) and T-shirt (13) are the game's own bundles. The long dress
+ * Costumes: the evening dress (bank 10) and T-shirt (13) are the game's own bundles, with optional
+ * room packs (pe_skins/outfit_evening, outfit_tshirt: build_outfit_rooms.py). The long dress
  * (11) and transformed Aya (14) have no full player moveset and are not offered. The character skins
  * (pe_skins/<folder>/, built from the user's disc by the bridge's build_skin.py) are skin
  * bundles the Wardrobe loads (pe_skin_loader.c); one whose folder is missing stays hidden.
@@ -97,7 +98,8 @@ void pe_pack_pe1_register(void) {
         const PeSkin *k = &g_pe_skins[i];
         if (k->kind == 0 && k->area != 10 && k->area != 13) continue;   /* no full moveset */
         s_costume[i] = (PeCostume){ s_costume_key[i], k->name, k->kind ? pe_skin_group(k) : "Aya's outfits", k->price,
-                                    (int16_t)(k->kind ? -1 : k->area), NULL, NULL, k->kind ? k->folder : NULL };
+                                    (int16_t)(k->kind ? -1 : k->area), NULL, NULL,
+                                    k->kind ? k->folder : k->area == 10 ? "outfit_evening" : "outfit_tshirt" };
         w->add(&s_costume[i]);
     }
 }

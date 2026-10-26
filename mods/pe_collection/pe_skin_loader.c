@@ -7,7 +7,9 @@
  *                     day1-8.bin    the per-day row blobs
  *                     rooms.bin     optional: room animations retargeted ("PERR", fingerprint table)
  *                     meta.bin      optional: "PEMT", the part the weapon follows
- * Any pack can name a folder (PeCostume.bundle); the Wardrobe loads it here.
+ * Any pack can name a folder (PeCostume.bundle); the Wardrobe loads it here. A game outfit
+ * (PeCostume.bank >= 0) may name a room pack: a folder with rooms.bin alone (the bridge's
+ * build_outfit_rooms.py), whose rows replace the room's animations for Aya's other skeletons.
  *
  * The native game resolves these files' offsets into pointers (SceneAsset_ResolveOffset) and keeps
  * them in g_GameState.bank_slots / bank_rows, so a skin goes in the same way, pointing at our copy
@@ -120,6 +122,28 @@ static PeSkin *pe_load_failed(const char *folder, const char *file) {
     return NULL;
 }
 
+static void pe_read_rooms(PeSkin *k) {
+    if (pe_read(k->folder, "rooms.bin", &k->rooms) && !memcmp(k->rooms.data, "PERR", 4)) {
+        const u32 n = rd32(k->rooms.data, 4);
+        if (8u + 12u * n <= k->rooms.size) k->nrooms = n;
+    }
+}
+
+/* A room pack: rooms.bin alone, for one of the game's own outfits (PeCostume.bank >= 0). */
+static PeSkin *pe_load_rooms(const char *folder) {
+    PeSkin *k = pe_find(folder, 1);
+    if (!k) return NULL;
+    if (!k->loaded) {
+        k->loaded = 1;
+        k->gun_part = -1;
+        pe_read_rooms(k);
+        k->ok = k->nrooms != 0;
+        if (k->ok) pe_log("skin", "%s room pack loaded: rooms %u", folder, k->nrooms);
+        else pe_log("skin", "%s: rooms.bin missing or unreadable (room animations stay the game's)", folder);
+    }
+    return k->ok ? k : NULL;
+}
+
 static PeSkin *pe_load(const char *folder) {
     PeSkin *k = pe_find(folder, 1);
     PeBlob meta = { 0, 0 };
@@ -134,10 +158,7 @@ static PeSkin *pe_load(const char *folder) {
         snprintf(name, sizeof name, "day%d.bin", d);
         if (!pe_read(folder, name, &k->day[d]) || !pe_dir(&k->day[d])) return pe_load_failed(folder, name);
     }
-    if (pe_read(folder, "rooms.bin", &k->rooms) && !memcmp(k->rooms.data, "PERR", 4)) {
-        const u32 n = rd32(k->rooms.data, 4);
-        if (8u + 12u * n <= k->rooms.size) k->nrooms = n;
-    }
+    pe_read_rooms(k);
     if (!k->nrooms) pe_log("skin", "%s: rooms.bin missing or unreadable (room animations stay Aya's)", folder);
     k->gun_part = -1;
     if (pe_read(folder, "meta.bin", &meta) && !memcmp(meta.data, "PEMT", 4) && meta.data[4] < 64) k->gun_part = meta.data[4];
@@ -169,6 +190,12 @@ static int pe_can_apply(void) { return pe_save_loaded() && pe_gameplay_bank() &&
 static PeSkin *pe_wanted(void) {
     const PeCostume *c = pe_wardrobe_worn();
     return c && c->bank < 0 && c->bundle ? pe_load(c->bundle) : NULL;
+}
+
+/* The worn game outfit's room pack, while that outfit is the loaded player bundle. */
+static PeSkin *pe_wanted_rooms(void) {
+    const PeCostume *c = pe_wardrobe_worn();
+    return c && c->bank >= 0 && c->bundle && c->bank == g_GameState.loaded_entity_bank ? pe_load_rooms(c->bundle) : NULL;
 }
 
 /* ---- textures ---- */
@@ -345,6 +372,15 @@ static void pe_keep(PeSkin *k) {
     s_pointed = k;
 }
 
+/* A game outfit worn where the story has another: the room's animations for that other skeleton
+ * are swapped for the pack's copies, retargeted to the outfit's (the model stays the game's). */
+static void pe_keep_rooms(void) {
+    PeSkin *r;
+    if (s_pointed || !pe_can_apply() || !(r = pe_wanted_rooms())) return;
+    pe_room_rows(r);
+    pe_running_row(r);
+}
+
 /* Her actor takes the model and idle row again, as the room load does (step 0x27). */
 static void pe_rebind_player(void) {
     FieldActor *player = g_PlayerEntity;
@@ -401,6 +437,7 @@ static int pe_on_player_rows(void *ctx, void *user) {
     (void)ctx;
     (void)user;
     if (pe_save_loaded()) pe_keep(pe_can_apply() && s_tex_known ? s_tex : NULL);
+    if (pe_save_loaded()) pe_keep_rooms();
     return 0;
 }
 
@@ -411,6 +448,7 @@ static int pe_on_frame(void *ctx, void *user) {
     (void)user;
     if (!pe_game_loaded()) return 0;
     k = pe_can_apply() ? pe_wanted() : NULL;
+    pe_keep_rooms();
     if (!s_tex_known && !k) return 0;                   /* nothing to put on; the next load tells us */
     if (s_instant && (k != s_tex || !s_tex_known) && !pe_in_battle() && pe_free_field() && g_PlayerEntity && pe_textures(k)) {
         pe_keep(k);
@@ -426,6 +464,7 @@ static int pe_on_battle(void *ctx, void *user) {
     (void)ctx;
     (void)user;
     if (s_pointed && pe_can_apply()) pe_keep(s_pointed);
+    pe_keep_rooms();
     return 0;
 }
 

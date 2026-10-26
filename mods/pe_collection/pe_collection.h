@@ -64,6 +64,7 @@ void pe_wardrobe_menu_register(const char *mod_id);
 /* ---- skins (pe_skin_loader.c): costumes with a `bundle` folder ---- */
 int pe_skin_available(const char *folder);       /* its files are there */
 int pe_skin_instant(void);                       /* skins swap in place (F1), else the room reloads */
+void pe_animation_audit_register(const char *mod_id);
 void pe_skin_register(const char *mod_id);
 
 #endif

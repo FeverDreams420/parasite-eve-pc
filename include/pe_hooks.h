@@ -44,6 +44,7 @@ typedef enum PeHookId {
                           * and her rows (g_GameState.bank_rows) */
     PE_HOOK_PLAYER_TEXTURES, /* SceneAssetBlob *: Aya's texture blob just read, before its TIMs go to VRAM;
                               * replaceable (nonzero: the game skips its upload) */
+    PE_HOOK_RENDER_STATS, /* PeHookRenderStats: native face submission, diagnostics only */
     PE_HOOK_COUNT
 } PeHookId;
 
@@ -84,6 +85,11 @@ typedef struct PeHookInit {
     int interactive;        /* 0 for headless runs: no window, no menus */
     const char *prefs_file; /* per-user preferences file; mods keep their files beside it */
 } PeHookInit;
+
+typedef struct PeHookRenderStats {
+    struct RenderObjectEntity *object;
+    unsigned submitted[4]; /* textured quad/triangle, untextured quad/triangle */
+} PeHookRenderStats;
 
 typedef struct PeHookInventoryRow {
     struct MenuWidgetNode *node;

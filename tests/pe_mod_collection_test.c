@@ -12,6 +12,7 @@
 #include "pe1/game_state.h"
 
 extern const PeMod pe_mod_pe_collection;
+void pe_animation_audit_register(const char *mod_id) { (void)mod_id; } /* isolated runtime diagnostics */
 
 Pe1GameState g_GameState;
 GameStateBlock g_GameStateBlock;

@@ -93,7 +93,9 @@ typedef struct PeBestiaryApi {
 
 /* ---- Costumes ----
  * A costume is one of:
- *   - one of the game's player bundles (bank 10 evening dress, 12 Aya, 13 T-shirt: g_SceneAreaType);
+ *   - one of the game's player bundles (bank 10 evening dress, 12 Aya, 13 T-shirt: g_SceneAreaType),
+ *     optionally with a room pack (`bundle`: pe_skins/<bundle>/rooms.bin only), the room animations
+ *     of Aya's other skeletons retargeted to this outfit's, swapped in when a room installs them;
  *   - a skin folder in the game's own player formats (bank -1, `bundle`): pe_skins/<bundle>/ beside
  *     the preferences, holding texture.bin, model.bin, day1-8.bin and optionally rooms.bin and
  *     meta.bin (the bridge's build_skin.py makes them); the Wardrobe loads it and swaps it in
@@ -109,7 +111,8 @@ typedef struct PeCostume {
     int16_t bank;             /* >= 0: the game's player bundle; -1: `bundle` or load() */
     int (*available)(void);   /* NULL: always; 0 hides it from every list (e.g. its files are missing) */
     void (*load)(int wearing);
-    const char *bundle;       /* bank -1 without load(): the skin folder under pe_skins/ */
+    const char *bundle;       /* bank -1 without load(): the skin folder under pe_skins/;
+                               * bank >= 0: an optional room pack folder (NULL: none) */
 } PeCostume;
 
 typedef struct PeCostumesApi {

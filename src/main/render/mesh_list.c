@@ -167,8 +167,8 @@ void Render_CommitWidescreenPicture(int slot, int buffer_y) {
     memset(&s_WidescreenCover[slot], 0, sizeof(s_WidescreenCover[slot]));
 }
 
-/* A custom GP0 command switches centred drawing on at the head of entry 1
- * and off at the head of entry 0, in the ordering table's own order. */
+/* A custom GP0 command switches centred drawing on at the head of the top
+ * entry and off at the head of entry 0, in the ordering table's own order. */
 #define WS_CENTRED_OPCODE 0x1Eu
 static struct {
     RenderNativeTag tag;
@@ -182,17 +182,17 @@ static int Render_WidescreenCentredCommand(const u_long *words, int available, v
     return 1;
 }
 
-void Render_CentreWidescreenMenu(int slot, RenderNativeTag *ordering, int menu_open) {
+void Render_CentreWidescreenOverlay(int slot, RenderNativeTag *ordering, int top_entry) {
     static int registered;
     int i;
 
-    if (!menu_open || !Psyz_VideoGetWidescreen()) return;
+    if (top_entry <= 0 || !Psyz_VideoGetWidescreen()) return;
     if (!registered) {
         Psyz_GpuRegisterCommandHandler(WS_CENTRED_OPCODE, Render_WidescreenCentredCommand, NULL);
         registered = 1;
     }
     for (i = 0; i < 2; ++i) {
-        RenderNativeTag *entry = ordering + 1 - i;
+        RenderNativeTag *entry = i == 0 ? ordering + top_entry : ordering;
         s_WidescreenCentred[slot][i].tag.length = 1;
         s_WidescreenCentred[slot][i].code = (WS_CENTRED_OPCODE << 24) | (i == 0);
         s_WidescreenCentred[slot][i].tag.address = entry->address;

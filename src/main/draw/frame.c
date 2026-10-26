@@ -7,6 +7,7 @@
 #include "pe1/menu_widget.h"
 #include "pe1/psyq_gpu.h"
 #include "pe1/render_packets.h"
+#include "pe1/textbox.h"
 
 int g_ActiveDrawSlot;
 DISPENV g_RenderDispEnvArray[2];
@@ -20,6 +21,18 @@ static inline DISPENV *DispAddress(int index) {
 
 static inline DRAWENV *DrawAddress(int index) {
     return &g_RenderDrawEnvArray[index];
+}
+
+/* Highest ordering-table entry of the 2D layers widescreen keeps centred:
+ * 2 while a dialogue is shown (its backdrop links there), 1 while a menu is
+ * open, else 0. */
+static int Draw_WidescreenOverlayEntry(void) {
+    int i;
+
+    for (i = 0; i < 4; ++i) {
+        if (g_TextboxEntries[i].state != 0) return 2;
+    }
+    return g_MenuWidgetCurrentNode != 0;
 }
 
 void Draw_RenderFrame(void) {
@@ -63,7 +76,7 @@ draw_buffer:
         drawSlot = g_ActiveDrawSlot;
         orderingTable = (RenderNativeTag *)g_GameState.shared_buffers.ordering_tables[drawSlot];
         Render_CommitWidescreenPicture(drawSlot, g_RenderDrawEnvArray[drawSlot].clip.y);
-        Render_CentreWidescreenMenu(drawSlot, orderingTable, g_MenuWidgetCurrentNode != 0);
+        Render_CentreWidescreenOverlay(drawSlot, orderingTable, Draw_WidescreenOverlayEntry());
         DrawOTagEnv(orderingTable + 4095, &g_RenderDrawEnvArray[drawSlot]);
     }
 

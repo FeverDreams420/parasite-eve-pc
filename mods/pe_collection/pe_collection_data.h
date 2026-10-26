@@ -425,7 +425,7 @@ static const PeCreatureKey g_pe_creature_keys[PE_CREATURE_KEYS] = {
     { 437, 0x0035, 68 },
 };
 
-#define PE_SKINS 36
+#define PE_SKINS 43
 static const PeSkin g_pe_skins[PE_SKINS] = {
     { "Aya", 0, 0, 12, "" },
     { "Aya: evening dress", 50, 0, 10, "" },
@@ -463,4 +463,11 @@ static const PeSkin g_pe_skins[PE_SKINS] = {
     { "Cameraman", 25, 1, 0, "cameraman" },
     { "Admiral", 100, 1, 0, "admiral" },
     { "Captain", 100, 1, 0, "captain" },
+    { "Policewoman (vest)", 25, 1, 0, "policewoman" },
+    { "Police officer (light uniform)", 25, 1, 0, "police_light" },
+    { "Police officer (cap)", 25, 1, 0, "police_cap" },
+    { "Klamp (lab coat)", 100, 1, 0, "klamp_coat" },
+    { "Nix (gun drawn)", 100, 1, 0, "nix_gun" },
+    { "Eddie (gun drawn)", 100, 1, 0, "eddie_gun" },
+    { "Charred body", 25, 1, 0, "charred" },
 };

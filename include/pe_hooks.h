@@ -45,6 +45,8 @@ typedef enum PeHookId {
                           * spawn reads them) and Scene_InitEntityPlayer step 0x27 (scene start) */
     PE_HOOK_PLAYER_TEXTURES, /* SceneAssetBlob *: Aya's texture blob just read, before its TIMs go to VRAM;
                               * replaceable (nonzero: the game skips its upload) */
+    PE_HOOK_FRAME_DRAWN, /* NULL: Draw_RenderFrame, the previous frame finished drawing (DrawSync)
+                          * and not yet shown; its buffer is g_RenderDrawEnvArray[1 - g_ActiveDrawSlot] */
     PE_HOOK_COUNT
 } PeHookId;
 

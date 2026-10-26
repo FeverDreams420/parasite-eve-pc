@@ -12,6 +12,11 @@ set(pe_host_sources
     host/pe_game_facts.c    # game facts as tables: effect names and groups, power tags
     host/pe_main_menu.c     # extra rows in Aya's main menu, screens from game widgets
     host/pe_equip_sync.c    # edited equipment reaches the next battle
+    host/pe_present.c       # image presenter: pictures pasted into the finished frame
+    host/pe_disc_assets.c   # read-only game data from the player's disc (rooms)
+    host/pe_model.c         # decoded game models: geometry, textures, idle animation
+    host/pe_model_view.c    # a model posed, turned and drawn into a picture
+    host/pe_model_stage.c   # a model on show: turning, idle animation, box or full screen
     host/ui/pe_ui_raster.c  # drawing: boxes and text
     host/ui/pe_ui_gpu.c     # the overlay quad
     host/ui/pe_toast.c)     # one-line messages

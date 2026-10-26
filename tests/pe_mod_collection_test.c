@@ -68,7 +68,11 @@ int pe_menu_register_dynamic_choice(const char *s, const char *l, const char *d,
 }
 int pe_menu_register_info(const char *s, const char *l, const char *d, PeMenuText t) { (void)s; (void)l; (void)d; (void)t; return 0; }
 int pe_menu_register_tick(PeMenuPerFrame f) { (void)f; return 0; }
+int pe_menu_register_live_int(const char *s, const char *l, const char *d, int lo, int hi, int st, PeMenuGet g, PeMenuSet t) {
+    (void)s; (void)l; (void)d; (void)lo; (void)hi; (void)st; (void)g; (void)t; return 0;
+}
 void pe_wardrobe_menu_register(const char *m) { (void)m; }   /* the menu screen: drawing only */
+void pe_bestiary_menu_register(const char *m) { (void)m; }   /* the Bestiary screen: drawing only */
 void pe_skin_register(const char *m) { (void)m; }            /* the loader: game buffers, VRAM */
 int pe_skin_available(const char *folder) { return strcmp(folder, "test_skin") == 0; }
 int pe_skin_instant(void) { return 0; }
@@ -83,6 +87,7 @@ static const char *last_filter(const char *label) {
 
 /* ---- what another mod would do ---- */
 static const PeCreatureInfo s_zombie = { "re2/zombie", "Zombie", "Resident Evil 2", 0, 0, 60, 10, 1, 0, "Handgun ammo 50%", "nothing", 5, 10 };
+static struct PeModel *zombie_model(void *user) { (void)user; return NULL; }   /* an import's own decoder */
 static const PeCreatureInfo s_zombie_rnd = { "re2/zombie", "Zombie", "Resident Evil 2", 0, 0, 60, 10, 2, 0, "Medicine 1 100%", "nothing", 5, 10 };
 static const PeCreatureInfo s_impostor = { "re2/licker", "Licker", "Resident Evil 2", 0, 0, 60, 10, 0, 0, "", "", 5, 10 };
 static int s_rnd_handle = -1;
@@ -143,9 +148,30 @@ int main(void) {
         for (j = 0; j < i; ++j) assert(strcmp(pe_pack_pe1_creature_key(i), pe_pack_pe1_creature_key(j)) != 0);
     assert(i == 75);
 
+    /* The PE pack's model forms: every creature has a main body (form 0); Eve has three bodies, the
+     * Crab's body comes before its claws, and Ultimate Being's 5-vertex script helper is left out. */
+    {
+        PeModelSource src;
+        int eve = b->find("pe1/eve"), crab = b->find("pe1/crab"), ub = b->find("pe1/ultimate_being");
+        for (i = 0; pe_pack_pe1_creature_key(i); ++i) assert(b->model(b->find(pe_pack_pe1_creature_key(i)), 0, NULL));
+        assert(eve >= 0 && b->model(eve, 0, &src) && src.kind == PE_MODEL_ROOM && src.map == 23 && src.actor == 2);
+        assert(b->model(eve, 2, NULL) && !b->model(eve, 3, NULL));
+        assert(crab >= 0 && b->model(crab, 0, &src) && src.map == 269 && src.actor == 3);
+        assert(ub >= 0 && b->model(ub, 4, NULL) && !b->model(ub, 5, NULL));
+    }
+
     /* An import pack: its own creature, area and mapping; a taken key is refused. */
     assert((zombie = b->add(&s_zombie)) >= 0);
     assert(b->add(&s_zombie) < 0);
+    {   /* its own model: another game's decoder; bad sources are refused */
+        PeModelSource own = {PE_MODEL_CALLBACK, 0, 0, NULL, zombie_model, NULL}, got;
+        PeModelSource no_load = {PE_MODEL_CALLBACK, 0, 0, NULL, NULL, NULL};
+        PeModelSource no_folder = {PE_MODEL_SKIN, 0, 0, NULL, NULL, NULL};
+        assert(!b->model(zombie, 0, NULL));
+        assert(b->set_model(zombie, 0, &own) && b->model(zombie, 0, &got) && got.load == zombie_model);
+        assert(!b->set_model(zombie, 1, &no_load) && !b->set_model(zombie, 1, &no_folder));
+        assert(!b->set_model(zombie, PE_BESTIARY_MAX_FORMS, &own) && !b->set_model(9999, 0, &own));
+    }
     assert(b->map(999, 0x42, zombie));
     s_room = 999;
     for (i = 0; i < 5; ++i) kill_once(0, 0x42);
@@ -257,6 +283,26 @@ int main(void) {
     assert(pe_profile_creature("ff7/cactuar", &kills) == 7 && kills == 3 && s_junk == junk_before);
     kill_once(0, 0x99);
     assert(b->state(zombie) == 1 && b->kills(zombie) == 1);
+
+    /* NEW marks: an older line (no seen number) is all looked at; a new tier is NEW until looked at,
+     * and kept across a save. Buying: met creatures only, the next tier, paid in Junk. */
+    assert(pe_profile_creature_seen("ff7/cactuar") == 7);
+    assert(pe_bestiary_new(zombie) == PE_BESTIARY_MET);
+    pe_bestiary_seen(zombie);
+    assert(pe_bestiary_new(zombie) == 0);
+    {
+        unsigned bit, price = pe_bestiary_next_price(zombie, &bit), junk = s_junk = 5000;
+        assert(bit == PE_BESTIARY_WEAK && price == b->info(zombie)->price_weak);
+        assert(pe_bestiary_buy(zombie) && s_junk == junk - price);
+        assert(b->state(zombie) == 3 && pe_bestiary_new(zombie) == 0);   /* bought while looking */
+        pe_profile_set_creature_seen("re2/zombie", 1);
+        assert(pe_bestiary_new(zombie) == PE_BESTIARY_WEAK);
+        pe_profile_save();
+        pe_profile_load();
+        assert(pe_bestiary_new(zombie) == PE_BESTIARY_WEAK);
+        pe_profile_set_creature("re2/zombie", 0, 0);
+        assert(!pe_bestiary_buy(zombie) && s_junk == junk - price);       /* never met: no sale */
+    }
     remove(path);
     /* The psxrecomp build's pe_collection.dat (by index) is imported once through the PE keys. */
     {

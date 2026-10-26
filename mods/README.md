@@ -33,9 +33,17 @@ mods/
     pe_services.h        every service struct mods share (no mod includes another's headers)
     pe_game.*            game access and the game facts every mod shares (see below)
     pe_game_facts.c      those facts as tables: mod effect names and groups, power tags
-    pe_main_menu.*       extra rows in Aya's main menu, and screens from the game's own widgets
+    pe_main_menu.*       extra rows in Aya's main menu, screens from the game's own widgets, Yes / No
     pe_equip_sync.c      edited equipment reaches the next battle
     pe_gametext.h        text in the game's glyph code; pe_item_table.h the game's item names
+    pe_image.h           the picture type the image code shares (RGBA, straight alpha)
+    pe_present.*         image presenter: the only code that puts pictures into the game's frame
+                         (pasted at PE_HOOK_FRAME_DRAWN; box now, strips as a test; never read back)
+    pe_disc_assets.*     read-only game data from the player's disc (a room's blobs)
+    pe_model.*           decoded game models: geometry, textures (private VRAM), idle animation
+    pe_model_view.*      a model posed, turned, fitted and drawn into a picture (no game state)
+    pe_model_stage.*     a model on show for a screen: turning, idle animation, pause, silhouette,
+                         its box or full screen, through the presenter (Bestiary, test pages)
     ui/                  drawing (pe_ui_raster), the overlay quad (pe_ui_gpu), toasts
   pe_qol/              quality of life: movement, encounters, key item pocket, bag sort, Key Items menu
   pe_rebalance/        mod effects, Parasite Energy balance, half-bar turns / Quick powers, Combine
@@ -312,6 +320,14 @@ without touching these files.
   resolves to: mods' resolvers first (newest first), then the mapped (room, identity) table.
   5 kills or Scan show weaknesses, 15 kills the loot (bosses: defeat shows weaknesses, loot is Junk
   only); each tier can be bought. Announces "bestiary.unlock".
+- `pe_bestiary_menu.c`: a Bestiary row in Aya's main menu (the P.E. icon, twice) once a creature is
+  met: the area's creatures (L1 / R1 change area; unmet ones "???"), the model turning with its idle
+  animation in a game panel (host pe_model_stage; Left / Right turn it, Triangle full screen, Square
+  pause, Select the next form), and what is known by tier below. Unmet creatures of a reached area
+  show as a silhouette; others and bosses show nothing. Cross buys the next tier after the game's
+  Yes / No (host `pe_confirm`). NEW: tiers not looked at yet (profile `seen`) list in the game's
+  yellow. Debug > Collection: Junk, Give 1000 Junk, Test creature (its tiers, kills, NEW), Unlock
+  next tier, Add a kill, Reset creature, Mark creature NEW, Clear / Make all NEW.
 - `pe_wardrobe.c`: the costume registry. A costume is one of the game's player bundles (bank 10 /
   12 / 13, rewritten at the start of Aya's model load, PE_HOOK_PLAYER_BANK), a skin folder
   (`bundle`, loaded by pe_skin_loader.c), or a provider's own model (its load(1) / load(0) at that
@@ -343,7 +359,10 @@ Writing a pack (another mod):
    (static `PeCreatureInfo`, a key under your own prefix: "re2/zombie") and `b->map(room, identity,
    handle)` for where it appears, or `b->add_resolver(fn)` to decide per enemy (a randomizer that
    shuffles enemies). `b->replace(handle, &info)` swaps in new info under the same key (randomized
-   drops or weaknesses).
+   drops or weaknesses). `b->set_model(handle, form, &src)` says where its 3D model comes from for
+   the Bestiary viewer (form 0 the main body, then parts or phases): a room and bank slot on the
+   Parasite Eve disc, a `pe_skins` folder, or your own decoder (`PE_MODEL_CALLBACK`). The PE pack
+   gives all 75 creatures their forms from the generated table (`g_pe_creature_models`).
 3. `const PeCostumesApi *c = pe_service_get("costumes", 1);` then `c->add(&costume)`: `bank` for one
    of the game's outfits, `bank = -1` with `bundle` for a skin folder in the game's player formats
    (the Wardrobe loads it), or `bank = -1` with `load` (and `available`) for a model your mod puts

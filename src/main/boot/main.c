@@ -20,6 +20,7 @@
 #include "pe1/pad_state.h"
 #include "pe1/psyq_gpu.h"
 #include "pe1/scene_dispatch.h"
+#include "pe_hooks.h"
 
 /* Desktop preferences belong to the original boot module. The modal loop
  * never ticks the game, PS1 timers, scripts, or audio. */
@@ -1709,6 +1710,7 @@ images_ready:;
     }
 
     g_BootHostActive = 1;
+    PE_HOOK(PE_HOOK_INIT, (&(PeHookInit){interactive, host_options.user_file}));
     if (Psyz_VideoSetInternalResolution(internal_resolution) < 0) {
         fprintf(stderr, "Cannot select internal resolution\n");
         goto shutdown;

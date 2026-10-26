@@ -1,0 +1,30 @@
+# Mod host and mods, built only with -DPE_MODS=ON. See mods/README.md.
+# Each mod is a folder here holding .c files and defining `const PeMod pe_mod_<folder>`.
+# pe_hello is the example mod; add it to the list to build it.
+set(PE_MOD_LIST "" CACHE STRING "Mods built into the game (folder names)")
+
+set(pe_host_sources
+    host/pe_mod_host.c      # registry, hooks, services, events, logs
+    host/pe_mod_menu.c      # Mods panel rows and pe_mods.ini
+    host/pe_mod_panel.c     # the F1 panel: navigation and input
+    host/pe_game.c          # game access helpers
+    host/ui/pe_ui_raster.c  # drawing: boxes and text
+    host/ui/pe_ui_gpu.c     # the overlay quad
+    host/ui/pe_toast.c)     # one-line messages
+
+set(pe_mod_sources ${pe_host_sources})
+set(pe_mod_decls "")
+set(pe_mod_refs "")
+foreach(mod IN LISTS PE_MOD_LIST)
+    file(GLOB mod_files CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${mod}/*.c)
+    list(APPEND pe_mod_sources ${mod_files})
+    string(APPEND pe_mod_decls "extern const PeMod pe_mod_${mod};\n")
+    string(APPEND pe_mod_refs "    &pe_mod_${mod},\n")
+endforeach()
+configure_file(pe_mod_list.c.in ${CMAKE_CURRENT_BINARY_DIR}/pe_mod_list.c @ONLY)
+
+add_library(pe-mods OBJECT ${pe_mod_sources} ${CMAKE_CURRENT_BINARY_DIR}/pe_mod_list.c)
+target_include_directories(pe-mods PRIVATE ${PROJECT_SOURCE_DIR}/include host
+    "$<TARGET_PROPERTY:SDL3::SDL3,INTERFACE_INCLUDE_DIRECTORIES>")
+target_compile_definitions(pe-mods PRIVATE __psyz)
+target_link_libraries(pe-mods PRIVATE psyz)

@@ -19,6 +19,7 @@
 #include "pe1/scene_dispatch.h"
 #include "pe1/scene_room_load.h"
 #include "pe1/scene_transition.h"
+#include "pe_hooks.h"
 
 u32 g_FrameRngCounter;
 
@@ -119,6 +120,7 @@ int Boot_RunFrame(void)
         scene_flags = &g_GameState.bank_state_12;
         state = &g_GameState;
         fade = (RenderTintTargetView *)&g_ScreenTint.targetR;
+        PE_HOOK(PE_HOOK_SCENE_START, NULL);
         do {
             /* Geometry belongs to this game frame, not to each VBlank.
              * Draw_RenderFrame waits after the OT has already been built. */
@@ -126,6 +128,7 @@ int Boot_RunFrame(void)
             g_DrawPacketOffset = 0;
             *scene_flags = 0;
             Field_HandleStateTransition();
+            PE_HOOK(PE_HOOK_FRAME, NULL);
             flags = g_GameStateFlags;
             g_GameStateFlags = flags & ~0x30u;
             skip_movie = Boot_MovieSkipChosen(state);

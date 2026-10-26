@@ -24,6 +24,13 @@ Keep each CUE file next to its BIN file.
 Settings and selected disc paths are saved automatically.
 Optional geometry correction, antialiasing and model texture filtering are in **Escape → Graphics**.
 
+## Mods
+
+This tree can also build with a mod host (`-DPE_MODS=ON`). A standard build is unchanged: the
+`PE_HOOK(...)` lines in the game compile to nothing. In a mod build, **F1** opens the Mods panel;
+mods start only after **F1 → Manage mods → All mods** is turned on and the game restarted.
+Settings are saved in `pe_mods.ini`. See [the mod guide](mods/README.md) for writing a mod.
+
 ## Build
 
 Requires Git, CMake 3.21 or newer and a C11 compiler.
@@ -37,5 +44,15 @@ cmake -S . -B build -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build build --parallel
 ./build/parasite-eve-pc
 ```
+
+### Build with mods
+
+```sh
+cmake -S . -B build-mods -DCMAKE_BUILD_TYPE=RelWithDebInfo -DPE_MODS=ON
+cmake --build build-mods --parallel
+./build-mods/parasite-eve-pc
+```
+
+`PE_MOD_LIST` picks the mods by folder name (default: none (add `pe_hello` for the example)).
 
 For development details, see [code organization](docs/CODE_ORGANIZATION.md).

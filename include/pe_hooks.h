@@ -15,11 +15,14 @@ typedef enum PeHookId {
     PE_HOOK_ENEMY_HIT,   /* BattleEntity *: Battle_StepEnemyMovement entry, before an enemy's damage */
     PE_HOOK_SPELL,       /* PeHookSpell: Battle_ApplySpellEffect entry (battle and menu) */
     PE_HOOK_HELP_TEXT,   /* u8 **: the menu title-bar line, before it is printed; may be replaced */
+    PE_HOOK_BATTLE_REWARDS, /* PeHookRewards: Aya_SetTotalExp entry, once per won battle */
     PE_HOOK_INV_COMMAND, /* PeHookInvCommand: Inv_DispatchCommand entry; replaceable */
     PE_HOOK_ITEM_ADD,    /* s32 *: Inv_AddItem entry; change id, or return nonzero for handled/success */
+    PE_HOOK_STEAL,       /* NULL: a steal's Inv_AddItem follows (Battle_ResolveHitOnTimer) */
     PE_HOOK_SAVE_WRITE,  /* u8 *: the 8 KB card block, before its CRC (free tail from 0x1C90) */
     PE_HOOK_SAVE_READ,   /* u8 *: the 8 KB card block of a save being loaded */
     PE_HOOK_ITEM_COUNT,  /* int **: Script_CountItemsByValue ({&item, &result}); nonzero uses supplied result */
+    PE_HOOK_SLOT_ROW,    /* u8 **: an item row's name (Menu_DrawSlotRow), before it is printed */
     PE_HOOK_PAD_READ,    /* NULL: Field_HandleStateTransition, before it reads g_PadPackets */
     PE_HOOK_LIST_ROWS,   /* PeHookListRows: Draw_SetPrimCallback entry; the row count may change */
     PE_HOOK_MAIN_MENU_ACTION, /* PeHookMenuAction: Aya's main menu confirm; replaceable */
@@ -27,6 +30,8 @@ typedef enum PeHookId {
     PE_HOOK_ITEM_USE,    /* int *: Battle_ApplyDamage item id before its effects */
     PE_HOOK_TEXT_LOOKUP, /* PeHookTextLookup: item name/description lookup result */
     PE_HOOK_INVENTORY_SORTED, /* NULL: Aya's native bag sort completed */
+    PE_HOOK_INVENTORY_HEADER, /* MenuWidgetNode *: after Aya's Quantity header is drawn */
+    PE_HOOK_EQUIP_EFFECT, /* PeHookEquipEffect: effect icon draw; nonzero replaces sprite */
     PE_HOOK_ITEM_ACTIONS, /* PeHookItemActions: an item's action list (Use / Move / Discard ...) just opened */
     PE_HOOK_MAIN_MENU_ICON, /* PeHookMainMenuIcon: a main menu row's icon, before it is drawn */
     PE_HOOK_INVENTORY_ROW, /* PeHookInventoryRow: inventory row dimming, presentation only */
@@ -44,6 +49,11 @@ typedef struct PeHookTextLookup {
     unsigned table, index; /* table 8 = item names, 12 = item descriptions */
     void **text;
 } PeHookTextLookup;
+
+typedef struct PeHookRewards {
+    int exp;
+    struct BattleRewardSlot *list; /* 10 entries, id 0 ends */
+} PeHookRewards;
 
 typedef struct PeHookInvCommand {
     int command, value;
@@ -75,6 +85,11 @@ typedef struct PeHookListRows {
     struct MenuWidgetNode *node;
     int *count;
 } PeHookListRows;
+
+typedef struct PeHookEquipEffect {
+    int effect; /* lower five bits of the equipment modifier */
+    int armor;  /* 0 = weapon, 1 = armor */
+} PeHookEquipEffect;
 
 typedef struct PeHookMenuAction {
     int action;                   /* 0-8 the game's rows; 9 = a row past the last one */

@@ -6,6 +6,7 @@
  * a mod that doesn't find one carries on without it.
  *
  *   "junk"      v1  pe_economy  the Junk counter
+ *   "catalog"   v1  pe_economy  armor effects unlocked in the Mod Catalog
  *   "keys"      v1  pe_qol      the key item pocket
  *
  * Providers (an import pack, a randomizer) register at their init, so they list "pe_collection"
@@ -33,6 +34,11 @@ typedef struct PeJunkApi {
     int (*wayne_waiting)(void);        /* he holds 300+ but can't build before Day 4 */
     int (*handin_blocked)(void);       /* a hand-in needs one free bag slot */
 } PeJunkApi;
+
+typedef struct PeCatalogApi {
+    int (*armor_unlocked)(int effect);
+    int (*unlock_armor)(int effect);   /* 1 if it was new */
+} PeCatalogApi;
 
 typedef struct PeKeysApi {
     int (*take)(uint16_t item);        /* pocket a key; 1 means handled */

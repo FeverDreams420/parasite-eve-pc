@@ -497,6 +497,8 @@ void Menu_DrawActionCodeItem(int arg0) {
             return;
         }
 
+        if (PE_HOOK(PE_HOOK_EQUIP_EFFECT, (&(PeHookEquipEffect){code, g_InvItemUsableFlag == 0}))) return;
+
         if (g_InvItemUsableFlag != 0) {
             Draw_AllocSprite(code + 0x22);
         } else {

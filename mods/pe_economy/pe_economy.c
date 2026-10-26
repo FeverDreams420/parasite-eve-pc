@@ -1,0 +1,23 @@
+/* PE Enhancements: economy, ported from the psxrecomp build. F1 > PE Enhancements > Economy.
+ * One file per feature; each registers its own rows, hooks and services. */
+#include "pe_mod_host.h"
+#include "pe_pages.h"
+
+#define MOD_ID "pe_economy"
+
+void pe_loot_register(const char *mod_id);    /* pe_loot.c: Junk, battle rewards, rare drops */
+
+void pe_wayne_refund_register(const char *mod_id); /* failed vanilla crafts */
+
+void pe_armor_effect_display_register(const char *mod_id);
+void pe_junk_counter_register(const char *mod_id);
+
+static int economy_init(void) {
+    pe_loot_register(MOD_ID);
+    pe_armor_effect_display_register(MOD_ID);
+    pe_junk_counter_register(MOD_ID);
+    pe_wayne_refund_register(MOD_ID);
+    return 0;
+}
+
+const PeMod pe_mod_pe_economy = {MOD_ID, "PE Enhancements: economy", PE_ENHANCEMENTS_VERSION, NULL, economy_init, NULL};

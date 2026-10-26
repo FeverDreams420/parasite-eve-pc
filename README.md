@@ -52,6 +52,9 @@ Open **F1 → PE Enhancements** to configure them.
   with a gauge indicator; attacks and other powers still need a full bar.
 - **Medicine combining and Panacea** (`pe_rebalance`): two Medicine 1/2/3 become the next tier;
   Medicine 4 and Full Cure become Panacea (400 HP and cures ailments).
+- **Junk economy** (`pe_economy`): a shared Junk counter, battle and steal rewards, Super/Duper
+  Junk conversion, difficulty presets, rare drops with soft pity, a Junk counter beside the
+  bag's Quantity, and four economy armor effects (Bargain, Scavenger, Lucky Find, Salvager).
 
 Mod builds are experimental; a passing build or test does not establish full in-game compatibility.
 
@@ -77,6 +80,6 @@ cmake --build build-mods --parallel
 ./build-mods/parasite-eve-pc
 ```
 
-`PE_MOD_LIST` picks the mods by folder name (default: `pe_qol;pe_rebalance`).
+`PE_MOD_LIST` picks the mods by folder name (default: `pe_qol;pe_rebalance;pe_economy`).
 
 For development details, see [code organization](docs/CODE_ORGANIZATION.md).

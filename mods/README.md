@@ -9,7 +9,7 @@ cmake --build build-mods
 ```
 
 `PE_MOD_LIST` (CMake cache) picks the mods, by folder name. Default:
-`pe_qol;pe_rebalance` (add `pe_hello` for the example).
+`pe_qol;pe_rebalance;pe_economy` (add `pe_hello` for the example).
 
 Two switches, so a modded build is safe to hand out:
 - **Build**: `PE_MODS` off (the default) leaves no mod code in the game at all.
@@ -38,6 +38,7 @@ mods/
     ui/                  drawing (pe_ui_raster), the overlay quad (pe_ui_gpu), toasts
   pe_qol/              quality of life: movement, encounters, key item pocket, bag sort, Key Items menu
   pe_rebalance/        mod effects, Parasite Energy balance, half-bar turns / Quick powers, Combine
+  pe_economy/          Junk and loot, Mod Catalog / Dismantle / Rebuild, Requisition, Wayne and Warner
   pe_hello/            example mod (not built by default)
 ```
 
@@ -98,6 +99,7 @@ inside the game's CRC, at the same offsets as the psxrecomp build so saves move 
 
 | Offset (from 0x1C90) | Block | Owner |
 |---|---|---|
+| +0x000 | `PELT` Junk, rare pity, difficulty | pe_economy/pe_loot.c |
 | +0x200 | `PKEY` key item pocket | pe_qol/pe_key_items.c |
 | +0x260 | `SORT` bag sort | pe_qol/pe_bag_sort.c |
 
@@ -210,6 +212,22 @@ Run the inventory regression checks on Windows with
 `tests/run_pe_inventory_test.ps1` after configuring build-mods. The test
 links both feature files and the real native inventory sorter; unrelated
 game paths are isolated by explicit test stubs.
+
+Inventory Junk counter (pe_economy/pe_junk_counter.c): enabled by default;
+F1 / PE Enhancements / Inventory / Junk counter saves its visibility in pe_mods.ini.
+Draws the live economy balance in the free box left of Quantity, following the
+native header when bag height or scrolling changes (on an odd bag's last page the
+header moves up beside the last item; the counter keeps the row it left). Hidden when Junk economy
+is off. The native header provides one draw hook; all presentation stays in
+the feature file. It never changes inventory capacity, balances or save data.
+
+Custom armor effect display (pe_economy/pe_armor_effect_display.c) replaces
+retail sprite lookup only for armor effects 17-20: BRG (Bargain), SCV
+(Scavenger), LCK (Lucky Find), SLV (Salvager). Badges fit the 36-pixel
+effect cells; selecting a badge shows the full name in the help bar.
+Original armor and all weapon effects retain native icons. One replaceable
+equipment-effect draw hook keeps presentation in the economy feature file.
+Checks: tests/run_pe_armor_effect_display_test.ps1.
 
 ## Tests
 

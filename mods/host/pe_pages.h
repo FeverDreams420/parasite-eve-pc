@@ -7,7 +7,10 @@
  *   PE Enhancements
  *     Movement            always run, speeds                        (pe_qol)
  *     Combat              rules, mod effects, Parasite Energy, DPS  (pe_rebalance)
+ *     Economy             Junk, difficulty, Catalog, Dismantle,      (pe_economy)
+ *                         Rebuild
  *     Inventory           key item pocket, bag sorting              (pe_qol)
+ *     Debug               tuning and test rows of every mod
  *
  * The sub-page strings are passed as `sub` to pe_menu_register_* while PE_MENU_PAGE is the
  * current page; pe_pages_describe() gives each page its description and order. */
@@ -21,9 +24,11 @@
 #define PE_PAGE_PE_BALANCE     "Combat/Parasite Energy"
 #define PE_PAGE_QUICK_POWERS    "Combat/Parasite Energy/Quick powers"
 #define PE_PAGE_COMBINE         "Combat/Combine items"
+#define PE_PAGE_ECONOMY        "Economy"
 #define PE_PAGE_INVENTORY       "Inventory"
 #define PE_PAGE_KEYS            "Inventory/Key items"
 #define PE_PAGE_DEBUG          "Debug"
+#define PE_PAGE_DEBUG_LOOT     "Debug/Loot tuning"
 
 /* Descriptions and order of the pages above (host/pe_pages.c; called by the host at start). */
 void pe_pages_describe(void);

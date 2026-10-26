@@ -165,8 +165,11 @@ static void pe_shutdown_mods(void) {
 }
 
 /* ---- Manage mods (F1): every built-in mod, on or off from the next start ----
- * A toggle per mod on the host's page, saved in pe_mods.ini like any row; it is read before the
- * mods start, so a mod turned off doesn't start at all (nor do the mods that need it). */
+ * "All mods" first, OFF by default: until a player turns it on, no mod starts and the game plays
+ * as the original (only F1 and this page are there, to turn it on). Then a toggle per mod. All are
+ * saved in pe_mods.ini like any row and read before the mods start, so a mod turned off doesn't
+ * start at all (nor do the mods that need it). */
+static int s_all_on;
 static int s_mod_on[PE_MAX_MODS];
 static char s_mod_note[PE_MAX_MODS][160];
 
@@ -174,6 +177,9 @@ static void pe_manage_register(int mod_count) {
     int i;
     pe_menu_top_page(PE_MENU_MANAGE, "Turn mods on or off. Changes apply the next time the game starts.", 100000);
     pe_menu_begin(PE_MENU_MANAGE);
+    s_all_on = 0;
+    pe_menu_register_toggle(0, "All mods", "Off: no mod starts and the game plays as the original. "
+                            "Applies the next time the game starts.", &s_all_on, NULL);
     for (i = 0; i < mod_count; i++) {
         s_mod_on[i] = 1;
         pe_menu_register_toggle(0, g_pe_mods[i]->name, s_mod_note[i], &s_mod_on[i], NULL);
@@ -185,7 +191,7 @@ static void pe_manage_register(int mod_count) {
 static void pe_manage_notes(int mod_count, const int *state) {
     static const char *const states[] = {
         "Running.", "Off: starts with the game again once turned on.", "Not running: a mod it needs is off or missing.",
-        "Not running: it failed to start (see pe_mods.log).",
+        "Not running: it failed to start (see pe_mods.log).", "Not running: All mods is off.",
     };
     int i;
     for (i = 0; i < mod_count; i++) {
@@ -197,18 +203,19 @@ static void pe_manage_notes(int mod_count, const int *state) {
     }
 }
 
-enum { PE_MOD_RUNNING, PE_MOD_OFF, PE_MOD_NEEDS, PE_MOD_FAILED };
+enum { PE_MOD_RUNNING, PE_MOD_OFF, PE_MOD_NEEDS, PE_MOD_FAILED, PE_MOD_ALL_OFF };
 
 static void pe_start_mods(void) {
     int mod_count = 0, tried[PE_MAX_MODS] = {0}, state[PE_MAX_MODS] = {0}, progress = 1, i;
 
     while (g_pe_mods[mod_count] && mod_count < PE_MAX_MODS) mod_count++;
     pe_manage_register(mod_count);
+    if (!s_all_on) pe_mod_log(NULL, "All mods off (Manage mods): the game plays as the original");
     for (i = 0; i < mod_count; i++)
-        if (!s_mod_on[i]) {
+        if (!s_all_on || !s_mod_on[i]) {
             tried[i] = 1;
-            state[i] = PE_MOD_OFF;
-            pe_mod_log(g_pe_mods[i]->id, "off (Manage mods)");
+            state[i] = s_all_on ? PE_MOD_OFF : PE_MOD_ALL_OFF;
+            if (s_all_on) pe_mod_log(g_pe_mods[i]->id, "off (Manage mods)");
         }
     /* Start every mod whose requirements run, until no more can start. */
     while (progress) {
@@ -252,9 +259,11 @@ static void pe_host_start(const PeHookInit *init) {
     pe_mod_log(NULL, "mod host started (%s)", s_interactive ? "interactive" : "headless");
     pe_menu_load_settings();
     pe_pages_describe();
-    pe_main_menu_init();
-    pe_equip_sync_init();
     pe_start_mods();
+    if (s_all_on) {                              /* off: nothing but F1 touches the game */
+        pe_main_menu_init();
+        pe_equip_sync_init();
+    }
     if (s_interactive) pe_panel_install();
     s_started = 1;
 }

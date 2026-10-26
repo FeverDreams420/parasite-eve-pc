@@ -126,7 +126,7 @@ typedef struct PeHookItemActions {
 typedef struct PeHookMainMenuIcon {
     int row;     /* the list row */
     int action;  /* 0-8 the game's rows; 9 = a row past the last one */
-    int sprite;  /* action + 0x56; may be changed */
+    int sprite;  /* action + 0x56; may be changed; -1: the handler drew the icon itself */
 } PeHookMainMenuIcon;
 
 #ifdef PE_MODS

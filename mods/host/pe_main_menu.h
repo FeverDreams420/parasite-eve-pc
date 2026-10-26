@@ -23,13 +23,21 @@ typedef struct PeMainMenuRow {
     int (*shown)(void);   /* NULL = always */
     void (*open)(struct MenuWidgetNode *main_list);   /* confirmed */
     /* Optional, instead of icon_item: draw extra sprites at the icon's spot (the text cursor) and/or
-     * set icon->sprite, which the game then draws there. */
+     * set icon->sprite, which the game then draws there (-1: nothing more, the row drew its icon). */
     void (*icon)(PeHookMainMenuIcon *icon);
 } PeMainMenuRow;
 
-/* The main menu's own icons: action + PE_MAIN_MENU_SPRITE (0 Use Item .. 3 Equip Armor .. 8). */
+/* The main menu's own icons: action + PE_MAIN_MENU_SPRITE (0 Use Item .. 3 Equip Armor .. 8 BP). */
 #define PE_MAIN_MENU_SPRITE 0x56
 #define PE_ACTION_EQUIP_ARMOR 3
+#define PE_ACTION_BONUS_POINTS 8
+#define PE_ICON_SIZE 16                 /* an icon's spot, 16 x 16 from the text cursor */
+
+/* For a row's icon(): a sprite drawn (dx, dy) from the icon's spot; and part of a sprite (the
+ * texels at u, v, w x h inside it) drawn dw x dh at (dx, dy). Both dim as the game's icons do on
+ * rows not highlighted, and leave the text cursor where it was. */
+void pe_icon_sprite(int sprite, int dx, int dy);
+void pe_icon_part(int sprite, int u, int v, int w, int h, int dx, int dy, int dw, int dh);
 
 void pe_main_menu_add(const PeMainMenuRow *row, int order);   /* row must outlive the game */
 

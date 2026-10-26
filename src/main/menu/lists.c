@@ -375,7 +375,7 @@ void Menu_DrawItemSlot(int arg0) {
     {
         PeHookMainMenuIcon icon = {arg0, var_s0, var_s0 + 0x56};
         PE_HOOK(PE_HOOK_MAIN_MENU_ICON, &icon);
-        Draw_AllocSprite(icon.sprite);
+        if (icon.sprite >= 0) Draw_AllocSprite(icon.sprite);
     }
 }
 

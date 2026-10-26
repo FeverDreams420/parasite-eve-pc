@@ -90,12 +90,13 @@ static void pe_open(MenuWidgetNode *main_list) {
 /* Shown once something can be worn besides her own clothes. */
 static int pe_shown(void) { return pe_wardrobe_owned_count() > 0; }
 
+/* The Equip Armor icon twice, the one behind up and right; the pair centred on the icon's spot. */
 static void pe_icon(PeHookMainMenuIcon *icon) {
     const int armor = PE_MAIN_MENU_SPRITE + PE_ACTION_EQUIP_ARMOR;
-    Draw_OffsetCursor(PE_ICON_SHIFT_X, -PE_ICON_SHIFT_Y);      /* the one behind */
-    Draw_AllocSprite(armor);
-    Draw_OffsetCursor(-PE_ICON_SHIFT_X, PE_ICON_SHIFT_Y);
-    icon->sprite = armor;                                     /* and the game draws the front one */
+    const int x = -(PE_ICON_SHIFT_X / 2), y = (PE_ICON_SHIFT_Y + 1) / 2;
+    pe_icon_sprite(armor, x + PE_ICON_SHIFT_X, y - PE_ICON_SHIFT_Y);   /* the one behind */
+    pe_icon_sprite(armor, x, y);
+    icon->sprite = -1;
 }
 
 static const PeMainMenuRow s_row = { "Wardrobe", 0, pe_shown, pe_open, pe_icon };

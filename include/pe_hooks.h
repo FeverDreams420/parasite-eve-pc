@@ -40,8 +40,9 @@ typedef enum PeHookId {
                           * g_SceneAreaType (her outfit bank) may be changed while entity_texture_phase is 0 */
     PE_HOOK_INVENTORY_ROW, /* PeHookInventoryRow: inventory row dimming, presentation only */
     PE_HOOK_POWER_AVAILABLE, /* PeHookPowerAvailable: Menu_CheckItemAffordable, can this PE power be picked now */
-    PE_HOOK_PLAYER_ROWS, /* NULL: Scene_InitEntityPlayer step 0x27, before Aya's actor takes bank_slots[0]
-                          * and her rows (g_GameState.bank_rows) */
+    PE_HOOK_PLAYER_ROWS, /* NULL: before Aya's actor takes bank_slots[0] and her rows (g_GameState.bank_rows):
+                          * the end of Scene_LoadEntityTexture (every room load: the room's actor
+                          * spawn reads them) and Scene_InitEntityPlayer step 0x27 (scene start) */
     PE_HOOK_PLAYER_TEXTURES, /* SceneAssetBlob *: Aya's texture blob just read, before its TIMs go to VRAM;
                               * replaceable (nonzero: the game skips its upload) */
     PE_HOOK_RENDER_STATS, /* PeHookRenderStats: native face submission, diagnostics only */

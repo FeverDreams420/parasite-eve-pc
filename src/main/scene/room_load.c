@@ -1480,6 +1480,7 @@ retry:
         state->entity_texture_phase = 0;
         state->loaded_entity_bank = state->requested_entity_bank;
         state->flags &= ~0x200000;
+        PE_HOOK(PE_HOOK_PLAYER_ROWS, NULL);
         return 0;
     default:
         return 0;

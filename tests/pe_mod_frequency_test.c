@@ -1,5 +1,8 @@
 #include <assert.h>
 #include <stdio.h>
+#ifndef _WIN32
+#include <sys/types.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 #include "pe_game.h"

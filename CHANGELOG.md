@@ -2,7 +2,22 @@
 
 ## Unreleased
 
-- Added optional 16:9 widescreen as the third Aspect ratio choice in Graphics settings (off by default). Rooms show more of their background where it is wider than the original screen, and the view stops at the background's edge at a room's end; rooms with only a 4:3 background keep even black bars, and movies stay 4:3.
+- Keep memory cards in the user data directory on every desktop platform; import old cards without deleting or overwriting saves.
+- Reset speed hold when a controller disconnects and handle keyboard and controller holds independently.
+- Preserve mod settings if writing the settings file fails.
+
+- Show keyboard bindings using the active keyboard layout.
+- Keep smooth color gradients when dithering is disabled.
+
+- Preserve the previous save if writing a new save fails.
+- Reject malformed inventory data when loading and prevent invalid equipment from crashing sorting.
+- Check room task data before resolving its offsets into native pointers.
+
+## 0.5
+
+- Added analog movement with a configurable field walk/run threshold in Controls settings.
+- Added a configurable 2x–4x speed hold.
+- Added the optional F1 Mods menu with movement, encounter and inventory conveniences. Mods are off by default.
 
 ## 0.4
 

@@ -1,13 +1,103 @@
-#ifdef PE_HOST_SETTINGS_TEST
+#if defined(PE_MOD_SETTINGS_TEST)
+#undef NDEBUG
+#include <SDL3/SDL.h>
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+#include "../mods/host/pe_mod_host.h"
+static int save_fault, save_errors;
+static const char *mod_test_directory;
+static SDL_IOStream *ModTestOpen(const char *path, const char *mode) {
+    if (save_fault == 1) { SDL_SetError("injected open failure"); return NULL; }
+    return SDL_IOFromFile(path, mode);
+}
+static size_t ModTestWrite(SDL_IOStream *io, const void *data, size_t size) {
+    return SDL_WriteIO(io, data, save_fault == 2 ? size / 2 : size);
+}
+static bool ModTestFlush(SDL_IOStream *io) {
+    return save_fault != 3 && SDL_FlushIO(io);
+}
+static bool ModTestClose(SDL_IOStream *io) {
+    bool closed = SDL_CloseIO(io);
+    return save_fault != 4 && closed;
+}
+static bool ModTestRename(const char *old, const char *new_path) {
+    return save_fault != 5 && SDL_RenamePath(old, new_path);
+}
+#define SDL_IOFromFile ModTestOpen
+#define SDL_WriteIO ModTestWrite
+#define SDL_FlushIO ModTestFlush
+#define SDL_CloseIO ModTestClose
+#define SDL_RenamePath ModTestRename
+#include "../mods/host/pe_mod_menu.c"
+#undef SDL_IOFromFile
+#undef SDL_WriteIO
+#undef SDL_FlushIO
+#undef SDL_CloseIO
+#undef SDL_RenamePath
+int pe_mod_path(char *out, size_t capacity, const char *file) {
+    int n = snprintf(out, capacity, "%s/%s", mod_test_directory, file);
+    return n > 0 && (size_t)n < capacity ? 0 : -1;
+}
+void pe_mod_log(const char *id, const char *format, ...) {
+    (void)id; (void)format; ++save_errors;
+}
+void pe_toast(const char *text) { (void)text; }
+int pe_mod_active(const char *id) { (void)id; return 1; }
+const char *pe_mod_current(void) { return NULL; }
+int pe_hook_add(int id, PeHookFn fn, void *user, int priority, const char *mod) {
+    (void)id; (void)fn; (void)user; (void)priority; (void)mod; return 0;
+}
+int main(int argc, char **argv) {
+    assert(argc == 2); mod_test_directory = argv[1];
+    assert(SDL_CreateDirectory(mod_test_directory));
+    char path[4096]; assert(!pe_mod_path(path, sizeof(path), "pe_mods.ini"));
+    const char *old = "# preserved settings\nOld/Option=7\n";
+    assert(SDL_SaveFile(path, old, strlen(old)));
+    pe_menu_load_settings();
+    static int enabled = 1;
+    assert(!pe_menu_register_toggle(NULL, "Test option", "", &enabled, NULL));
+    for (save_fault = 1; save_fault <= 5; ++save_fault) {
+        int before = save_errors;
+        pe_menu_save_settings();
+        assert(save_errors > before);
+        size_t bytes; char *data = SDL_LoadFile(path, &bytes);
+        assert(data && bytes == strlen(old) && !memcmp(data, old, bytes)); SDL_free(data);
+        int count = -1;
+        char **files = SDL_GlobDirectory(mod_test_directory, "*.tmp", 0, &count);
+        assert(files && count == 0); SDL_free(files);
+    }
+    save_fault = 0; pe_menu_save_settings();
+    size_t bytes; char *data = SDL_LoadFile(path, &bytes);
+    assert(data && strstr(data, "Old/Option=7") && strstr(data, "Test option=1")); SDL_free(data);
+    assert(SDL_RemovePath(path));
+    save_fault = 2; pe_menu_save_settings();
+    SDL_PathInfo info; assert(!SDL_GetPathInfo(path, &info));
+    save_fault = 0; pe_menu_save_settings(); assert(SDL_GetPathInfo(path, &info));
+    puts("PASS: atomic mod settings preserve previous bytes on open/write/flush/close/rename failures; first save and unknown settings retained");
+    return 0;
+}
+
+#elif defined(PE_HOST_SETTINGS_TEST)
 extern long SetRCnt(long spec, unsigned short target, long mode);
 extern long GetRCnt(long spec);
 #undef NDEBUG
 #include <SDL3/SDL.h>
 #include <assert.h>
+#ifdef _WIN32
+#include <direct.h>
+#define TestChdir _chdir
+#else
+#include <unistd.h>
+#define TestChdir chdir
+#endif
 #include <stdio.h>
 
+static SDL_Keycode TestLayoutKey(SDL_Scancode scancode, SDL_Keymod modifiers, bool key_event);
+static SDL_Keycode test_layout_key;
 static bool TestPresent(SDL_Renderer *renderer);
 static bool TestWait(SDL_Event *event, Sint32 timeout);
+static bool test_card_rename_failure;
 static bool TestRename(const char *from, const char *to);
 static bool TestMessageBox(SDL_MessageBoxFlags flags, const char *title, const char *message, SDL_Window *window);
 
@@ -15,17 +105,120 @@ static bool TestMessageBox(SDL_MessageBoxFlags flags, const char *title, const c
 #define SDL_WaitEventTimeout TestWait
 #define SDL_RenamePath TestRename
 #define SDL_ShowSimpleMessageBox TestMessageBox
+#define SDL_GetKeyFromScancode TestLayoutKey
 #define main original_game_main
 #include "../src/main/boot/main.c"
 #undef main
+#undef SDL_GetKeyFromScancode
 #undef SDL_RenderPresent
 #undef SDL_WaitEventTimeout
 #undef SDL_RenamePath
 #undef SDL_ShowSimpleMessageBox
+#include <kernel.h>
+extern void *firstfile(const char *name, void *entry);
+extern void *nextfile(void *entry);
+
+static SDL_Keycode TestLayoutKey(SDL_Scancode scancode, SDL_Keymod modifiers, bool key_event) {
+    return test_layout_key ? test_layout_key : SDL_GetKeyFromScancode(scancode, modifiers, key_event);
+}
+
+static void TestKeyboardLayoutLabels(void) {
+    HostOverlayState state = {0};
+    state.bind_device = HOST_BIND_KEYBOARD;
+    int saved = host_options.keys[0];
+    host_options.keys[0] = SDL_SCANCODE_Z;
+    test_layout_key = SDLK_Y;
+    assert(!strcmp(Host_ControlBindingValueName(&state, 0), "Y"));
+    test_layout_key = SDLK_W;
+    assert(!strcmp(Host_ControlBindingValueName(&state, 0), "W"));
+    /* A changed layout takes effect on the next paint, without rebinding. */
+    test_layout_key = SDLK_Z;
+    assert(!strcmp(Host_ControlBindingValueName(&state, 0), "Z"));
+    test_layout_key = 0x0437; /* Cyrillic name is unsupported by this font. */
+    assert(!strcmp(Host_ControlBindingValueName(&state, 0), "Z"));
+    assert(host_options.keys[0] == SDL_SCANCODE_Z);
+    host_options.keys[0] = saved;
+    test_layout_key = 0;
+    puts("PASS: active keyboard layout labels, live changes and non-Latin fallback");
+}
+
+static const char *test_directory;
+
+static void TestUserCardMigration(void) {
+    char *cwd = SDL_GetCurrentDirectory();
+    char root[4096], source[4096], target[4096], prefs[4096];
+    snprintf(root, sizeof(root), "%s/legacy-cards-%llx", test_directory, (unsigned long long)SDL_GetPerformanceCounter());
+    assert(SDL_CreateDirectory(root));
+    snprintf(source, sizeof(source), "%s/bu00", root); assert(SDL_CreateDirectory(source));
+    snprintf(source, sizeof(source), "%s/bu10", root); assert(SDL_CreateDirectory(source));
+    const char *names[] = {"BASLUS-006620000000A", "BASLUS-006620000001B"};
+    unsigned char data[8192]; memset(data, 0x37, sizeof(data));
+    for (unsigned port = 0; port < 2; ++port) {
+        snprintf(source, sizeof(source), "%s/bu%u0/%s", root, port, names[port]);
+        assert(SDL_SaveFile(source, data, sizeof(data)));
+    }
+    snprintf(prefs, sizeof(prefs), "%s", host_options.user_file);
+    /* Exercise UTF-8 and paths longer than the old 256-byte SDK buffers. */
+    snprintf(host_options.user_file, sizeof(host_options.user_file),
+        "%s/user-zażółć/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/"
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/"
+        "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc/preferences.toml", root);
+    assert(!TestChdir(root));
+    int prepared = Host_InstallCardPaths(NULL);
+    if (!prepared) fprintf(stderr, "card import failed: %s\n", SDL_GetError());
+    assert(prepared);
+    for (unsigned port = 0; port < 2; ++port) {
+        char device[64]; snprintf(device, sizeof(device), "bu%u0:%s", port, names[port]);
+        assert(!Host_CardPath(target, device, sizeof(target)));
+        assert(strlen(target) > 256);
+        int fd = psyz_open(device, 1); assert(fd >= 0);
+        unsigned char readback[8192];
+        assert(psyz_read(fd, readback, sizeof(readback)) == sizeof(readback));
+        assert(!psyz_close(fd)); assert(!memcmp(data, readback, sizeof(data)));
+        char pattern[16]; snprintf(pattern, sizeof(pattern), "bu%u0:*", port);
+        struct DIRENTRY entry;
+        assert(firstfile(pattern, &entry)); assert(entry.size == 8192);
+        while (nextfile(&entry)) {}
+        /* A newer destination must win over a legacy file with the same name. */
+        unsigned char newer[8192]; memset(newer, 0x59, sizeof(newer));
+        assert(SDL_SaveFile(target, newer, sizeof(newer)));
+        char directory[4096]; snprintf(directory, sizeof(directory), "%s/bu%u0", root, port);
+        HostCardImport imported = {.ok = 1};
+        assert(SDL_EnumerateDirectory(directory, Host_ImportCard, &imported) && imported.ok && imported.count == 0);
+        size_t size; void *contents = SDL_LoadFile(target, &size);
+        assert(contents && size == sizeof(newer) && !memcmp(contents, newer, size)); SDL_free(contents);
+        /* Source remains intact. A deleted imported save must stay deleted. */
+        snprintf(source, sizeof(source), "%s/bu%u0/%s", root, port, names[port]);
+        SDL_PathInfo info; assert(SDL_GetPathInfo(source, &info) && info.size == 8192);
+        assert(SDL_RemovePath(target));
+        assert(Host_InstallCardPaths(NULL));
+        assert(!SDL_GetPathInfo(target, &info));
+    }
+    char marker[4200];
+    assert(!Host_CardPath(target, "bu00:*", sizeof(target)));
+    snprintf(marker, sizeof(marker), "%.*s.legacy-imported", (int)strlen(target) - 5, target);
+    assert(SDL_RemovePath(marker));
+    test_card_rename_failure = true;
+    assert(!Host_InstallCardPaths(NULL));
+    SDL_PathInfo marker_info; assert(!SDL_GetPathInfo(marker, &marker_info));
+    for (unsigned port = 0; port < 2; ++port) {
+        char device[64]; snprintf(device, sizeof(device), "bu%u0:%s", port, names[port]);
+        assert(!Host_CardPath(target, device, sizeof(target)));
+        assert(!SDL_GetPathInfo(target, &marker_info));
+    }
+    test_card_rename_failure = false;
+    assert(Host_InstallCardPaths(NULL));
+    assert(SDL_GetPathInfo(marker, &marker_info));
+    assert(!TestChdir(cwd)); SDL_free(cwd);
+    int same_card = psyz_open("bu00:BASLUS-006620000000A", 1);
+    assert(same_card >= 0); assert(!psyz_close(same_card));
+    snprintf(host_options.user_file, sizeof(host_options.user_file), "%s", prefs);
+    Psyz_AdjustPathCB(NULL);
+    puts("PASS: both legacy cards imported once, originals retained, UTF-8/long user paths read and enumerated");
+}
 
 static int presents;
 static SDL_AtomicInt panel_ready;
-static const char *test_directory;
 
 static bool TestMessageBox(SDL_MessageBoxFlags flags, const char *title, const char *message, SDL_Window *window) {
     (void)flags;
@@ -36,6 +229,7 @@ static bool TestMessageBox(SDL_MessageBoxFlags flags, const char *title, const c
 }
 
 static bool TestRename(const char *from, const char *to) {
+    if (test_card_rename_failure && strstr(from, "bu10")) return false;
     bool result = SDL_RenamePath(from, to);
     fprintf(stderr, "host-settings: preferences rename=%d error=%s\n", result, result ? "" : SDL_GetError());
     return result;
@@ -351,6 +545,7 @@ int main(int argc, char **argv) {
     assert(SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software"));
     assert(SDL_Init(SDL_INIT_VIDEO));
     Host_InitOptions(0);
+    TestKeyboardLayoutLabels();
     Psyz_VideoSetVsyncMode(PSYZ_VSYNC_OFF);
     unsigned frozen = (unsigned)Psyz_VideoVSync(-1);
     Psyz_PauseHostClock_SDL3(true);
@@ -383,6 +578,8 @@ int main(int argc, char **argv) {
 
     host_options.enabled = 1;
     snprintf(host_options.user_file, sizeof(host_options.user_file), "%s/preferences.toml", test_directory);
+
+    TestUserCardMigration();
 
     char card_path[4096];
     char expected_card[4096];
@@ -602,6 +799,87 @@ int main(int argc, char **argv) {
     host_options.keys[HOST_SPEED_BINDING] = SDL_SCANCODE_G;
     Host_LoadOptions(host_options.user_file);
     assert(host_options.keys[HOST_SPEED_BINDING] == HOST_UNBOUND_KEY);
+
+    /* Mixed sources, independent controllers, removal and modal resets. */
+    host_options.keys[HOST_SPEED_BINDING] = SDL_SCANCODE_G;
+    host_options.buttons[HOST_SPEED_BINDING] = SDL_GAMEPAD_BUTTON_BACK;
+    SDL_Event pad = {0}; pad.type = SDL_EVENT_GAMEPAD_BUTTON_DOWN;
+    pad.gbutton.which = 11; pad.gbutton.button = SDL_GAMEPAD_BUTTON_BACK;
+    Host_ResetSpeedHold();
+    assert(Host_SettingsEvent(&speed_key));
+    assert(Host_SettingsEvent(&pad));
+    speed_key.type = SDL_EVENT_KEY_UP;
+    assert(Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == host_options.speed_factor);
+    pad.gbutton.which = 22; assert(Host_SettingsEvent(&pad));
+    SDL_Event removed = {0}; removed.type = SDL_EVENT_GAMEPAD_REMOVED; removed.gdevice.which = 11;
+    assert(!Host_SettingsEvent(&removed) && Psyz_VideoGetSpeed() == host_options.speed_factor);
+    removed.gdevice.which = 22;
+    assert(!Host_SettingsEvent(&removed) && Psyz_VideoGetSpeed() == 1);
+    speed_key.type = SDL_EVENT_KEY_DOWN; assert(Host_SettingsEvent(&speed_key));
+    pad.gbutton.which = 11; assert(Host_SettingsEvent(&pad));
+    assert(!Host_SettingsEvent(&removed) && Psyz_VideoGetSpeed() == host_options.speed_factor);
+    removed.gdevice.which = 11;
+    assert(!Host_SettingsEvent(&removed) && Psyz_VideoGetSpeed() == host_options.speed_factor);
+    speed_key.type = SDL_EVENT_KEY_UP; assert(Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == 1);
+    host_options.buttons[HOST_SPEED_BINDING] = SDL_GAMEPAD_BUTTON_COUNT;
+    pad.type = SDL_EVENT_GAMEPAD_AXIS_MOTION; pad.gaxis.which = 33;
+    pad.gaxis.axis = SDL_GAMEPAD_AXIS_LEFT_TRIGGER; pad.gaxis.value = 17000;
+    assert(!Host_SettingsEvent(&pad) && Psyz_VideoGetSpeed() == host_options.speed_factor);
+    pad.gaxis.value = 10000;
+    assert(!Host_SettingsEvent(&pad) && Psyz_VideoGetSpeed() == host_options.speed_factor);
+    Host_ResetSpeedHold();
+    assert(!Host_SettingsEvent(&pad) && Psyz_VideoGetSpeed() == 1);
+    pad.gaxis.value = 17000; Host_SettingsEvent(&pad);
+    removed.gdevice.which = 33;
+    assert(!Host_SettingsEvent(&removed) && Psyz_VideoGetSpeed() == 1);
+    Host_SettingsEvent(&pad); Psyz_VideoSetSpeed(1); /* Mods panel consumes releases. */
+    pad.gaxis.value = 10000;
+    assert(!Host_SettingsEvent(&pad) && Psyz_VideoGetSpeed() == 1);
+    Host_ResetSpeedHold();
+    host_options.keys[HOST_SPEED_BINDING] = HOST_UNBOUND_KEY;
+    host_options.buttons[HOST_SPEED_BINDING] = HOST_UNBOUND_BUTTON;
+    puts("PASS: speed hold combines sources, handles two pads, disconnects and resets trigger hysteresis");
+
+    /* Field run threshold is a Controls stepper, not a rebinding row. */
+    assert(host_options.analog_run_threshold == 85);
+    HostOverlayState analog_state = {.open=1, .page=HOST_PAGE_CONTROLS,
+                                     .row=HOST_ANALOG_RUN_ROW};
+    Host_EnsureControlsRowVisible(&analog_state);
+    assert(OverlayVisibleSlotForRow(&analog_state, HOST_ANALOG_RUN_ROW) >= 0);
+    SDL_Event threshold_step;
+    SDL_zero(threshold_step);
+    threshold_step.type=SDL_EVENT_KEY_DOWN;threshold_step.key.down=true;
+    threshold_step.key.scancode=SDL_SCANCODE_LEFT;
+    Host_ProcessSettingsEvent(&analog_state,&threshold_step,NULL,NULL);
+    assert(host_options.analog_run_threshold == 80 && g_FieldAnalogRunThreshold == 80);
+    assert(!analog_state.capturing_binding);
+    for (unsigned i=0;i<30;++i) Host_ApplySettingsAction(&analog_state, -1, 0, NULL);
+    assert(host_options.analog_run_threshold == 0);
+    for (unsigned i=0;i<30;++i) Host_ApplySettingsAction(&analog_state, 1, 0, NULL);
+    assert(host_options.analog_run_threshold == 100);
+    char valid_threshold[]="65", invalid_threshold[]="101", negative_threshold[]="-1";
+    assert(Host_ParseOptionValue("controls", "field_run_threshold", valid_threshold));
+    assert(!Host_ParseOptionValue("controls", "field_run_threshold", invalid_threshold));
+    assert(!Host_ParseOptionValue("controls", "field_run_threshold", negative_threshold));
+    assert(host_options.analog_run_threshold == 65);
+    assert(Host_SaveOptions());
+    host_options.analog_run_threshold = 85;
+    Host_LoadOptions(host_options.user_file);
+    Host_ApplyOptions(NULL);
+    assert(host_options.analog_run_threshold == 65 && g_FieldAnalogRunThreshold == 65);
+    OverlayLayout analog_layout;
+    OverlayComputeLayout(HOST_PAGE_CONTROLS,1280,720,&analog_layout);
+    OverlaySurface analog_surface={0};
+    assert(OverlaySurfaceResize(&analog_surface,analog_layout.w,analog_layout.h));
+    OverlayPaint(&analog_surface,&analog_state,&analog_layout);
+    SDL_Surface *analog_image=SDL_CreateSurfaceFrom(analog_surface.w,analog_surface.h,
+        SDL_PIXELFORMAT_RGBA32,analog_surface.pixels,analog_surface.w*4);
+    assert(analog_image);
+    char analog_image_path[4096];
+    snprintf(analog_image_path,sizeof(analog_image_path),"%s/field-controls.bmp",test_directory);
+    assert(SDL_SaveBMP(analog_image,analog_image_path));
+    SDL_DestroySurface(analog_image);OverlaySurfaceRelease(&analog_surface);
+
 
     /* Issue #2: All settings tabs share a fixed panel height and top Y anchor. */
     OverlayLayout base_layout = {0};
@@ -859,6 +1137,7 @@ int main(void) {
 
     g_BootHostActive = 1;
     Boot_ResetPadInput();
+    Boot_BuildRenderFlagTable();
     char controller[PSYZ_PAD_BUF_LEN] = {0};
     controller[1] = 0x41;
     controller[2] = (char)0xff;
@@ -869,6 +1148,59 @@ int main(void) {
         return 44;
     }
 
+    /* Real packet polling reaches the original analog movement decoder. */
+    controller[1] = PSYZ_CTRL_ANALOG_PAD;
+    controller[2] = controller[3] = (char)0xff;
+    controller[4] = controller[5] = (char)128;
+    static const struct {unsigned x,y,threshold,analog,run;} stick_cases[] = {
+        {128,128,85,0,0}, {133,122,85,0,0},
+        {190,128,85,1,0}, {235,128,85,1,0}, {236,128,85,1,1},
+        {21,128,85,1,0}, {20,128,85,1,1},
+        {205,205,90,1,0}, {205,205,80,1,1},
+        {170,128,0,1,1}, {254,128,100,1,0},
+        {255,128,100,1,1}, {0,128,100,1,1}
+    };
+    for (unsigned i=0;i<sizeof(stick_cases)/sizeof(stick_cases[0]);++i) {
+        controller[6]=(char)stick_cases[i].x;controller[7]=(char)stick_cases[i].y;
+        g_FieldAnalogRunThreshold=stick_cases[i].threshold;
+        g_GameStateFlags=0;
+        Psyz_PadsSet(0,controller,sizeof(controller));Field_HandleStateTransition();
+        if (((g_PadPackets[0].header>>12)==7)!=stick_cases[i].analog ||
+            ((g_FieldPadBits&1)!=0)!=stick_cases[i].run) {
+            fprintf(stderr,"Analog case %u: header=%04x field=%08x\n",i,g_PadPackets[0].header,g_FieldPadBits);
+            return 49;
+        }
+    }
+    /* A field preference must not change the original battle run threshold. */
+    g_FieldAnalogRunThreshold=0;controller[6]=(char)190;controller[7]=(char)128;
+    g_GameStateFlags=2;Psyz_PadsSet(0,controller,sizeof(controller));Field_HandleStateTransition();
+    if (g_FieldPadBits&1) return 50;
+    /* The field preference does not affect navigation inside a game menu. */
+    MenuWidgetNode analog_menu={0};analog_menu.mode=1;
+    g_MenuWidgetActiveListHead=&analog_menu;
+    g_GameStateFlags=0;controller[6]=(char)190;
+    Psyz_PadsSet(0,controller,sizeof(controller));Field_HandleStateTransition();
+    if (g_FieldPadBits&0x79) return 54;
+    controller[6]=(char)250;
+    Psyz_PadsSet(0,controller,sizeof(controller));Field_HandleStateTransition();
+    if (!(g_FieldPadBits&0x10) || (g_FieldPadBits&1)) return 55;
+    g_MenuWidgetActiveListHead=NULL;
+
+    /* D-pad and keyboard movement take priority over a deflected stick. */
+    g_GameStateFlags=0;controller[2]=(char)0xef;
+    Psyz_PadsSet(0,controller,sizeof(controller));Field_HandleStateTransition();
+    if ((g_PadPackets[0].header>>12)!=4 || !(g_FieldPadBits&8)) return 51;
+    controller[2]=(char)0xff;
+    SDL_Event direction;SDL_zero(direction);direction.type=SDL_EVENT_KEY_DOWN;
+    direction.key.scancode=SDL_SCANCODE_UP;direction.key.down=true;SDL_PushEvent(&direction);
+    Psyz_PadsSet(0,controller,sizeof(controller));Field_HandleStateTransition();
+    if ((g_PadPackets[0].header>>12)!=4 || !(g_FieldPadBits&8)) return 52;
+    direction.type=SDL_EVENT_KEY_UP;direction.key.down=false;SDL_PushEvent(&direction);
+    /* Losing focus releases axes as well as keyboard buttons. */
+    direction.type=SDL_EVENT_WINDOW_FOCUS_LOST;SDL_PushEvent(&direction);
+    Field_HandleStateTransition();
+    if ((g_PadPackets[0].header>>12)!=4 || (g_FieldPadBits&0x79)) return 53;
+    g_FieldAnalogRunThreshold=85;
     g_BootHostActive = 0;
     Boot_ResetPadInput();
     if (saved_headless) {

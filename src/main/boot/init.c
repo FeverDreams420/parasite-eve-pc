@@ -1004,6 +1004,7 @@ void Boot_StoreTableEntry(u32 mask, int value) {
 }
 
 u32 g_PadComboProgress;
+unsigned g_FieldAnalogRunThreshold = 85;
 
 static void Boot_PollConfiguredPad(void);
 static bool native_pad_poll;
@@ -1183,6 +1184,23 @@ void Field_HandleStateTransition(void) {
             }
         }
 
+        /* Keep original menu/battle rules; field running follows radial stick
+         * magnitude, independent of facing direction or diagonal movement. */
+        if ((g_PadPackets[0].header & 0xF000) == 0x7000 &&
+            !(g_GameStateFlags & 2) && !menu_open) {
+            int x = (int)g_PadPackets[0].leftX - 128;
+            int y = (int)g_PadPackets[0].leftY - 128;
+            if (x < -127) x = -127;
+            if (y < -127) y = -127;
+            unsigned radius2 = (unsigned)(x*x + y*y);
+            unsigned threshold = g_FieldAnalogRunThreshold;
+            g_FieldPadBits &= ~1u;
+            if ((g_FieldPadBits & 0x78) &&
+                radius2 * 10000u >= 127u * 127u * threshold * threshold) {
+                g_FieldPadBits |= 1;
+            }
+        }
+
         final_pad = g_FieldPadBits;
         final_old = g_FieldPadLastFrame;
         changed = final_pad ^ final_old;
@@ -1254,8 +1272,21 @@ static void Boot_PollConfiguredPad(void) {
     }
     unsigned char packet[PSYZ_PAD_BUF_LEN];
     Psyz_PadsGet(0, (char *)packet, sizeof(packet));
-    if (packet[0] == 0 && packet[1] == PSYZ_CTRL_DIGITAL_PAD) {
+    if (packet[0] == 0 && (packet[1] == PSYZ_CTRL_DIGITAL_PAD ||
+                           packet[1] == PSYZ_CTRL_ANALOG_PAD)) {
         g_PadPackets[0].buttons &= (u16)(packet[2] | ((u16)packet[3] << 8));
+        /* Digital movement takes priority, so keyboard/D-pad input never
+         * borrows a stale stick angle. Preserve the original stick dead zone. */
+        if (packet[1] == PSYZ_CTRL_ANALOG_PAD &&
+            !(~g_PadPackets[0].buttons & 0x00f0) &&
+            (packet[6] < 0x5a || packet[6] >= 0xa1 ||
+             packet[7] < 0x5a || packet[7] >= 0xa1)) {
+            g_PadPackets[0].header = 0x7300;
+            g_PadPackets[0].rightX = packet[4];
+            g_PadPackets[0].rightY = packet[5];
+            g_PadPackets[0].leftX = packet[6];
+            g_PadPackets[0].leftY = packet[7];
+        }
     }
 }
 
@@ -1288,6 +1319,7 @@ void Boot_ResetPadInput(void) {
     native_pad_poll = !headless || !*headless;
     if (g_BootHostActive && native_pad_poll) {
         PadInit(0);
+        Psyz_PadsSetKind(0, 0, PSYZ_CTRL_ANALOG_PAD);
     }
     SDL_RemoveEventWatch(Boot_WatchPadEvent, NULL);
     SDL_AddEventWatch(Boot_WatchPadEvent, NULL);

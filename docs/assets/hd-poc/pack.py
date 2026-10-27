@@ -3,7 +3,7 @@ from pathlib import Path
 import json,argparse,hashlib,shutil
 import numpy as np
 from PIL import Image
-p=argparse.ArgumentParser();p.add_argument('model');p.add_argument('--root',type=Path,default=Path(__file__).resolve().parent);p.add_argument('--destination',type=Path);p.add_argument('--room');p.add_argument('--entry-overrides',type=Path);p.add_argument('--no-family-lock',action='store_true');p.add_argument('--fallback-pack',type=Path);p.add_argument('--retain-controller',action='append',default=[]);a=p.parse_args();root=a.root.resolve();data=json.loads((root/'tasks.json').read_text());model=root/a.model;dest=a.destination.resolve() if a.destination else root/('pack-'+a.model);dest.mkdir(exist_ok=True)
+p=argparse.ArgumentParser();p.add_argument('model');p.add_argument('--root',type=Path,default=Path(__file__).resolve().parent);p.add_argument('--destination',type=Path);p.add_argument('--room');p.add_argument('--entry-overrides',type=Path);p.add_argument('--no-family-lock',action='store_true');p.add_argument('--preserve-source-black',action='store_true');p.add_argument('--fallback-pack',type=Path);p.add_argument('--retain-controller',action='append',default=[]);a=p.parse_args();root=a.root.resolve();data=json.loads((root/'tasks.json').read_text());model=root/a.model;dest=a.destination.resolve() if a.destination else root/('pack-'+a.model);dest.mkdir(exist_ok=True)
 detail_regions=json.loads((root/'native-detail-regions.json').read_text()) if (root/'native-detail-regions.json').exists() else []
 # Lock common context in each serialized controller family. Controllers remain
 # independent: no combined animation/video replaces their original state.
@@ -42,6 +42,8 @@ for t in data['tasks']:
  for i,((x,y),ref) in enumerate(zip(t['tiles'],refs)):
   patch=enhanced[y*4:y*4+64,x*4:x*4+64].copy();assert patch.shape==(64,64,3)
   rgb=np.stack([(ref&31)*255//31,((ref>>5)&31)*255//31,((ref>>10)&31)*255//31],axis=-1).astype('uint8');rgb=np.repeat(np.repeat(rgb,4,0),4,1)
+  if a.preserve_source_black:
+   black=np.repeat(np.repeat((ref&0x7fff)==0,4,0),4,1);patch[black]=0
   for region in detail_regions:
    if region['room']!=t['room']:continue
    x0,y0,x1,y1=region['bbox'];left,right=max(x,x0),min(x+16,x1);top,bottom=max(y,y0),min(y+16,y1)
@@ -60,4 +62,4 @@ for t in data['tasks']:
  records.append({**t,'atlas_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'rgba_bytes':atlas.shape[0]*atlas.shape[1]*4,'static_family_locked':t['key'] in locked,'entry_override':str(override) if override and override.exists() else None})
 if a.room and (dest/'manifest.json').exists():
  previous=json.loads((dest/'manifest.json').read_text())['atlases'];records=[t for t in previous if t['room']!=a.room]+records
-(dest/'manifest.json').write_text(json.dumps({'model':a.model,'scope':'Optional background PoC; original masks/STP/OT/animation timing; palette mismatch falls back to original RGB.','native_detail_regions':detail_regions,'atlases':records},indent=2));print(a.model,len(records),'atlases',sum(t['rgba_bytes'] for t in records)/2**20,'MiB GPU')
+(dest/'manifest.json').write_text(json.dumps({'model':a.model,'scope':'Optional background PoC; original masks/STP/OT/animation timing; palette mismatch falls back to original RGB.','native_detail_regions':detail_regions,'preserve_source_black':a.preserve_source_black,'atlases':records},indent=2));print(a.model,len(records),'atlases',sum(t['rgba_bytes'] for t in records)/2**20,'MiB GPU')

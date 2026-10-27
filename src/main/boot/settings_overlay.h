@@ -648,6 +648,14 @@ static const char *Host_ControlBindingValueName(const HostOverlayState *state,
         SDL_Scancode scancode = (SDL_Scancode)host_options.keys[bindingIndex];
         SDL_Keycode keycode = SDL_GetKeyFromScancode(scancode, SDL_KMOD_NONE, false);
         const char *name = keycode != SDLK_UNKNOWN ? SDL_GetKeyName(keycode) : NULL;
+        /* DrawText and the bundled font are Latin-only: Cyrillic, kana and other non-ASCII
+         * names fall back to the Latin legend, which those keyboards also print on the key. */
+        for (const char *c = name; c && *c; c++) {
+            if ((unsigned char)*c >= 0x80) {
+                name = NULL;
+                break;
+            }
+        }
         if (!name || !*name) name = SDL_GetScancodeName(scancode);
         return (name && *name) ? name : "Unbound";
     }

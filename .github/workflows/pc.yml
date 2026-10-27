@@ -64,9 +64,10 @@ jobs:
       - name: Package Linux x86-64
         run: |
           stage=package/Parasite-Eve-linux-x86_64
-          mkdir -p "$stage/docs/images" "$stage/licenses"
+          mkdir -p "$stage/docs/images" "$stage/licenses" "$stage/mods"
           cp build/parasite-eve-pc README.md CHANGELOG.md LICENSE.md THIRD_PARTY_NOTICES.md "$stage/"
           cp docs/CODE_ORGANIZATION.md "$stage/docs/"
+          cp mods/README.md "$stage/mods/"
           cp docs/images/gameplay.png "$stage/docs/images/"
           python3 - <<'PYLICENSE'
           from pathlib import Path

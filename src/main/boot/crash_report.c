@@ -74,18 +74,34 @@ static void Crash_Path(wchar_t *out, const wchar_t *name, const wchar_t *suffix)
 
 /* ---- the log ---- */
 
+/* A full log starts over with its last 256 KB, so a crash late in a long
+ * session still has what led up to it. */
+static void Crash_RestartLog(void) {
+    static const char note[] = "[log reached 4 MB and started over; the 256 KB before that follow]\r\n";
+    DWORD written;
+
+    SetFilePointer(crash.log, 0, NULL, FILE_BEGIN);
+    SetEndOfFile(crash.log);
+    WriteFile(crash.log, note, sizeof(note) - 1, &written, NULL);
+    crash.log_size = sizeof(note) - 1;
+    if (crash.tail_wrapped) {
+        WriteFile(crash.log, crash.tail + crash.tail_pos, (DWORD)(CRASH_TAIL_SIZE - crash.tail_pos), &written, NULL);
+        crash.log_size += (DWORD)(CRASH_TAIL_SIZE - crash.tail_pos);
+    }
+    WriteFile(crash.log, crash.tail, (DWORD)crash.tail_pos, &written, NULL);
+    crash.log_size += (DWORD)crash.tail_pos;
+}
+
 static void Crash_Keep(const char *data, DWORD size) {
     DWORD written;
 
     EnterCriticalSection(&crash.lock);
-    if (crash.log != INVALID_HANDLE_VALUE && crash.log_size < CRASH_LOG_LIMIT) {
-        DWORD part = size < CRASH_LOG_LIMIT - crash.log_size ? size : CRASH_LOG_LIMIT - crash.log_size;
-        WriteFile(crash.log, data, part, &written, NULL);
-        crash.log_size += part;
-        if (crash.log_size >= CRASH_LOG_LIMIT) {
-            static const char full[] = "\r\n[log is full; a crash report still gets its last 256 KB]\r\n";
-            WriteFile(crash.log, full, sizeof(full) - 1, &written, NULL);
+    if (crash.log != INVALID_HANDLE_VALUE) {
+        if (crash.log_size + size > CRASH_LOG_LIMIT) {
+            Crash_RestartLog();
         }
+        WriteFile(crash.log, data, size, &written, NULL);
+        crash.log_size += size;
     }
     while (size) {
         size_t part = CRASH_TAIL_SIZE - crash.tail_pos;
@@ -1043,7 +1059,7 @@ static void Crash_WriteLog(HANDLE out) {
     for (int tries = 0; tries < 50 && !(locked = TryEnterCriticalSection(&crash.lock)); ++tries) {
         Sleep(2);
     }
-    if ((log == INVALID_HANDLE_VALUE || crash.log_size >= CRASH_LOG_LIMIT) && (crash.tail_wrapped || crash.tail_pos)) {
+    if (log == INVALID_HANDLE_VALUE && (crash.tail_wrapped || crash.tail_pos)) {
         static const char title[] = "\r\n== End of the log ==\r\n";
         WriteFile(out, title, sizeof(title) - 1, &written, NULL);
         if (crash.tail_wrapped) {

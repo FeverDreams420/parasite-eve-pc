@@ -164,16 +164,32 @@ static int Crash_Read(uintptr_t address, void *out, size_t size) {
 
 /* ---- the log ---- */
 
+/* A full log starts over with its last 256 KB, so a crash late in a long
+ * session still has what led up to it. */
+static void Crash_RestartLog(void) {
+    static const char note[] = "[log reached 4 MB and started over; the 256 KB before that follow]\n";
+
+    if (ftruncate(crash.log, 0) || lseek(crash.log, 0, SEEK_SET)) {
+        return;
+    }
+    Crash_Write(crash.log, note, sizeof(note) - 1);
+    crash.log_size = sizeof(note) - 1;
+    if (crash.tail_wrapped) {
+        Crash_Write(crash.log, crash.tail + crash.tail_pos, CRASH_TAIL_SIZE - crash.tail_pos);
+        crash.log_size += (unsigned)(CRASH_TAIL_SIZE - crash.tail_pos);
+    }
+    Crash_Write(crash.log, crash.tail, crash.tail_pos);
+    crash.log_size += (unsigned)crash.tail_pos;
+}
+
 static void Crash_Keep(const char *data, size_t size) {
     pthread_mutex_lock(&crash.lock);
-    if (crash.log >= 0 && crash.log_size < CRASH_LOG_LIMIT) {
-        size_t part = size < CRASH_LOG_LIMIT - crash.log_size ? size : CRASH_LOG_LIMIT - crash.log_size;
-        Crash_Write(crash.log, data, part);
-        crash.log_size += (unsigned)part;
-        if (crash.log_size >= CRASH_LOG_LIMIT) {
-            static const char full[] = "\n[log is full; a crash report still gets its last 256 KB]\n";
-            Crash_Write(crash.log, full, sizeof(full) - 1);
+    if (crash.log >= 0) {
+        if (crash.log_size + size > CRASH_LOG_LIMIT) {
+            Crash_RestartLog();
         }
+        Crash_Write(crash.log, data, size);
+        crash.log_size += (unsigned)size;
     }
     while (size) {
         size_t part = CRASH_TAIL_SIZE - crash.tail_pos;
@@ -1502,7 +1518,7 @@ static void Crash_WriteLog(int out) {
     for (int tries = 0; tries < 50 && !(locked = !pthread_mutex_trylock(&crash.lock)); ++tries) {
         Crash_Sleep(2);
     }
-    if ((log < 0 || crash.log_size >= CRASH_LOG_LIMIT) && (crash.tail_wrapped || crash.tail_pos)) {
+    if (log < 0 && (crash.tail_wrapped || crash.tail_pos)) {
         static const char title[] = "\n== End of the log ==\n";
         Crash_Write(out, title, sizeof(title) - 1);
         if (crash.tail_wrapped) {

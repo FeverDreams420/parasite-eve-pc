@@ -3,6 +3,7 @@ name: mods-build
 on:
   push:
     branches: [mods]
+    tags: ['mods-v*']
   workflow_dispatch:
 
 permissions:
@@ -80,3 +81,28 @@ jobs:
         with:
           name: windows-x86_64-mods
           path: package/Parasite-Eve-mods-windows-x86_64
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/mods-v')
+    needs: [macos-arm64, windows-x86_64]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+      - name: Zip Windows package
+        run: |
+          cd dist/windows-x86_64-mods
+          zip -r ../../Parasite-Eve-mods-windows-x86_64.zip .
+      - name: Publish prerelease
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          cp dist/macos-arm64-mods/Parasite-Eve-mods-macos-arm64.zip .
+          sha256sum Parasite-Eve-mods-*.zip > SHA256SUMS.txt
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --prerelease --title "Parasite Eve mods $TAG (test build)" \
+            --notes "Experimental test build of the mods branch (PE Enhancements: movement, rebalance, economy, collection, tools). Requires your own USA disc image (CUE/BIN). Open F1 in game, then Manage mods, and turn on All mods and restart. macOS build is Apple Silicon and ad-hoc signed: right-click, Open on first launch. Source commit: $GITHUB_SHA" \
+            Parasite-Eve-mods-macos-arm64.zip Parasite-Eve-mods-windows-x86_64.zip SHA256SUMS.txt

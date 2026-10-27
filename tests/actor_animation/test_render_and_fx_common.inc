@@ -208,15 +208,54 @@ static int native_save_safety(void) {
         }
         if (Inv_ValidateSavedInventory(&candidate)) valid = 0;
     }
-    /* Run the real sorter and selection-mask rebuild too, including the
-     * corrupt kind that previously indexed beyond the rank table. */
-    g_SaveRuntimeState = clean;
-    g_InventoryRuntime.equipment[0].kind = 255;
-    g_AyaSaveState.equipped_weapon_slot = -128;
-    g_AyaSaveState.equipped_armor_slot = 127;
-    g_InvBonusSlotCount = 0;
-    Inv_SortInventoryByMode(1, 0);
-    if (g_AyaSaveState.equipped_weapon_slot != -1 || g_AyaSaveState.equipped_armor_slot != -1) valid = 0;
+    /* Exercise every UI sorting mode from a cold start, then switch modes
+     * repeatedly. Preserve the item multiset, equipped identities and all
+     * equipment bytes, including the invalid kind from the crash report. */
+    unsigned sort_cases = 0;
+    const unsigned kinds[] = {1, 24, 31, 32, 255};
+    for (unsigned fault = 0; fault < sizeof(kinds) / sizeof(kinds[0]); ++fault) {
+        for (int mode = 0; mode < 3; ++mode) for (int key = 0; key < 3; ++key) {
+            g_SaveRuntimeState = clean;
+            g_InventoryRuntime.equipment[0].kind = kinds[fault];
+            if (fault) {
+                g_AyaSaveState.equipped_weapon_slot = -128;
+                g_AyaSaveState.equipped_armor_slot = 127;
+            }
+            g_InvBonusSlotCount = 0;
+            g_InvSortRankTable = NULL;
+            g_InvSortTypeRankTable = NULL;
+            g_InvWeaponSortStatIndex = g_InvAmmoSortStatIndex = 0;
+            ItemDataRecord equipment_before[2];
+            memcpy(equipment_before, g_InventoryRuntime.equipment, sizeof(equipment_before));
+            for (unsigned pass = 0; pass < 3; ++pass) {
+                Inv_SortInventoryByMode(pass == 1 ? (mode + 1) % 3 : mode, key);
+                unsigned weapons = 0, armors = 0;
+                for (unsigned slot = 0; slot < 50; ++slot) {
+                    int id = g_AyaInventoryItems[slot];
+                    if (id == 0x100) ++weapons;
+                    else if (id == 0x101) ++armors;
+                    else if (id != 0) valid = 0;
+                }
+                if (weapons != 1 || armors != 1 ||
+                    memcmp(equipment_before, g_InventoryRuntime.equipment, sizeof(equipment_before))) valid = 0;
+                if (fault) {
+                    if (g_AyaSaveState.equipped_weapon_slot != -1 ||
+                        g_AyaSaveState.equipped_armor_slot != -1) valid = 0;
+                } else {
+                    int weapon = g_AyaSaveState.equipped_weapon_slot;
+                    int armor = g_AyaSaveState.equipped_armor_slot;
+                    if (weapon < 0 || weapon >= 50 || armor < 0 || armor >= 50 ||
+                        g_AyaInventoryItems[weapon] != 0x100 || g_AyaInventoryItems[armor] != 0x101) valid = 0;
+                }
+            }
+            s16 sorted[50];
+            memcpy(sorted, g_AyaInventoryItems, sizeof(sorted));
+            Inv_SortInventoryByMode(mode, key);
+            if (memcmp(sorted, g_AyaInventoryItems, sizeof(sorted))) valid = 0;
+            ++sort_cases;
+        }
+    }
+    printf("Native inventory sort: %u cold-start/mode-switch cases, all modes, invalid kinds, item preservation and idempotence checked\n", sort_cases);
     if (!native_task_relocation_safety() || !native_save_hook_safety()) valid = 0;
     g_ResidentDataPack = saved;
     return valid ? 0 : 1;

@@ -61,6 +61,7 @@ static struct {
     char system[4096];
     void (*describe)(char *out, size_t size);
     void (*describe_mods)(char *out, size_t size, int on_game_thread);
+    void (*describe_save)(char *out, size_t size);
     volatile LONG crashing;
 } crash = {.log = INVALID_HANDLE_VALUE};
 
@@ -936,6 +937,12 @@ static void Crash_BuildText(EXCEPTION_POINTERS *info) {
 
     Crash_Append("\r\n== PC ==\r\n%s", crash.system);
     Crash_AppendModules();
+
+    if (crash.describe_save) {
+        section[0] = 0;
+        crash.describe_save(section, sizeof(section));
+        Crash_Append("%s", section);
+    }
 }
 
 /* ---- telling the player ---- */
@@ -1160,6 +1167,10 @@ void CrashReport_SetMods(void (*describe)(char *out, size_t size, int on_game_th
     crash.describe_mods = describe;
 }
 
+void CrashReport_SetSaveData(void (*describe)(char *out, size_t size)) {
+    crash.describe_save = describe;
+}
+
 #elif !(defined(__linux__) || defined(__APPLE__)) || defined(__EMSCRIPTEN__)
 
 /* Linux and macOS: crash_report_posix.c. */
@@ -1169,6 +1180,10 @@ void CrashReport_Install(int interactive, void (*describe)(char *out, size_t siz
 }
 
 void CrashReport_SetMods(void (*describe)(char *out, size_t size, int on_game_thread)) {
+    (void)describe;
+}
+
+void CrashReport_SetSaveData(void (*describe)(char *out, size_t size)) {
     (void)describe;
 }
 

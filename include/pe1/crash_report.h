@@ -16,4 +16,9 @@ void CrashReport_Install(int interactive, void (*describe)(char *out, size_t siz
  * handler; on_game_thread: the crash was on the thread that runs mod code. */
 void CrashReport_SetMods(void (*describe)(char *out, size_t size, int on_game_thread));
 
+/* Adds the game's save data near the end of crash reports (after the loaded
+ * modules, before the log), so a save can be rebuilt from a report. describe
+ * runs inside the crash handler. */
+void CrashReport_SetSaveData(void (*describe)(char *out, size_t size));
+
 #endif

@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,6 +24,8 @@
 #include "pe1/game_timers.h"
 #include "pe1/pad_state.h"
 #include "pe1/psyq_gpu.h"
+#include "pe1/save.h"
+#include "pe1/save_tail_state.h"
 #include "pe1/scene_dispatch.h"
 #include "pe_hooks.h"
 
@@ -65,6 +68,10 @@ static const char *const host_button_names[HOST_BINDING_COUNT] = {
 
 /* speed_factor while the speed binding is held; every start is 1x. */
 static unsigned host_speed = 1;
+
+/* --test-crash-key: F9 crashes on purpose, to check the crash report at any
+ * point of the game. */
+static int host_test_crash_key;
 
 static void Host_SetSpeed(unsigned speed) {
     if (speed != host_speed || speed != Psyz_VideoGetSpeed()) {
@@ -1596,6 +1603,12 @@ static bool Host_SettingsEvent(const SDL_Event *event) {
         Host_PauseForFocus(game);
         return true;
     }
+    if (host_test_crash_key && event->type == SDL_EVENT_KEY_DOWN &&
+        event->key.scancode == SDL_SCANCODE_F9 && !event->key.repeat) {
+        static int *volatile target;
+        fprintf(stderr, "Test crash: F9, write to address 0 at VBlank %u\n", (unsigned)g_BootHostVBlankCount);
+        *target = 0;
+    }
     if (event->type == SDL_EVENT_KEY_DOWN && event->key.scancode == SDL_SCANCODE_ESCAPE) {
         if (!event->key.repeat) {
             Host_Settings(game);
@@ -1616,9 +1629,28 @@ static void Host_InstallSettingsOverlay(void) {
 #define STATE_FLAG_READY 0x00000100U
 
 #ifndef PE_HOST_SETTINGS_TEST
-/* Crash report: what the game was doing. Runs inside the crash handler, so
- * it only reads values. The room number is decoded as mods/host/pe_game.c
- * does (-1: the token is not a room). */
+/* Appends to a crash report section; text past its end is dropped. */
+static void Host_CrashAppend(char *out, size_t size, size_t *used, const char *format, ...) {
+    if (*used >= size) return;
+    va_list args;
+    va_start(args, format);
+    const int n = vsnprintf(out + *used, size - *used, format, args);
+    va_end(args);
+    if (n > 0) *used += (size_t)n < size - *used ? (size_t)n : size - *used - 1;
+}
+
+/* File name only: reports are shared, and folders can hold the user's name. */
+static const char *Host_CrashFileName(const char *path) {
+    const char *name = path;
+    for (const char *s = path; *s; ++s) {
+        if (*s == '/' || *s == '\\') name = s + 1;
+    }
+    return *name ? name : "(not set)";
+}
+
+/* Crash report: what the game was doing and every desktop setting. Runs
+ * inside the crash handler, so it only reads values. The room number is
+ * decoded as mods/host/pe_game.c does (-1: the token is not a room). */
 static void Host_DescribeCrash(char *out, size_t size) {
     const unsigned token = (unsigned)g_SceneDispatchToken;
     int room = 0;
@@ -1626,21 +1658,107 @@ static void Host_DescribeCrash(char *out, size_t size) {
         const char c = (char)g_Base32CharTable[(token >> ((5 - i) * 5 + 2)) & 0x1Fu];
         room = c >= '0' && c <= '9' ? room * 10 + (c - '0') : -1;
     }
-    snprintf(out, size,
-             "Game: room %d, scene token 0x%08X (current 0x%08X), disc %u, VBlank %u, game frame %u\r\n"
-             "Game state: flags 0x%08X / 0x%08X, %s\r\n"
-             "Aya: HP %u/%u, level %u, EXP %u\r\n"
-             "Settings: internal resolution %ux, aspect %d, geometry correction %d, antialiasing %d, "
-             "model filtering %d, dithering %d, fullscreen %d, speed %ux now (hold %ux)\r\n",
-             room, token, (unsigned)g_SceneDispatchCur, (unsigned)g_PeImageMountFlags,
-             (unsigned)g_BootHostVBlankCount, g_GlobalFrameCounter[0],
-             (unsigned)g_GameStateFlags, (unsigned)g_GameStateFlagsWord,
-             (g_GameStateFlags & 2) ? "in battle" : "not in battle",
-             (unsigned)g_AyaSaveState.current_hp, (unsigned)g_AyaSaveState.max_hp,
-             (unsigned)g_AyaSaveState.level + 1u, (unsigned)g_AyaSaveState.total_exp,
-             Psyz_VideoGetInternalResolution(), host_options.aspect, host_options.geometry_correction,
-             host_options.antialiasing, host_options.model_filtering, host_options.dither,
-             host_options.fullscreen, host_speed, host_options.speed_factor);
+    const unsigned speed = Psyz_VideoGetSpeed();
+    size_t used = 0;
+    out[0] = 0;
+    Host_CrashAppend(out, size, &used,
+                     "Game: room %d, scene token 0x%08X (current 0x%08X), disc %u, VBlank %u, game frame %u\r\n"
+                     "Game state: flags 0x%08X / 0x%08X, %s\r\n"
+                     "Aya: HP %u/%u, level %u, EXP %u\r\n"
+                     "Story: day %d on the save card (progress %u), story day %d (next %d), day flags 0x%02X\r\n",
+                     room, token, (unsigned)g_SceneDispatchCur, (unsigned)g_PeImageMountFlags,
+                     (unsigned)g_BootHostVBlankCount, g_GlobalFrameCounter[0],
+                     (unsigned)g_GameStateFlags, (unsigned)g_GameStateFlagsWord,
+                     (g_GameStateFlags & 2) ? "in battle" : "not in battle",
+                     (unsigned)g_AyaSaveState.current_hp, (unsigned)g_AyaSaveState.max_hp,
+                     (unsigned)g_AyaSaveState.level + 1u, (unsigned)g_AyaSaveState.total_exp,
+                     Save_ClassifyPlaytime((int)g_PlayTimeFrameCounter), (unsigned)g_PlayTimeFrameCounter,
+                     g_GameState.current_story_day, g_GameState.pending_story_day,
+                     (unsigned)g_GameState.story_day_flags);
+    if (speed > 1) {
+        Host_CrashAppend(out, size, &used, "Speed-up: ON at the crash, the game was running at %ux\r\n", speed);
+    } else {
+        Host_CrashAppend(out, size, &used, "Speed-up: off at the crash (normal speed)\r\n");
+    }
+
+    /* The same names as the settings screen (settings_overlay.h). */
+    Host_CrashAppend(out, size, &used,
+                     "\r\n== Settings ==\r\n"
+                     "Settings file: %s\r\n"
+                     "Graphics: render resolution %ux (renderer %ux), fullscreen %s, aspect ratio %s, "
+                     "dithering %s, geometry correction %s, antialiasing %s, model textures %s\r\n"
+                     "Audio: master volume %u%%\r\n"
+                     "Controls: speed-up %ux while held, field run threshold %u\r\n"
+                     "Discs: disc 1 %s, disc 2 %s\r\n",
+                     host_options.enabled && *host_options.user_file ? Host_CrashFileName(host_options.user_file)
+                                                                      : "none (defaults, not saved)",
+                     host_options.scale, Psyz_VideoGetInternalResolution(), kSwitchNames[host_options.fullscreen != 0],
+                     kAspectNames[host_options.aspect != 0], kDitherNames[host_options.dither != 0],
+                     kSwitchNames[host_options.geometry_correction != 0], kAntialiasNames[host_options.antialiasing != 0],
+                     kFilterNames[host_options.model_filtering != 0], host_options.volume, host_options.speed_factor,
+                     host_options.analog_run_threshold, Host_CrashFileName(host_options.discs[0]),
+                     Host_CrashFileName(host_options.discs[1]));
+    Host_CrashAppend(out, size, &used, "Keyboard:");
+    for (unsigned i = 0; i < HOST_BINDING_COUNT; ++i) {
+        const int key = host_options.keys[i];
+        const char *name = key != HOST_UNBOUND_KEY ? SDL_GetScancodeName((SDL_Scancode)key) : NULL;
+        Host_CrashAppend(out, size, &used, "%s %s = %s", i ? "," : "", host_button_names[i],
+                         name && *name ? name : "none");
+    }
+    Host_CrashAppend(out, size, &used, "\r\nController:");
+    for (unsigned i = 0; i < HOST_BINDING_COUNT; ++i) {
+        const int button = host_options.buttons[i];
+        const char *name = button == SDL_GAMEPAD_BUTTON_COUNT       ? "Left trigger"
+                           : button == SDL_GAMEPAD_BUTTON_COUNT + 1 ? "Right trigger"
+                           : button != HOST_UNBOUND_BUTTON ? SDL_GetGamepadStringForButton((SDL_GamepadButton)button)
+                                                           : NULL;
+        Host_CrashAppend(out, size, &used, "%s %s = %s", i ? "," : "", host_button_names[i],
+                         name && *name ? name : "none");
+    }
+    Host_CrashAppend(out, size, &used, "\r\n");
+}
+
+/* Crash report: what a save made now would hold, file offsets 0x100 up to
+ * the checksum at 0x1C8C (Aya, items, key items, equipment, storage, then
+ * script variables, day and Aya's battle record), so a save can be rebuilt
+ * from the report, in a battle too (the room stays the same and loading
+ * clears the battle flags). Save_BuildHeader fills the header fields as the
+ * save menu does. Save_SerializeTail refuses when Aya's two record links are
+ * not the saved records, which only a damaged record does, so those links
+ * are set back for the copy and restored. */
+static void Host_DescribeSaveData(char *out, size_t size) {
+    static u8 data[0x12E4 + 0x8A8];
+    Save_BuildHeader();
+    memcpy(data, &g_SaveRuntimeState, 0x12E4);
+    u8 *cursor = g_SaveIoCursor;
+    BattleStateTail *action = g_AyaBattleState.action;
+    BattleAttributes *attributes = g_AyaBattleState.attributes;
+    const int links_fixed = (action && action != &g_SavedBattleStateTail) ||
+                            (attributes && attributes != &g_BattleEquipStateBlock);
+    if (links_fixed) {
+        g_AyaBattleState.action = &g_SavedBattleStateTail;
+        g_AyaBattleState.attributes = &g_BattleEquipStateBlock;
+    }
+    g_SaveIoCursor = data + 0x12E4;
+    const int have_tail = Save_SerializeTail() == 0;
+    g_SaveIoCursor = cursor;
+    g_AyaBattleState.action = action;
+    g_AyaBattleState.attributes = attributes;
+
+    const size_t count = have_tail ? sizeof(data) : 0x12E4;
+    size_t used = 0;
+    out[0] = 0;
+    Host_CrashAppend(out, size, &used, "\r\n== Save data (save file bytes from 0x0100) ==\r\n%s%s",
+                     links_fixed ? "Note: Aya's battle record links were damaged; written as the saved records.\r\n" : "",
+                     have_tail ? "" : "Story progress from 0x13E4 not available: the game could not save at this moment.\r\n");
+    for (size_t i = 0; i < count && used + 1 < size; ++i) {
+        const char *end = i % 32 == 31 || i + 1 == count ? "\r\n" : "";
+        if (i % 32) {
+            Host_CrashAppend(out, size, &used, " %02X%s", data[i], end);
+        } else {
+            Host_CrashAppend(out, size, &used, "%04X: %02X%s", 0x100u + (unsigned)i, data[i], end);
+        }
+    }
 }
 
 static void Host_PrintHelp(const char *program_name) {
@@ -1649,7 +1767,7 @@ static void Host_PrintHelp(const char *program_name) {
         "[--geometry-correction 0|1] [--antialiasing 0|1] [--model-filtering 0|1] "
         "[--headless | --headless-gpu] [--internal-resolution 1..8] [--frame-limit N] [--control-at N] "
         "[--dump-vram PATH] [--dump-frame PATH] [--dump-audio PATH] [--pad-at VBLANK:BUTTON_MASK ...] "
-        "[--test-crash-after N | --test-abort-after N]\n",
+        "[--test-crash-after N | --test-abort-after N] [--test-crash-key]\n",
         program_name
     );
     printf("Without --disc, opens a native multi-select CUE/BIN dialog. --choose-discs selects new images. ESC opens desktop settings.\n");
@@ -1659,6 +1777,7 @@ static void Host_PrintHelp(const char *program_name) {
     printf("Headless control: --control-at N pauses for stdin commands: advance FRAMES BUTTON_MASK, graphics PGXP AA FILTER (0/1; advances 8 blanks), or quit (requires --frame-limit).\n");
     printf("Headless fixtures only: --diagnostic-hp-at VBLANK:EXPECTED_HP:VALUE (requires --frame-limit; output is marked coverage-only)\n");
     printf("--test-crash-after N / --test-abort-after N crash on purpose at VBlank N to check the crash report (its path is printed).\n");
+    printf("--test-crash-key makes F9 crash on purpose, at any point of the game.\n");
 }
 
 static int Host_ParsePadEventArg(const char *spec, int argc) {
@@ -1747,6 +1866,7 @@ int main(int argc, char **argv) {
     }
 
     CrashReport_Install(interactive, Host_DescribeCrash);
+    CrashReport_SetSaveData(Host_DescribeSaveData);
 #ifdef PE_MODS
     CrashReport_SetMods(pe_mod_crash_describe);
 #endif
@@ -1819,6 +1939,8 @@ int main(int argc, char **argv) {
                 return EXIT_FAILURE;
             }
             g_BootHostControlAt = (u32)tick;
+        } else if (!strcmp(argv[arg], "--test-crash-key")) {
+            host_test_crash_key = 1;
         } else if (!strcmp(argv[arg], "--test-crash-after") || !strcmp(argv[arg], "--test-abort-after")) {
             char *end = NULL;
             errno = 0;

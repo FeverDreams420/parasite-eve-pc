@@ -400,5 +400,33 @@ void pe_mod_crash_describe(char *out, size_t size, int on_game_thread) {
                    "functions.\r\n", pe_mod_label(mod_id), mod_id, s_calls[depth - 1].what,
                    s_calls[depth - 1].detail ? " " : "", s_calls[depth - 1].detail ? s_calls[depth - 1].detail : "");
     }
+
+    /* Saved F1 rows (pe_mods.ini), read directly so no mod code runs here. */
+    int settings = 0;
+    PE_OUT("Mod settings (F1, saved in pe_mods.ini):\r\n");
+    for (i = 0; i < pe_menu_row_count(); i++) {
+        const PeMenuRow *row = pe_menu_row(i);
+        if (!row || !row->value) continue;
+        const int v = *row->value;
+        switch (row->kind) {
+        case PE_ROW_TOGGLE:
+            PE_OUT("  %s/%s = %s\r\n", row->page, row->label, v ? "On" : "Off");
+            break;
+        case PE_ROW_CHOICE:
+            PE_OUT("  %s/%s = %s\r\n", row->page, row->label,
+                   v >= 0 && (unsigned)v < row->count ? row->names[v] : "?");
+            break;
+        case PE_ROW_INT:
+            PE_OUT("  %s/%s = %d\r\n", row->page, row->label, v);
+            break;
+        case PE_ROW_DYNAMIC_CHOICE:
+            PE_OUT("  %s/%s = choice %d\r\n", row->page, row->label, v);
+            break;
+        default:
+            continue;
+        }
+        settings++;
+    }
+    if (!settings) PE_OUT("  none\r\n");
 #undef PE_OUT
 }

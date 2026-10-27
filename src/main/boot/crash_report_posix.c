@@ -108,6 +108,7 @@ static struct {
     char system[4096];
     void (*describe)(char *out, size_t size);
     void (*describe_mods)(char *out, size_t size, int on_game_thread);
+    void (*describe_save)(char *out, size_t size);
     int crashing;
 } crash = {.log = -1, .pipes = {-1, -1}, .console = {-1, -1}, .lock = PTHREAD_MUTEX_INITIALIZER};
 
@@ -1393,6 +1394,12 @@ static void Crash_BuildText(int number, const siginfo_t *info, const void *conte
 
     Crash_Append("\n== Computer ==\n%s", crash.system);
     Crash_AppendModules();
+
+    if (crash.describe_save) {
+        section[0] = 0;
+        crash.describe_save(section, sizeof(section));
+        Crash_AppendSection(section);
+    }
 }
 
 /* ---- telling the player ---- */
@@ -1626,6 +1633,10 @@ void CrashReport_Install(int interactive, void (*describe)(char *out, size_t siz
 
 void CrashReport_SetMods(void (*describe)(char *out, size_t size, int on_game_thread)) {
     crash.describe_mods = describe;
+}
+
+void CrashReport_SetSaveData(void (*describe)(char *out, size_t size)) {
+    crash.describe_save = describe;
 }
 
 #endif

@@ -20,10 +20,28 @@ Keep each CUE file next to its BIN file.
 2. You can start with either disc. If the other is needed, the game asks for it by name.
 3. Press **Escape** for graphics, controls, audio and disc settings. You can add the other disc there later.
 
-**Enter** is START and skips movies; in a story movie, START pauses it and asks whether to skip. View or change all bindings in **Escape → Controls**.
+**Enter** is START and skips movies; in a story movie, START pauses it and asks whether to skip. View or change all bindings in **Escape → Controls**. A **speed** button can be bound there too: the game runs at 2x while it is held, or 3x or 4x with the arrows either side of the number (Left/Right on that row). It is unbound until you choose a key or button, and keeps your VSync setting.
 Settings and selected disc paths are saved automatically.
 Optional widescreen, geometry correction, antialiasing and model texture filtering are in **Escape → Graphics**.
 Widescreen (the third **Aspect ratio** choice) shows 16:9 where a room's background is wider than the original screen; at a room's end the view stops at the background's edge, and a room with only a 4:3 background keeps even black bars. Movies stay 4:3.
+
+## Mods
+
+This tree can also build with a mod host (`-DPE_MODS=ON`). A standard build is unchanged: the
+`PE_HOOK(...)` lines in the game compile to nothing. In a mod build, **F1** opens the Mods panel;
+mods start only after **F1 → Manage mods → All mods** is turned on and the game restarted.
+Settings are saved in `pe_mods.ini`. See [the mod guide](mods/README.md) for writing a mod.
+
+### PE Enhancements
+
+Open **F1 → PE Enhancements** to configure them.
+
+- **Movement** (`pe_qol`): Always Run and configurable walk, run, combat and battle-entry speeds
+  (walking and running default to 1.75×).
+- **Encounters** (`pe_qol`): no random battles, or Normal, 2×, 4× or Every Check frequency. Story
+  and room rules still apply; this changes how often fights happen, not their size.
+
+Mod builds are experimental; a passing build or test does not establish full in-game compatibility.
 
 ## Build
 
@@ -38,5 +56,15 @@ cmake -S . -B build -DBUILD_TESTING=OFF -DCMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build build --parallel
 ./build/parasite-eve-pc
 ```
+
+### Build with mods
+
+```sh
+cmake -S . -B build-mods -DCMAKE_BUILD_TYPE=RelWithDebInfo -DPE_MODS=ON
+cmake --build build-mods --parallel
+./build-mods/parasite-eve-pc
+```
+
+`PE_MOD_LIST` picks the mods by folder name (default: `pe_qol`).
 
 For development details, see [code organization](docs/CODE_ORGANIZATION.md).

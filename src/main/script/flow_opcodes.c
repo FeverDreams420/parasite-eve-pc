@@ -1,4 +1,5 @@
 #include "common.h"
+#include "pe_hooks.h"
 #include "pe1/field_sprite_state.h"
 #include "pe1/akao_send.h"
 #include <stdio.h>
@@ -398,6 +399,7 @@ int Draw_PackPrimColor(int start, int end);
 int Script_Random(int **arg0) {
     int start = *arg0[1];
     int end = *arg0[2];
+    PE_HOOK(PE_HOOK_SCRIPT_RANDOM, (&(PeHookScriptRandom){&start, &end, g_ScriptCursor}));
 
     if (start == end) {
         *arg0[0] = Draw_FlushPrimQueue();

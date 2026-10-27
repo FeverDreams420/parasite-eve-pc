@@ -28,10 +28,12 @@ All artwork, disc-derived metadata, packs, model weights and generated previews 
 2. Produce missing material anchors with the built-in imagegen tool using `generate_anchors.js`. Restore all original active contexts with `../hd-poc/infer.py` and the recorded RealESRNet weights. Do not generate animation phases independently for the expansion.
 3. Run the read-only native text-region extractor `text_regions.swift`, then `register_anchors.py` and `audit_registration.py --anchors --registered`. Low-confidence registration requires review.
 4. Run `assemble_sources.py --require-complete`. Optional `--shards N --shard I` partitions views; merge the resulting `views` and `pending` arrays into `source-guided-assembly.json`.
-5. Run `../hd-poc/pack.py OpenAI-source-guided --root . --destination pack --no-family-lock --preserve-source-black` from this directory.
+5. Run `../hd-poc/pack.py OpenAI-source-guided --root . --destination pack --no-family-lock --preserve-source-black --entry-overrides corrections/entry-overrides` from this directory.
 6. Run `retain_reviewed.py --baseline /absolute/frozen/0.1/pack`, then `combine.py` with the same baseline.
 7. Run `audit_pack.py --pack pack-with-0.1`, `composite.py --pack pack-with-0.1`, `audit_temporal.py` and `review.py`. Add `composite.py --pack pack-with-0.1 --room M038 --synchronized`, and likewise M039, before the final review build for combined car-controller previews.
 
 The gallery provides a map selector, paired full-scene views, phase selection, playback and diagnostic script-layer views. Preview speed/repeat are inspection controls; compositions exclude actors, camera movement and running scripts. A door is not required to loop or to have identical first/last poses.
 
 Data/reference audits, packed-scene temporal checks and preservation checks are separate from runtime testing. `original-all-room-loads` checks native room loading from both discs. Headless GPU integration checks the assembled pack on its existing replay route, comparing original state, VRAM and PCM; it does **not** visit every new map. The expansion still needs visual review in those later locations.
+
+Reviewed text corrections are retained as per-entry overrides. M195’s lower red exhibition-banner dates read **Nov 1st, Jan 15th** (two lines). The imagegen source, prompt, localized patch and verification are in private `corrections/M195/`; only the date rectangle changes, consistently across all original phases. Include `--entry-overrides corrections/entry-overrides` when repacking.

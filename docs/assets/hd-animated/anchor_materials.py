@@ -24,6 +24,8 @@ for j in jobs:
   if number in (161,163):j['reference_file']=str(R.parent/'hd-static/corrections/M162/road-v2.png');j['material_note']='Match the corrected coherent rectangular stone road setts in the reference, not glossy worm-like or molten cobbles. Preserve original curb, snow, road width, slope, manholes and shadows.'
   if number in (254,371):j['reference_file']=str(R.parent/'hd-static/composites/M255-g00-cbase-p00-hd.png');j['material_note']='Same museum rotunda as the reference: keep coherent blue floor tile material and architecture finish. Target original camera, floor joints, bones, lighting and silhouettes remain absolute authority.'
   if number in (290,292,293,294):j['reference_file']=str(R.parent/'hd-static/composites/M291-g00-cbase-p00-hd.png');j['material_note']='Match the existing Chrysler marble/stone material family without changing the target source floor joints, medallion geometry, elevator details or light.'
+  if number==195:
+   j['literal_text']='Nov 1st, Jan 15th';j['material_note']='The tiny dates at the bottom of the red exhibition banner read Nov 1st, on the first line and Jan 15th on the second line. Keep all other banner text and geometry unchanged.'
   if number==94:j['literal_text']="SAM'S"
   if number==96:j['literal_text']='PHARMACY'
  # Explicit files have no generation dependency. A source-only board never

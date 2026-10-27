@@ -50,7 +50,7 @@ for room in rooms:
  for e in range(count):
   m=ep+e*56;n=u16(g,m+38);pp=m+u32(g,m+40);uv=m+u32(g,m+44);group=g[m+36];sx,sy=struct.unpack_from('<hh',g,m+12)
   for data in [bytes([group]),struct.pack('<H',n),g[m+8:m+12],g[pp:pp+n*4],g[uv:uv+n*8]]:gh=fnv(gh,data)
-  entries.append({'index':e,'group':group,'flags':g[m],'tiles':n,'key':None,'scroll_modulus':list(struct.unpack_from('<hh',g,m+8)),'source_origin':[sx,sy]})
+  entries.append({'index':e,'group':group,'flags':g[m],'tiles':n,'key':None,'scroll_modulus':list(struct.unpack_from('<HH',g,m+4)),'source_origin':[sx,sy]})
   for t in range(n):
    pos=u32(g,pp+t*4);word=u32(g,uv+t*8);u,v=g[uv+t*8+4],g[uv+t*8+3];tx,ty=(word>>10)&0x3c0,(word>>7)&256;cx,cy=(word>>5)&0x3f0,word&511
    indices=vb[(ty+np.arange(v,v+16)%256)%512][:,(tx*2+np.arange(u,u+16)%256)%2048];pixels=vram[cy,(cx+indices.astype(np.uint16))%1024]
@@ -59,7 +59,7 @@ for room in rooms:
  for ci in range(u16(g,4)):
   cp=u32(g,16)+ci*16;sp=cp+struct.unpack_from('<i',g,cp+12)[0];slots=[{'entry':g[sp+j*2],'duration':struct.unpack_from('b',g,sp+j*2+1)[0]} for j in range(u32(g,cp)>>8)]
   if slots:initial.add(slots[0]['entry'])
-  controls.append({'id':ci,'group':g[cp+4],'slots':slots})
+  controls.append({'id':ci,'group':g[cp+4],'flags':g[cp],'position':struct.unpack_from('<i',g,cp+4)[0]>>8,'step':struct.unpack_from('<h',g,cp+8)[0],'elapsed':u16(g,cp+10),'slots':slots})
  groupdata={}
  for view in room['views']:
   group=view['group'];raw=[t for t in tiles if entries[t['entry']]['group']==group]
@@ -82,7 +82,9 @@ for room in rooms:
   visible.add(e);context=compose(translated,visible,w,h)
   for t in sorted(own,key=lambda t:(t['depth'],t['ordinal']),reverse=True):
    x,y=t['x'],t['y'];opaque=t['pixels']!=0;dest=context[y:y+16,x:x+16];rgb=tile_rgb(t['pixels']);dest[opaque]=rgb[opaque]
-  source=save_image(context,'inputs');x0,y0,x1,y1=view['active_bbox'];active=save_image(context[y0:y1,x0:x1],'active-inputs');ref=np.stack([t['pixels'] for t in own]);np.save(OUT/'refs'/(key+'.npy'),ref)
-  tasks.append({'room':room['id'],'group':group,'entry':e,'key':key,'input':source,'active_input':active,'active_bbox':view['active_bbox'],'native_origin':view['native_origin'],'size':[w,h],'tiles':[[t['x'],t['y']] for t in own],'tile_meta':[{k:t[k] for k in ['depth','ordinal','semi','mode']} for t in own],'control':family['id'] if family else None,'controls':[c['id'] for c in families],'ref':key+'.npy'})
+  source=save_image(context,'inputs');x0,y0,x1,y1=view['active_bbox'];active=save_image(context[y0:y1,x0:x1],'active-inputs');ref=np.stack([t['pixels'] for t in own]);ref_sha=hashlib.sha256(ref.tobytes()).hexdigest();ref_name=key+'.npy'
+  if (OUT/'refs'/ref_name).exists() and not np.array_equal(np.load(OUT/'refs'/ref_name),ref):ref_name=key+'-'+ref_sha[:12]+'.npy'
+  np.save(OUT/'refs'/ref_name,ref)
+  tasks.append({'room':room['id'],'group':group,'entry':e,'key':key,'input':source,'active_input':active,'active_bbox':view['active_bbox'],'native_origin':view['native_origin'],'size':[w,h],'tiles':[[t['x'],t['y']] for t in own],'tile_meta':[{k:t[k] for k in ['depth','ordinal','semi','mode']} for t in own],'control':family['id'] if family else None,'controls':[c['id'] for c in families],'ref':ref_name,'ref_sha256':ref_sha})
  roomdata.append({'room':room['id'],'geometry_key':f'{gh:016x}','entries':entries,'controls':controls});print(room['id'],count,'entries',flush=True)
 (OUT/'tasks.json').write_text(json.dumps({'scope':'Serialized entry coverage; actual playback controlled by original scripts. Native immutable geometry keys retained. RGB context is not necessarily a reachable visible frame.','tasks':tasks,'rooms':roomdata},indent=2));(OUT/'views.json').write_text(json.dumps(views,indent=2));print(len(tasks),'atlases;',len(views),'views;',len(set(t['active_input'] for t in tasks)),'unique active entry contexts',flush=True)

@@ -20,3 +20,8 @@ manifest={'model':'OpenAI built-in imagegen','scope':'Reviewed Day1 assets plus 
 (dest/'manifest.json').write_text(json.dumps(manifest,indent=2))
 (R/'day1-preservation.json').write_text(json.dumps({'all_reviewed_day1_atlases_byte_identical':True,'records':protected},indent=2))
 print(len(records),'unique atlases;',len(protected),'Day1 records preserved byte for byte')
+
+# Apply only explicitly recorded local art corrections after the reviewed base.
+if (R/"corrections/regions.json").exists():
+ import subprocess,sys
+ subprocess.run([sys.executable,str(R/"apply_corrections.py")],check=True)

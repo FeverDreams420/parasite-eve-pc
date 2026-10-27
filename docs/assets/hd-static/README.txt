@@ -13,9 +13,12 @@ full canvases. Original geometry, masking, tile depth, STP, native reference RGB
 palette fallback and game logic remain authoritative.
 
 pack/ contains the static expansion. pack-with-day1/ combines it with the
-reviewed Day1 pack, giving the Day1 files priority on all overlapping keys.
-day1-preservation.json verifies all reviewed Day1 atlas bytes are unchanged.
+reviewed Day1 pack, giving the Day1 files priority on all overlapping keys. Explicit user-requested
+local corrections in corrections/regions.json are then applied by apply_corrections.py.
+day1-preservation.json verifies unchanged Day1 atlases and lists intentional
+user-requested M005 floor corrections separately.
 No animated Day1 work, including the accepted M037 car interior, is regenerated.
+Localized corrections preserve every native-reference and unselected atlas texel.
 
 Use the HD WIP build with:
 PE_HD_BACKGROUNDS="/absolute/path/to/pack-with-day1" ./build/parasite-eve-pc --disc "/path/to/disc.cue"

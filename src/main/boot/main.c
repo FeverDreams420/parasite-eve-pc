@@ -69,10 +69,6 @@ static const char *const host_button_names[HOST_BINDING_COUNT] = {
 /* speed_factor while the speed binding is held; every start is 1x. */
 static unsigned host_speed = 1;
 
-/* --test-crash-key: F9 crashes on purpose, to check the crash report at any
- * point of the game. */
-static int host_test_crash_key;
-
 static void Host_SetSpeed(unsigned speed) {
     if (speed != host_speed || speed != Psyz_VideoGetSpeed()) {
         host_speed = speed;
@@ -1603,12 +1599,6 @@ static bool Host_SettingsEvent(const SDL_Event *event) {
         Host_PauseForFocus(game);
         return true;
     }
-    if (host_test_crash_key && event->type == SDL_EVENT_KEY_DOWN &&
-        event->key.scancode == SDL_SCANCODE_F9 && !event->key.repeat) {
-        static int *volatile target;
-        fprintf(stderr, "Test crash: F9, write to address 0 at VBlank %u\n", (unsigned)g_BootHostVBlankCount);
-        *target = 0;
-    }
     if (event->type == SDL_EVENT_KEY_DOWN && event->key.scancode == SDL_SCANCODE_ESCAPE) {
         if (!event->key.repeat) {
             Host_Settings(game);
@@ -1767,7 +1757,7 @@ static void Host_PrintHelp(const char *program_name) {
         "[--geometry-correction 0|1] [--antialiasing 0|1] [--model-filtering 0|1] "
         "[--headless | --headless-gpu] [--internal-resolution 1..8] [--frame-limit N] [--control-at N] "
         "[--dump-vram PATH] [--dump-frame PATH] [--dump-audio PATH] [--pad-at VBLANK:BUTTON_MASK ...] "
-        "[--test-crash-after N | --test-abort-after N] [--test-crash-key]\n",
+        "[--test-crash-after N | --test-abort-after N]\n",
         program_name
     );
     printf("Without --disc, opens a native multi-select CUE/BIN dialog. --choose-discs selects new images. ESC opens desktop settings.\n");
@@ -1777,7 +1767,6 @@ static void Host_PrintHelp(const char *program_name) {
     printf("Headless control: --control-at N pauses for stdin commands: advance FRAMES BUTTON_MASK, graphics PGXP AA FILTER (0/1; advances 8 blanks), or quit (requires --frame-limit).\n");
     printf("Headless fixtures only: --diagnostic-hp-at VBLANK:EXPECTED_HP:VALUE (requires --frame-limit; output is marked coverage-only)\n");
     printf("--test-crash-after N / --test-abort-after N crash on purpose at VBlank N to check the crash report (its path is printed).\n");
-    printf("--test-crash-key makes F9 crash on purpose, at any point of the game.\n");
 }
 
 static int Host_ParsePadEventArg(const char *spec, int argc) {
@@ -1939,8 +1928,6 @@ int main(int argc, char **argv) {
                 return EXIT_FAILURE;
             }
             g_BootHostControlAt = (u32)tick;
-        } else if (!strcmp(argv[arg], "--test-crash-key")) {
-            host_test_crash_key = 1;
         } else if (!strcmp(argv[arg], "--test-crash-after") || !strcmp(argv[arg], "--test-abort-after")) {
             char *end = NULL;
             errno = 0;

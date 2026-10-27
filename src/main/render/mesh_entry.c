@@ -28,9 +28,13 @@ static int Render_HdCommand(const u_long *words, int available, void *unused) {
 /* Hash immutable descriptors before scripts animate the native entries. The
  * exporter hashes the same little-endian fields, independent of host pointers. */
 void Render_PrepareHdBackgrounds(void) {
+    const uint64_t previous_key=hd_geometry_key;
     hd_background_path=getenv("PE_HD_BACKGROUNDS");
     hd_geometry_key=0;
-    if (!hd_background_path || !*hd_background_path) return;
+    if (!hd_background_path || !*hd_background_path) {
+        if (previous_key) Psyz_GpuResetSpriteAtlases();
+        return;
+    }
     Psyz_GpuRegisterCommandHandler(0xF8,Render_HdCommand,NULL);
     const GeomEntry *entries=(const void *)((const u8 *)g_GeomState+g_GeomState->entry_offset);
     uint64_t hash=UINT64_C(14695981039346656037);
@@ -42,6 +46,7 @@ void Render_PrepareHdBackgrounds(void) {
         hash=Render_HdHash(hash,(const u8 *)entry+entry->u28.pos_ptr,(size_t)entry->prim_count*4);
         hash=Render_HdHash(hash,(const u8 *)entry+entry->u2C.uv_ptr,(size_t)entry->prim_count*8);
     }
+    if (previous_key!=hash) Psyz_GpuResetSpriteAtlases();
     hd_geometry_key=hash;
     fprintf(stderr,"HD background geometry %016" PRIx64 " (%u entries)\n",hash,(unsigned)g_GeomState->entry_count06);
 }

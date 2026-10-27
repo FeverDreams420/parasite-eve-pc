@@ -1,0 +1,82 @@
+name: mods-build
+
+on:
+  push:
+    branches: [mods]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  macos-arm64:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: Fetch PsyZ and SDL
+        run: |
+          git submodule update --init third_party/psyz
+          git -C third_party/psyz submodule update --init external/SDL
+      - name: Build with mods
+        run: |
+          cmake -S . -B build -DPE_MODS=ON -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel
+          ./build/parasite-eve-pc --help
+      - name: Package .app
+        run: |
+          app="package/Parasite Eve.app"
+          mkdir -p "$app/Contents/MacOS" "$app/Contents/Resources"
+          cp build/parasite-eve-pc "$app/Contents/MacOS/Parasite Eve"
+          cp packaging/macos/Info.plist "$app/Contents/"
+          cp packaging/macos/ParasiteEve.icns "$app/Contents/Resources/"
+          cp README.md CHANGELOG.md LICENSE.md THIRD_PARTY_NOTICES.md mods/README.md package/
+          codesign --force --deep --sign - "$app"
+          git rev-parse HEAD > package/source-commit.txt
+          ditto -c -k --keepParent package Parasite-Eve-mods-macos-arm64.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-arm64-mods
+          path: Parasite-Eve-mods-macos-arm64.zip
+
+  windows-x86_64:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            git
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+      - name: Fetch PsyZ and SDL
+        run: |
+          git submodule update --init third_party/psyz
+          git -C third_party/psyz submodule update --init external/SDL
+      - name: Build with mods
+        run: |
+          cmake -S . -B build -G Ninja -DPE_MODS=ON -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel 2
+          ./build/parasite-eve-pc.exe --help
+      - name: Package
+        run: |
+          stage=package/Parasite-Eve-mods-windows-x86_64
+          mkdir -p "$stage"
+          cp build/parasite-eve-pc.exe README.md CHANGELOG.md LICENSE.md THIRD_PARTY_NOTICES.md "$stage/"
+          cp mods/README.md "$stage/MODS-README.md"
+          ldd build/parasite-eve-pc.exe | awk '/ucrt64/ {print $3}' | xargs -r -I{} cp {} "$stage/"
+          git rev-parse HEAD > "$stage/source-commit.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-x86_64-mods
+          path: package/Parasite-Eve-mods-windows-x86_64

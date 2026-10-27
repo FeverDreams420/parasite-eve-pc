@@ -72,6 +72,8 @@ extern u32 g_FrameRngCounter;
  * buffers and the cheat sequence masks. */
 extern s32 g_FieldRenderFlagTable[];
 extern u32 g_FieldPadHeldFrameCounts[];
+/* Left-stick magnitude (0..100 percent) required to run outside battles. */
+extern unsigned g_FieldAnalogRunThreshold;
 extern u8 g_PadSetActBuffer[];
 extern u8 g_PadActuatorAlign[];
 extern u32 g_PadComboSequence[];

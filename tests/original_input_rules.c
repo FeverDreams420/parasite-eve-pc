@@ -362,7 +362,20 @@ int main(int argc, char **argv) {
     assert((unsigned)Psyz_VideoVSync(-1) == frozen);
     Psyz_PauseHostClock_SDL3(false);
     assert((unsigned)Psyz_VideoVSync(-1) - frozen <= 1);
-    assert(Psyz_SetKeyboardBinding_SDL3(16, SDL_SCANCODE_A) == -1);
+    /* 2x speed: the blank count carries on without a jump, then runs at
+     * twice the NTSC rate; back at 1x it carries on again. */
+    assert(Psyz_VideoSetSpeed(0) == -1 && Psyz_VideoSetSpeed(PSYZ_SPEED_MAX + 1) == -1);
+    for (unsigned speed = 2; speed >= 1; --speed) {
+        unsigned before = (unsigned)Psyz_VideoVSync(-1);
+        assert(Psyz_VideoSetSpeed(speed) == 0 && Psyz_VideoGetSpeed() == speed);
+        Uint64 start = SDL_GetTicksNS();
+        unsigned counted = (unsigned)Psyz_VideoVSync(-1);
+        assert(counted - before <= 1);
+        SDL_Delay(150);
+        double expected = (double)(SDL_GetTicksNS() - start) / 1e9 * 59.94 * speed;
+        double blanks = (double)((unsigned)Psyz_VideoVSync(-1) - counted);
+        assert(blanks > expected - 2.0 && blanks < expected + 2.0);
+    }
     assert(Psyz_SetKeyboardBinding_SDL3(0, SDL_SCANCODE_ESCAPE) == -1);
     assert(Psyz_SetGamepadBinding_SDL3(16, 0) == -1);
     assert(Psyz_SetGamepadBinding_SDL3(0, -1) == -1);
@@ -496,6 +509,122 @@ int main(int argc, char **argv) {
     assert(!Host_SettingsEvent(&ignored));
     assert(Psyz_SetOverlayEventFilter_SDL3(Host_SettingsEvent) == NULL);
     assert(Psyz_SetOverlayEventFilter_SDL3(NULL) == Host_SettingsEvent);
+
+    /* 2x speed hold: unbound by default (and after a save/load), a key a
+     * pad button uses is refused, 2x lasts while the bound key is held, the
+     * binding is remembered and can be cleared again. */
+    assert(host_options.keys[HOST_SPEED_BINDING] == HOST_UNBOUND_KEY);
+    assert(host_options.buttons[HOST_SPEED_BINDING] == HOST_UNBOUND_BUTTON);
+    SDL_Event speed_key;
+    SDL_zero(speed_key);
+    speed_key.type = SDL_EVENT_KEY_DOWN;
+    speed_key.key.scancode = SDL_SCANCODE_G;
+    speed_key.key.down = true;
+    assert(!Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == 1);
+    HostOverlayState speed_state = {
+        .open = 1,
+        .page = OVERLAY_PAGE_CONTROLS,
+        .row = HOST_SPEED_BINDING + 1,
+        .capturing_binding = 1
+    };
+    SDL_Event used = speed_key;
+    used.key.scancode = (SDL_Scancode)host_options.keys[4];
+    Host_ProcessSettingsEvent(&speed_state, &used, NULL, NULL);
+    assert(host_options.keys[HOST_SPEED_BINDING] == HOST_UNBOUND_KEY);
+    assert(!strcmp(speed_state.status, "Already used by Triangle.") && !speed_state.capturing_binding);
+    speed_state.capturing_binding = 1;
+    Host_ProcessSettingsEvent(&speed_state, &speed_key, NULL, NULL);
+    assert(host_options.keys[HOST_SPEED_BINDING] == SDL_SCANCODE_G);
+    assert(Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == 2);
+    speed_key.key.repeat = true;
+    assert(Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == 2);
+    speed_key.key.repeat = false;
+    speed_key.type = SDL_EVENT_KEY_UP;
+    speed_key.key.down = false;
+    assert(Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == 1);
+    /* Left/Right on the speed row steps the hold's speed between 2x and
+     * PSYZ_SPEED_MAX, stopping at both ends; it is saved. */
+    assert(host_options.speed_factor == 2);
+    SDL_Event step;
+    SDL_zero(step);
+    step.type = SDL_EVENT_KEY_DOWN;
+    step.key.down = true;
+    step.key.scancode = SDL_SCANCODE_LEFT;
+    Host_ProcessSettingsEvent(&speed_state, &step, NULL, NULL);
+    assert(host_options.speed_factor == 2);
+    step.key.scancode = SDL_SCANCODE_RIGHT;
+    for (unsigned i = 0; i < 3; ++i) {
+        Host_ProcessSettingsEvent(&speed_state, &step, NULL, NULL);
+    }
+    assert(host_options.speed_factor == PSYZ_SPEED_MAX && !speed_state.capturing_binding);
+    speed_key.type = SDL_EVENT_KEY_DOWN;
+    speed_key.key.down = true;
+    assert(Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == PSYZ_SPEED_MAX);
+    speed_key.type = SDL_EVENT_KEY_UP;
+    speed_key.key.down = false;
+    assert(Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == 1);
+    speed_key.type = SDL_EVENT_KEY_DOWN;
+    speed_key.key.down = true;
+    assert(Host_SaveOptions());
+    host_options.keys[HOST_SPEED_BINDING] = HOST_UNBOUND_KEY;
+    host_options.speed_factor = 2;
+    Host_LoadOptions(host_options.user_file);
+    assert(host_options.speed_factor == PSYZ_SPEED_MAX);
+    step.key.scancode = SDL_SCANCODE_LEFT;
+    Host_ProcessSettingsEvent(&speed_state, &step, NULL, NULL);
+    assert(host_options.speed_factor == PSYZ_SPEED_MAX - 1);
+    assert(host_options.keys[HOST_SPEED_BINDING] == SDL_SCANCODE_G);
+    assert(host_options.buttons[HOST_SPEED_BINDING] == HOST_UNBOUND_BUTTON);
+    SDL_Event clear = speed_key;
+    clear.key.scancode = SDL_SCANCODE_DELETE;
+    Host_ProcessSettingsEvent(&speed_state, &clear, NULL, NULL);
+    assert(host_options.keys[HOST_SPEED_BINDING] == HOST_UNBOUND_KEY);
+    assert(!Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == 1);
+    assert(Host_SaveOptions());
+    host_options.keys[HOST_SPEED_BINDING] = SDL_SCANCODE_G;
+    Host_LoadOptions(host_options.user_file);
+    assert(host_options.keys[HOST_SPEED_BINDING] == HOST_UNBOUND_KEY);
+
+    /* Field run threshold is a Controls stepper, not a rebinding row. */
+    assert(host_options.analog_run_threshold == 85);
+    HostOverlayState analog_state = {.open=1, .page=HOST_PAGE_CONTROLS,
+                                     .row=HOST_ANALOG_RUN_ROW};
+    Host_EnsureControlsRowVisible(&analog_state);
+    assert(OverlayVisibleSlotForRow(&analog_state, HOST_ANALOG_RUN_ROW) >= 0);
+    SDL_Event threshold_step;
+    SDL_zero(threshold_step);
+    threshold_step.type=SDL_EVENT_KEY_DOWN;threshold_step.key.down=true;
+    threshold_step.key.scancode=SDL_SCANCODE_LEFT;
+    Host_ProcessSettingsEvent(&analog_state,&threshold_step,NULL,NULL);
+    assert(host_options.analog_run_threshold == 80 && g_FieldAnalogRunThreshold == 80);
+    assert(!analog_state.capturing_binding);
+    for (unsigned i=0;i<30;++i) Host_ApplySettingsAction(&analog_state, -1, 0, NULL);
+    assert(host_options.analog_run_threshold == 0);
+    for (unsigned i=0;i<30;++i) Host_ApplySettingsAction(&analog_state, 1, 0, NULL);
+    assert(host_options.analog_run_threshold == 100);
+    char valid_threshold[]="65", invalid_threshold[]="101", negative_threshold[]="-1";
+    assert(Host_ParseOptionValue("controls", "field_run_threshold", valid_threshold));
+    assert(!Host_ParseOptionValue("controls", "field_run_threshold", invalid_threshold));
+    assert(!Host_ParseOptionValue("controls", "field_run_threshold", negative_threshold));
+    assert(host_options.analog_run_threshold == 65);
+    assert(Host_SaveOptions());
+    host_options.analog_run_threshold = 85;
+    Host_LoadOptions(host_options.user_file);
+    Host_ApplyOptions(NULL);
+    assert(host_options.analog_run_threshold == 65 && g_FieldAnalogRunThreshold == 65);
+    OverlayLayout analog_layout;
+    OverlayComputeLayout(HOST_PAGE_CONTROLS,1280,720,&analog_layout);
+    OverlaySurface analog_surface={0};
+    assert(OverlaySurfaceResize(&analog_surface,analog_layout.w,analog_layout.h));
+    OverlayPaint(&analog_surface,&analog_state,&analog_layout);
+    SDL_Surface *analog_image=SDL_CreateSurfaceFrom(analog_surface.w,analog_surface.h,
+        SDL_PIXELFORMAT_RGBA32,analog_surface.pixels,analog_surface.w*4);
+    assert(analog_image);
+    char analog_image_path[4096];
+    snprintf(analog_image_path,sizeof(analog_image_path),"%s/field-controls.bmp",test_directory);
+    assert(SDL_SaveBMP(analog_image,analog_image_path));
+    SDL_DestroySurface(analog_image);OverlaySurfaceRelease(&analog_surface);
+
 
     /* Issue #2: All settings tabs share a fixed panel height and top Y anchor. */
     OverlayLayout base_layout = {0};
@@ -753,6 +882,7 @@ int main(void) {
 
     g_BootHostActive = 1;
     Boot_ResetPadInput();
+    Boot_BuildRenderFlagTable();
     char controller[PSYZ_PAD_BUF_LEN] = {0};
     controller[1] = 0x41;
     controller[2] = (char)0xff;
@@ -763,6 +893,59 @@ int main(void) {
         return 44;
     }
 
+    /* Real packet polling reaches the original analog movement decoder. */
+    controller[1] = PSYZ_CTRL_ANALOG_PAD;
+    controller[2] = controller[3] = (char)0xff;
+    controller[4] = controller[5] = (char)128;
+    static const struct {unsigned x,y,threshold,analog,run;} stick_cases[] = {
+        {128,128,85,0,0}, {133,122,85,0,0},
+        {190,128,85,1,0}, {235,128,85,1,0}, {236,128,85,1,1},
+        {21,128,85,1,0}, {20,128,85,1,1},
+        {205,205,90,1,0}, {205,205,80,1,1},
+        {170,128,0,1,1}, {254,128,100,1,0},
+        {255,128,100,1,1}, {0,128,100,1,1}
+    };
+    for (unsigned i=0;i<sizeof(stick_cases)/sizeof(stick_cases[0]);++i) {
+        controller[6]=(char)stick_cases[i].x;controller[7]=(char)stick_cases[i].y;
+        g_FieldAnalogRunThreshold=stick_cases[i].threshold;
+        g_GameStateFlags=0;
+        Psyz_PadsSet(0,controller,sizeof(controller));Field_HandleStateTransition();
+        if (((g_PadPackets[0].header>>12)==7)!=stick_cases[i].analog ||
+            ((g_FieldPadBits&1)!=0)!=stick_cases[i].run) {
+            fprintf(stderr,"Analog case %u: header=%04x field=%08x\n",i,g_PadPackets[0].header,g_FieldPadBits);
+            return 49;
+        }
+    }
+    /* A field preference must not change the original battle run threshold. */
+    g_FieldAnalogRunThreshold=0;controller[6]=(char)190;controller[7]=(char)128;
+    g_GameStateFlags=2;Psyz_PadsSet(0,controller,sizeof(controller));Field_HandleStateTransition();
+    if (g_FieldPadBits&1) return 50;
+    /* The field preference does not affect navigation inside a game menu. */
+    MenuWidgetNode analog_menu={0};analog_menu.mode=1;
+    g_MenuWidgetActiveListHead=&analog_menu;
+    g_GameStateFlags=0;controller[6]=(char)190;
+    Psyz_PadsSet(0,controller,sizeof(controller));Field_HandleStateTransition();
+    if (g_FieldPadBits&0x79) return 54;
+    controller[6]=(char)250;
+    Psyz_PadsSet(0,controller,sizeof(controller));Field_HandleStateTransition();
+    if (!(g_FieldPadBits&0x10) || (g_FieldPadBits&1)) return 55;
+    g_MenuWidgetActiveListHead=NULL;
+
+    /* D-pad and keyboard movement take priority over a deflected stick. */
+    g_GameStateFlags=0;controller[2]=(char)0xef;
+    Psyz_PadsSet(0,controller,sizeof(controller));Field_HandleStateTransition();
+    if ((g_PadPackets[0].header>>12)!=4 || !(g_FieldPadBits&8)) return 51;
+    controller[2]=(char)0xff;
+    SDL_Event direction;SDL_zero(direction);direction.type=SDL_EVENT_KEY_DOWN;
+    direction.key.scancode=SDL_SCANCODE_UP;direction.key.down=true;SDL_PushEvent(&direction);
+    Psyz_PadsSet(0,controller,sizeof(controller));Field_HandleStateTransition();
+    if ((g_PadPackets[0].header>>12)!=4 || !(g_FieldPadBits&8)) return 52;
+    direction.type=SDL_EVENT_KEY_UP;direction.key.down=false;SDL_PushEvent(&direction);
+    /* Losing focus releases axes as well as keyboard buttons. */
+    direction.type=SDL_EVENT_WINDOW_FOCUS_LOST;SDL_PushEvent(&direction);
+    Field_HandleStateTransition();
+    if ((g_PadPackets[0].header>>12)!=4 || (g_FieldPadBits&0x79)) return 53;
+    g_FieldAnalogRunThreshold=85;
     g_BootHostActive = 0;
     Boot_ResetPadInput();
     if (saved_headless) {

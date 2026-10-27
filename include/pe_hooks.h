@@ -136,8 +136,10 @@ typedef struct PeHookMainMenuIcon {
 } PeHookMainMenuIcon;
 
 #ifdef PE_MODS
+int pe_host_init(const PeHookInit *init);
 int pe_hook_dispatch(int id, void *ctx);
-#define PE_HOOK(id, ctx) pe_hook_dispatch((id), (ctx))
+#define PE_HOOK(id, ctx) \
+    ((id) == PE_HOOK_INIT ? pe_host_init((const PeHookInit *)(const void *)(ctx)) : pe_hook_dispatch((id), (ctx)))
 #else
 #define PE_HOOK(id, ctx) ((void)0, 0)
 #endif

@@ -43,6 +43,10 @@ enum {
     OVERLAY_ACTION_GAP = 14,
     OVERLAY_FOOTER_H = 74,
     OVERLAY_VALUE_W = 250,
+    /* "< 2x >" stepper in front of the speed row's label */
+    OVERLAY_SPEED_STEP_CENTRE = 22,
+    OVERLAY_SPEED_STEP_REACH = 18,
+    OVERLAY_SPEED_STEP_W = 54,
     OVERLAY_TAB_TOP = 62,
     OVERLAY_TAB_H = 34,
     OVERLAY_REFERENCE_H = 820,
@@ -207,7 +211,7 @@ static const OverlaySetting *OverlayPageSettings(int page, int *count) {
 
 static int Host_SettingsPureRowCount(int page) {
     if (page == OVERLAY_PAGE_GRAPHICS) return COUNT_OF(kGraphics);
-    if (page == OVERLAY_PAGE_CONTROLS) return 17;
+    if (page == OVERLAY_PAGE_CONTROLS) return 2 + HOST_BINDING_COUNT;
     if (page == OVERLAY_PAGE_AUDIO) return COUNT_OF(kAudio);
     return 2;
 }
@@ -217,9 +221,9 @@ static int Host_SettingsTotalRowCount(int page) {
 }
 
 enum {
-    OVERLAY_CONTROLS_BINDING_COUNT = 16,
+    OVERLAY_CONTROLS_ITEM_COUNT = HOST_BINDING_COUNT + 1,
     OVERLAY_CONTROLS_VISIBLE_BINDINGS = OVERLAY_VISIBLE_CONTROLS - 1,
-    OVERLAY_CONTROLS_MAX_SCROLL = OVERLAY_CONTROLS_BINDING_COUNT - OVERLAY_CONTROLS_VISIBLE_BINDINGS
+    OVERLAY_CONTROLS_MAX_SCROLL = OVERLAY_CONTROLS_ITEM_COUNT - OVERLAY_CONTROLS_VISIBLE_BINDINGS
 };
 
 static int Host_SettingsVisibleSettingCount(int page) {
@@ -237,14 +241,14 @@ static int Host_ClampControlsScroll(int scroll) {
     return scroll;
 }
 
-/* Scrolls the Controls binding window by the minimum amount needed to keep
- * a keyboard/gamepad-selected binding row in view. Mouse hover never calls this. */
+/* Scrolls Controls by the minimum amount needed to keep a selected binding
+ * or field-threshold row in view. Mouse hover never calls this. */
 static void Host_EnsureControlsRowVisible(HostOverlayState *state) {
     state->scroll = Host_ClampControlsScroll(state->scroll);
     if (state->page != OVERLAY_PAGE_CONTROLS) {
         return;
     }
-    if (state->row <= 0 || state->row > OVERLAY_CONTROLS_BINDING_COUNT) {
+    if (state->row <= 0 || state->row > OVERLAY_CONTROLS_ITEM_COUNT) {
         return;
     }
     int bindingIdx = state->row - 1;
@@ -599,6 +603,27 @@ static void PaintValueRow(const Painter *p, const char *labelText,
              ALIGN_CENTRE);
 }
 
+/* "< 3x > speed": the arrows step the hold's speed; a dim arrow is the limit. */
+static void PaintSpeedLabel(const Painter *p, float mid, float baseline,
+                            int selected, Color label) {
+    const float s = p->s;
+    float centre = (float)(OVERLAY_PAD + OVERLAY_SPEED_STEP_CENTRE) * s;
+    float reach = (float)OVERLAY_SPEED_STEP_REACH * s;
+    unsigned factor = host_options.speed_factor;
+    Color chevron = selected ? kAccent : WithAlpha(kMuted, 0.75f);
+    Color limit = WithAlpha(kMuted, 0.3f);
+    char text[8];
+
+    snprintf(text, sizeof(text), "%ux", factor);
+    DrawChevron(p->surface, centre - reach, mid, 5.0f * s, -1, 2.0f * s,
+                factor > 2 ? chevron : limit);
+    DrawChevron(p->surface, centre + reach, mid, 5.0f * s, 1, 2.0f * s,
+                factor < PSYZ_SPEED_MAX ? chevron : limit);
+    DrawText(p->surface, centre, baseline, 17.0f * s, text, label, ALIGN_CENTRE);
+    DrawText(p->surface, (float)(OVERLAY_PAD + OVERLAY_SPEED_STEP_W) * s,
+             baseline, 17.0f * s, "speed", label, ALIGN_LEFT);
+}
+
 static void PaintSettingRow(const Painter *p, const OverlaySetting *setting,
                             float mid, float baseline, int selected,
                             Color label) {
@@ -662,14 +687,22 @@ static void PaintRows(const Painter *p) {
                                           : "Keyboard";
                     PaintValueRow(p, "Input device", dev, mid, baseline,
                                   selected, 0, label);
+                } else if (row == HOST_ANALOG_RUN_ROW) {
+                    char value[32];
+                    snprintf(value, sizeof(value), "%u%%", host_options.analog_run_threshold);
+                    PaintValueRow(p, "Field run threshold", value, mid, baseline, selected, 0, label);
                 } else {
                     int idx = row - 1;
                     int capturing = selected && p->state->capturing_binding;
                     const char *val = capturing
                                           ? "Press key or button..."
                                           : Host_ControlBindingValueName(p->state, idx);
-                    PaintValueRow(p, host_button_names[idx], val, mid, baseline,
-                                  selected, capturing, label);
+                    int speed = idx == HOST_SPEED_BINDING;
+                    PaintValueRow(p, speed ? "" : host_button_names[idx],
+                                  val, mid, baseline, selected, capturing, label);
+                    if (speed) {
+                        PaintSpeedLabel(p, mid, baseline, selected, label);
+                    }
                 }
             } else if (page == OVERLAY_PAGE_DISCS) {
                 char discLabel[32];
@@ -692,7 +725,7 @@ static void PaintRows(const Painter *p) {
         float trackH = (float)(OVERLAY_CONTROLS_VISIBLE_BINDINGS * OVERLAY_ROW_H - 8) * s;
         float trackX = (float)(OVERLAY_PANEL_W - 12) * s;
         float thumbH = trackH * ((float)OVERLAY_CONTROLS_VISIBLE_BINDINGS /
-                                 (float)OVERLAY_CONTROLS_BINDING_COUNT);
+                                 (float)OVERLAY_CONTROLS_ITEM_COUNT);
         float thumbTop = trackTop + (trackH - thumbH) *
                          ((float)scroll / (float)OVERLAY_CONTROLS_MAX_SCROLL);
         FillRoundRect(p->surface, trackX, trackTop, 4.0f * s, trackH, 2.0f * s,
@@ -724,6 +757,12 @@ static const char *OverlayRowHelp(const HostOverlayState *state) {
     if (state->page == OVERLAY_PAGE_CONTROLS) {
         if (state->row == 0) {
             return "Choose whether to inspect and rebind keyboard or controller inputs.";
+        }
+        if (state->row == HOST_ANALOG_RUN_ROW) {
+            return "Left-stick deflection needed to run in the field. Lower values start running sooner.";
+        }
+        if (state->row == HOST_SPEED_BINDING + 1) {
+            return "Hold to speed up. Left/Right: 2x-4x. Enter/South binds; Del/West unbinds.";
         }
         return "Press Enter or South button to rebind. Duplicate bindings swap automatically.";
     }

@@ -34,19 +34,40 @@ static struct {
     int antialiasing;
     int model_filtering;
     int fullscreen;
-    int keys[16];
-    int buttons[16];
+    /* 2..PSYZ_SPEED_MAX, used while the speed binding is held */
+    unsigned speed_factor;
+    unsigned analog_run_threshold;
+    /* 16 pad buttons, then the speed hold (unbound by default) */
+    int keys[17];
+    int buttons[17];
     char discs[2][4096];
     char user_file[4096];
     int enabled;
 } host_options;
 
-static const char *const host_button_names[16] = {
+#define HOST_BINDING_COUNT 17
+#define HOST_SPEED_BINDING 16
+#define HOST_ANALOG_RUN_ROW (HOST_BINDING_COUNT + 1)
+#define HOST_UNBOUND_KEY SDL_SCANCODE_UNKNOWN
+#define HOST_UNBOUND_BUTTON -1
+
+static const char *const host_button_names[HOST_BINDING_COUNT] = {
     "L2", "R2", "L1", "R1",
     "Triangle", "Circle", "Cross", "Square",
     "Select", "L3", "R3", "Start",
-    "Up", "Right", "Down", "Left"
+    "Up", "Right", "Down", "Left",
+    "Speed"
 };
+
+/* speed_factor while the speed binding is held; every start is 1x. */
+static unsigned host_speed = 1;
+
+static void Host_SetSpeed(unsigned speed) {
+    if (speed != host_speed || speed != Psyz_VideoGetSpeed()) {
+        host_speed = speed;
+        Psyz_VideoSetSpeed(speed);
+    }
+}
 
 typedef enum HostSettingsPage {
     HOST_PAGE_GRAPHICS = 0,
@@ -143,13 +164,22 @@ static int Host_ParseOptionValue(const char *section, const char *key, char *val
         errno = 0;
         long parsed = strtol(value, &end, 10);
         end = Host_Trim(end);
-        if (errno || end == value || (*end && *end != '#') || parsed < 0 || parsed > INT_MAX) {
+        if (errno || end == value || (*end && *end != '#') || parsed < -1 || parsed > INT_MAX) {
             return 0;
         }
         v = (int)parsed;
     }
+    /* -1 only marks an unbound controller speed binding. */
+    if (v < 0 && (strcmp(section, "controller") || strcmp(key, host_button_names[HOST_SPEED_BINDING]))) {
+        return 0;
+    }
 
-    if (!strcmp(section, "graphics")) {
+    if (!strcmp(section, "controls")) {
+        if (!strcmp(key, "field_run_threshold")) {
+            if (v > 100) return 0;
+            host_options.analog_run_threshold = (unsigned)v;
+        }
+    } else if (!strcmp(section, "graphics")) {
         if (!strcmp(key, "internal_resolution")) {
             if (v < 1 || v > 8) {
                 return 0;
@@ -187,16 +217,23 @@ static int Host_ParseOptionValue(const char *section, const char *key, char *val
             return 0;
         }
         host_options.volume = (unsigned)v;
+    } else if (!strcmp(section, "game") && !strcmp(key, "speed")) {
+        if (v < 2 || v > PSYZ_SPEED_MAX) {
+            return 0;
+        }
+        host_options.speed_factor = (unsigned)v;
     } else if (!strcmp(section, "keyboard") || !strcmp(section, "controller")) {
-        for (unsigned i = 0; i < 16; ++i) {
+        for (unsigned i = 0; i < HOST_BINDING_COUNT; ++i) {
             if (!strcmp(key, host_button_names[i])) {
+                int speed = i == HOST_SPEED_BINDING;
                 if (!strcmp(section, "keyboard")) {
-                    if (v <= SDL_SCANCODE_UNKNOWN || v >= SDL_SCANCODE_COUNT || v == SDL_SCANCODE_ESCAPE) {
+                    if (!(speed && v == HOST_UNBOUND_KEY) &&
+                        (v <= SDL_SCANCODE_UNKNOWN || v >= SDL_SCANCODE_COUNT || v == SDL_SCANCODE_ESCAPE)) {
                         return 0;
                     }
                     host_options.keys[i] = v;
                 } else {
-                    if (v > SDL_GAMEPAD_BUTTON_COUNT + 1) {
+                    if (!(speed && v == HOST_UNBOUND_BUTTON) && (v < 0 || v > SDL_GAMEPAD_BUTTON_COUNT + 1)) {
                         return 0;
                     }
                     host_options.buttons[i] = v;
@@ -292,6 +329,10 @@ static int Host_SaveOptions(void) {
         "model_filtering = %s\n\n"
         "[audio]\n"
         "volume = %u\n\n"
+        "[game]\n"
+        "speed = %u\n\n"
+        "[controls]\n"
+        "field_run_threshold = %u\n\n"
         "[discs]\n"
         "disc1 = ",
         host_options.scale,
@@ -301,18 +342,20 @@ static int Host_SaveOptions(void) {
         host_options.geometry_correction ? "true" : "false",
         host_options.antialiasing ? "true" : "false",
         host_options.model_filtering ? "true" : "false",
-        host_options.volume
+        host_options.volume,
+        host_options.speed_factor,
+        host_options.analog_run_threshold
     );
     Host_WriteString(file, host_options.discs[0]);
     fputs("\ndisc2 = ", file);
     Host_WriteString(file, host_options.discs[1]);
 
     fputs("\n\n[keyboard]\n", file);
-    for (unsigned i = 0; i < 16; ++i) {
+    for (unsigned i = 0; i < HOST_BINDING_COUNT; ++i) {
         fprintf(file, "%s = %d\n", host_button_names[i], host_options.keys[i]);
     }
     fputs("\n[controller]\n", file);
-    for (unsigned i = 0; i < 16; ++i) {
+    for (unsigned i = 0; i < HOST_BINDING_COUNT; ++i) {
         fprintf(file, "%s = %d\n", host_button_names[i], host_options.buttons[i]);
     }
 
@@ -374,11 +417,15 @@ static void Host_InitOptions(int enabled) {
     host_options.antialiasing = 0;
     host_options.model_filtering = 0;
     host_options.volume = 100;
+    host_options.speed_factor = 2;
+    host_options.analog_run_threshold = 85;
     Boot_InitHostBindings();
     for (unsigned i = 0; i < 16; ++i) {
         host_options.keys[i] = Psyz_GetKeyboardBinding_SDL3(i);
         host_options.buttons[i] = Psyz_GetGamepadBinding_SDL3(i);
     }
+    host_options.keys[HOST_SPEED_BINDING] = HOST_UNBOUND_KEY;
+    host_options.buttons[HOST_SPEED_BINDING] = HOST_UNBOUND_BUTTON;
     if (!enabled) {
         return;
     }
@@ -441,6 +488,7 @@ static void Host_InitOptions(int enabled) {
 }
 
 static void Host_ApplyOptions(SDL_Window *window) {
+    g_FieldAnalogRunThreshold = host_options.analog_run_threshold;
     Psyz_VideoSetInternalResolution(host_options.scale);
     Psyz_VideoSetAspectMode((PsyzAspectMode)host_options.aspect);
     Psyz_VideoSetDitheringMode((PsyzDitherMode)host_options.dither);
@@ -780,17 +828,43 @@ static void Host_ApplySettingsAction(
                                 ? "Image added and remembered."
                                 : "No image added.";
         }
+    } else if (state->page == HOST_PAGE_CONTROLS && state->row == HOST_ANALOG_RUN_ROW) {
+        int threshold = (int)host_options.analog_run_threshold + action * 5;
+        if (threshold < 0) threshold = 0;
+        if (threshold > 100) threshold = 100;
+        host_options.analog_run_threshold = (unsigned)threshold;
     } else if (state->row == 0) {
         state->bind_device = (state->bind_device == HOST_BIND_CONTROLLER)
                                  ? HOST_BIND_KEYBOARD
                                  : HOST_BIND_CONTROLLER;
+    } else if (state->row == HOST_SPEED_BINDING + 1 && !activate_only) {
+        int factor = (int)host_options.speed_factor + action;
+        if (factor < 2 || factor > PSYZ_SPEED_MAX) {
+            return;
+        }
+        host_options.speed_factor = (unsigned)factor;
     } else if (activate_only) {
         state->capturing_binding = 1;
+        state->status = NULL;
     } else {
         return;
     }
     state->dirty = 1;
     Host_ApplyOptions(game);
+}
+
+/* Only the speed binding can be left unbound. */
+static void Host_ClearSpeedBinding(HostOverlayState *state) {
+    if (state->page != HOST_PAGE_CONTROLS || state->row != HOST_SPEED_BINDING + 1) {
+        return;
+    }
+    if (state->bind_device == HOST_BIND_KEYBOARD) {
+        host_options.keys[HOST_SPEED_BINDING] = HOST_UNBOUND_KEY;
+    } else {
+        host_options.buttons[HOST_SPEED_BINDING] = HOST_UNBOUND_BUTTON;
+    }
+    state->status = NULL;
+    state->dirty = 1;
 }
 
 /* The headless control console uses the same actions as the actual menu. */
@@ -852,10 +926,16 @@ static void Host_ProcessSettingsPointer(
         state->open = 0;
         return;
     }
+    if (state->page == HOST_PAGE_CONTROLS && hitRow == HOST_SPEED_BINDING + 1 &&
+        x < (float)(OVERLAY_PAD + OVERLAY_SPEED_STEP_W)) {
+        int action = x < (float)(OVERLAY_PAD + OVERLAY_SPEED_STEP_CENTRE) ? -1 : 1;
+        Host_ApplySettingsAction(state, action, 0, game);
+        return;
+    }
     if (hitRow >= 0) {
         int pureCount = Host_SettingsPureRowCount(state->page);
         int isStepper = hitRow < pureCount &&
-                        !(state->page == HOST_PAGE_CONTROLS && hitRow >= 1) &&
+                        !(state->page == HOST_PAGE_CONTROLS && hitRow >= 1 && hitRow != HOST_ANALOG_RUN_ROW) &&
                         state->page != HOST_PAGE_IMAGES;
         int action = isStepper ? (x < OverlayValueCentre() ? -1 : 1) : 1;
         Host_ApplySettingsAction(state, action, !isStepper, game);
@@ -1004,18 +1084,28 @@ static void Host_ProcessSettingsEvent(
         }
         if (binding >= 0 &&
             (state->bind_device == HOST_BIND_CONTROLLER || binding > SDL_SCANCODE_UNKNOWN)) {
-            int *bindings = (state->bind_device == HOST_BIND_KEYBOARD)
-                                ? host_options.keys
-                                : host_options.buttons;
-            /* Swap duplicates, keeping every original button reachable. */
-            for (int i = 0; i < 16; ++i) {
-                if (i != state->row - 1 && bindings[i] == binding) {
-                    bindings[i] = bindings[state->row - 1];
-                }
-            }
-            bindings[state->row - 1] = binding;
+            int keyboard = state->bind_device == HOST_BIND_KEYBOARD;
+            int *bindings = keyboard ? host_options.keys : host_options.buttons;
+            int target = state->row - 1;
+            int unbound = keyboard ? HOST_UNBOUND_KEY : HOST_UNBOUND_BUTTON;
             state->capturing_binding = 0;
             state->dirty = 1;
+            /* Swap duplicates, keeping every original button reachable. An
+             * unbound speed binding has nothing to give back in a swap. */
+            for (int i = 0; i < HOST_BINDING_COUNT; ++i) {
+                if (i != target && bindings[i] == binding && bindings[target] == unbound) {
+                    static char message[64];
+                    snprintf(message, sizeof(message), "Already used by %s.", host_button_names[i]);
+                    state->status = message;
+                    return;
+                }
+            }
+            for (int i = 0; i < HOST_BINDING_COUNT; ++i) {
+                if (i != target && bindings[i] == binding) {
+                    bindings[i] = bindings[target];
+                }
+            }
+            bindings[target] = binding;
             Host_ApplyOptions(game);
         }
         return;
@@ -1068,6 +1158,10 @@ static void Host_ProcessSettingsEvent(
                 Host_ApplySettingsAction(state, 1, 1, game);
             }
             break;
+        case SDL_SCANCODE_DELETE:
+        case SDL_SCANCODE_BACKSPACE:
+            Host_ClearSpeedBinding(state);
+            break;
         default:
             break;
         }
@@ -1076,6 +1170,9 @@ static void Host_ProcessSettingsEvent(
         case SDL_GAMEPAD_BUTTON_EAST:
         case SDL_GAMEPAD_BUTTON_START:
             state->open = 0;
+            break;
+        case SDL_GAMEPAD_BUTTON_WEST:
+            Host_ClearSpeedBinding(state);
             break;
         case SDL_GAMEPAD_BUTTON_LEFT_SHOULDER:
             Host_SwitchSettingsPage(state, state->page - 1);
@@ -1155,6 +1252,8 @@ static void Host_Settings(SDL_Window *game) {
     Psyz_PauseHostClock_SDL3(true);
     int paused = Psyz_AudioIsPaused();
     Psyz_AudioPause();
+    /* The panel draws at normal speed; the menu takes the hold's release. */
+    Host_SetSpeed(1);
 
     s_overlayState = (HostOverlayState){
         .open = 1,
@@ -1232,6 +1331,7 @@ static int Host_ConfirmMovieSkip(void) {
 
     Psyz_PauseHostClock_SDL3(true);
     Psyz_AudioPause();
+    Host_SetSpeed(1);
     if (game != NULL && s_overlayGpuDevice != NULL) {
         s_overlayState = (HostOverlayState){
             .open = 1,
@@ -1298,10 +1398,47 @@ static void Host_PauseForFocus(SDL_Window *game) {
     }
 
     SDL_ResetKeyboard();
+    /* A release while unfocused is never seen: drop back to 1x. */
+    Host_SetSpeed(1);
     Psyz_PauseHostClock_SDL3(false);
     if (!paused) {
         Psyz_AudioUnpause();
     }
+}
+
+/* The game runs at speed_factor while the bound key, button or trigger is held. */
+static bool Host_SpeedHoldEvent(const SDL_Event *event) {
+    static int trigger_held;
+    int key = host_options.keys[HOST_SPEED_BINDING];
+    int button = host_options.buttons[HOST_SPEED_BINDING];
+    int held;
+
+    if (event->type == SDL_EVENT_KEY_DOWN || event->type == SDL_EVENT_KEY_UP) {
+        if (key == HOST_UNBOUND_KEY || (int)event->key.scancode != key) {
+            return false;
+        }
+        held = event->type == SDL_EVENT_KEY_DOWN;
+    } else if (event->type == SDL_EVENT_GAMEPAD_BUTTON_DOWN ||
+               event->type == SDL_EVENT_GAMEPAD_BUTTON_UP) {
+        if (button < 0 || event->gbutton.button != button) {
+            return false;
+        }
+        held = event->type == SDL_EVENT_GAMEPAD_BUTTON_DOWN;
+    } else if (event->type == SDL_EVENT_GAMEPAD_AXIS_MOTION) {
+        int axis = button == SDL_GAMEPAD_BUTTON_COUNT ? SDL_GAMEPAD_AXIS_LEFT_TRIGGER
+                 : button == SDL_GAMEPAD_BUTTON_COUNT + 1 ? SDL_GAMEPAD_AXIS_RIGHT_TRIGGER
+                 : -1;
+        if (axis < 0 || event->gaxis.axis != axis) {
+            return false;
+        }
+        held = event->gaxis.value > (trigger_held ? 8000 : 16000);
+        trigger_held = held;
+    } else {
+        return false;
+    }
+    Host_SetSpeed(held ? host_options.speed_factor : 1);
+    /* Trigger motion still reaches the pad state. */
+    return event->type != SDL_EVENT_GAMEPAD_AXIS_MOTION;
 }
 
 static bool Host_SettingsEvent(const SDL_Event *event) {
@@ -1329,7 +1466,7 @@ static bool Host_SettingsEvent(const SDL_Event *event) {
         }
         return true;
     }
-    return false;
+    return Host_SpeedHoldEvent(event);
 }
 
 static void Host_InstallSettingsOverlay(void) {

@@ -211,7 +211,7 @@ static const OverlaySetting *OverlayPageSettings(int page, int *count) {
 
 static int Host_SettingsPureRowCount(int page) {
     if (page == OVERLAY_PAGE_GRAPHICS) return COUNT_OF(kGraphics);
-    if (page == OVERLAY_PAGE_CONTROLS) return 1 + HOST_BINDING_COUNT;
+    if (page == OVERLAY_PAGE_CONTROLS) return 2 + HOST_BINDING_COUNT;
     if (page == OVERLAY_PAGE_AUDIO) return COUNT_OF(kAudio);
     return 2;
 }
@@ -221,9 +221,9 @@ static int Host_SettingsTotalRowCount(int page) {
 }
 
 enum {
-    OVERLAY_CONTROLS_BINDING_COUNT = HOST_BINDING_COUNT,
+    OVERLAY_CONTROLS_ITEM_COUNT = HOST_BINDING_COUNT + 1,
     OVERLAY_CONTROLS_VISIBLE_BINDINGS = OVERLAY_VISIBLE_CONTROLS - 1,
-    OVERLAY_CONTROLS_MAX_SCROLL = OVERLAY_CONTROLS_BINDING_COUNT - OVERLAY_CONTROLS_VISIBLE_BINDINGS
+    OVERLAY_CONTROLS_MAX_SCROLL = OVERLAY_CONTROLS_ITEM_COUNT - OVERLAY_CONTROLS_VISIBLE_BINDINGS
 };
 
 static int Host_SettingsVisibleSettingCount(int page) {
@@ -241,14 +241,14 @@ static int Host_ClampControlsScroll(int scroll) {
     return scroll;
 }
 
-/* Scrolls the Controls binding window by the minimum amount needed to keep
- * a keyboard/gamepad-selected binding row in view. Mouse hover never calls this. */
+/* Scrolls Controls by the minimum amount needed to keep a selected binding
+ * or field-threshold row in view. Mouse hover never calls this. */
 static void Host_EnsureControlsRowVisible(HostOverlayState *state) {
     state->scroll = Host_ClampControlsScroll(state->scroll);
     if (state->page != OVERLAY_PAGE_CONTROLS) {
         return;
     }
-    if (state->row <= 0 || state->row > OVERLAY_CONTROLS_BINDING_COUNT) {
+    if (state->row <= 0 || state->row > OVERLAY_CONTROLS_ITEM_COUNT) {
         return;
     }
     int bindingIdx = state->row - 1;
@@ -687,6 +687,10 @@ static void PaintRows(const Painter *p) {
                                           : "Keyboard";
                     PaintValueRow(p, "Input device", dev, mid, baseline,
                                   selected, 0, label);
+                } else if (row == HOST_ANALOG_RUN_ROW) {
+                    char value[32];
+                    snprintf(value, sizeof(value), "%u%%", host_options.analog_run_threshold);
+                    PaintValueRow(p, "Field run threshold", value, mid, baseline, selected, 0, label);
                 } else {
                     int idx = row - 1;
                     int capturing = selected && p->state->capturing_binding;
@@ -721,7 +725,7 @@ static void PaintRows(const Painter *p) {
         float trackH = (float)(OVERLAY_CONTROLS_VISIBLE_BINDINGS * OVERLAY_ROW_H - 8) * s;
         float trackX = (float)(OVERLAY_PANEL_W - 12) * s;
         float thumbH = trackH * ((float)OVERLAY_CONTROLS_VISIBLE_BINDINGS /
-                                 (float)OVERLAY_CONTROLS_BINDING_COUNT);
+                                 (float)OVERLAY_CONTROLS_ITEM_COUNT);
         float thumbTop = trackTop + (trackH - thumbH) *
                          ((float)scroll / (float)OVERLAY_CONTROLS_MAX_SCROLL);
         FillRoundRect(p->surface, trackX, trackTop, 4.0f * s, trackH, 2.0f * s,
@@ -753,6 +757,9 @@ static const char *OverlayRowHelp(const HostOverlayState *state) {
     if (state->page == OVERLAY_PAGE_CONTROLS) {
         if (state->row == 0) {
             return "Choose whether to inspect and rebind keyboard or controller inputs.";
+        }
+        if (state->row == HOST_ANALOG_RUN_ROW) {
+            return "Left-stick deflection needed to run in the field. Lower values start running sooner.";
         }
         if (state->row == HOST_SPEED_BINDING + 1) {
             return "Hold to speed up. Left/Right: 2x-4x. Enter/South binds; Del/West unbinds.";

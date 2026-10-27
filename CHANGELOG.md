@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5
+
+- Added analog movement with a configurable field walk/run threshold in Controls settings.
+- Added a configurable 2x–4x speed hold.
+- Added the optional F1 Mods menu with movement, encounter and inventory conveniences. Mods are off by default.
+
 ## 0.4
 
 - Press Start during a story movie to pause it and choose whether to skip. Skipping also stops music started for that movie.

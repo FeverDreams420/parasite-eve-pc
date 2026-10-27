@@ -36,6 +36,7 @@ static struct {
     int fullscreen;
     /* 2..PSYZ_SPEED_MAX, used while the speed binding is held */
     unsigned speed_factor;
+    unsigned analog_run_threshold;
     /* 16 pad buttons, then the speed hold (unbound by default) */
     int keys[17];
     int buttons[17];
@@ -46,6 +47,7 @@ static struct {
 
 #define HOST_BINDING_COUNT 17
 #define HOST_SPEED_BINDING 16
+#define HOST_ANALOG_RUN_ROW (HOST_BINDING_COUNT + 1)
 #define HOST_UNBOUND_KEY SDL_SCANCODE_UNKNOWN
 #define HOST_UNBOUND_BUTTON -1
 
@@ -172,7 +174,12 @@ static int Host_ParseOptionValue(const char *section, const char *key, char *val
         return 0;
     }
 
-    if (!strcmp(section, "graphics")) {
+    if (!strcmp(section, "controls")) {
+        if (!strcmp(key, "field_run_threshold")) {
+            if (v > 100) return 0;
+            host_options.analog_run_threshold = (unsigned)v;
+        }
+    } else if (!strcmp(section, "graphics")) {
         if (!strcmp(key, "internal_resolution")) {
             if (v < 1 || v > 8) {
                 return 0;
@@ -324,6 +331,8 @@ static int Host_SaveOptions(void) {
         "volume = %u\n\n"
         "[game]\n"
         "speed = %u\n\n"
+        "[controls]\n"
+        "field_run_threshold = %u\n\n"
         "[discs]\n"
         "disc1 = ",
         host_options.scale,
@@ -334,7 +343,8 @@ static int Host_SaveOptions(void) {
         host_options.antialiasing ? "true" : "false",
         host_options.model_filtering ? "true" : "false",
         host_options.volume,
-        host_options.speed_factor
+        host_options.speed_factor,
+        host_options.analog_run_threshold
     );
     Host_WriteString(file, host_options.discs[0]);
     fputs("\ndisc2 = ", file);
@@ -408,6 +418,7 @@ static void Host_InitOptions(int enabled) {
     host_options.model_filtering = 0;
     host_options.volume = 100;
     host_options.speed_factor = 2;
+    host_options.analog_run_threshold = 85;
     Boot_InitHostBindings();
     for (unsigned i = 0; i < 16; ++i) {
         host_options.keys[i] = Psyz_GetKeyboardBinding_SDL3(i);
@@ -477,6 +488,7 @@ static void Host_InitOptions(int enabled) {
 }
 
 static void Host_ApplyOptions(SDL_Window *window) {
+    g_FieldAnalogRunThreshold = host_options.analog_run_threshold;
     Psyz_VideoSetInternalResolution(host_options.scale);
     Psyz_VideoSetAspectMode((PsyzAspectMode)host_options.aspect);
     Psyz_VideoSetDitheringMode((PsyzDitherMode)host_options.dither);
@@ -816,6 +828,11 @@ static void Host_ApplySettingsAction(
                                 ? "Image added and remembered."
                                 : "No image added.";
         }
+    } else if (state->page == HOST_PAGE_CONTROLS && state->row == HOST_ANALOG_RUN_ROW) {
+        int threshold = (int)host_options.analog_run_threshold + action * 5;
+        if (threshold < 0) threshold = 0;
+        if (threshold > 100) threshold = 100;
+        host_options.analog_run_threshold = (unsigned)threshold;
     } else if (state->row == 0) {
         state->bind_device = (state->bind_device == HOST_BIND_CONTROLLER)
                                  ? HOST_BIND_KEYBOARD
@@ -918,7 +935,7 @@ static void Host_ProcessSettingsPointer(
     if (hitRow >= 0) {
         int pureCount = Host_SettingsPureRowCount(state->page);
         int isStepper = hitRow < pureCount &&
-                        !(state->page == HOST_PAGE_CONTROLS && hitRow >= 1) &&
+                        !(state->page == HOST_PAGE_CONTROLS && hitRow >= 1 && hitRow != HOST_ANALOG_RUN_ROW) &&
                         state->page != HOST_PAGE_IMAGES;
         int action = isStepper ? (x < OverlayValueCentre() ? -1 : 1) : 1;
         Host_ApplySettingsAction(state, action, !isStepper, game);

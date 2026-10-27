@@ -35,8 +35,12 @@ typedef struct PeHookInit {
 } PeHookInit;
 
 #ifdef PE_MODS
+#include <stddef.h>
 int pe_host_init(const PeHookInit *init);
 int pe_hook_dispatch(int id, void *ctx);
+/* Crash report Mods section: the mods and their state, and the mod code that was running.
+ * Runs inside the crash handler, so it only reads values. */
+void pe_mod_crash_describe(char *out, size_t size, int on_game_thread);
 #define PE_HOOK(id, ctx) \
     ((id) == PE_HOOK_INIT ? pe_host_init((const PeHookInit *)(const void *)(ctx)) : pe_hook_dispatch((id), (ctx)))
 #else

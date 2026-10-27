@@ -90,6 +90,26 @@ void pe_log(const char *tag, const char *fmt, ...) {
 
 int pe_mod_interactive(void) { return s_interactive; }
 
+/* ---- what mod code is running, for crash reports ----
+ * Each call into a mod (start, shutdown, a hook or event handler, a per-frame tick, an F1 row)
+ * is marked here, innermost last: two stores per call. */
+enum { PE_MAX_CALLS = 8 };
+static struct { const char *mod_id, *what, *detail; } s_calls[PE_MAX_CALLS];
+static int s_call_depth;
+
+void pe_mod_call_begin(const char *mod_id, const char *what, const char *detail) {
+    if (s_call_depth < PE_MAX_CALLS) {
+        s_calls[s_call_depth].mod_id = mod_id;
+        s_calls[s_call_depth].what = what;
+        s_calls[s_call_depth].detail = detail;
+    }
+    s_call_depth++;
+}
+
+void pe_mod_call_end(void) {
+    if (s_call_depth > 0) s_call_depth--;
+}
+
 /* ---- hooks and events ---- */
 
 int pe_hook_add(int id, PeHookFn fn, void *user, int priority, const char *mod_id) {
@@ -191,7 +211,11 @@ static int pe_requires_met(const PeMod *mod) {
 static void pe_shutdown_mods(void) {
     while (s_running_count > 0) {
         const PeMod *mod = s_running[--s_running_count];
-        if (mod->shutdown) mod->shutdown();
+        if (mod->shutdown) {
+            pe_mod_call_begin(mod->id, "shutdown", NULL);
+            mod->shutdown();
+            pe_mod_call_end();
+        }
     }
     if (s_log) fclose(s_log);
     s_log = NULL;
@@ -254,7 +278,9 @@ static void pe_start_mods(void) {
             if (tried[i] || !pe_requires_inited(mod)) continue;
             tried[i] = progress = 1;
             s_current_mod = mod->id;
+            pe_mod_call_begin(mod->id, "start", NULL);
             ok = !mod->init || mod->init() == 0;
+            pe_mod_call_end();
             s_current_mod = NULL;
             if (!ok) { state[i] = PE_MOD_FAILED; pe_mod_log(mod->id, "init failed, mod off"); continue; }
             s_inited_ids[s_inited_count++] = mod->id;
@@ -309,13 +335,70 @@ int pe_host_init(const PeHookInit *init) {
     return 0;
 }
 
+static const char *pe_hook_name(int id) {
+    static const char *const names[PE_HOOK_COUNT] = {
+        "init", "scene start", "frame", "inventory command", "save read", "pad read", "script random",
+    };
+    if (id >= 0 && id < PE_HOOK_COUNT) return names[id] ? names[id] : "?";
+    return id - PE_HOOK_COUNT < s_event_count ? s_events[id - PE_HOOK_COUNT] : "?";
+}
+
 int pe_hook_dispatch(int id, void *ctx) {
     int i, handled = 0;
     if (!s_started) return 0;
     for (i = 0; i < s_handler_count; i++) {
+        int result;
         if (s_handlers[i].id < id) continue;
         if (s_handlers[i].id > id) break;
-        if (s_handlers[i].active && s_handlers[i].fn(ctx, s_handlers[i].user)) handled = 1;
+        if (!s_handlers[i].active) continue;
+        pe_mod_call_begin(s_handlers[i].mod_id, id < PE_HOOK_COUNT ? "hook" : "event", pe_hook_name(id));
+        result = s_handlers[i].fn(ctx, s_handlers[i].user);
+        pe_mod_call_end();
+        if (result) handled = 1;
     }
     return handled;
+}
+
+/* ---- crash report Mods section (runs inside the crash handler: reads only) ---- */
+
+static const char *pe_mod_label(const char *mod_id) {
+    int i;
+    if (!mod_id || !strcmp(mod_id, "host") || !strcmp(mod_id, "menu")) return "the mod host";
+    for (i = 0; g_pe_mods[i] && i < PE_MAX_MODS; i++)
+        if (!strcmp(g_pe_mods[i]->id, mod_id)) return g_pe_mods[i]->name;
+    return mod_id;
+}
+
+void pe_mod_crash_describe(char *out, size_t size, int on_game_thread) {
+    size_t n = 0;
+    int i, depth = s_call_depth < PE_MAX_CALLS ? s_call_depth : PE_MAX_CALLS;
+#define PE_OUT(...) \
+    do { \
+        int w_ = n < size ? snprintf(out + n, size - n, __VA_ARGS__) : 0; \
+        if (w_ > 0) n += (size_t)w_ < size - n ? (size_t)w_ : size - n - 1; \
+    } while (0)
+
+    PE_OUT("Mod API %d, mod host %s, All mods %s\r\n", PE_MOD_API_VERSION, s_started ? "started" : "not started yet",
+           s_all_on ? "on" : "off (mods did not touch the game)");
+    for (i = 0; g_pe_mods[i] && i < PE_MAX_MODS; i++)
+        PE_OUT("  %s: %s\r\n", g_pe_mods[i]->name, s_mod_note[i][0] ? s_mod_note[i] : g_pe_mods[i]->id);
+
+    if (!depth) {
+        PE_OUT("Mod code running at the crash: none.%s\r\n",
+               s_all_on ? " A mod can still have changed game data earlier: if this repeats, try the same steps "
+                          "with All mods off." : "");
+    } else {
+        const char *mod_id = s_calls[depth - 1].mod_id;
+        PE_OUT("Mod code running at the crash%s (innermost first):\r\n",
+               on_game_thread ? "" : " on the game thread (the crash itself was on another thread)");
+        for (i = depth - 1; i >= 0; i--)
+            PE_OUT("  %s (%s): %s%s%s\r\n", pe_mod_label(s_calls[i].mod_id), s_calls[i].mod_id ? s_calls[i].mod_id : "host",
+                   s_calls[i].what, s_calls[i].detail ? " " : "", s_calls[i].detail ? s_calls[i].detail : "");
+        if (s_call_depth > PE_MAX_CALLS) PE_OUT("  (%d more calls not kept)\r\n", s_call_depth - PE_MAX_CALLS);
+        if (on_game_thread && mod_id && strcmp(mod_id, "host") && strcmp(mod_id, "menu"))
+            PE_OUT("Most likely cause: the mod \"%s\" (%s), in its %s%s%s. The call stack below shows which of its "
+                   "functions.\r\n", pe_mod_label(mod_id), mod_id, s_calls[depth - 1].what,
+                   s_calls[depth - 1].detail ? " " : "", s_calls[depth - 1].detail ? s_calls[depth - 1].detail : "");
+    }
+#undef PE_OUT
 }

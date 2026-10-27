@@ -70,10 +70,10 @@ add_library(parasite-eve-original-disc OBJECT src/main/cdrom/scene_assets.c)
 pe_configure_object_library(parasite-eve-original-disc)
 
 # The executable starts the original game and compiles its modules in place.
-add_executable(parasite-eve-pc src/main/boot/main.c)
+add_executable(parasite-eve-pc src/main/boot/main.c src/main/boot/crash_report.c src/main/boot/crash_report_posix.c)
 target_include_directories(parasite-eve-pc PRIVATE include)
-target_link_libraries(parasite-eve-pc PRIVATE psyz)
-target_compile_definitions(parasite-eve-pc PRIVATE __psyz)
+target_link_libraries(parasite-eve-pc PRIVATE psyz ${CMAKE_DL_LIBS})
+target_compile_definitions(parasite-eve-pc PRIVATE __psyz PE_VERSION="${PROJECT_VERSION}")
 if(APPLE AND PE_MACOS_BUNDLE)
     set_target_properties(parasite-eve-pc PROPERTIES
         MACOSX_BUNDLE TRUE

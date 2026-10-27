@@ -14,6 +14,10 @@
 #include "pe1/boot_disc_check.h"
 #include "pe1/boot_display.h"
 #include "pe1/boot_services.h"
+#include "pe1/asset_table.h"
+#include "pe1/aya.h"
+#include "pe1/crash_report.h"
+#include "pe1/game_state_types.h"
 #include "pe1/field_bg_load.h"
 #include "pe1/game_state.h"
 #include "pe1/game_timers.h"
@@ -1612,12 +1616,40 @@ static void Host_InstallSettingsOverlay(void) {
 #define STATE_FLAG_READY 0x00000100U
 
 #ifndef PE_HOST_SETTINGS_TEST
+/* Crash report: what the game was doing. Runs inside the crash handler, so
+ * it only reads values. The room number is decoded as mods/host/pe_game.c
+ * does (-1: the token is not a room). */
+static void Host_DescribeCrash(char *out, size_t size) {
+    const unsigned token = (unsigned)g_SceneDispatchToken;
+    int room = 0;
+    for (int i = 2; i < 5 && room >= 0; ++i) {
+        const char c = (char)g_Base32CharTable[(token >> ((5 - i) * 5 + 2)) & 0x1Fu];
+        room = c >= '0' && c <= '9' ? room * 10 + (c - '0') : -1;
+    }
+    snprintf(out, size,
+             "Game: room %d, scene token 0x%08X (current 0x%08X), disc %u, VBlank %u, game frame %u\r\n"
+             "Game state: flags 0x%08X / 0x%08X, %s\r\n"
+             "Aya: HP %u/%u, level %u, EXP %u\r\n"
+             "Settings: internal resolution %ux, widescreen %d, geometry correction %d, antialiasing %d, "
+             "model filtering %d, dithering %d, fullscreen %d, speed %ux now (hold %ux)\r\n",
+             room, token, (unsigned)g_SceneDispatchCur, (unsigned)g_PeImageMountFlags,
+             (unsigned)g_BootHostVBlankCount, g_GlobalFrameCounter[0],
+             (unsigned)g_GameStateFlags, (unsigned)g_GameStateFlagsWord,
+             (g_GameStateFlags & 2) ? "in battle" : "not in battle",
+             (unsigned)g_AyaSaveState.current_hp, (unsigned)g_AyaSaveState.max_hp,
+             (unsigned)g_AyaSaveState.level + 1u, (unsigned)g_AyaSaveState.total_exp,
+             Psyz_VideoGetInternalResolution(), host_options.widescreen, host_options.geometry_correction,
+             host_options.antialiasing, host_options.model_filtering, host_options.dither,
+             host_options.fullscreen, host_speed, host_options.speed_factor);
+}
+
 static void Host_PrintHelp(const char *program_name) {
     printf(
         "Usage: %s [--disc <USA Disc 1 CUE/BIN>] [--disc2 <USA Disc 2 CUE/BIN>] [--choose-discs] "
         "[--geometry-correction 0|1] [--antialiasing 0|1] [--model-filtering 0|1] "
         "[--headless | --headless-gpu] [--internal-resolution 1..8] [--frame-limit N] [--control-at N] "
-        "[--dump-vram PATH] [--dump-frame PATH] [--dump-audio PATH] [--pad-at VBLANK:BUTTON_MASK ...]\n",
+        "[--dump-vram PATH] [--dump-frame PATH] [--dump-audio PATH] [--pad-at VBLANK:BUTTON_MASK ...] "
+        "[--test-crash-after N | --test-abort-after N]\n",
         program_name
     );
     printf("Without --disc, opens a native multi-select CUE/BIN dialog. --choose-discs selects new images. ESC opens desktop settings.\n");
@@ -1626,6 +1658,7 @@ static void Host_PrintHelp(const char *program_name) {
     printf("--dump-audio writes stereo 44100 Hz signed-16-bit little-endian PCM; requires headless and PSYZ_AUDIO_CLOCK=video.\n");
     printf("Headless control: --control-at N pauses for stdin commands: advance FRAMES BUTTON_MASK, graphics PGXP AA FILTER (0/1; advances 8 blanks), or quit (requires --frame-limit).\n");
     printf("Headless fixtures only: --diagnostic-hp-at VBLANK:EXPECTED_HP:VALUE (requires --frame-limit; output is marked coverage-only)\n");
+    printf("--test-crash-after N / --test-abort-after N crash on purpose at VBlank N to check the crash report (its path is printed).\n");
 }
 
 static int Host_ParsePadEventArg(const char *spec, int argc) {
@@ -1713,6 +1746,10 @@ int main(int argc, char **argv) {
         }
     }
 
+    CrashReport_Install(interactive, Host_DescribeCrash);
+#ifdef PE_MODS
+    CrashReport_SetMods(pe_mod_crash_describe);
+#endif
     Host_InitOptions(interactive);
     unsigned internal_resolution = host_options.scale;
     int resolution_argument = 0;
@@ -1782,6 +1819,17 @@ int main(int argc, char **argv) {
                 return EXIT_FAILURE;
             }
             g_BootHostControlAt = (u32)tick;
+        } else if (!strcmp(argv[arg], "--test-crash-after") || !strcmp(argv[arg], "--test-abort-after")) {
+            char *end = NULL;
+            errno = 0;
+            int abort_crash = !strcmp(argv[arg], "--test-abort-after");
+            unsigned long tick = arg + 1 < argc ? strtoul(argv[++arg], &end, 10) : 0;
+            if (!tick || tick > INT_MAX || errno || *end || g_BootHostCrashAt) {
+                fprintf(stderr, "Invalid or duplicate test crash VBlank\n");
+                return EXIT_FAILURE;
+            }
+            g_BootHostCrashAt = (u32)tick;
+            g_BootHostCrashAbort = abort_crash;
         } else if (!strcmp(argv[arg], "--dump-vram")) {
             if (arg + 1 >= argc || g_BootHostVramPath) {
                 fprintf(stderr, "Missing or duplicate capture path\n");

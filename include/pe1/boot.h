@@ -26,6 +26,10 @@ extern const char *g_BootHostFramePath;
 extern const char *g_BootHostAudioPath;
 extern BootHostPadEvent *g_BootHostPadEvents;
 extern unsigned g_BootHostPadEventCount;
+/* --test-crash-after / --test-abort-after: a deliberate crash at this VBlank,
+ * to check that crash reports work. */
+extern u32 g_BootHostCrashAt;
+extern int g_BootHostCrashAbort;
 
 /* Frame counter boot/frame_loop.c advances once per frame (an array view, so
  * -G8 units still address it absolutely). */

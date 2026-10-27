@@ -6,6 +6,8 @@ extern long GetRCnt(long spec);
 #include <assert.h>
 #include <stdio.h>
 
+static SDL_Keycode TestLayoutKey(SDL_Scancode scancode, SDL_Keymod modifiers, bool key_event);
+static SDL_Keycode test_layout_key;
 static bool TestPresent(SDL_Renderer *renderer);
 static bool TestWait(SDL_Event *event, Sint32 timeout);
 static bool TestRename(const char *from, const char *to);
@@ -15,13 +17,39 @@ static bool TestMessageBox(SDL_MessageBoxFlags flags, const char *title, const c
 #define SDL_WaitEventTimeout TestWait
 #define SDL_RenamePath TestRename
 #define SDL_ShowSimpleMessageBox TestMessageBox
+#define SDL_GetKeyFromScancode TestLayoutKey
 #define main original_game_main
 #include "../src/main/boot/main.c"
 #undef main
+#undef SDL_GetKeyFromScancode
 #undef SDL_RenderPresent
 #undef SDL_WaitEventTimeout
 #undef SDL_RenamePath
 #undef SDL_ShowSimpleMessageBox
+
+static SDL_Keycode TestLayoutKey(SDL_Scancode scancode, SDL_Keymod modifiers, bool key_event) {
+    return test_layout_key ? test_layout_key : SDL_GetKeyFromScancode(scancode, modifiers, key_event);
+}
+
+static void TestKeyboardLayoutLabels(void) {
+    HostOverlayState state = {0};
+    state.bind_device = HOST_BIND_KEYBOARD;
+    int saved = host_options.keys[0];
+    host_options.keys[0] = SDL_SCANCODE_Z;
+    test_layout_key = SDLK_Y;
+    assert(!strcmp(Host_ControlBindingValueName(&state, 0), "Y"));
+    test_layout_key = SDLK_W;
+    assert(!strcmp(Host_ControlBindingValueName(&state, 0), "W"));
+    /* A changed layout takes effect on the next paint, without rebinding. */
+    test_layout_key = SDLK_Z;
+    assert(!strcmp(Host_ControlBindingValueName(&state, 0), "Z"));
+    test_layout_key = 0x0437; /* Cyrillic name is unsupported by this font. */
+    assert(!strcmp(Host_ControlBindingValueName(&state, 0), "Z"));
+    assert(host_options.keys[0] == SDL_SCANCODE_Z);
+    host_options.keys[0] = saved;
+    test_layout_key = 0;
+    puts("PASS: active keyboard layout labels, live changes and non-Latin fallback");
+}
 
 static int presents;
 static SDL_AtomicInt panel_ready;
@@ -351,6 +379,7 @@ int main(int argc, char **argv) {
     assert(SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software"));
     assert(SDL_Init(SDL_INIT_VIDEO));
     Host_InitOptions(0);
+    TestKeyboardLayoutLabels();
     Psyz_VideoSetVsyncMode(PSYZ_VSYNC_OFF);
     unsigned frozen = (unsigned)Psyz_VideoVSync(-1);
     Psyz_PauseHostClock_SDL3(true);

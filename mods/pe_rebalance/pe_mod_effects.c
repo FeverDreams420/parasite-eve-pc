@@ -58,7 +58,7 @@ static PeRow s_rows[] = {
     { "Installed RoF volley %", "RoF 5/7/10 mods: whole volley.", 0, 200, 0, 300, 10, &s_rof_volley, 0 },
     { "G3A3 attack bonus", "Added to the G3A3's attack.", 0, 45, 0, 100, 5, &s_g3a3_bonus, 0 },
     { "M203 4 attack bonus", "Added to the M203 4's attack.", 0, 15, 0, 100, 5, &s_m203_4_bonus, 0 },
-    { "Progression gun bonuses", "Weaker guns: +15 to +25 attack.", 0, 1, 0, 1, 1, &s_prog_bonus, 1 },
+    { "Progression gun bonuses", "Weaker guns: +5 to +25 attack.", 0, 1, 0, 1, 1, &s_prog_bonus, 1 },
     { "Attack All crowd cap %", "Max HP lost a turn (100 = off).", 100, 75, 25, 100, 5, &s_aa_cap, 0 },
     { "RoF mods: fast volleys", "Installed RoF 5/7/10 fire fast.", 0, 1, 0, 1, 1, &s_fast_volley, 1 },
     { "Acid/Tranq vs resist %", "Chance vs resistant (vanilla 0).", 0, 20, 0, 100, 5, &s_status_resist, 0 },
@@ -156,8 +156,24 @@ static void pe_status(uint32_t *s2, uint32_t *mask, unsigned shift) {
 /* ---- R-A / R-B / R-C / R-E / R-F ---- */
 #define GUN_G3A3   0x7Du
 #define GUN_M203_4 0x86u
-static const uint8_t s_prog_guns[][2] = { { 0x79u, 25 } /* M16A1 */, { 0x7Bu, 15 } /* SG550 */,
-                                          { 0x83u, 20 } /* M203 */, { 0x84u, 15 } /* M203 2 */ };
+/* Shared by battle damage and the Weapon power (DPS) display. These flat attack
+ * bonuses follow the Progression gun bonuses toggle and the rules preset. */
+static const uint8_t s_prog_guns[][2] = {
+    { 0x52u, 15 }, /* M1911A3 */
+    { 0x5Fu, 5 },  /* PPK */
+    { 0x69u, 10 }, /* M870 2 (MA10-2) */
+    { 0x79u, 25 }, /* M16A1 */
+    { 0x7Au, 20 }, /* M16A2 */
+    { 0x7Bu, 15 }, /* SG550 */
+    { 0x83u, 20 }, /* M203 */
+    { 0x84u, 15 }, /* M203 2 */
+    { 0x85u, 20 }, /* M203 3 */
+    { 0x87u, 15 }, /* M203 5 */
+    { 0x8Au, 20 }, /* M79 2 */
+    { 0x8Bu, 18 }, /* M79 3 */
+    { 0x8Cu, 15 }, /* M79 4 */
+    { 0x8Du, 10 }, /* M79 5 */
+};
 
 static int pe_gun_bonus(unsigned gun) {
     unsigned i;

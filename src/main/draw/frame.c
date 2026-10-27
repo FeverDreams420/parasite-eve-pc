@@ -74,6 +74,7 @@ draw_buffer:
 
         drawSlot = g_ActiveDrawSlot;
         orderingTable = (RenderNativeTag *)g_GameState.shared_buffers.ordering_tables[drawSlot];
+        Render_LinkFieldSubpixel(drawSlot, orderingTable);
         Render_CommitWidescreenPicture(drawSlot, g_RenderDrawEnvArray[drawSlot].clip.y);
         Render_CentreWidescreenOverlay(drawSlot, orderingTable, Draw_WidescreenOverlayEntry());
         DrawOTagEnv(orderingTable + 4095, &g_RenderDrawEnvArray[drawSlot]);

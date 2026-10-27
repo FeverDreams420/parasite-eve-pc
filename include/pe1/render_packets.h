@@ -91,4 +91,11 @@ void Render_CommitWidescreenPicture(int slot, int buffer_y);
  * nothing. Call after the frame's packets are linked. */
 void Render_CentreWidescreenOverlay(int slot, RenderNativeTag *ordering, int top_entry);
 
+/* Widescreen: shows the room and its models (entries above the screen
+ * layers) at the camera's sub-pixel position, so camera pans move evenly at
+ * any internal resolution. Nothing outside widescreen or when the camera did
+ * not follow its point this frame. Call after the frame's packets are linked
+ * and before Render_CommitWidescreenPicture, which hands the position on. */
+void Render_LinkFieldSubpixel(int slot, RenderNativeTag *ordering);
+
 #endif

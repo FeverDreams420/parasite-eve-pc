@@ -18,7 +18,7 @@ The first M038–M043 study remains byte-identical: seven views, thirteen contro
 
 Native coverage, STP blending, tile depth, controller independence, phase order and durations remain authoritative. Original scripts decide when motion starts, stops, reverses or holds. No interpolation, extra frames, replacement video or runtime animation layer is introduced. The exporter retains controller flags, position, step and elapsed values for inspection. Gameplay and runtime C modules are unchanged by this asset batch.
 
-`pack-with-0.1/` combines 4069 unique packets. All 1029 frozen baseline BMPs remain byte-identical. Nine keys recur in later rooms; reviewed baseline material wins for those packets. The native reference half of every added atlas is checked against original RGB555 source data.
+`pack-with-0.1/` combines 4069 unique packets. The frozen 0.1 snapshot is immutable. Later reviewed corrections are applied separately from `corrections/pack-overrides/`; the preservation audit lists any intentionally overridden baseline keys. Nine keys recur in later rooms; reviewed baseline material wins for those packets. The native reference half of every added atlas is checked against original RGB555 source data.
 
 ## Rebuild and review
 
@@ -37,3 +37,5 @@ The gallery provides a map selector, paired full-scene views, phase selection, p
 Data/reference audits, packed-scene temporal checks and preservation checks are separate from runtime testing. `original-all-room-loads` checks native room loading from both discs. Headless GPU integration checks the assembled pack on its existing replay route, comparing original state, VRAM and PCM; it does **not** visit every new map. The expansion still needs visual review in those later locations.
 
 Reviewed text corrections are retained as per-entry overrides. M195’s lower red exhibition-banner dates read **Nov 1st, Jan 15th** (two lines). The imagegen source, prompt, localized patch and verification are in private `corrections/M195/`; only the date rectangle changes, consistently across all original phases. Include `--entry-overrides corrections/entry-overrides` when repacking.
+
+Chinatown M161–M163: the straight-row road reinterpretation is rejected. Restore the original irregular herringbone road from each native layer using `source-material-regions.json` and full-context `source-materials/` inputs. M164 is an interior; M165 already retains the original pattern. The reviewed overlay changes only road support and tile gutters; native reference halves and all other atlas pixels remain identical. Private provenance and before/after previews are in `corrections/chinatown-source-road/`. Do not restore `M162/road-v2.png` as a generation reference.

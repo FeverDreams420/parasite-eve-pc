@@ -275,33 +275,6 @@
     "preserve_black_material": false
   },
   {
-    "room": "M162",
-    "group": 0,
-    "image": "corrections/M162/road-v2.png",
-    "polygons": [
-      [
-        [
-          29,
-          0
-        ],
-        [
-          109,
-          0
-        ],
-        [
-          280,
-          512
-        ],
-        [
-          102,
-          512
-        ]
-      ]
-    ],
-    "exclude": [],
-    "reason": "Rectangular stone setts instead of twisted glossy road texture"
-  },
-  {
     "room": "M075",
     "group": 0,
     "image": "corrections/M075/information-v2.png",

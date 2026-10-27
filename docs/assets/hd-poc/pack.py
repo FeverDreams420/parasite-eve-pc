@@ -2,9 +2,11 @@
 from pathlib import Path
 import json,argparse,hashlib,shutil
 import numpy as np
-from PIL import Image
+from PIL import Image,ImageDraw
+import cv2
 p=argparse.ArgumentParser();p.add_argument('model');p.add_argument('--root',type=Path,default=Path(__file__).resolve().parent);p.add_argument('--destination',type=Path);p.add_argument('--room');p.add_argument('--entry-overrides',type=Path);p.add_argument('--no-family-lock',action='store_true');p.add_argument('--preserve-source-black',action='store_true');p.add_argument('--fallback-pack',type=Path);p.add_argument('--retain-controller',action='append',default=[]);a=p.parse_args();root=a.root.resolve();data=json.loads((root/'tasks.json').read_text());model=root/a.model;dest=a.destination.resolve() if a.destination else root/('pack-'+a.model);dest.mkdir(exist_ok=True)
 detail_regions=json.loads((root/'native-detail-regions.json').read_text()) if (root/'native-detail-regions.json').exists() else []
+material_regions=json.loads((root/'source-material-regions.json').read_text()) if (root/'source-material-regions.json').exists() else []
 # Lock common context in each serialized controller family. Controllers remain
 # independent: no combined animation/video replaces their original state.
 locked={};families={}
@@ -38,6 +40,21 @@ for t in data['tasks']:
  enhanced=locked.get(t['key'])
  if override and override.exists():enhanced=np.array(Image.open(override))
  if enhanced is None:enhanced=np.array(Image.open(source))
+ # A reviewed material revert uses the restored original context for every
+ # native layer. Never flatten its geometry using a different generated view.
+ applied_materials=[]
+ for region in material_regions:
+  if region['room']!=t['room'] or region.get('group',t['group'])!=t['group']:continue
+  restored=np.array(Image.open(root/region['source_directory']/t['input']).convert('RGB'))
+  assert restored.shape==enhanced.shape,(t['key'],'source material canvas mismatch')
+  mask=Image.new('L',(enhanced.shape[1],enhanced.shape[0]));draw=ImageDraw.Draw(mask)
+  for polygon in region['polygons']:draw.polygon([(x*4,y*4) for x,y in polygon],fill=255)
+  for polygon in region.get('exclude',[]):draw.polygon([(x*4,y*4) for x,y in polygon],fill=0)
+  support=np.array(mask)>0
+  distance=cv2.distanceTransform(np.pad(support.astype('uint8'),1),cv2.DIST_L2,5)[1:-1,1:-1]
+  alpha=np.clip(distance/region.get('feather_hd',8),0,1)[...,None]
+  enhanced=np.uint8(np.rint(enhanced*(1-alpha)+restored*alpha))
+  applied_materials.append(region['reason'])
  refs=np.load(root/'refs'/t['ref']);n=len(refs);cols=min(16,n);rows=(n+cols-1)//cols;atlas=np.zeros((rows*136,cols*68,3),dtype='uint8')
  for i,((x,y),ref) in enumerate(zip(t['tiles'],refs)):
   patch=enhanced[y*4:y*4+64,x*4:x*4+64].copy();assert patch.shape==(64,64,3)
@@ -59,7 +76,7 @@ for t in data['tasks']:
   atlas[ay:ay+68,ax:ax+68]=np.pad(patch,((2,2),(2,2),(0,0)),mode='edge')
   atlas[ay+rows*68:ay+rows*68+68,ax:ax+68]=np.pad(rgb,((2,2),(2,2),(0,0)),mode='edge')
  path=dest/(t['key']+'.bmp');temp=path.with_suffix('.tmp');Image.fromarray(atlas).save(temp,format='BMP');temp.replace(path)
- records.append({**t,'atlas_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'rgba_bytes':atlas.shape[0]*atlas.shape[1]*4,'static_family_locked':t['key'] in locked,'entry_override':str(override) if override and override.exists() else None})
+ records.append({**t,'atlas_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'rgba_bytes':atlas.shape[0]*atlas.shape[1]*4,'static_family_locked':t['key'] in locked,'entry_override':str(override) if override and override.exists() else None,'source_material_restoration':applied_materials})
 if a.room and (dest/'manifest.json').exists():
  previous=json.loads((dest/'manifest.json').read_text())['atlases'];records=[t for t in previous if t['room']!=a.room]+records
 (dest/'manifest.json').write_text(json.dumps({'model':a.model,'scope':'Optional background PoC; original masks/STP/OT/animation timing; palette mismatch falls back to original RGB.','native_detail_regions':detail_regions,'preserve_source_black':a.preserve_source_black,'atlases':records},indent=2));print(a.model,len(records),'atlases',sum(t['rgba_bytes'] for t in records)/2**20,'MiB GPU')

@@ -21,7 +21,9 @@ for j in jobs:
   if number==285:parent=('M284',0)
   if parent in byview and byview[parent]['id']!=j['id']:
    j['reference']=byview[parent]['id'];j['reference_kind']='same place or building material reference; preserve target geometry and lighting'
-  if number in (161,163):j['reference_file']=str(R.parent/'hd-static/corrections/M162/road-v2.png');j['material_note']='Match the corrected coherent rectangular stone road setts in the reference, not glossy worm-like or molten cobbles. Preserve original curb, snow, road width, slope, manholes and shadows.'
+  if number in (161,163):
+   j.pop('reference_file',None)
+   j['material_note']='Preserve the original irregular herringbone road layout exactly. Do not replace it with straight rows or use the rejected M162 road-v2 material reference. Source-material regions restore original road geometry consistently in every native layer.'
   if number in (254,371):j['reference_file']=str(R.parent/'hd-static/composites/M255-g00-cbase-p00-hd.png');j['material_note']='Same museum rotunda as the reference: keep coherent blue floor tile material and architecture finish. Target original camera, floor joints, bones, lighting and silhouettes remain absolute authority.'
   if number in (290,292,293,294):j['reference_file']=str(R.parent/'hd-static/composites/M291-g00-cbase-p00-hd.png');j['material_note']='Match the existing Chrysler marble/stone material family without changing the target source floor joints, medallion geometry, elevator details or light.'
   if number==195:

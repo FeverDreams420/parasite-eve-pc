@@ -38,7 +38,7 @@ def scan():
    if not start and not bits:continue
    mapid=idx+1;row={'disc':discid,'map':mapid,'id':f'M{mapid:03d}'if mapid<=409 else f'E{mapid-410:02d}','start_sector':start,'scratch_sectors':scratch,'texture_sectors':tex,'room_sectors':room,'location':labels[locations[mapid]].decode('shift_jis','replace')if mapid<len(locations)and locations[mapid]<len(labels)else'', 'views':[]}
    try:
-   
+
     if not room:
      row['status']='empty-range';allrows.append(row);continue
     blob=d.read(img,(start+scratch+tex)*2048,room*2048)

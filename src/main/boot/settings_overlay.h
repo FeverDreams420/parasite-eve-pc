@@ -643,7 +643,12 @@ static const char *Host_ControlBindingValueName(const HostOverlayState *state,
         const char *name = SDL_GetGamepadStringForButton((SDL_GamepadButton)btn);
         return (name && *name) ? name : "Unbound";
     } else {
-        const char *name = SDL_GetScancodeName((SDL_Scancode)host_options.keys[bindingIndex]);
+        /* Bindings are physical scancodes; label them with the key's name in the active
+         * layout (SDL_GetScancodeName always reports the US-layout name, so QWERTZ's Y read "Z"). */
+        SDL_Scancode scancode = (SDL_Scancode)host_options.keys[bindingIndex];
+        SDL_Keycode keycode = SDL_GetKeyFromScancode(scancode, SDL_KMOD_NONE, false);
+        const char *name = keycode != SDLK_UNKNOWN ? SDL_GetKeyName(keycode) : NULL;
+        if (!name || !*name) name = SDL_GetScancodeName(scancode);
         return (name && *name) ? name : "Unbound";
     }
 }

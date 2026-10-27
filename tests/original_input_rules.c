@@ -45,6 +45,10 @@ void pe_mod_log(const char *id, const char *format, ...) {
 void pe_toast(const char *text) { (void)text; }
 int pe_mod_active(const char *id) { (void)id; return 1; }
 const char *pe_mod_current(void) { return NULL; }
+void pe_mod_call_begin(const char *mod_id, const char *what, const char *detail) {
+    (void)mod_id; (void)what; (void)detail;
+}
+void pe_mod_call_end(void) {}
 int pe_hook_add(int id, PeHookFn fn, void *user, int priority, const char *mod) {
     (void)id; (void)fn; (void)user; (void)priority; (void)mod; return 0;
 }

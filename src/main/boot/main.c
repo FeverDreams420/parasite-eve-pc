@@ -1630,7 +1630,7 @@ static void Host_DescribeCrash(char *out, size_t size) {
              "Game: room %d, scene token 0x%08X (current 0x%08X), disc %u, VBlank %u, game frame %u\r\n"
              "Game state: flags 0x%08X / 0x%08X, %s\r\n"
              "Aya: HP %u/%u, level %u, EXP %u\r\n"
-             "Settings: internal resolution %ux, widescreen %d, geometry correction %d, antialiasing %d, "
+             "Settings: internal resolution %ux, aspect %d, geometry correction %d, antialiasing %d, "
              "model filtering %d, dithering %d, fullscreen %d, speed %ux now (hold %ux)\r\n",
              room, token, (unsigned)g_SceneDispatchCur, (unsigned)g_PeImageMountFlags,
              (unsigned)g_BootHostVBlankCount, g_GlobalFrameCounter[0],
@@ -1638,7 +1638,7 @@ static void Host_DescribeCrash(char *out, size_t size) {
              (g_GameStateFlags & 2) ? "in battle" : "not in battle",
              (unsigned)g_AyaSaveState.current_hp, (unsigned)g_AyaSaveState.max_hp,
              (unsigned)g_AyaSaveState.level + 1u, (unsigned)g_AyaSaveState.total_exp,
-             Psyz_VideoGetInternalResolution(), host_options.widescreen, host_options.geometry_correction,
+             Psyz_VideoGetInternalResolution(), host_options.aspect, host_options.geometry_correction,
              host_options.antialiasing, host_options.model_filtering, host_options.dither,
              host_options.fullscreen, host_speed, host_options.speed_factor);
 }

@@ -361,14 +361,9 @@ static const char *pe_hook_name(int id) {
     return id - PE_HOOK_COUNT < s_event_count ? s_events[id - PE_HOOK_COUNT] : "?";
 }
 
-/* Set by the crash report's save copy: from then on save writes reach the mods
- * only for that block, so each handler runs once. */
-static const void *s_crash_block;
-
 int pe_hook_dispatch(int id, void *ctx) {
     int i, handled = 0;
     if (!s_started) return 0;
-    if (id == PE_HOOK_SAVE_WRITE && s_crash_block && ctx != s_crash_block) return 0;
     for (i = 0; i < s_handler_count; i++) {
         int result;
         if (s_handlers[i].id < id) continue;
@@ -382,12 +377,12 @@ int pe_hook_dispatch(int id, void *ctx) {
     return handled;
 }
 
-/* ---- crash report save tail ----
+/* ---- crash report room snapshot: save tail ----
  * The save write handlers fill the block exactly as a real save does: every
- * mod's per-save data, whatever its layout. Not when mod code was running at
- * the crash, since its data may be half changed. */
-int pe_mod_crash_save_tail(unsigned char *block) {
-    s_crash_block = block;
+ * mod's per-save data, whatever its layout. Called when a room starts, on the
+ * game thread, never inside the crash handler. Not while mod code is running,
+ * since its data may be half changed. */
+int pe_mod_snapshot_save_tail(unsigned char *block) {
     if (s_call_depth) return -1;
     pe_hook_dispatch(PE_HOOK_SAVE_WRITE, block);
     return 0;

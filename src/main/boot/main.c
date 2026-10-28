@@ -1638,16 +1638,23 @@ static const char *Host_CrashFileName(const char *path) {
     return *name ? name : "(not set)";
 }
 
-/* Crash report: what the game was doing and every desktop setting. Runs
- * inside the crash handler, so it only reads values. The room number is
- * decoded as mods/host/pe_game.c does (-1: the token is not a room). */
-static void Host_DescribeCrash(char *out, size_t size) {
+/* The room number, decoded as mods/host/pe_game.c does (-1: the token is not
+ * a room). Only reads values. */
+static int Host_CrashRoom(void) {
     const unsigned token = (unsigned)g_SceneDispatchToken;
     int room = 0;
     for (int i = 2; i < 5 && room >= 0; ++i) {
         const char c = (char)g_Base32CharTable[(token >> ((5 - i) * 5 + 2)) & 0x1Fu];
         room = c >= '0' && c <= '9' ? room * 10 + (c - '0') : -1;
     }
+    return room;
+}
+
+/* Crash report: what the game was doing and every desktop setting. Runs
+ * inside the crash handler, so it only reads values. */
+static void Host_DescribeCrash(char *out, size_t size) {
+    const unsigned token = (unsigned)g_SceneDispatchToken;
+    const int room = Host_CrashRoom();
     const unsigned speed = Psyz_VideoGetSpeed();
     size_t used = 0;
     out[0] = 0;
@@ -1708,18 +1715,67 @@ static void Host_DescribeCrash(char *out, size_t size) {
     Host_CrashAppend(out, size, &used, "\r\n");
 }
 
-/* Crash report: what a save made now would hold, file offsets 0x100 up to
- * the checksum at 0x1C8C (Aya, items, key items, equipment, storage, then
- * script variables, day and Aya's battle record), so a save can be rebuilt
- * from the report, in a battle too (the room stays the same and loading
- * clears the battle flags). Save_BuildHeader fills the header fields as the
- * save menu does. Save_SerializeTail refuses when Aya's two record links are
- * not the saved records, which only a damaged record does, so those links
- * are set back for the copy and restored.
- * With mods, a second section holds the save's free tail from 0x1C90 (each
- * mod's per-save data), filled by the mods' save write handlers into a blank
- * card block before Save_SerializeTail, whose own hook call then reaches no
- * mod. Its contents are opaque: the layout depends on the mods loaded. */
+/* Crash report room snapshot: what a save made at the start of the current
+ * room would hold, file offsets 0x100 up to the checksum at 0x1C8C (Aya,
+ * items, key items, equipment, storage, then script variables, day and Aya's
+ * battle record), and with mods the save's free tail from 0x1C90 (each mod's
+ * per-save data, filled by the mods' save write handlers into a blank card
+ * block; its layout depends on the mods loaded). Taken whole each time a room
+ * starts outside a battle, on the game thread, so a save can be rebuilt from
+ * any report and the crash handler only copies it out. Two copies: a crash
+ * while one is being taken reports the other, never a part of one.
+ * Save_BuildHeader fills the header fields as the save menu does; the game's
+ * own copy of them is put back afterwards. Save_SerializeTailData refuses when
+ * Aya's two record links are not the saved records, which only a damaged
+ * record does, so those links are set back for the copy and restored. */
+typedef struct HostRoomSnapshot {
+    u8 data[0x12E4 + 0x8A8];
+#ifdef PE_MODS
+    u8 card[0x2000];
+    int have_mod_tail;
+#endif
+    int room, story_day, links_fixed;
+    u32 vblank;
+} HostRoomSnapshot;
+
+static HostRoomSnapshot host_room_snapshots[2];
+static volatile int host_room_snapshot = -1; /* the complete copy, -1: none yet */
+
+static void Host_TakeRoomSnapshot(void) {
+    static SaveRuntimeState header;
+    if (g_GameStateFlags & 2) return; /* a battle: the room's own snapshot stays */
+    HostRoomSnapshot *snapshot = &host_room_snapshots[host_room_snapshot == 0];
+
+    memcpy(&header, &g_SaveRuntimeState, sizeof(header));
+    Save_BuildHeader();
+    memcpy(snapshot->data, &g_SaveRuntimeState, 0x12E4);
+    memcpy(&g_SaveRuntimeState, &header, sizeof(header));
+
+    u8 *cursor = g_SaveIoCursor;
+    BattleStateTail *action = g_AyaBattleState.action;
+    BattleAttributes *attributes = g_AyaBattleState.attributes;
+    snapshot->links_fixed = (action && action != &g_SavedBattleStateTail) ||
+                            (attributes && attributes != &g_BattleEquipStateBlock);
+    if (snapshot->links_fixed) {
+        g_AyaBattleState.action = &g_SavedBattleStateTail;
+        g_AyaBattleState.attributes = &g_BattleEquipStateBlock;
+    }
+    g_SaveIoCursor = snapshot->data + 0x12E4;
+    const int have_tail = Save_SerializeTailData() == 0;
+    g_SaveIoCursor = cursor;
+    g_AyaBattleState.action = action;
+    g_AyaBattleState.attributes = attributes;
+    if (!have_tail) return;
+#ifdef PE_MODS
+    memset(snapshot->card, 0, sizeof(snapshot->card));
+    snapshot->have_mod_tail = pe_mod_snapshot_save_tail(snapshot->card) == 0;
+#endif
+    snapshot->room = Host_CrashRoom();
+    snapshot->story_day = g_GameState.current_story_day;
+    snapshot->vblank = g_BootHostVBlankCount;
+    host_room_snapshot = (int)(snapshot - host_room_snapshots);
+}
+
 static void Host_CrashHex(char *out, size_t size, size_t *used, const u8 *data, size_t count, unsigned address) {
     for (size_t i = 0; i < count && *used + 1 < size; ++i) {
         const char *end = i % 32 == 31 || i + 1 == count ? "\r\n" : "";
@@ -1732,43 +1788,29 @@ static void Host_CrashHex(char *out, size_t size, size_t *used, const u8 *data, 
 }
 
 static void Host_DescribeSaveData(char *out, size_t size) {
-    static u8 data[0x12E4 + 0x8A8];
-#ifdef PE_MODS
-    static u8 card[0x2000];
-    memset(card, 0, sizeof(card));
-    const int have_mod_tail = pe_mod_crash_save_tail(card) == 0;
-#endif
-    Save_BuildHeader();
-    memcpy(data, &g_SaveRuntimeState, 0x12E4);
-    u8 *cursor = g_SaveIoCursor;
-    BattleStateTail *action = g_AyaBattleState.action;
-    BattleAttributes *attributes = g_AyaBattleState.attributes;
-    const int links_fixed = (action && action != &g_SavedBattleStateTail) ||
-                            (attributes && attributes != &g_BattleEquipStateBlock);
-    if (links_fixed) {
-        g_AyaBattleState.action = &g_SavedBattleStateTail;
-        g_AyaBattleState.attributes = &g_BattleEquipStateBlock;
-    }
-    g_SaveIoCursor = data + 0x12E4;
-    const int have_tail = Save_SerializeTail() == 0;
-    g_SaveIoCursor = cursor;
-    g_AyaBattleState.action = action;
-    g_AyaBattleState.attributes = attributes;
-
-    const size_t count = have_tail ? sizeof(data) : 0x12E4;
+    const int index = host_room_snapshot;
     size_t used = 0;
     out[0] = 0;
-    Host_CrashAppend(out, size, &used, "\r\n== Save data (save file bytes from 0x0100) ==\r\n%s%s",
-                     links_fixed ? "Note: Aya's battle record links were damaged; written as the saved records.\r\n" : "",
-                     have_tail ? "" : "Story progress from 0x13E4 not available: the game could not save at this moment.\r\n");
-    Host_CrashHex(out, size, &used, data, count, 0x100u);
+    Host_CrashAppend(out, size, &used, "\r\n== Room snapshot ==\r\n");
+    if (index < 0) {
+        Host_CrashAppend(out, size, &used, "None: no room had started yet, so there is no save data.\r\n");
+        return;
+    }
+    const HostRoomSnapshot *snapshot = &host_room_snapshots[index];
+    Host_CrashAppend(out, size, &used,
+                     "Taken when room %d started, story day %d, %u seconds before the crash. The save data below "
+                     "is all from that moment.\r\n%s",
+                     snapshot->room, snapshot->story_day, (unsigned)((g_BootHostVBlankCount - snapshot->vblank) / 60u),
+                     snapshot->links_fixed ? "Note: Aya's battle record links were damaged; written as the saved records.\r\n" : "");
+    Host_CrashAppend(out, size, &used, "\r\n== Save data (save file bytes from 0x0100) ==\r\n");
+    Host_CrashHex(out, size, &used, snapshot->data, sizeof(snapshot->data), 0x100u);
 #ifdef PE_MODS
     Host_CrashAppend(out, size, &used, "\r\n== Save tail (save file bytes from 0x1C90) ==\r\n");
-    if (have_mod_tail) {
-        Host_CrashHex(out, size, &used, card + 0x1C90, sizeof(card) - 0x1C90, 0x1C90u);
+    if (snapshot->have_mod_tail) {
+        Host_CrashHex(out, size, &used, snapshot->card + 0x1C90, sizeof(snapshot->card) - 0x1C90, 0x1C90u);
     } else {
         Host_CrashAppend(out, size, &used,
-                         "Not available: mod code was running at the crash, so the mods' save data was not taken.\r\n");
+                         "Not available: mod code was running when the room started, so the mods' save data was not taken.\r\n");
     }
 #endif
 }
@@ -1878,6 +1920,7 @@ int main(int argc, char **argv) {
 
     CrashReport_Install(interactive, Host_DescribeCrash);
     CrashReport_SetSaveData(Host_DescribeSaveData);
+    g_BootSceneStarted = Host_TakeRoomSnapshot;
 #ifdef PE_MODS
     CrashReport_SetMods(pe_mod_crash_describe);
 #endif
@@ -2296,6 +2339,7 @@ shutdown:
     g_CdImageVolumes[0] = g_CdImageVolumes[1] = NULL;
     g_CdImageRequest = NULL;
     g_BootMovieSkipConfirm = NULL;
+    g_BootSceneStarted = NULL;
     host_images = NULL;
     pe_disc_close(&images[0]);
     pe_disc_close(&images[1]);

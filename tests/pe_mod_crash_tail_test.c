@@ -1,13 +1,13 @@
-/* Crash report Save tail: the mods' save write handlers fill the crash copy once,
- * the game's own save call during the crash reaches no mod, and nothing is
- * taken while mod code was running. */
+/* Crash report room snapshot, save tail: the mods' save write handlers fill the
+ * snapshot block as a real save does, nothing is taken while mod code is
+ * running, and later saves still reach the mods. */
 #include <stdio.h>
 #include <string.h>
 #include "pe_hooks.h"
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
 
-static int writes, crash_inside_mod;
+static int writes, inside_mod;
 static unsigned char card[0x2000], live[0x2000];
 
 static int on_save_write(void *ctx, void *user) {
@@ -19,7 +19,7 @@ static int on_save_write(void *ctx, void *user) {
 
 static int on_frame(void *ctx, void *user) {
     (void)ctx; (void)user;
-    if (crash_inside_mod) crash_inside_mod = pe_mod_crash_save_tail(card);
+    if (inside_mod) inside_mod = pe_mod_snapshot_save_tail(card);
     return 0;
 }
 
@@ -65,20 +65,25 @@ int main(void) {
     pe_hook_dispatch(PE_HOOK_SAVE_WRITE, live);
     CHECK(writes == 1 && !memcmp(live + 0x1C90, "TEST", 4));
 
-    /* Crashing inside mod code: nothing is taken. */
-    crash_inside_mod = 1;
+    /* Asked while mod code is running: nothing is taken. */
+    inside_mod = 1;
     pe_hook_dispatch(PE_HOOK_FRAME, NULL);
-    CHECK(crash_inside_mod == -1);
-    CHECK(writes == 1);
+    CHECK(inside_mod == -1);
+    CHECK(writes == 1 && card[0x1C90] == 0);
 
-    /* The crash copy: each handler once, then the game's own save call reaches no mod. */
+    /* The snapshot: each handler once, into the snapshot block. */
     memset(live, 0, sizeof(live));
-    CHECK(pe_mod_crash_save_tail(card) == 0);
+    CHECK(pe_mod_snapshot_save_tail(card) == 0);
     CHECK(writes == 2 && !memcmp(card + 0x1C90, "TEST", 4));
+
+    /* Every room takes one: later saves and snapshots still reach the mods. */
     pe_hook_dispatch(PE_HOOK_SAVE_WRITE, live);
-    CHECK(writes == 2 && live[0x1C90] == 0);
+    CHECK(writes == 3 && !memcmp(live + 0x1C90, "TEST", 4));
+    memset(card, 0, sizeof(card));
+    CHECK(pe_mod_snapshot_save_tail(card) == 0);
+    CHECK(writes == 4 && !memcmp(card + 0x1C90, "TEST", 4));
 
     if (failures) return 1;
-    printf("crash save tail: ok\n");
+    printf("room snapshot save tail: ok\n");
     return 0;
 }

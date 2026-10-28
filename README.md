@@ -29,7 +29,7 @@ If the game crashes, it saves a report and shows where to find it. Attach that f
 
 ## Mods
 
-Downloads include an optional mod host. When building from source, enable it with `-DPE_MODS=ON`: the
+Downloads include an optional mod host. When building from source, enable it with `-DPE_MODS=ON`. Without it, the
 `PE_HOOK(...)` lines in the game compile to nothing. In a mod build, **F1** opens the Mods panel;
 mods start only after **F1 → Manage mods → All mods** is turned on and the game restarted.
 Settings are saved in `pe_mods.ini`. See [the mod guide](mods/README.md) for writing a mod.

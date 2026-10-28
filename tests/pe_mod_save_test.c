@@ -17,10 +17,11 @@ int pe_hook_add(int id, PeHookFn fn, void *user, int priority, const char *mod_i
     return 0;
 }
 static const char *s_current = "junk_mod";
-static int s_junk_on = 1, s_keys_on = 1;
+static int s_junk_on = 1, s_keys_on = 1, s_pocket_on = 1;
 const char *pe_mod_current(void) { return s_current; }
 int pe_mod_active(const char *mod_id) {
-    return !mod_id || (!strcmp(mod_id, "junk_mod") ? s_junk_on : !strcmp(mod_id, "keys_mod") ? s_keys_on : 1);
+    return !mod_id || (!strcmp(mod_id, "junk_mod") ? s_junk_on : !strcmp(mod_id, "keys_mod") ? s_keys_on :
+                       !strcmp(mod_id, "pocket_mod") ? s_pocket_on : 1);
 }
 void pe_mod_log(const char *mod_id, const char *fmt, ...) { (void)mod_id; (void)fmt; }
 void pe_toast(const char *text) { (void)text; }
@@ -47,6 +48,17 @@ static int keys_upgrade(void *d, const unsigned char *old, unsigned size, unsign
     return 0;
 }
 static const PeSaveRecord s_keys_rec = { "pe_qol.keys", 1, s_keys, sizeof s_keys, NULL, keys_upgrade, NULL };
+
+/* A third mod whose record holds things the game needs back when the mod is off (pe_qol's keys):
+ * release() "returns" all but the last to the game. */
+static unsigned short s_pocket[3], s_returned;
+static int s_releases;
+static void pocket_release(void *d) {
+    (void)d; ++s_releases;
+    s_returned = s_pocket[0];
+    s_pocket[0] = s_pocket[1]; s_pocket[1] = 0;
+}
+static const PeSaveRecord s_pocket_rec = { "test.pocket", 1, s_pocket, sizeof s_pocket, NULL, NULL, NULL, pocket_release };
 
 static unsigned char s_card[0x2000];
 static void game_save(void) { memset(s_card, 0, sizeof s_card); pe_save_on_write(s_card); }   /* Save_BuildCardFile */
@@ -111,6 +123,9 @@ int main(void) {
     s_current = "keys_mod";
     assert(pe_save_register(&s_keys_rec) == 0);
     assert(pe_save_register(&s_keys_rec) == -1);                      /* same name twice */
+    s_current = "pocket_mod";
+    assert(pe_save_register(&s_pocket_rec) == 0);
+    s_current = "keys_mod";
     {
         static unsigned char big[0x370];
         static const PeSaveRecord too_big = { "test.big", 1, big, sizeof big, NULL, NULL, NULL };
@@ -246,8 +261,29 @@ int main(void) {
     game_save();
     assert(!memcmp(crash + 0x1C90, s_card + 0x1C90, 0x370));
     pe_save_crash_describe(text, sizeof text, &used);
-    assert(strstr(text, "2 record(s)") && strstr(text, "writer mod API 1 / save writer 1") &&
+    assert(strstr(text, "3 record(s)") && strstr(text, "writer mod API 1 / save writer 1") &&
            strstr(text, "pe_economy.loot (junk_mod) v2, 8 bytes, live"));
+
+    /* An off mod with release(): its record loads, release() gives back what it can, and the save
+     * holds what is left (from memory), not the carried record. Running, release() never runs. */
+    {
+        s_pocket[0] = 0xC8; s_pocket[1] = 0xC9;
+        game_save();
+        game_load(s_card);
+        assert(s_releases == 0);
+        s_pocket_on = 0;
+        memset(s_pocket, 0, sizeof s_pocket);
+        game_load(s_card);
+        assert(s_releases == 1 && s_returned == 0xC8 && s_pocket[0] == 0xC9);
+        game_save();
+        assert((p = find(s_card, "test.pocket", NULL, NULL)) && p[0] == 0xC9 && p[2] == 0);
+        game_load(s_card);                                             /* released again: the rest */
+        assert(s_releases == 2 && s_returned == 0xC9 && s_pocket[0] == 0);
+        s_pocket_on = 1;
+        game_load(s_card);
+        assert(s_releases == 2 && s_pocket[0] == 0xC9);                /* on again: the record as saved */
+        memset(s_pocket, 0, sizeof s_pocket);
+    }
 
     /* The window (0x200..0x287): the old PKEY/SORT blocks. A build without the records (an
      * official release) rewrites them; the container doesn't break, and the newer pocket wins. */

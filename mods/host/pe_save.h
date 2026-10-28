@@ -14,7 +14,8 @@
  *              mod's upgrade(); a newer layout this build can't read is kept as it is, so saving
  *              doesn't destroy it, and the mod starts from its defaults.
  *   Mods off   a record whose mod is off, failed to start or isn't in this build is carried from
- *              the loaded save into every later save unchanged.
+ *              the loaded save into every later save unchanged; one with release() is loaded and
+ *              released instead (see below), then saved from memory.
  *   Newer      a container format (or flags) newer than this build reads is kept as it is: every
  *              save writes it back unchanged and the mods start from their defaults.
  *   New Game   every record is reset and nothing carries over.
@@ -67,6 +68,11 @@ typedef struct PeSaveRecord {
     int (*upgrade)(void *data, const uint8_t *old, unsigned size, unsigned version);
     /* Optional. Defaults, for a save without this record and for New Game. Without it: zeros. */
     void (*reset)(void *data);
+    /* Optional. The mod is off this session: after a load the record goes into data as usual, then
+     * release() gives back to the game what only the record holds (pocketed keys to the bag), so the
+     * game plays as the original, and leaves in data what it couldn't. The host then saves the
+     * record from data. The only mod code that runs for a mod that is off. */
+    void (*release)(void *data);
 } PeSaveRecord;
 
 /* In the mod's init (it owns the record). The record must stay valid while the game runs.

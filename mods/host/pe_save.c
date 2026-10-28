@@ -27,12 +27,13 @@ typedef struct {
 } PeSaveInfo;
 
 /* Registered records: the running mods' state. kept = the loaded save holds a newer layout than
- * this build reads, so its carried bytes are written back instead of the (reset) state. */
+ * this build reads, so its carried bytes are written back instead of the (reset) state. released =
+ * its mod is off and release() ran on the loaded record: it is saved from memory like a live one. */
 static struct {
     const PeSaveRecord *record;
     const char *mod_id;
     uint32_t id;
-    int kept;
+    int kept, released;
 } s_reg[PE_SAVE_MAX_RECORDS];
 static int s_reg_count;
 static unsigned s_reg_bytes = PE_SAVE_HEADER_SIZE;
@@ -53,6 +54,9 @@ static const struct { const char *name; unsigned at, size; char magic[5]; } s_le
     { "pe_qol.sort", 0x260, 0x028, "SORT" },
 };
 #define PE_LEGACY_COUNT ((int)(sizeof s_legacy / sizeof s_legacy[0]))
+
+/* Saved from memory: its mod runs, or it is off and its record was released. */
+static int pe_save_live(int i) { return pe_mod_active(s_reg[i].mod_id) || s_reg[i].released; }
 
 static uint32_t pe_fnv(const char *name) {
     uint32_t h = 0x811C9DC5u;
@@ -195,7 +199,7 @@ static void pe_window(uint8_t *win, const uint8_t *live) {
         uint32_t id = pe_fnv(s_legacy[i].name);
         if (!pe_in_window(i)) continue;
         for (j = 0; j < s_reg_count && s_reg[j].id != id; ++j) {}
-        if (j < s_reg_count && pe_mod_active(s_reg[j].mod_id))
+        if (j < s_reg_count && pe_save_live(j))
             memcpy(win + s_legacy[i].at - PE_SAVE_WINDOW_AT, live + s_legacy[i].at, s_legacy[i].size);
     }
 }
@@ -217,7 +221,7 @@ static int pe_pack(uint8_t *out, const uint8_t *live, int *dropped) {
         return 0;
     }
     for (i = 0; i < s_reg_count; ++i) {
-        if (s_reg[i].kept || !pe_mod_active(s_reg[i].mod_id)) continue;
+        if (s_reg[i].kept || !pe_save_live(i)) continue;
         list[n].id = s_reg[i].id;
         list[n].version = (uint16_t)s_reg[i].record->version;
         list[n].size = (uint16_t)s_reg[i].record->size;
@@ -351,7 +355,7 @@ int pe_save_register(const PeSaveRecord *r) {
     s_reg[s_reg_count].record = r;
     s_reg[s_reg_count].mod_id = mod;
     s_reg[s_reg_count].id = id;
-    s_reg[s_reg_count].kept = 0;
+    s_reg[s_reg_count].kept = s_reg[s_reg_count].released = 0;
     ++s_reg_count;
     s_reg_bytes += PE_SAVE_RECORD_HEADER_SIZE + r->size;
     return 0;
@@ -361,7 +365,17 @@ void pe_save_on_read(const uint8_t *block) {
     int i;
     pe_carry(block + PE_SAVE_TAIL_OFFSET, 1);
     for (i = 0; i < s_reg_count; ++i)
-        if (pe_mod_active(s_reg[i].mod_id)) pe_load_one(i);
+        if (pe_mod_active(s_reg[i].mod_id)) {
+            s_reg[i].released = 0;
+            pe_load_one(i);
+        } else if (s_reg[i].record->release) {
+            pe_load_one(i);
+            s_reg[i].released = !s_reg[i].kept;
+            if (s_reg[i].released) {
+                s_reg[i].record->release(s_reg[i].record->data);
+                pe_mod_log(s_reg[i].mod_id, "save: %s released (the mod is off)", s_reg[i].record->name);
+            }
+        }
 }
 
 void pe_save_on_write(uint8_t *block) {
@@ -381,7 +395,7 @@ void pe_save_new_game(void) {
     s_foreign = 0;
     memset(&s_car_info, 0, sizeof s_car_info);
     for (i = 0; i < s_reg_count; ++i) {
-        s_reg[i].kept = 0;
+        s_reg[i].kept = s_reg[i].released = 0;
         if (pe_mod_active(s_reg[i].mod_id)) pe_reset(i);
     }
 }
@@ -427,7 +441,8 @@ void pe_save_crash_describe(char *out, size_t size, size_t *used) {
         for (j = 0; j < s_reg_count; ++j)
             if (s_reg[j].id == s_crash_list[i].id) {
                 from = s_reg[j].kept ? "kept: newer than this build" :
-                       pe_mod_active(s_reg[j].mod_id) ? "live" : "carried: mod off";
+                       pe_mod_active(s_reg[j].mod_id) ? "live" :
+                       s_reg[j].released ? "released: mod off" : "carried: mod off";
                 break;
             }
         if (j == s_reg_count && name) from = "carried: mod not in this build";

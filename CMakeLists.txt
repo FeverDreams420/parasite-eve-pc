@@ -40,9 +40,13 @@ target_compile_definitions(psyz PRIVATE __psyz)
 # Set this after configuring PsyZ: its SDK/SDL targets retain their own options.
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options("$<$<COMPILE_LANGUAGE:C>:-fno-strict-aliasing>"
-        "$<$<COMPILE_LANGUAGE:C>:-fno-omit-frame-pointer>"
         "$<$<COMPILE_LANGUAGE:C>:-ffunction-sections>"
         "$<$<COMPILE_LANGUAGE:C>:-fdata-sections>")
+    # POSIX walks frame chains. Windows uses its native unwind metadata;
+    # forcing frame pointers in large MinGW frames can break exception dispatch.
+    if(NOT WIN32)
+        add_compile_options("$<$<COMPILE_LANGUAGE:C>:-fno-omit-frame-pointer>")
+    endif()
 elseif(MSVC)
     add_compile_options("$<$<COMPILE_LANGUAGE:C>:/Gy>" "$<$<COMPILE_LANGUAGE:C>:/Gw>")
 endif()

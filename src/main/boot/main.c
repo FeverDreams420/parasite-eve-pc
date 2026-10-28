@@ -2178,8 +2178,9 @@ image_error:
 images_ready:;
     host_options.scale = internal_resolution;
     g_BootHostGraphicsOptions = Host_ControlGraphics;
-    if (interactive) {
-        /* Copy both before replacing picker storage: selection can be reversed. */
+    {
+        /* Keep CLI/headless disc names accurate in reports too. Copy both
+         * before replacing picker storage: selection can be reversed. */
         char ordered[2][4096] = {{0}};
         for (unsigned i = 0; i < 2; ++i) {
             const char *path = NULL;
@@ -2191,6 +2192,8 @@ images_ready:;
             snprintf(ordered[i], sizeof(ordered[i]), "%s", path ? path : "");
         }
         memcpy(host_options.discs, ordered, sizeof(ordered));
+    }
+    if (interactive) {
         host_images = images;
         g_CdImageRequest = Host_RequestImage;
         g_BootMovieSkipConfirm = Host_ConfirmMovieSkip;

@@ -13,14 +13,19 @@ static int MenuCard_ReadMovieAudio(struct PsyzCdRead *read) {
     return pe_disc_read_raw(movieAudioImage,&movieAudioFile,
                read->sector-movieAudioFile.sector,read->buffer)?2352:-1;
 }
+/* CD commands raise kernel events. Never hold audio while issuing one:
+ * the IRQ thread holds the kernel while the AKAO timer writes SPU registers. */
 static void MenuCard_StopMovieAudio(void) {
     Psyz_AudioLock();
-    if(movieAudioImage){
+    int active=movieAudioImage!=NULL;
+    Psyz_AudioUnlock();
+    if(active){
         CdControlB(8,NULL,NULL);
+        Psyz_AudioLock();
         Psyz_CdSetReadCB(NULL);
         movieAudioImage=NULL;
+        Psyz_AudioUnlock();
     }
-    Psyz_AudioUnlock();
 }
 static int MenuCard_StartMovieAudio(PeDisc *image,const PeDiscFile *file) {
     u8 raw[2352],filter[2],mode=200;
@@ -37,11 +42,11 @@ static int MenuCard_StartMovieAudio(PeDisc *image,const PeDiscFile *file) {
     Psyz_AudioLock();
     movieAudioImage=image;movieAudioFile=*file;
     Psyz_CdSetReadCB(MenuCard_ReadMovieAudio);
+    Psyz_AudioUnlock();
     CdIntToPos(file->sector,&position);
     int ok=CdControlB(14,&mode,NULL)>0 && CdControlB(13,filter,NULL)>0 &&
            CdControlB(2,(u8 *)&position,NULL)>0 && CdControlB(27,NULL,NULL)>0;
     if(!ok)MenuCard_StopMovieAudio();
-    Psyz_AudioUnlock();
     return ok;
 }
 

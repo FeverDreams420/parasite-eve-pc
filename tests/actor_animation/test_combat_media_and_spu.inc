@@ -1,3 +1,46 @@
+/* Reproduce the IRQ/kernel -> SPU/audio half of the observed deadlock while
+ * the original movie shutdown runs on the main thread. Each attempt starts
+ * with the IRQ holding the kernel; its delayed SPU write gives shutdown time
+ * to reach its CD command. A watchdog fails cleanly instead of stranding CI. */
+static SDL_Semaphore *movie_lock_held,*movie_lock_proceed,*movie_lock_finished;
+static long movie_lock_irq(void) {
+    SDL_SignalSemaphore(movie_lock_held);
+    SDL_WaitSemaphore(movie_lock_proceed);
+    SDL_Delay(20);
+    Psyz_SpuWrite(0x18C,0);
+    return 0;
+}
+static int movie_lock_worker(void *unused) {
+    (void)unused;DeliverEvent(0xFA0000FFu,0x1000);return 0;
+}
+static int movie_lock_watchdog(void *unused) {
+    (void)unused;
+    if(!SDL_WaitSemaphoreTimeout(movie_lock_finished,10000)) {
+        fprintf(stderr,"Movie CD command deadlocked against kernel IRQ/SPU write\n");fflush(stderr);_Exit(1);
+    }
+    return 0;
+}
+static int original_movie_audio_lock_order(void) {
+    if(!SDL_Init(SDL_INIT_EVENTS) || !SDL_SetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_AUDIO_CLOCK","video",true) || Psyz_AudioInit())return 0;
+    movie_lock_held=SDL_CreateSemaphore(0);movie_lock_proceed=SDL_CreateSemaphore(0);movie_lock_finished=SDL_CreateSemaphore(0);
+    if(!movie_lock_held || !movie_lock_proceed || !movie_lock_finished)return 0;
+    long event=OpenEvent(0xFA0000FFu,0x1000,0x1000,movie_lock_irq);
+    if(event==-1 || !EnableEvent(event))return 0;
+    SDL_Thread *watchdog=SDL_CreateThread(movie_lock_watchdog,"Movie lock watchdog",NULL);if(!watchdog)return 0;
+    for(unsigned attempt=0;attempt<32;++attempt) {
+        g_BootDisplayPlaybackActive=1;
+        SDL_Thread *irq=SDL_CreateThread(movie_lock_worker,"Movie lock IRQ",NULL);if(!irq)return 0;
+        SDL_WaitSemaphore(movie_lock_held);
+        SDL_SignalSemaphore(movie_lock_proceed);
+        if(BootDisplay_WaitForCdAndRestoreCallbacks() || g_BootDisplayPlaybackActive)return 0;
+        SDL_WaitThread(irq,NULL);
+    }
+    SDL_SignalSemaphore(movie_lock_finished);SDL_WaitThread(watchdog,NULL);
+    CloseEvent(event);Psyz_AudioDestroy();
+    SDL_DestroySemaphore(movie_lock_held);SDL_DestroySemaphore(movie_lock_proceed);SDL_DestroySemaphore(movie_lock_finished);
+    puts("Original movie shutdown: 32 contended kernel-IRQ/SPU/CD lock-order cycles completed without deadlock");return 1;
+}
+
 static int original_enemy_death(void)
 {
     extern void Battle_StepEntityAnimState(BattleEntity *);

@@ -115,8 +115,8 @@ pub struct EditArgs {
     #[arg(long)]
     pub bp: Option<u32>,
 
-    /// Set Aya's active inventory slot capacity (10..=50)
-    #[arg(long)]
+    /// Set Aya's base bag capacity (10..=46; armor can add up to 4 slots)
+    #[arg(long, value_parser = clap::value_parser!(u8).range(10..=46))]
     pub slots: Option<u8>,
 
     /// Set story day (1..=6)
@@ -155,7 +155,11 @@ pub struct EditArgs {
     #[arg(long)]
     pub add_item: Vec<String>,
 
-    /// Cheat: Max Aya stats (Lv 99, 999/999 HP, 99,999 BP, 50 item slots, max stat growth)
+    /// Repair equipment icons/model classes from older editor versions, preserving upgrades
+    #[arg(long)]
+    pub repair_equipment_types: bool,
+
+    /// Cheat: Max Aya stats (Lv 99, 999/999 HP, 99,999 BP, 46 base item slots, max stat growth)
     #[arg(long)]
     pub max_aya: bool,
 
@@ -419,6 +423,9 @@ fn cmd_edit(args: EditArgs) -> Result<()> {
     let idx = resolve_slot_index(&container, args.slot)?;
     let save = container.slots[idx].as_mut().unwrap();
 
+    if args.repair_equipment_types {
+        println!("Repaired {} equipment icon/model classes", save.repair_equipment_types());
+    }
     if args.max_aya {
         save.apply_cheat_max_aya();
     }
@@ -451,7 +458,7 @@ fn cmd_edit(args: EditArgs) -> Result<()> {
         save.bonus_points = bp.min(99_999);
     }
     if let Some(slots) = args.slots {
-        save.inventory_slot_count = slots.clamp(10, 50);
+        save.inventory_slot_count = slots;
     }
     if let Some(day) = args.day {
         save.play_time_class = day.clamp(1, 6);

@@ -1,3 +1,6 @@
+#ifdef NDEBUG
+#undef NDEBUG /* These runtime checks must also execute in release CI builds. */
+#endif
 #include <assert.h>
 #include <stdio.h>
 #ifndef _WIN32

@@ -86,6 +86,24 @@ mod tests {
     }
 
     #[test]
+    fn test_edits_keep_mod_data_in_the_free_tail() {
+        // Mods keep their own blocks after the checksum word (0x1C90..0x2000), inside the CRC.
+        let sample_path =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples/Parasite_Eve_PS1_Sample_Card.srm");
+        let mut container = MemoryCardContainer::open(&sample_path).expect("open sample .srm card");
+        let slot = container.slots[0].as_mut().unwrap();
+        let tail: Vec<u8> = (0..0x370u32).map(|i| (i * 7 + 3) as u8).collect();
+        slot.raw_bytes[0x1C90..0x2000].copy_from_slice(&tail);
+
+        slot.apply_cheat_max_aya();
+        slot.add_item_to_inventory(0x78).unwrap();
+        let bytes = slot.to_bytes();
+        let reparsed = crate::save::PeSaveSlot::from_bytes(&bytes, 0, &slot.filename).unwrap();
+        assert!(reparsed.is_crc_valid());
+        assert_eq!(&bytes[0x1C90..0x2000], &tail[..]);
+    }
+
+    #[test]
     fn test_bag_size_follows_item_capacity_stat_without_disc() {
         let sample_path =
             PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples/Parasite_Eve_PS1_Sample_Card.srm");

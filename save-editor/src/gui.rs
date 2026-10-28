@@ -1158,13 +1158,19 @@ impl eframe::App for SaveEditorApp {
                             }
                             ui.separator();
                             if ui
-                                .button("🏆 Add Ultimate Loadout (P90 + Cm Suit 2 + Super Tool Kit)")
+                                .button("🏆 Equip Ultimate Loadout (P90 + Cm Suit 2 + Super Tool Kit)")
+                                .on_hover_text(
+                                    "Adds an ultimate P90 and Cm Suit 2 and puts them on (the old \
+                                     gun and armor stay in the bag), plus tool kits and medicine. \
+                                     The suit's HP Max Up lets Max Aya reach 999 HP.",
+                                )
                                 .clicked()
                             {
                                 if save.apply_cheat_give_ultimate_loadout().is_ok() {
                                     let _ = save.to_bytes();
-                                    status_toast =
-                                        Some("Added Ultimate P90, Cm Suit 2 & Super Tool Kit.");
+                                    status_toast = Some(
+                                        "Equipped Ultimate P90 & Cm Suit 2; added Super Tool Kit.",
+                                    );
                                 }
                                 ui.close_menu();
                             }

@@ -179,7 +179,8 @@ pub struct EditArgs {
     #[arg(long)]
     pub max_gear: bool,
 
-    /// Cheat: Add an ultimate P90 + Cm Suit 2 + Super Tool Kit + Full Recover loadout
+    /// Cheat: Add and equip an ultimate P90 + Cm Suit 2 (old gear stays in the bag), plus Super
+    /// Tool Kit + Full Recover. The suit's HP Max Up lets --max-aya reach 999 HP
     #[arg(long)]
     pub ultimate_loadout: bool,
 }

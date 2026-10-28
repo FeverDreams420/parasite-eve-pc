@@ -137,6 +137,32 @@ mod tests {
     }
 
     #[test]
+    fn test_max_aya_and_ultimate_loadout_give_999_hp_in_either_order() {
+        let sample_path =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples/Parasite_Eve_PS1_Sample_Card.srm");
+        for max_aya_first in [true, false] {
+            let mut container = MemoryCardContainer::open(&sample_path).expect("open sample .srm card");
+            let slot = container.slots[0].as_mut().unwrap();
+            // As the GUI does: each cheat is written out before the next.
+            for step in 0..2 {
+                if (step == 0) == max_aya_first {
+                    slot.apply_cheat_max_aya();
+                } else {
+                    slot.apply_cheat_give_ultimate_loadout().unwrap();
+                }
+                let _ = slot.to_bytes();
+            }
+            let bytes = slot.to_bytes();
+            let r = crate::save::PeSaveSlot::from_bytes(&bytes, 0, &slot.filename).unwrap();
+            assert_eq!((r.max_hp, r.current_hp), (999, 999), "max_aya_first = {}", max_aya_first);
+
+            let worn = |s: i8| r.equipment[(r.inventory_items[s as usize] - 0x100) as usize].item_id;
+            assert_eq!(worn(r.equipped_weapon_slot), 0x78);
+            assert_eq!(worn(r.equipped_armor_slot), 0xC7);
+        }
+    }
+
+    #[test]
     fn test_bag_size_follows_item_capacity_stat_without_disc() {
         let sample_path =
             PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples/Parasite_Eve_PS1_Sample_Card.srm");

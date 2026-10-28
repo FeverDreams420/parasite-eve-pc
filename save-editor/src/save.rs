@@ -663,15 +663,36 @@ impl PeSaveSlot {
     /// Whether the equipped armor carries HP Max Up, which lifts max HP by 3/20
     /// (`BattleCmd_LoadWeaponModifiers` reads the mods in the armor's first `tail_count` slots).
     pub fn armor_has_hp_max_up(&self) -> bool {
-        let Some(&val) = usize::try_from(self.equipped_armor_slot)
+        Self::has_hp_max_up(self.equipped_armor_slot, &self.inventory_items, |i| {
+            self.equipment.get(i).cloned()
+        })
+    }
+
+    /// `armor_has_hp_max_up` as the save stood when loaded or last written (`raw_bytes`).
+    fn raw_armor_has_hp_max_up(&self) -> bool {
+        let rt = &self.raw_bytes[RT_OFFSET..];
+        let inventory: Vec<i16> = (0..50)
+            .map(|i| i16::from_le_bytes([rt[0x68 + i * 2], rt[0x69 + i * 2]]))
+            .collect();
+        Self::has_hp_max_up(rt[0x42] as i8, &inventory, |i| {
+            (i < 128).then(|| EquipmentRecord::parse(i, &rt[0xCC + i * 0x20..0xEC + i * 0x20]))
+        })
+    }
+
+    fn has_hp_max_up(
+        armor_slot: i8,
+        inventory: &[i16],
+        record: impl Fn(usize) -> Option<EquipmentRecord>,
+    ) -> bool {
+        let Some(&val) = usize::try_from(armor_slot)
             .ok()
-            .and_then(|slot| self.inventory_items.get(slot))
+            .and_then(|slot| inventory.get(slot))
         else {
             return false;
         };
         let Some(rec) = usize::try_from(val as i32 - 0x100)
             .ok()
-            .and_then(|i| self.equipment.get(i))
+            .and_then(record)
             .filter(|r| r.is_active())
         else {
             return false;
@@ -687,14 +708,17 @@ impl PeSaveSlot {
     /// The game recomputes max HP from the HP stat at the start of every battle, on level ups and
     /// in the status menu (`Inv_RecalcSlotStats`), so an edited max HP only sticks when the stat
     /// gives it. A changed stat sets max HP; otherwise a changed max HP sets the stat. The top
-    /// is 869, or 999 while the equipped armor has HP Max Up. Current HP is kept within max HP.
+    /// is 869, or 999 while the equipped armor has HP Max Up, so putting on or taking off such
+    /// armor also resets max HP. Current HP is kept within max HP, and a full bar stays full.
     fn sync_max_hp_with_hp_stat(&mut self, orig_max_hp: u16, orig_stat: u16) {
         let hp_max_up = self.armor_has_hp_max_up();
+        let armor_changed = hp_max_up != self.raw_armor_has_hp_max_up();
+        let was_full = self.current_hp >= self.max_hp;
         let limit = self.max_hp_limit();
         let stat = &mut self.stats_levels[HP_STAT];
         match game_data() {
             Some(g) => {
-                if *stat != orig_stat {
+                if *stat != orig_stat || armor_changed {
                     self.max_hp = g.max_hp_for_stat(*stat, hp_max_up);
                 } else if self.max_hp != orig_max_hp {
                     let wanted = self.max_hp.min(limit);
@@ -710,12 +734,18 @@ impl PeSaveSlot {
                 if self.max_hp != orig_max_hp && self.max_hp >= limit {
                     *stat = (*stat).max(TOP_LEVEL_STAT);
                 }
-                if *stat >= TOP_LEVEL_STAT && (*stat != orig_stat || self.max_hp != orig_max_hp) {
+                if *stat >= TOP_LEVEL_STAT
+                    && (*stat != orig_stat || self.max_hp != orig_max_hp || armor_changed)
+                {
                     self.max_hp = limit;
                 }
             }
         }
-        self.current_hp = self.current_hp.min(self.max_hp);
+        self.current_hp = if was_full {
+            self.max_hp
+        } else {
+            self.current_hp.min(self.max_hp)
+        };
     }
 
     pub fn is_crc_valid(&self) -> bool {
@@ -952,6 +982,8 @@ impl PeSaveSlot {
         }
     }
 
+    /// Adds an ultimate P90 and Cm Suit 2 and equips them (the old gear stays in the bag), plus
+    /// tool kits and medicine. The suit carries HP Max Up, so with Max Aya max HP reaches 999.
     pub fn apply_cheat_give_ultimate_loadout(&mut self) -> Result<()> {
         self.inventory_slot_count = MAX_STAT_BAG_SLOTS;
         self.stats_levels[ITEM_CAPACITY_STAT] =
@@ -976,6 +1008,7 @@ impl PeSaveSlot {
             }
             if let Some(pos) = self.inventory_items.iter().position(|&v| v == 0) {
                 self.inventory_items[pos] = weapon_eq_val;
+                self.equipped_weapon_slot = pos as i8;
             }
         }
 
@@ -995,6 +1028,8 @@ impl PeSaveSlot {
             }
             if let Some(pos) = self.inventory_items.iter().position(|&v| v == 0) {
                 self.inventory_items[pos] = armor_eq_val;
+                // Worn, so its HP Max Up counts: with Max Aya, max HP reaches 999.
+                self.equipped_armor_slot = pos as i8;
             }
         }
 

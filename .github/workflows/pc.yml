@@ -138,6 +138,12 @@ jobs:
           $cases = $report.SelectNodes('//testcase')
           $incomplete = $report.SelectNodes('//testcase/skipped | //testcase/failure | //testcase/error')
           if ($cases.Count -ne 25 -or $incomplete.Count -ne 0) { throw 'Expected 25 executed source-only cases without failures or skips' }
+      - name: Diagnose native Windows crash handler failures
+        if: failure()
+        run: |
+          mkdir -p build/crash-diagnostics
+          gdb --batch -q -ex 'set pagination off' -ex 'handle SIGSEGV nostop noprint pass' -ex 'run --child segv' -ex 'thread apply all bt 30' -ex 'info registers' --args ./build/test-crash-report.exe > build/crash-diagnostics/debugger.log 2>&1 || true
+          cat build/crash-diagnostics/debugger.log
       - name: Capture settings thread stacks after a runtime failure
         if: failure()
         run: |
@@ -172,6 +178,9 @@ jobs:
           name: windows-source-only-evidence
           path: |
             build/windows-source-only.xml
+            build/test-crash-report.exe
+            build/crash-diagnostics
+            build/pe-crash-test-*/logs
             build/Testing/Temporary/LastTest.log
             build/settings-diagnostics/*.log
             build/settings-diagnostics/process.json

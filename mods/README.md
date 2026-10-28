@@ -86,6 +86,10 @@ moved, disabled or updated without touching the others. Add the folder name to `
 Movement speed uses the local `PLAYER_MOVE` hook in the original input movement
 handlers. It never writes the actor's `moveFactor`: cutscenes and battle-entry
 scripts own that value, including values that match a mod speed option.
+Always Run changes a local input mask, never the game's mapping table. Battle-start
+speed scales the local script speed before its destination clamp, and the local
+animation increment; it never writes the actor's velocity or `animStep`.
+These options keep no per-actor ownership state to restore after a scene or save load.
 
 ## Optional encounter controls
 

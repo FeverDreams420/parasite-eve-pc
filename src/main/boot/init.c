@@ -1078,11 +1078,13 @@ void Field_HandleStateTransition(void) {
             pad_bits |= 0x2000;
         }
 
+        int run_mask = g_FieldRenderFlagTable[0];
+        PE_HOOK(PE_HOOK_PAD_MAP, (&(PeHookPadMap){pad_bits, &run_mask}));
         g_FieldPadBits = 0;
         /* Decoded input is saved in pad_bits; reuse the scratch for key indices. */
         for (i = 0; i < 0x20; i++) {
             base_bits = i;
-            if (((u16)pad_bits & g_FieldRenderFlagTable[base_bits]) != 0) {
+            if (((u16)pad_bits & (base_bits == 0 ? run_mask : g_FieldRenderFlagTable[base_bits])) != 0) {
                 g_FieldPadBits |= 1u << base_bits;
                 g_FieldPadHeldFrameCounts[base_bits]++;
             } else {

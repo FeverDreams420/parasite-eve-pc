@@ -68,6 +68,7 @@ endfunction()
 # Original scene/archive module owns file-image I/O and completion flags.
 add_library(parasite-eve-original-disc OBJECT src/main/cdrom/scene_assets.c)
 pe_configure_object_library(parasite-eve-original-disc)
+target_link_libraries(parasite-eve-original-disc PRIVATE psyz)
 
 # The executable starts the original game and compiles its modules in place.
 add_executable(parasite-eve-pc src/main/boot/main.c)
@@ -464,6 +465,8 @@ if(BUILD_TESTING)
         $<TARGET_OBJECTS:parasite-eve-original-actor-animation>)
     target_include_directories(test-original-actor-animation PRIVATE include tests)
     target_link_libraries(test-original-actor-animation PRIVATE psyz)
+    add_test(NAME original-game-movie-audio-lock-order COMMAND test-original-actor-animation --movie-audio-lock-order)
+    set_tests_properties(original-game-movie-audio-lock-order PROPERTIES TIMEOUT 20 LABELS "audio")
     add_test(NAME original-game-save-safety COMMAND test-original-actor-animation --save-safety)
     add_test(NAME original-game-actor-animation COMMAND test-original-actor-animation)
     add_test(NAME original-game-animation-event-completion COMMAND test-original-actor-animation --anim-event-completion)
@@ -684,6 +687,7 @@ if(BUILD_TESTING)
     # Rename its real I/O symbols to keep them distinct from the fixture doubles.
     add_library(parasite-eve-test-disc OBJECT src/main/cdrom/scene_assets.c)
     pe_configure_object_library(parasite-eve-test-disc)
+    target_link_libraries(parasite-eve-test-disc PRIVATE psyz)
     target_compile_definitions(parasite-eve-test-disc PRIVATE
         CdRom_ReadSectorsFromLba=CdRom_ImageReadSectorsFromLba
         CdRom_PollReady=CdRom_ImagePollReady

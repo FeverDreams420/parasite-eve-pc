@@ -15,8 +15,32 @@ typedef enum PeHookId {
     PE_HOOK_SAVE_READ,   /* u8 *: the 8 KB card block of a save being loaded */
     PE_HOOK_PAD_READ,    /* NULL: Field_HandleStateTransition, before it reads g_PadPackets */
     PE_HOOK_SCRIPT_RANDOM, /* PeHookScriptRandom: local RNG bounds, before a script roll */
+    PE_HOOK_PLAYER_MOVE, /* PeHookPlayerMove: local multiplier for a player-input movement step */
+    PE_HOOK_PAD_MAP,     /* PeHookPadMap: local run-button mapping for this poll */
+    PE_HOOK_ACTOR_STEP,  /* PeHookActorStep: local scripted speed or animation increment */
     PE_HOOK_COUNT
 } PeHookId;
+
+/* The factor belongs to the current calculation, not the actor. A handler
+ * may change it for this input step only and must not retain its address. */
+typedef struct PeHookPlayerMove {
+    const void *actor;
+    int *factor;
+    int running;
+    int combat;
+} PeHookPlayerMove;
+
+typedef struct PeHookPadMap {
+    unsigned buttons;
+    int *run_mask;
+} PeHookPadMap;
+
+/* Stack-local values only; never retain these pointers or alter actor state. */
+typedef struct PeHookActorStep {
+    const void *actor;
+    int *speed;    /* scripted movement speed, NULL for animation */
+    int *anim;     /* animation increment, NULL for motion */
+} PeHookActorStep;
 
 /* next points just past the current instruction in native loaded bytecode. */
 typedef struct PeHookScriptRandom {

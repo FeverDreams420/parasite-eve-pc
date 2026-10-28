@@ -13,6 +13,44 @@ mod tests {
     use crate::memcard::MemoryCardContainer;
 
     #[test]
+    fn inventory_preflight_rejects_broken_references_without_writing() {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples/Parasite_Eve_PS1_Sample_Card.srm");
+        let mut card = MemoryCardContainer::open(&path).unwrap();
+        for slot in card.slots.iter().flatten() { slot.validate_inventory().unwrap(); }
+        let mut slot = card.slots[0].as_ref().unwrap().clone();
+        slot.inventory_items.fill(0);slot.storage.fill(0);slot.special_storage.fill(0);
+        for item in &mut slot.equipment { item.icon_id = 0; }
+        slot.equipped_weapon_slot = 0;slot.equipped_armor_slot = -1;
+        slot.equipment[0] = crate::save::EquipmentRecord::from_item_template(0, 0x78);
+        slot.inventory_items[0] = 0x100;
+        slot.validate_inventory().unwrap();
+        for fault in 0..9 {
+            let mut bad = slot.clone();
+            match fault {
+                0 => bad.inventory_items[49] = 0x100,
+                1 => bad.storage[99] = 0x100,
+                2 => bad.special_storage[81] = 0x100,
+                3 => bad.equipment[0].tail_count = 11,
+                4 => bad.equipment[0].tail_capacity = 11,
+                5 => bad.equipment[0].icon_id = 0,
+                6 => bad.equipped_weapon_slot = -2,
+                7 => bad.equipped_armor_slot = 0,
+                _ => bad.equipment[0].index = 127,
+            }
+            assert!(bad.validate_inventory().is_err(), "fault {}", fault);
+            card.slots[0] = Some(bad);
+            let target = std::env::temp_dir().join(format!("pe-invalid-card-{}-{}.srm", std::process::id(), fault));
+            std::fs::write(&target, b"previous save").unwrap();
+            assert!(card.export_to_ps1_card_image(&target).is_err());
+            assert_eq!(std::fs::read(&target).unwrap(), b"previous save");
+            std::fs::remove_file(target).unwrap();
+        }
+        slot.inventory_items[1] = 0x200;slot.storage[0] = 0x200;
+        slot.equipment[0].bonus_stats = [999, 500, 123];
+        slot.validate_inventory().unwrap();
+    }
+
+    #[test]
     fn test_real_ps1_sample_card_parsing_and_crc() {
         let sample_path =
             PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples/Parasite_Eve_PS1_Sample_Card.srm");
@@ -63,7 +101,94 @@ mod tests {
         assert_eq!(reparsed.current_hp, 999);
         assert_eq!(reparsed.max_hp, 999);
         assert_eq!(reparsed.bonus_points, 99_999);
-        assert_eq!(reparsed.inventory_slot_count, 50);
+        assert_eq!(reparsed.inventory_slot_count, 46);
         assert_eq!(reparsed.category_counts[0], 999);
     }
+    #[test]
+    fn factory_equipment_preserves_native_type_ammo_bonuses_and_effects() {
+        use crate::save::EquipmentRecord;
+        let p90 = EquipmentRecord::from_item_template(7, 0x78);
+        assert_eq!((p90.index, p90.icon_id, p90.kind), (7, 4, 3));
+        assert_eq!(p90.base_stats, [122, 51, 200]);
+        assert_eq!(p90.ammo, 201);
+        assert_eq!(p90.bonus_stats, [0, 2, 1]);
+        assert_eq!((p90.tail_count, p90.tail_capacity), (5, 7));
+        assert_eq!(&p90.tail_data[..2], &[37, 72]);
+        let armor = EquipmentRecord::from_item_template(8, 0xB7);
+        assert_eq!((armor.icon_id, armor.kind), (18, 9));
+        assert_eq!(armor.base_stats, [106, 102, 48]);
+        assert_eq!(armor.bonus_stats, [1, 2, 3]);
+        assert_eq!((armor.tail_count, armor.tail_capacity), (7, 10));
+        assert_eq!(armor.tail_data[0], 11);
+        for id in 0x3F..=0xC7 {
+            let item = EquipmentRecord::from_item_template(0, id);
+            assert_eq!(item.item_id, id);
+            assert!((1..=9).contains(&item.kind));
+            assert!(item.tail_count <= 10 && item.tail_capacity <= 10);
+            let meta = crate::tables::item_metadata(id);
+            assert_eq!(meta.default_kind, item.kind);
+            assert_eq!(meta.default_icon_id, item.icon_id);
+        }
+    }
+
+    #[test]
+    fn bag_capacity_edits_update_growth_and_preserve_other_stats() {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("samples/Parasite_Eve_PS1_Sample_Card.srm");
+        let card = MemoryCardContainer::open(&path).unwrap();
+        let original = card.slots[0].as_ref().unwrap();
+        let mut native_test_data = Vec::new();
+        for id in 0x3F..=0xC7 {
+            let item = crate::save::EquipmentRecord::from_item_template(0, id);
+            let mut bytes = [0; 32];
+            item.write(&mut bytes);
+            native_test_data.extend_from_slice(&bytes);
+        }
+        for capacity in 10..=46 {
+            let mut slot = original.clone();
+            slot.inventory_slot_count = capacity;
+            let bytes = slot.to_bytes();
+            let decoded = crate::save::PeSaveSlot::from_bytes(&bytes, 0, &slot.filename).unwrap();
+            let growth = decoded.stats_levels[6];
+            assert_eq!(crate::tables::BAG_CAPACITY_BY_LEVEL[(growth / 10).min(98) as usize], capacity);
+            assert_eq!(&decoded.stats_levels[..6], &original.stats_levels[..6]);
+            assert!(decoded.is_crc_valid());
+            native_test_data.extend_from_slice(&(capacity as u16).to_le_bytes());
+            native_test_data.extend_from_slice(&growth.to_le_bytes());
+        }
+        // Optional cross-language fixture: the native asset test compares every
+        // editor-created record with the disc and recalculates all bag sizes.
+        if let Some(path) = std::env::var_os("PE_TEST_EDITOR_DATA") {
+            std::fs::write(path, native_test_data).unwrap();
+        }
+        let mut unchanged = original.clone();
+        assert_eq!(unchanged.to_bytes(), original.raw_bytes);
+    }
+
+    #[test]
+    fn repair_legacy_equipment_preserves_custom_upgrades() {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("samples/Parasite_Eve_PS1_Sample_Card.srm");
+        let mut card = MemoryCardContainer::open(&path).unwrap();
+        let save = card.slots[0].as_mut().unwrap();
+        let mut p90 = crate::save::EquipmentRecord::from_item_template(7, 0x78);
+        p90.icon_id = 5;
+        p90.kind = 4;
+        p90.bonus_stats = [900, 333, 222];
+        p90.ammo = 700;
+        p90.set_engraved(true);
+        p90.set_mod_at(0, 20);
+        save.equipment[7] = p90.clone();
+        save.repair_equipment_types();
+        let fixed = &save.equipment[7];
+        let mut expected = [0; 32];
+        p90.write(&mut expected);
+        expected[0] = 4;
+        expected[6] = 3;
+        let mut actual = [0; 32];
+        fixed.write(&mut actual);
+        assert_eq!(actual, expected);
+        assert_eq!(save.repair_equipment_types(), 0);
+    }
+
 }

@@ -1080,8 +1080,14 @@ impl eframe::App for SaveEditorApp {
                             .strong(),
                         |ui| {
                             ui.set_min_width(270.0);
+                            if ui.button("Repair Equipment Icons & Models").clicked() {
+                                save.repair_equipment_types();
+                                let _ = save.to_bytes();
+                                status_toast = Some("Repaired equipment types; upgrades preserved.");
+                                ui.close_menu();
+                            }
                             if ui
-                                .button("✨ Max Aya (Lv 99 • 999 HP • 99,999 BP • 50 Slots)")
+                                .button("✨ Max Aya (Lv 99 • 999 HP • 99,999 BP • 46 Base Slots)")
                                 .clicked()
                             {
                                 save.apply_cheat_max_aya();
@@ -1362,10 +1368,10 @@ impl SaveEditorApp {
                                 save.apply_cheat_max_ammo();
                             }
                             ui.separator();
-                            ui.label("Bag Slots:");
+                            ui.label("Base Bag Slots:");
                             ui.add(
                                 egui::DragValue::new(&mut save.inventory_slot_count)
-                                    .range(10..=50),
+                                    .range(10..=46),
                             );
                             ui.checkbox(&mut self.show_locked_inv_slots, "Show Locked (..50)");
                         });
@@ -2509,9 +2515,9 @@ fn render_tab_character_and_stats(ui: &mut egui::Ui, save: &mut PeSaveSlot) {
                             );
                             ui.end_row();
 
-                            ui.label("Active Bag Capacity:");
+                            ui.label("Base Bag Capacity (armor can add up to 4):");
                             ui.add(
-                                egui::Slider::new(&mut save.inventory_slot_count, 10..=50)
+                                egui::Slider::new(&mut save.inventory_slot_count, 10..=46)
                                     .suffix(" slots"),
                             );
                             ui.end_row();

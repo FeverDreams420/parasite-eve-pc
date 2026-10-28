@@ -7,7 +7,7 @@ use crate::crc::{
 };
 use crate::tables::{
     encode_mod_byte, item_metadata, map_location_descriptive, mod_metadata,
-    save_header_location_name, ItemCategory, PARASITE_SPELLS,
+    save_header_location_name, BAG_CAPACITY_BY_LEVEL, EQUIPMENT_TEMPLATES, PARASITE_SPELLS,
 };
 
 pub const RT_OFFSET: usize = 0x0100;
@@ -53,27 +53,14 @@ impl EquipmentRecord {
     }
 
     pub fn from_item_template(index: usize, item_id: u8) -> Self {
-        let meta = item_metadata(item_id);
-        let (tail_count, tail_capacity) = meta.default_slots;
-        let ammo = if meta.category.is_weapon() && meta.category != ItemCategory::MeleeWeapon {
-            meta.default_stats[2] as u16
+        if (0x3F..=0xC7).contains(&item_id) {
+            let mut record = Self::parse(index, &EQUIPMENT_TEMPLATES[(item_id - 0x3F) as usize]);
+            // The unused retail Debug SMG has a capacity of 100, beyond the
+            // record's ten editable effect slots and the port's save bounds.
+            record.tail_capacity = record.tail_capacity.min(10);
+            record
         } else {
-            0
-        };
-        Self {
-            index,
-            icon_id: meta.default_icon_id.max(1),
-            tail_capacity,
-            reserved02: [0; 2],
-            item_id,
-            flags: 0,
-            kind: meta.default_kind,
-            base_stats: meta.default_stats,
-            ammo,
-            reserve_ammo: 0,
-            bonus_stats: [0; 3],
-            tail_count,
-            tail_data: [0; 11],
+            Self::empty(index)
         }
     }
 
@@ -435,6 +422,54 @@ impl PeSaveSlot {
         })
     }
 
+    /// Check structural references before any save/export writes a container.
+    /// Stat bonuses, ammo and legitimate custom effects are left untouched.
+    pub fn validate_inventory(&self) -> Result<()> {
+        if self.inventory_slot_count > 50 || self.inventory_items.len() != 50
+            || self.storage.len() != 100 || self.special_storage.len() != 82
+            || self.equipment.len() != 128 {
+            bail!("Invalid inventory dimensions");
+        }
+        for (index, item) in self.equipment.iter().enumerate() {
+            if item.index != index {
+                bail!("Equipment record {} has an invalid index", index);
+            }
+            if item.icon_id != 0 && (item.item_id == 0 || item.kind >= 24
+                || item.tail_count > 10 || item.tail_capacity > 10) {
+                bail!("Equipment record {} has invalid type or modification slots", index);
+            }
+        }
+        let mut seen = [false; 128];
+        for list in [&self.inventory_items, &self.storage, &self.special_storage] {
+            for &value in list {
+                let id = value as u16;
+                if id <= 255 || (0x200..=0x208).contains(&id) { continue; }
+                if !(0x100..0x180).contains(&id) {
+                    bail!("Invalid inventory reference 0x{:04X}", id);
+                }
+                let index = (id - 0x100) as usize;
+                if self.equipment[index].icon_id == 0 || seen[index] {
+                    bail!("Equipment record {} is missing or referenced more than once", index);
+                }
+                seen[index] = true;
+            }
+        }
+        for (armor, slot) in [(false, self.equipped_weapon_slot), (true, self.equipped_armor_slot)] {
+            if slot == -1 { continue; }
+            if !(0..50).contains(&slot) { bail!("Invalid equipped inventory slot {}", slot); }
+            let id = self.inventory_items[slot as usize] as u16;
+            let kind = if (0x100..0x180).contains(&id) {
+                self.equipment[(id - 0x100) as usize].kind
+            } else if (1..=255).contains(&id) {
+                item_metadata(id as u8).default_kind
+            } else { 0 };
+            if if armor { kind != 9 } else { !(1..=8).contains(&kind) } {
+                bail!("Equipped slot {} does not contain compatible equipment", slot);
+            }
+        }
+        Ok(())
+    }
+
     /// Serializes all modified fields back into `self.raw_bytes`, syncs `g_AyaBattleState`,
     /// updates the Shift-JIS header title if relevant fields changed, and recalculates the CRC-16 at `0x1C8C`.
     pub fn to_bytes(&mut self) -> Vec<u8> {
@@ -491,6 +526,20 @@ impl PeSaveSlot {
             );
             self.raw_bytes[0x04..0x44].copy_from_slice(&title_bytes);
             self.header_title = decode_sjis_title(&title_bytes).1;
+        }
+
+        // The byte is a cached base capacity. The game derives it again from
+        // BAG growth whenever equipment/stats are refreshed. Armor adds up to
+        // four further slots; those are not part of this serialized base value.
+        if self.inventory_slot_count != orig_slot_count {
+            self.inventory_slot_count = self.inventory_slot_count.clamp(10, 46);
+            let current_level = (self.stats_levels[6] / 10).min(98) as usize;
+            if BAG_CAPACITY_BY_LEVEL[current_level] != self.inventory_slot_count {
+                let level = BAG_CAPACITY_BY_LEVEL.iter()
+                    .position(|&capacity| capacity == self.inventory_slot_count)
+                    .expect("all base capacities 10..=46 are represented");
+                self.stats_levels[6] = (level * 10) as u16;
+            }
         }
 
         let battle_state_needs_sync = self.max_hp != orig_max_hp
@@ -779,13 +828,30 @@ impl PeSaveSlot {
     // Quick Cheat & Preset Helpers
     // =========================================================================
 
+    /// Repair icon/model classes written by older editor templates without
+    /// replacing a player's upgrades, ammunition, effects or engraving.
+    pub fn repair_equipment_types(&mut self) -> usize {
+        let mut repaired = 0;
+        for item in self.equipment.iter_mut().filter(|item| item.is_active()) {
+            if (0x3F..=0xC7).contains(&item.item_id) {
+                let meta = item_metadata(item.item_id);
+                if item.icon_id != meta.default_icon_id || item.kind != meta.default_kind {
+                    item.icon_id = meta.default_icon_id;
+                    item.kind = meta.default_kind;
+                    repaired += 1;
+                }
+            }
+        }
+        repaired
+    }
+
     pub fn apply_cheat_max_aya(&mut self) {
         self.set_display_level(99);
         self.total_exp = 9_999_999;
         self.max_hp = 999;
         self.current_hp = 999;
         self.bonus_points = 99_999;
-        self.inventory_slot_count = 50;
+        self.inventory_slot_count = 46;
         self.pe_bonus_pool = 999;
         self.stats_levels = [1000; 7];
     }
@@ -830,7 +896,7 @@ impl PeSaveSlot {
     }
 
     pub fn apply_cheat_give_ultimate_loadout(&mut self) -> Result<()> {
-        self.inventory_slot_count = 50;
+        self.inventory_slot_count = 46;
         self.apply_cheat_max_ammo();
 
         // Create Ultimate DE50AE7 / P90 and Cm Suit 2 if free slots exist

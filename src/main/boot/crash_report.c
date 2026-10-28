@@ -1164,12 +1164,13 @@ static void Crash_Report(EXCEPTION_POINTERS *info) {
     if (file == INVALID_HANDLE_VALUE) {
         TerminateProcess(GetCurrentProcess(), 3);
     }
-    WriteFile(file, crash_text, (DWORD)crash_text_size, &written, NULL);
-    Crash_WriteLog(file);
+    int complete=WriteFile(file,crash_text,(DWORD)crash_text_size,&written,NULL) && written==crash_text_size;
+    if(complete)Crash_WriteLog(file);
     LARGE_INTEGER size = {0};
-    GetFileSizeEx(file, &size);
-    FlushFileBuffers(file);
+    if(!GetFileSizeEx(file,&size) || size.QuadPart<(LONGLONG)crash_text_size)complete=0;
+    if(!FlushFileBuffers(file))complete=0;
     CloseHandle(file);
+    if(!complete){DeleteFileW(path);return;} /* preserve the emergency report */
     InterlockedExchange(&crash_report_written,1);
     if(crash_emergency!=INVALID_HANDLE_VALUE) {
         CloseHandle(crash_emergency);crash_emergency=INVALID_HANDLE_VALUE;DeleteFileW(crash_emergency_path);

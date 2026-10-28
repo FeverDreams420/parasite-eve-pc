@@ -121,18 +121,11 @@ static int pe_sort_upgrade(void *data, const uint8_t *old, unsigned size, unsign
 static const PeSaveRecord s_sort_record = {
     "pe_qol.sort", 1, &s_sort, sizeof s_sort, pe_sort_check, pe_sort_upgrade, pe_sort_reset,
 };
-static int pe_sort_command(void *ctx, void *user) {
-    const PeHookInvCommand *c = ctx;
-    (void)user;
-    if (c->command == 1117) { memset(&s_sort, 0, sizeof s_sort); s_seen = s_sorting = 0; }
-    return 0;
-}
 void pe_bag_sort_register(const char *mod_id) {
     pe_menu_register_live_choice(PE_PAGE_INVENTORY, "Bag sort", "Auto remembers the game's Sort. Moving items manually switches it off.",
         s_modes, 2, pe_sort_mode, pe_set_sort_mode);
     pe_menu_register_tick(pe_sort_tick);
     pe_hook_add(PE_HOOK_INVENTORY_SORTED, pe_sort_chosen, NULL, PE_PRIORITY_NORMAL, mod_id);
-    pe_hook_add(PE_HOOK_INV_COMMAND, pe_sort_command, NULL, PE_PRIORITY_NORMAL, mod_id);
     pe_hook_add(PE_HOOK_SAVE_WRITE, pe_sort_save, NULL, PE_PRIORITY_NORMAL, mod_id);
     pe_save_register(&s_sort_record);
 }

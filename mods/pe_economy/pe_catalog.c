@@ -35,7 +35,6 @@
 #define PE_ITEM_SUPER_TOOL_KIT 0x36
 #define PE_BAG_SLOTS           50
 #define PE_STORAGE_SLOTS       100
-#define PE_INV_CMD_START_NEW_GAME 1117
 
 #define PE_SAVE_MAGIC   0x54434550u   /* "PECT" */
 #define PE_SAVE_VERSION 1u
@@ -299,18 +298,11 @@ static const PeSaveRecord s_save_record = {
     "pe_economy.catalog", 1, &s_cat, sizeof s_cat, pe_save_check, pe_save_upgrade, NULL,
 };
 
-static int pe_on_inv_command(void *ctx, void *user) {
-    (void)user;
-    if (((const PeHookInvCommand *)ctx)->command == PE_INV_CMD_START_NEW_GAME) memset(&s_cat, 0, sizeof s_cat);
-    return 0;
-}
-
 /* ---- registration: rules, then the Dismantle feature and the pages ---- */
 
 void pe_catalog_register(const char *mod_id) {
     pe_service_publish("catalog", 1, &s_catalog_api, mod_id);
     pe_save_register(&s_save_record);
-    pe_hook_add(PE_HOOK_INV_COMMAND, pe_on_inv_command, NULL, PE_PRIORITY_NORMAL, mod_id);
     pe_menu_register_int(PE_PAGE_DEBUG_CATALOG, "Mod price common", "Junk for a common effect.", &s_price[0], 0, 500, 5);
     pe_menu_register_int(PE_PAGE_DEBUG_CATALOG, "Mod price mid", "Junk for a mid effect.", &s_price[1], 0, 500, 5);
     pe_menu_register_int(PE_PAGE_DEBUG_CATALOG, "Mod price premium", "Junk for a premium effect (+Tool).", &s_price[2], 0, 500, 5);

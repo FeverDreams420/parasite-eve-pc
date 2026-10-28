@@ -6,7 +6,6 @@
 #include "pe_mod_host.h"
 #include "pe_save.h"
 
-#define PE_INV_CMD_START_NEW_GAME 1117
 #define PE_SAVE_MAX_RECORDS 32
 #define PE_SAVE_MAX_ENTRIES 64      /* records in one tail: 8 header bytes each, so 108 at most */
 #define PE_SAVE_MAGIC "PEMC"
@@ -249,6 +248,13 @@ static int pe_pack(uint8_t *out, const uint8_t *live, int *dropped) {
             list[j] = list[j - 1];
             list[j - 1] = t;
         }
+    /* No participating records: retain the original tail byte for byte,
+     * including data from writers this host does not understand. */
+    if (!n) {
+        memcpy(out, s_tail, PE_SAVE_TAIL_SIZE);
+        memcpy(out + PE_SAVE_WINDOW_AT, win, sizeof win);
+        return 0;
+    }
     memset(lin, 0, sizeof lin);
     memcpy(lin, PE_SAVE_MAGIC, 4);
     lin[4] = PE_SAVE_FORMAT;
@@ -339,7 +345,7 @@ int pe_save_register(const PeSaveRecord *r) {
     const char *mod = pe_mod_current();
     uint32_t id;
     int i;
-    if (!r || !r->name || !*r->name || !r->data || !r->size || r->version < 1 || r->version > 0xFFFF) {
+    if (!r || !r->name || !*r->name || !r->data || !r->size || r->size > PE_SAVE_ROOM - PE_SAVE_HEADER_SIZE - PE_SAVE_RECORD_HEADER_SIZE || r->version < 1 || r->version > 0xFFFF) {
         pe_mod_log(mod, "save: bad record, not registered");
         return -1;
     }
@@ -374,7 +380,7 @@ void pe_save_on_read(const uint8_t *block) {
             pe_load_one(i);
         } else if (s_reg[i].record->release) {
             pe_load_one(i);
-            s_reg[i].released = s_reg[i].release_due = !s_reg[i].kept;
+            s_reg[i].released = s_reg[i].release_due = !s_reg[i].kept && pe_carried(s_reg[i].id) != NULL;
         }
 }
 
@@ -438,6 +444,10 @@ void pe_save_crash_describe(char *out, size_t size, size_t *used) {
                (unsigned)s_crash_tail[4]);
         return;
     }
+    if (!s_crash_count && memcmp(s_crash_tail, PE_SAVE_MAGIC, 4)) {
+        PE_OUT("No mod records; original save tail preserved.\r\n");
+        return;
+    }
     if (s_crash_count < 0) {
         PE_OUT("Not taken.\r\n");
         return;
@@ -465,13 +475,6 @@ void pe_save_crash_describe(char *out, size_t size, size_t *used) {
 #undef PE_OUT
 }
 
-static int pe_on_command(void *ctx, void *user) {
-    (void)user;
-    if (ctx && ((const PeHookInvCommand *)ctx)->command == PE_INV_CMD_START_NEW_GAME) pe_save_new_game();
-    return 0;
-}
-
 void pe_save_install(void) {
-    pe_hook_add(PE_HOOK_INV_COMMAND, pe_on_command, NULL, -1000, "host");
     pe_hook_add(PE_HOOK_FRAME, pe_on_frame, NULL, -1000, "host");
 }

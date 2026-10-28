@@ -46,6 +46,7 @@ int pe_hook_add(int id,PeHookFn fn,void *u,int p,const char *m) {
 /* As the host: records go back before the mods' load handlers and into the save after theirs. */
 static void dispatch(int id,void *ctx) {
     if(id==PE_HOOK_SAVE_READ)pe_save_on_read(ctx);
+    if(id==PE_HOOK_NEW_GAME)pe_save_new_game();
     for(int i=0;i<nh;++i)if(hooks[i].id==id)hooks[i].fn(ctx,NULL);
     if(id==PE_HOOK_SAVE_WRITE)pe_save_on_write(ctx);
 }
@@ -72,7 +73,7 @@ static void reset(void) {
     memset(&g_GameStateBlock,0,sizeof g_GameStateBlock);memset(&g_GameState,0,sizeof g_GameState);
     loaded=economy=1;junk=10000;unlocked=0;fail_spend=discount=0;limit=10;
     *shop_pct=100;*tool_cap=100;
-    PeHookInvCommand c={1117,0,0};dispatch(PE_HOOK_INV_COMMAND,&c);
+    PeHookNewGame c={PE_NEW_GAME_TITLE};dispatch(PE_HOOK_NEW_GAME,&c);
     for(int i=0;i<3;++i)g_KeyItemRecords[i].bonusStats[2]=999;
     g_ScriptVariableBank[80]=0x10000;
 }
@@ -132,7 +133,7 @@ int main(void) {
      for(int i=0;i<4;++i)sum=(sum<<5)+sum+((uint8_t *)&old[4])[i];old[3]=sum;memcpy(card+0x1E50,old,sizeof old);}
     dispatch(PE_HOOK_SAVE_READ,card);assert(get_tools()==5);
     card[0x1E60]^=1;dispatch(PE_HOOK_SAVE_READ,card);assert(get_tools()==0);
-    set_tools(9);PeHookInvCommand c={1117,0,0};dispatch(PE_HOOK_INV_COMMAND,&c);assert(get_tools()==0);
+    set_tools(9);PeHookNewGame c={PE_NEW_GAME_TITLE};dispatch(PE_HOOK_NEW_GAME,&c);assert(get_tools()==0);
     reset();*selection=row(6);buy();assert(!g_AyaInventoryItems[0]);buy();assert(g_AyaInventoryItems[0]==6 && junk==9994);
     *selection=row(7);buy();tick();buy();assert(!g_AyaInventoryItems[1]);buy();assert(g_AyaInventoryItems[1]==7);
     *selection=row(8);buy();*selection=row(9);buy();assert(!g_AyaInventoryItems[2]);buy();assert(g_AyaInventoryItems[2]==9);

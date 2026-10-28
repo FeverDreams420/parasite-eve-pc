@@ -18,7 +18,8 @@
  *              released instead (see below), then saved from memory.
  *   Newer      a container format (or flags) newer than this build reads is kept as it is: every
  *              save writes it back unchanged and the mods start from their defaults.
- *   New Game   every record is reset and nothing carries over.
+ *   New Game   every record is reset and nothing carries over (PE_HOOK_NEW_GAME: the title's New
+ *              Game or Tutorial, or the EX Game; the host calls pe_save_new_game() first).
  *   Crash      pe_save_crash_tail() copies the same records from memory without calling any mod
  *              code, for a crash report: a save rebuilt from the report holds every mod's data,
  *              even when a mod caused the crash.

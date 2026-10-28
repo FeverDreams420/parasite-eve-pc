@@ -6,7 +6,6 @@
 #include "pe_mod_host.h"
 #include "pe_save.h"
 
-#define PE_INV_CMD_START_NEW_GAME 1117
 #define PE_SAVE_MAX_RECORDS 32
 #define PE_SAVE_MAX_ENTRIES 64      /* records in one tail: 8 header bytes each, so 108 at most */
 #define PE_SAVE_MAGIC "PEMC"
@@ -465,13 +464,6 @@ void pe_save_crash_describe(char *out, size_t size, size_t *used) {
 #undef PE_OUT
 }
 
-static int pe_on_command(void *ctx, void *user) {
-    (void)user;
-    if (ctx && ((const PeHookInvCommand *)ctx)->command == PE_INV_CMD_START_NEW_GAME) pe_save_new_game();
-    return 0;
-}
-
 void pe_save_install(void) {
-    pe_hook_add(PE_HOOK_INV_COMMAND, pe_on_command, NULL, -1000, "host");
     pe_hook_add(PE_HOOK_FRAME, pe_on_frame, NULL, -1000, "host");
 }

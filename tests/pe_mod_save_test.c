@@ -9,11 +9,11 @@
 #include "pe_mod_host.h"
 #include "pe_save.h"
 
-static PeHookFn s_new_game, s_frame;
+static PeHookFn s_frame;
 int pe_hook_add(int id, PeHookFn fn, void *user, int priority, const char *mod_id) {
     (void)user; (void)priority; (void)mod_id;
-    assert(id == PE_HOOK_INV_COMMAND || id == PE_HOOK_FRAME);
-    if (id == PE_HOOK_FRAME) s_frame = fn; else s_new_game = fn;
+    assert(id == PE_HOOK_FRAME);
+    s_frame = fn;
     return 0;
 }
 int pe_free_field(void) { return 1; }
@@ -114,7 +114,6 @@ static const unsigned char *find(const unsigned char *card, const char *name, un
 
 int main(void) {
     unsigned char other[0x2000], crash[0x2000];
-    PeHookInvCommand new_game = {1117, 0, 0};
     unsigned v, n;
     const unsigned char *p;
     char text[512];
@@ -248,7 +247,7 @@ int main(void) {
     game_save();
     game_load(s_card);
     s_keys_on = 0;
-    s_new_game(&new_game, NULL);
+    pe_save_new_game();                                          /* as the host on PE_HOOK_NEW_GAME */
     assert(s_junk.junk == 0);
     game_save();
     assert(!find(s_card, "pe_qol.keys", NULL, NULL));

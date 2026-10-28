@@ -70,7 +70,6 @@
 #define PE_STORAGE        100
 #define PE_ENEMY_SLOTS    7
 #define PE_GAUGE_FULL     9000u
-#define PE_CMD_NEW_GAME   1117
 #define PE_ESCAPE_PHASE   4
 #define PE_MIN_FRAMES     3u       /* shorter: the blip after a load */
 #define PE_WAYNE_SETTLE   90u
@@ -616,8 +615,14 @@ static int pe_on_item_add(void *ctx, void *user) {
 static int pe_on_inv_command(void *ctx, void *user) {
     const PeHookInvCommand *c = ctx;
     (void)user;
-    if (c->command == PE_CMD_NEW_GAME) s_pending = PE_PENDING_NEWGAME;
     if (pe_save_loaded()) pe_row("invcmd", "cmd=%d value=0x%X", c->command, (unsigned)c->value);
+    return 0;
+}
+
+/* A new game of any kind: its row is written once the game is running. */
+static int pe_on_new_game(void *ctx, void *user) {
+    (void)ctx; (void)user;
+    s_pending = PE_PENDING_NEWGAME;
     return 0;
 }
 
@@ -713,6 +718,7 @@ void pe_play_logger_register(const char *mod_id) {
     pe_hook_add(PE_HOOK_STEAL, pe_on_steal, NULL, PE_PRIORITY_EARLY, mod_id);
     pe_hook_add(PE_HOOK_ITEM_ADD, pe_on_item_add, NULL, PE_PRIORITY_EARLY, mod_id);   /* before a mod handles it */
     pe_hook_add(PE_HOOK_INV_COMMAND, pe_on_inv_command, NULL, PE_PRIORITY_EARLY, mod_id);
+    pe_hook_add(PE_HOOK_NEW_GAME, pe_on_new_game, NULL, PE_PRIORITY_EARLY, mod_id);
     pe_hook_add(PE_HOOK_ITEM_COUNT, pe_on_item_count, NULL, PE_PRIORITY_EARLY, mod_id);
     pe_hook_add(PE_HOOK_SPELL, pe_on_spell, NULL, PE_PRIORITY_NORMAL, mod_id);
     pe_hook_add(PE_HOOK_BATTLE_REWARDS, pe_on_rewards, NULL, PE_PRIORITY_LATE, mod_id);

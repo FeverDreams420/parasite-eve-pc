@@ -31,8 +31,9 @@ static PeHookFn hooks[PE_HOOK_COUNT];
 static PeMenuPerFrame tick;
 static struct { const char *name; int *value; } rows[32];
 static unsigned row_count;
+static int saved_rules=-1;
 int pe_menu_register_choice(const char *p,const char *n,const char *d,int *v,const char *const *c,unsigned count){
-    (void)p;(void)d;(void)c;(void)count;assert(row_count<32);rows[row_count].name=n;rows[row_count++].value=v;return 0;
+    (void)p;(void)d;(void)c;(void)count;if(!strcmp(n,"Rules") && saved_rules>=0)*v=saved_rules;assert(row_count<32);rows[row_count].name=n;rows[row_count++].value=v;return 0;
 }
 int pe_menu_register_int(const char *p,const char *n,const char *d,int *v,int lo,int hi,int step){
     (void)lo;(void)hi;(void)step;return pe_menu_register_choice(p,n,d,v,NULL,0);
@@ -118,7 +119,9 @@ static void poison(void){
     e->periodicDamage=7;setting("Rules",0);tick();assert(e->periodicDamage==7);
 }
 int main(int argc,char **argv){
+    if(argc==2 && !strcmp(argv[1],"--saved-vanilla"))saved_rules=0;
     pe_mod_effects_register("pe_rebalance");assert(tick);
+    if(saved_rules==0){assert(*rows[0].value==0);vanilla();return 0;}
     if(argc==2 && !strcmp(argv[1],"--vanilla"))vanilla();
     else if(argc==2 && !strcmp(argv[1],"--poison"))poison();else scoped();
     pe_mod_effects_shutdown();return 0;

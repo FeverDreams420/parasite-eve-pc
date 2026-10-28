@@ -98,6 +98,10 @@ pub struct SaveEditorApp {
     script_inspector_offset: usize,
 }
 
+const BAG_SIZE_HELP: &str = "The game sets the bag size from the Item Capacity stat (up to 46), \
+    so saving raises or lowers that stat to match (exactly with a game disc loaded). Armor with \
+    Item Capacity mods adds up to 50 in game.";
+
 // Theme Palette Constants
 const BG_DARKEST: Color32 = Color32::from_rgb(11, 16, 14);
 const BG_PANEL: Color32 = Color32::from_rgb(16, 23, 20);
@@ -138,6 +142,8 @@ impl SaveEditorApp {
             show_script_hex_inspector: false,
             script_inspector_offset: 0,
         };
+
+        crate::disc::load_configured_disc();
 
         if let Some(path) = initial_path {
             app.load_path(&cc.egui_ctx, path);
@@ -551,6 +557,35 @@ impl eframe::App for SaveEditorApp {
                             }
                         }
                     });
+
+                    let game = crate::disc::game_data();
+                    let disc_btn = ui
+                        .button(if game.is_some() { "💿 Game Disc ✔" } else { "💿 Game Disc…" })
+                        .on_hover_text(match &game {
+                            Some(g) => format!(
+                                "Item records and the bag table come from {}.",
+                                g.source.display()
+                            ),
+                            None => "No disc loaded: new weapons and armor get estimated stats and \
+                                     mod slots. Pick your Parasite Eve (USA) .cue / .bin / .iso."
+                                .to_string(),
+                        });
+                    if disc_btn.clicked() {
+                        if let Some(file) = rfd::FileDialog::new()
+                            .set_title("Select Parasite Eve (USA) Disc Image")
+                            .add_filter("Disc Images", &["cue", "bin", "iso", "img"])
+                            .add_filter("All Files", &["*"])
+                            .pick_file()
+                        {
+                            match crate::disc::load_disc(&file) {
+                                Ok(g) => self.set_status(
+                                    format!("Game data loaded from {}.", g.source.display()),
+                                    false,
+                                ),
+                                Err(e) => self.set_status(format!("{:#}", e), true),
+                            }
+                        }
+                    }
 
                     ui.separator();
 
@@ -1081,7 +1116,7 @@ impl eframe::App for SaveEditorApp {
                         |ui| {
                             ui.set_min_width(270.0);
                             if ui
-                                .button("✨ Max Aya (Lv 99 • 999 HP • 99,999 BP • 50 Slots)")
+                                .button("✨ Max Aya (Lv 99 • 999 HP • 99,999 BP • 46 Slots)")
                                 .clicked()
                             {
                                 save.apply_cheat_max_aya();
@@ -1365,8 +1400,9 @@ impl SaveEditorApp {
                             ui.label("Bag Slots:");
                             ui.add(
                                 egui::DragValue::new(&mut save.inventory_slot_count)
-                                    .range(10..=50),
-                            );
+                                    .range(10..=crate::disc::MAX_STAT_BAG_SLOTS),
+                            )
+                            .on_hover_text(BAG_SIZE_HELP);
                             ui.checkbox(&mut self.show_locked_inv_slots, "Show Locked (..50)");
                         });
                     });
@@ -2169,8 +2205,7 @@ fn render_equipment_record_editor(
                         .clicked()
                     {
                         rec.item_id = meta.id;
-                        rec.icon_id = meta.default_icon_id.max(1);
-                        rec.kind = meta.default_kind;
+                        (rec.icon_id, rec.kind) = EquipmentRecord::icon_and_kind_for(meta.id);
                     }
                 }
             });
@@ -2511,9 +2546,13 @@ fn render_tab_character_and_stats(ui: &mut egui::Ui, save: &mut PeSaveSlot) {
 
                             ui.label("Active Bag Capacity:");
                             ui.add(
-                                egui::Slider::new(&mut save.inventory_slot_count, 10..=50)
-                                    .suffix(" slots"),
-                            );
+                                egui::Slider::new(
+                                    &mut save.inventory_slot_count,
+                                    10..=crate::disc::MAX_STAT_BAG_SLOTS,
+                                )
+                                .suffix(" slots"),
+                            )
+                            .on_hover_text(BAG_SIZE_HELP);
                             ui.end_row();
 
                             ui.label("PE Energy Bonus Pool:");

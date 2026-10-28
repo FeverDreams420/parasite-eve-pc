@@ -115,9 +115,15 @@ pub struct EditArgs {
     #[arg(long)]
     pub bp: Option<u32>,
 
-    /// Set Aya's active inventory slot capacity (10..=50)
+    /// Set Aya's bag size (10..=46). The game sets it from the Item Capacity stat, so the stat is
+    /// raised to match (exactly with a disc; 46 without one). Armor mods add up to 50 in game.
     #[arg(long)]
     pub slots: Option<u8>,
+
+    /// Parasite Eve (USA) disc image (`.cue`, `.bin` or `.iso`) to read item records and the bag
+    /// table from. Defaults to the disc in the game's `parasite-eve.toml`.
+    #[arg(long)]
+    pub disc: Option<PathBuf>,
 
     /// Set story day (1..=6)
     #[arg(long)]
@@ -155,7 +161,7 @@ pub struct EditArgs {
     #[arg(long)]
     pub add_item: Vec<String>,
 
-    /// Cheat: Max Aya stats (Lv 99, 999/999 HP, 99,999 BP, 50 item slots, max stat growth)
+    /// Cheat: Max Aya stats (Lv 99, 999/999 HP, 99,999 BP, 46 item slots, max stat growth)
     #[arg(long)]
     pub max_aya: bool,
 
@@ -415,6 +421,18 @@ fn parse_u8_hex_or_dec(s: &str) -> Result<u8> {
 }
 
 fn cmd_edit(args: EditArgs) -> Result<()> {
+    let game = match &args.disc {
+        Some(disc) => Some(crate::disc::load_disc(disc)?),
+        None => crate::disc::load_configured_disc(),
+    };
+    match &game {
+        Some(g) => println!("Game data: {}", g.source.display()),
+        None if !args.add_item.is_empty() || args.ultimate_loadout => println!(
+            "No game disc found (use --disc): new weapons and armor get estimated stats and mod slots."
+        ),
+        None => {}
+    }
+
     let mut container = MemoryCardContainer::open(&args.path)?;
     let idx = resolve_slot_index(&container, args.slot)?;
     let save = container.slots[idx].as_mut().unwrap();
@@ -451,7 +469,7 @@ fn cmd_edit(args: EditArgs) -> Result<()> {
         save.bonus_points = bp.min(99_999);
     }
     if let Some(slots) = args.slots {
-        save.inventory_slot_count = slots.clamp(10, 50);
+        save.inventory_slot_count = slots.clamp(10, crate::disc::MAX_STAT_BAG_SLOTS);
     }
     if let Some(day) = args.day {
         save.play_time_class = day.clamp(1, 6);

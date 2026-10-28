@@ -1,6 +1,7 @@
 pub mod charset;
 pub mod cli;
 pub mod crc;
+pub mod disc;
 pub mod gui;
 pub mod memcard;
 pub mod save;
@@ -63,7 +64,40 @@ mod tests {
         assert_eq!(reparsed.current_hp, 999);
         assert_eq!(reparsed.max_hp, 999);
         assert_eq!(reparsed.bonus_points, 99_999);
-        assert_eq!(reparsed.inventory_slot_count, 50);
+        // The Item Capacity stat gives at most 46 slots; the game resets anything above it.
+        assert_eq!(reparsed.inventory_slot_count, 46);
+        assert!(reparsed.stats_levels[6] >= crate::save::MAX_BAG_ITEM_CAPACITY_STAT);
         assert_eq!(reparsed.category_counts[0], 999);
+    }
+
+    #[test]
+    fn test_new_gear_uses_the_games_icon_and_kind() {
+        let sample_path =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples/Parasite_Eve_PS1_Sample_Card.srm");
+        let mut container = MemoryCardContainer::open(&sample_path).expect("open sample .srm card");
+        let slot = container.slots[0].as_mut().unwrap();
+
+        // P90 (machine gun) and a handgun: icon 4 / kind 3 and icon 1 / kind 1 in the game's records.
+        for (item_id, icon, kind) in [(0x78u8, 4u8, 3u8), (0x44, 1, 1)] {
+            let val = slot.allocate_equipment_from_item(item_id).unwrap();
+            let rec = &slot.equipment[(val - 0x100) as usize];
+            assert_eq!((rec.item_id, rec.icon_id, rec.kind), (item_id, icon, kind));
+        }
+    }
+
+    #[test]
+    fn test_bag_size_follows_item_capacity_stat_without_disc() {
+        let sample_path =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples/Parasite_Eve_PS1_Sample_Card.srm");
+        let mut container = MemoryCardContainer::open(&sample_path).expect("open sample .srm card");
+        let slot = container.slots[0].as_mut().unwrap();
+        slot.stats_levels[6] = 0;
+        let _ = slot.to_bytes();
+
+        slot.inventory_slot_count = 50;
+        let bytes = slot.to_bytes();
+        let reparsed = crate::save::PeSaveSlot::from_bytes(&bytes, 0, &slot.filename).unwrap();
+        assert_eq!(reparsed.inventory_slot_count, 46);
+        assert_eq!(reparsed.stats_levels[6], crate::save::MAX_BAG_ITEM_CAPACITY_STAT);
     }
 }

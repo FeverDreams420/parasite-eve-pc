@@ -66,6 +66,24 @@ impl ItemCategory {
     }
 }
 
+/// The game's icon and kind for a weapon or armor category, as in its base item records.
+/// `kind` picks the model Aya holds and how the weapon fires; `icon` the bag picture. Armor
+/// icons differ per suit (17..=22); 18 is the common one. `ItemMetadata::default_icon_id` and
+/// `default_kind` do not match the game; prefer this, or the disc's records (`crate::disc`).
+pub fn game_icon_and_kind(category: ItemCategory) -> Option<(u8, u8)> {
+    Some(match category {
+        ItemCategory::Handgun => (1, 1),
+        ItemCategory::Shotgun => (2, 2),
+        ItemCategory::MachineGun => (4, 3),
+        ItemCategory::Rifle => (3, 4),
+        ItemCategory::GrenadeLauncher => (6, 5),
+        ItemCategory::RocketLauncher => (5, 6),
+        ItemCategory::MeleeWeapon => (7, 8),
+        ItemCategory::Armor => (18, 9),
+        _ => return None,
+    })
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct ItemMetadata {
     pub id: u8,

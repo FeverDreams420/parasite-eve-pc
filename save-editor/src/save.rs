@@ -5,8 +5,9 @@ use crate::charset::{decode_sjis_title, format_sjis_title_bytes, pe_decode, pe_e
 use crate::crc::{
     calc_save_crc16, read_stored_crc, update_save_crc16, SAVE_BLOCK_SIZE, SAVE_CRC_OFFSET,
 };
+use crate::disc::{game_data, ITEM_CAPACITY_STAT, MAX_STAT_BAG_SLOTS};
 use crate::tables::{
-    encode_mod_byte, item_metadata, map_location_descriptive, mod_metadata,
+    encode_mod_byte, game_icon_and_kind, item_metadata, map_location_descriptive, mod_metadata,
     save_header_location_name, ItemCategory, PARASITE_SPELLS,
 };
 
@@ -15,6 +16,8 @@ pub const TAIL_OFFSET: usize = 0x13E4;
 pub const SCRIPT_VAR_OFFSET: usize = 0x13E4;
 pub const SCRIPT_VAR_SIZE: usize = 0x0800;
 pub const BATTLE_STATE_OFFSET: usize = 0x1BFC;
+/// Item Capacity stat value of the top level (98), which gives `MAX_STAT_BAG_SLOTS`.
+pub const MAX_BAG_ITEM_CAPACITY_STAT: u16 = 980;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EquipmentRecord {
@@ -52,7 +55,13 @@ impl EquipmentRecord {
         }
     }
 
+    /// A new record for `item_id`, made the way the game makes one: a verbatim copy of the item's
+    /// base record (`Inv_FindSlotByIndex`). Without a loaded disc the stats and slots are the
+    /// editor's estimates; icon and kind still follow the game's per-category values.
     pub fn from_item_template(index: usize, item_id: u8) -> Self {
+        if let Some(rec) = game_data().and_then(|g| g.item_record(item_id)) {
+            return Self::parse(index, &rec);
+        }
         let meta = item_metadata(item_id);
         let (tail_count, tail_capacity) = meta.default_slots;
         let ammo = if meta.category.is_weapon() && meta.category != ItemCategory::MeleeWeapon {
@@ -60,14 +69,15 @@ impl EquipmentRecord {
         } else {
             0
         };
+        let (icon_id, kind) = Self::icon_and_kind_for(item_id);
         Self {
             index,
-            icon_id: meta.default_icon_id.max(1),
+            icon_id,
             tail_capacity,
             reserved02: [0; 2],
             item_id,
             flags: 0,
-            kind: meta.default_kind,
+            kind,
             base_stats: meta.default_stats,
             ammo,
             reserve_ammo: 0,
@@ -75,6 +85,16 @@ impl EquipmentRecord {
             tail_count,
             tail_data: [0; 11],
         }
+    }
+
+    /// Icon (bag picture) and kind (weapon class: the model Aya holds and how it fires) for
+    /// `item_id`: from the disc when loaded, else the game's value for the item's category.
+    pub fn icon_and_kind_for(item_id: u8) -> (u8, u8) {
+        if let Some(rec) = game_data().and_then(|g| g.item_record(item_id)) {
+            return (rec[0x00], rec[0x06]);
+        }
+        let meta = item_metadata(item_id);
+        game_icon_and_kind(meta.category).unwrap_or((meta.default_icon_id.max(1), meta.default_kind))
     }
 
     pub fn is_active(&self) -> bool {
@@ -208,7 +228,8 @@ pub struct PeSaveSlot {
     pub level: u8,
     /// EX Game round counter (`0` = 1st Playthrough, `1` = 2nd Round, etc.)
     pub new_game_count: u8,
-    /// Active item slot limit (`10..=50`)
+    /// Aya's own bag size (`10..=46`), set by the game from the Item Capacity stat; equipped
+    /// armor mods add up to 50 at run time
     pub inventory_slot_count: u8,
     /// Bonus Points (`0..=99999`)
     pub bonus_points: u32,
@@ -493,6 +514,11 @@ impl PeSaveSlot {
             self.header_title = decode_sjis_title(&title_bytes).1;
         }
 
+        let stat_off = RT_OFFSET + 0x48 + ITEM_CAPACITY_STAT * 2;
+        let orig_item_capacity =
+            u16::from_le_bytes(self.raw_bytes[stat_off..stat_off + 2].try_into().unwrap());
+        self.sync_bag_with_item_capacity(orig_slot_count, orig_item_capacity);
+
         let battle_state_needs_sync = self.max_hp != orig_max_hp
             || self.current_hp != orig_cur_hp
             || self.level != orig_level
@@ -594,6 +620,35 @@ impl PeSaveSlot {
         self.calculated_crc = crc;
 
         self.raw_bytes.clone()
+    }
+
+    /// The game sets the bag size from the Item Capacity stat whenever it recomputes Aya's stats
+    /// (`Inv_RecalcSlotStats`: level ups, equipment changes, the status menu), so an edited bag
+    /// size only sticks when the stat gives it. A changed stat sets the bag; otherwise a changed
+    /// bag sets the stat. The stat tops out at 46 slots; armor mods add the rest (to 50) at run
+    /// time and are not stored here.
+    fn sync_bag_with_item_capacity(&mut self, orig_slots: u8, orig_stat: u16) {
+        let stat = &mut self.stats_levels[ITEM_CAPACITY_STAT];
+        let Some(g) = game_data() else {
+            if self.inventory_slot_count != orig_slots {
+                self.inventory_slot_count = self.inventory_slot_count.min(MAX_STAT_BAG_SLOTS);
+                if self.inventory_slot_count == MAX_STAT_BAG_SLOTS {
+                    *stat = (*stat).max(MAX_BAG_ITEM_CAPACITY_STAT);
+                }
+            }
+            return;
+        };
+        if *stat != orig_stat {
+            self.inventory_slot_count = g.bag_slots_for_stat(*stat);
+        } else if self.inventory_slot_count != orig_slots {
+            let slots = self.inventory_slot_count.min(g.max_bag_slots());
+            if g.bag_slots_for_stat(*stat) != slots {
+                if let Some(v) = g.stat_for_bag_slots(slots) {
+                    *stat = v;
+                }
+            }
+            self.inventory_slot_count = g.bag_slots_for_stat(*stat);
+        }
     }
 
     pub fn is_crc_valid(&self) -> bool {
@@ -785,7 +840,7 @@ impl PeSaveSlot {
         self.max_hp = 999;
         self.current_hp = 999;
         self.bonus_points = 99_999;
-        self.inventory_slot_count = 50;
+        self.inventory_slot_count = MAX_STAT_BAG_SLOTS;
         self.pe_bonus_pool = 999;
         self.stats_levels = [1000; 7];
     }
@@ -830,7 +885,9 @@ impl PeSaveSlot {
     }
 
     pub fn apply_cheat_give_ultimate_loadout(&mut self) -> Result<()> {
-        self.inventory_slot_count = 50;
+        self.inventory_slot_count = MAX_STAT_BAG_SLOTS;
+        self.stats_levels[ITEM_CAPACITY_STAT] =
+            self.stats_levels[ITEM_CAPACITY_STAT].max(MAX_BAG_ITEM_CAPACITY_STAT);
         self.apply_cheat_max_ammo();
 
         // Create Ultimate DE50AE7 / P90 and Cm Suit 2 if free slots exist

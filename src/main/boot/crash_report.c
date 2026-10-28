@@ -67,6 +67,29 @@ static struct {
     wchar_t report_path[MAX_PATH];
 } crash = {.log = INVALID_HANDLE_VALUE};
 
+/* MinGW/UCRT can route an access violation through a CRT signal before the
+ * top-level exception filter. Keep the original registers for that path;
+ * first-chance exceptions otherwise continue through the application's handlers. */
+#ifdef _MSC_VER
+#define CRASH_TLS __declspec(thread)
+#else
+#define CRASH_TLS __thread
+#endif
+static CRASH_TLS CONTEXT crash_fault_context;
+static CRASH_TLS EXCEPTION_RECORD crash_fault_record;
+static CRASH_TLS int crash_fault_valid;
+static LONG CALLBACK Crash_CacheException(EXCEPTION_POINTERS *info) {
+    DWORD code=info->ExceptionRecord->ExceptionCode;
+    if(code==EXCEPTION_ACCESS_VIOLATION || code==EXCEPTION_IN_PAGE_ERROR ||
+       code==EXCEPTION_ILLEGAL_INSTRUCTION || code==EXCEPTION_INT_DIVIDE_BY_ZERO ||
+       code==EXCEPTION_FLT_DIVIDE_BY_ZERO || code==EXCEPTION_STACK_OVERFLOW) {
+        crash_fault_context=*info->ContextRecord;
+        crash_fault_record=*info->ExceptionRecord;
+        crash_fault_valid=1;
+    }
+    return EXCEPTION_CONTINUE_SEARCH;
+}
+
 static HANDLE crash_watch_event;
 static HANDLE crash_emergency=INVALID_HANDLE_VALUE;
 static wchar_t crash_emergency_path[MAX_PATH];
@@ -1202,6 +1225,9 @@ static void Crash_Abort(int signal_number) {
 #else
     record.ExceptionAddress = (void *)(uintptr_t)context.Eip;
 #endif
+    if(signal_number!=SIGABRT && crash_fault_valid) {
+        context=crash_fault_context;record=crash_fault_record;
+    }
     Crash_BeginEmergency(&info);
     Crash_Report(&info);
     TerminateProcess(GetCurrentProcess(), 3);
@@ -1236,8 +1262,12 @@ void CrashReport_Install(int interactive, void (*describe)(char *out, size_t siz
     }
     /* Leaves room for the report after a stack overflow on the main thread. */
     SetThreadStackGuarantee(&stack_reserve);
+    AddVectoredExceptionHandler(1,Crash_CacheException);
     SetUnhandledExceptionFilter(Crash_Filter);
     signal(SIGABRT, Crash_Abort);
+    signal(SIGSEGV, Crash_Abort);
+    signal(SIGILL, Crash_Abort);
+    signal(SIGFPE, Crash_Abort);
 }
 
 void CrashReport_SetMods(void (*describe)(char *out, size_t size, int on_game_thread)) {

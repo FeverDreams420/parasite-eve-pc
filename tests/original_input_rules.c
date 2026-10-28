@@ -45,7 +45,7 @@ int main(int argc,char **argv) {
         }
 #ifdef _WIN32
         if(!strcmp(argv[2],"segv")) {
-            ULONG_PTR access[]={0,1};RaiseException(EXCEPTION_ACCESS_VIOLATION,0,2,access);
+            volatile int *bad=(volatile int *)(uintptr_t)1;*bad=1;
         }
 #endif
         raise(!strcmp(argv[2],"segv")?SIGSEGV:SIGABRT);

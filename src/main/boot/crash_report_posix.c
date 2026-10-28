@@ -37,6 +37,7 @@
 #include <fcntl.h>
 #include <limits.h>
 #include <pthread.h>
+#include <poll.h>
 #include <sys/syscall.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -117,13 +118,13 @@ static struct {
  * reporter. It never formats text, flushes stdio, allocates or takes a lock.
  * A blocked reporter cannot strand the process: the emergency file survives. */
 static struct {
-    int pipe[2], emergency;
+    int pipe[2], ack[2], emergency;
     char path[CRASH_PATH + 96], temporary[CRASH_PATH + 100];
     siginfo_t *info;
     void *context;
     long thread;
     int signal, ready, progress;
-} handoff = {.pipe={-1,-1}, .emergency=-1};
+} handoff = {.pipe={-1,-1}, .ack={-1,-1}, .emergency=-1};
 
 static char crash_text[CRASH_TEXT_SIZE];
 static size_t crash_text_size;
@@ -1553,7 +1554,8 @@ static void Crash_Report(int number, siginfo_t *info, void *context) {
     int ok=size>=crash_text_size && !fsync(out);
     if(close(out))ok=0;
     if(!ok || rename(handoff.temporary,handoff.path)) {unlink(handoff.temporary);return;}
-    __atomic_store_n(&handoff.progress,1,__ATOMIC_RELEASE); /* durable; UI may now wait for the user */
+    __atomic_store_n(&handoff.progress,1,__ATOMIC_RELEASE);
+    char written='W';write(handoff.ack[1],&written,1); /* durable; UI may wait for the user */
     Crash_Tell(Crash_BaseName(handoff.path),size);
 }
 
@@ -1563,6 +1565,7 @@ static void *Crash_Reporter(void *unused) {
     if(__atomic_load_n(&handoff.ready,__ATOMIC_ACQUIRE))
         Crash_Report(handoff.signal,handoff.info,handoff.context);
     __atomic_store_n(&handoff.progress,2,__ATOMIC_RELEASE);
+    char done='D';write(handoff.ack[1],&done,1);
     return NULL;
 }
 
@@ -1588,10 +1591,15 @@ static void Crash_Signal(int number, siginfo_t *info, void *context) {
     __atomic_store_n(&handoff.ready,1,__ATOMIC_RELEASE);
     char wake=1;
     if(handoff.pipe[1]>=0 && write(handoff.pipe[1],&wake,1)==1) {
-        for(int waited=0;;waited+=10) {
-            int progress=__atomic_load_n(&handoff.progress,__ATOMIC_ACQUIRE);
-            if(progress==2 || (!progress && waited>=10000))break;
-            Crash_Sleep(10);
+        struct pollfd ack={handoff.ack[0],POLLIN,0};
+        int timeout=10000;
+        for(;;) {
+            int status=poll(&ack,1,timeout);
+            if(status<0 && errno==EINTR)continue;
+            if(status<=0)break;
+            char stage;
+            if(read(handoff.ack[0],&stage,1)!=1 || stage=='D')break;
+            if(stage=='W')timeout=-1;
         }
     }
     _exit(128+number);
@@ -1637,9 +1645,10 @@ void CrashReport_Install(int interactive, void (*describe)(char *out, size_t siz
             crash.dir,now.tm_year+1900,now.tm_mon+1,now.tm_mday,now.tm_hour,now.tm_min,now.tm_sec,(long)getpid());
         snprintf(handoff.temporary,sizeof(handoff.temporary),"%s.tmp",handoff.path);
         handoff.emergency=open(handoff.path,O_WRONLY|O_CREAT|O_EXCL|O_CLOEXEC,0644);
-        if(handoff.emergency>=0 && !pipe(handoff.pipe)) {
+        if(handoff.emergency>=0 && !pipe(handoff.pipe) && !pipe(handoff.ack)) {
             fcntl(handoff.pipe[0],F_SETFD,FD_CLOEXEC);fcntl(handoff.pipe[1],F_SETFD,FD_CLOEXEC);
             fcntl(handoff.pipe[1],F_SETFL,O_NONBLOCK);
+            fcntl(handoff.ack[0],F_SETFD,FD_CLOEXEC);fcntl(handoff.ack[1],F_SETFD,FD_CLOEXEC);
             pthread_t reporter;
             if(!pthread_create(&reporter,NULL,Crash_Reporter,NULL))pthread_detach(reporter);
             else {close(handoff.pipe[0]);close(handoff.pipe[1]);handoff.pipe[0]=handoff.pipe[1]=-1;}

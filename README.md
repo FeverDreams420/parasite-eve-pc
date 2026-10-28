@@ -25,6 +25,8 @@ The left stick provides analog movement. **Escape → Controls → Field run thr
 Settings and selected disc paths are saved automatically. Memory cards are kept in `memory-cards` beside your user preferences. Older `bu00`/`bu10` cards from the launch or executable folder are imported once, keeping the original files.
 Optional geometry correction, antialiasing and model texture filtering are in **Escape → Graphics**.
 
+If the game crashes, it saves a report and shows where to find it. Attach that file when reporting the problem on Discord.
+
 ## Mods
 
 Downloads include an optional mod host. When building from source, enable it with `-DPE_MODS=ON`: the

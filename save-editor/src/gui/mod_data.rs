@@ -6,7 +6,7 @@ use crate::{
 };
 use eframe::egui;
 
-pub fn show(ui: &mut egui::Ui, save: &mut PeSaveSlot) {
+pub(super) fn show(ui: &mut egui::Ui, save: &mut PeSaveSlot) {
     ui.heading("Mod Save Data");
     ui.label(
         "Unknown records are preserved. Normal save edits leave the entire mod tail unchanged.",

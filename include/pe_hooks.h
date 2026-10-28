@@ -23,10 +23,34 @@ typedef enum PeHookId {
     PE_HOOK_LIST_ROWS,   /* PeHookListRows: Draw_SetPrimCallback entry; the row count may change */
     PE_HOOK_MAIN_MENU_ACTION, /* PeHookMenuAction: Aya's main menu confirm; replaceable */
     PE_HOOK_SCRIPT_RANDOM, /* PeHookScriptRandom: local RNG bounds, before a script roll */
+    PE_HOOK_PLAYER_MOVE, /* PeHookPlayerMove: local multiplier for a player-input movement step */
+    PE_HOOK_PAD_MAP,     /* PeHookPadMap: local run-button mapping for this poll */
+    PE_HOOK_ACTOR_STEP,  /* PeHookActorStep: local scripted speed or animation increment */
     PE_HOOK_INVENTORY_SORTED, /* NULL: Aya's native bag sort completed */
     PE_HOOK_MAIN_MENU_ICON, /* PeHookMainMenuIcon: a main menu row's icon, before it is drawn */
     PE_HOOK_COUNT
 } PeHookId;
+
+/* The factor belongs to the current calculation, not the actor. A handler
+ * may change it for this input step only and must not retain its address. */
+typedef struct PeHookPlayerMove {
+    const void *actor;
+    int *factor;
+    int running;
+    int combat;
+} PeHookPlayerMove;
+
+typedef struct PeHookPadMap {
+    unsigned buttons;
+    int *run_mask;
+} PeHookPadMap;
+
+/* Stack-local values only; never retain these pointers or alter actor state. */
+typedef struct PeHookActorStep {
+    const void *actor;
+    int *speed;    /* scripted movement speed, NULL for animation */
+    int *anim;     /* animation increment, NULL for motion */
+} PeHookActorStep;
 
 /* next points just past the current instruction in native loaded bytecode. */
 typedef struct PeHookScriptRandom {
@@ -61,8 +85,18 @@ typedef struct PeHookMainMenuIcon {
 } PeHookMainMenuIcon;
 
 #ifdef PE_MODS
+#include <stddef.h>
+int pe_host_init(const PeHookInit *init);
 int pe_hook_dispatch(int id, void *ctx);
-#define PE_HOOK(id, ctx) pe_hook_dispatch((id), (ctx))
+/* Crash report Mods section: the mods and their state, and the mod code that was running.
+ * Runs inside the crash handler, so it only reads values. */
+void pe_mod_crash_describe(char *out, size_t size, int on_game_thread);
+/* Crash report room snapshot: runs the save write hook into block (a zeroed
+ * 8 KB card block) as a real save would, when a room starts. -1 while mod code
+ * is running; the block stays zeroed. */
+int pe_mod_snapshot_save_tail(unsigned char *block);
+#define PE_HOOK(id, ctx) \
+    ((id) == PE_HOOK_INIT ? pe_host_init((const PeHookInit *)(const void *)(ctx)) : pe_hook_dispatch((id), (ctx)))
 #else
 #define PE_HOOK(id, ctx) ((void)0, 0)
 #endif

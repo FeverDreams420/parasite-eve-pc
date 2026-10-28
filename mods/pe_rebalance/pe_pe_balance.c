@@ -168,6 +168,8 @@ void pe_pe_balance_register(const char *mod_id) {
             "Half bar costs less ATB; shooting powers still cost a full bar.",
             &s_quick[s_powers[i].index], s_quick_names, 2);
     pe_sync_quick();
+    /* Restore the selected preset after all saved individual rows have loaded. */
+    pe_apply(s_rules);
     s_rules = pe_matches(RULES_REBALANCED) ? RULES_REBALANCED : pe_matches(RULES_VANILLA) ? RULES_VANILLA : RULES_CUSTOM;
     s_rules_shown = s_rules;
     pe_menu_register_tick(pe_balance_tick);

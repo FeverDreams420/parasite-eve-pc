@@ -29,6 +29,7 @@ int pe_hook_dispatch(int id,void *ctx){return hooks[id]?hooks[id](ctx,NULL):0;}
 static PeMenuPerFrame tick;
 static int *rules,*detox,*scan;
 static unsigned toasts;
+static int saved_rules=-1;
 int pe_game_loaded(void){return 1;}
 int pe_in_battle(void){return 1;}
 Combatant *pe_aya_core(void){return &aya;}
@@ -41,7 +42,7 @@ int pe_menu_register_int(const char *p,const char *l,const char *d,int *v,int lo
     (void)p;(void)d;(void)lo;(void)hi;(void)step;if(!strcmp(l,"Detox PE cost"))detox=v;if(!strcmp(l,"Scan PE cost"))scan=v;return 0;
 }
 int pe_menu_register_choice(const char *p,const char *l,const char *d,int *v,const char *const *n,unsigned c){
-    (void)p;(void)d;(void)n;(void)c;if(!strcmp(l,"Rules"))rules=v;return 0;
+    (void)p;(void)d;(void)n;(void)c;if(!strcmp(l,"Rules")){rules=v;if(saved_rules>=0)*v=saved_rules;}return 0;
 }
 int pe_menu_register_tick(PeMenuPerFrame fn){tick=fn;return 0;}
 void pe_pe_balance_register(const char *);
@@ -85,6 +86,8 @@ static void other_actor(void){
     for(unsigned power=0;power<=7;++power){PeHookSpell spell={power,&player};hooks[PE_HOOK_SPELL](&spell,NULL);assert(!memcmp(&aya,&before,sizeof aya));}
 }
 int main(int argc,char **argv){
+    if(argc==2 && !strcmp(argv[1],"--saved-vanilla"))saved_rules=0;
     pe_pe_balance_register("pe_rebalance");assert(rules && detox && scan && tick);
+    if(saved_rules==0){assert(*rules==0 && !g_pe_half_enabled && !g_pe_panacea);vanilla();return 0;}
     if(argc==2 && !strcmp(argv[1],"--vanilla"))vanilla();else if(argc==2 && !strcmp(argv[1],"--actor"))other_actor();else costs();return 0;
 }

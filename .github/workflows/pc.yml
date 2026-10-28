@@ -55,7 +55,7 @@ jobs:
           cmake --build build --parallel 4
           ./build/parasite-eve-pc --help
           ctest --test-dir build --output-on-failure --no-tests=error --output-junit linux-source-only.xml -R '^(original-game-(akao-layout|math|gte|animation|transforms|projection|hierarchy|input-rules|pools|nodes|queue|expression|contact|movement|movie-audio-lock-order|spu-(mix-headroom|pitch-modulation|noise|live-adsr|register-serialization|hardware-reference))|host-settings|original-game-save-safety|mod-settings-save-safety|pe-mod-frequency)$'
-          ctest --test-dir build --output-on-failure --no-tests=error -R "^(host-crash-report|mod-crash-save-tail|mod-preserve-save-tail|mod-save-records|mod-save-registration-bounds|mod-rebalance-(vanilla|scoped|poison)|mod-inventory|mod-inventory-menu)$"
+          ctest --test-dir build --output-on-failure --no-tests=error -R "^(host-crash-report|mod-crash-save-tail|mod-preserve-save-tail|mod-save-records|mod-save-registration-bounds|mod-rebalance-(vanilla|saved-vanilla|scoped|poison)|mod-inventory|mod-inventory-menu)$"
           python3 - <<'PYTEST'
           import xml.etree.ElementTree as E
           r = E.parse('build/linux-source-only.xml')
@@ -152,7 +152,7 @@ jobs:
         run: |
           ./build/parasite-eve-pc.exe --help
           ctest --test-dir build --output-on-failure --no-tests=error --output-junit windows-source-only.xml -R '^(original-game-(akao-layout|math|gte|animation|transforms|projection|hierarchy|input-rules|pools|nodes|queue|expression|contact|movement|movie-audio-lock-order|spu-(mix-headroom|pitch-modulation|noise|live-adsr|register-serialization|hardware-reference))|host-settings|original-game-save-safety|mod-settings-save-safety|pe-mod-frequency)$'
-          ctest --test-dir build --output-on-failure --no-tests=error -R "^(host-crash-report|mod-crash-save-tail|mod-preserve-save-tail|mod-save-records|mod-save-registration-bounds|mod-rebalance-(vanilla|scoped|poison)|mod-inventory|mod-inventory-menu)$"
+          ctest --test-dir build --output-on-failure --no-tests=error -R "^(host-crash-report|mod-crash-save-tail|mod-preserve-save-tail|mod-save-records|mod-save-registration-bounds|mod-rebalance-(vanilla|saved-vanilla|scoped|poison)|mod-inventory|mod-inventory-menu)$"
       - name: Require all selected source-only cases to execute
         shell: pwsh
         run: |

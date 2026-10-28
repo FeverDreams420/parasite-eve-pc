@@ -563,5 +563,23 @@ mod tests {
         assert_eq!(data.max_hp_for_stat(TOP_LEVEL_STAT, false), MAX_STAT_MAX_HP);
         assert_eq!(data.max_hp_for_stat(TOP_LEVEL_STAT, true), 999);
         assert_eq!(data.stat_for_max_hp(999, true), Some(TOP_LEVEL_STAT));
+
+        // The editor writes mod bytes as the game's own records hold them. One record keeps a
+        // 3 Commands without its group (a quirk of the original data), which is allowed.
+        for id in 0x3Fu8..=0xC7 {
+            let rec = data.item_record(id).unwrap();
+            let armor = rec[0x06] == 9;
+            for &b in &rec[0x15..0x15 + (rec[0x14] as usize).min(11)] {
+                if b & 0x1F == 0 || (b == 0x14 && !armor) {
+                    continue;
+                }
+                assert_eq!(
+                    crate::tables::encode_mod_byte(b & 0x1F, armor),
+                    b,
+                    "item 0x{:02X}",
+                    id
+                );
+            }
+        }
     }
 }

@@ -87,6 +87,33 @@ mod tests {
     }
 
     #[test]
+    fn test_mod_bytes_use_the_games_groups_and_names() {
+        use crate::tables::{encode_mod_byte, mod_metadata};
+        // The P90's own record holds Rate of Fire x10 and Attack All as 0x25 and 0x48.
+        assert_eq!(encode_mod_byte(0x05, false), 0x25);
+        assert_eq!(encode_mod_byte(0x08, false), 0x48);
+        assert_eq!(encode_mod_byte(0x09, false), 0x09); // Heat: no group
+        assert_eq!(encode_mod_byte(0x14, false), 0x74); // 3 Commands: group 3
+        assert_eq!(encode_mod_byte(0x10, false), 0x90); // Steal: group 4
+        assert_eq!(encode_mod_byte(0x0A, true), 0xAA); // Bag +4: group 5
+        // An effect no table knows is kept, never turned into an empty slot.
+        assert_eq!(encode_mod_byte(0x15, false), 0x15);
+        assert_eq!(mod_metadata(0x15, false).name, "Unknown Effect");
+
+        // The economy mod's armor effects 17..=20, and the game's own names for 13 and 15.
+        assert_eq!(mod_metadata(17, true).name, "Bargain (mod)");
+        assert_eq!(mod_metadata(18, true).name, "Scavenger (mod)");
+        assert_eq!(mod_metadata(20, true).name, "Salvager (mod)");
+        assert_eq!(mod_metadata(13, true).name, "Slower Active Time");
+        assert_eq!(mod_metadata(15, true).name, "Attack Down");
+        for effect in 1..32u8 {
+            for armor in [false, true] {
+                assert_ne!(mod_metadata(effect, armor).name, "Empty Slot", "effect {}", effect);
+            }
+        }
+    }
+
+    #[test]
     fn test_edits_keep_mod_data_in_the_free_tail() {
         // Mods keep their own blocks after the checksum word (0x1C90..0x2000), inside the CRC.
         let sample_path =

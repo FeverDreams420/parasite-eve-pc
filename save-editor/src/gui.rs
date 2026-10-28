@@ -2360,6 +2360,9 @@ fn render_equipment_record_editor(
                     .width(260.0)
                     .selected_text(if cur_mod_id == 0 {
                         RichText::new("— Empty Slot —").color(TEXT_MUTED)
+                    } else if cur_mod_meta.id != cur_mod_id {
+                        RichText::new(format!("Unknown Effect #{} (kept as it is)", cur_mod_id))
+                            .color(ACCENT_AMBER)
                     } else {
                         RichText::new(format!(
                             "{} ({})",

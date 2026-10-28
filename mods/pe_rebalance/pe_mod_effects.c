@@ -696,6 +696,8 @@ void pe_mod_effects_register(const char *mod_id) {
             pe_menu_register_int(PE_PAGE_MOD_EFFECTS, s_rows[i].label, s_rows[i].desc, s_rows[i].value,
                                  s_rows[i].min, s_rows[i].max, s_rows[i].step);
     }
+    /* Restore the selected preset after all saved individual rows have loaded. */
+    pe_apply_rules(s_rules);
     s_rules = pe_matches(RULES_REBALANCED) ? RULES_REBALANCED : pe_matches(RULES_VANILLA) ? RULES_VANILLA : RULES_CUSTOM;
     s_rules_shown = s_rules;
     pe_menu_register_tick(pe_mod_effects_tick);

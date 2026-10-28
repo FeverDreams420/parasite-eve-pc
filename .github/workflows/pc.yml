@@ -62,8 +62,10 @@ jobs:
           assert len(r.findall('.//testcase')) == 25
           assert not any(r.findall('.//' + tag) for tag in ['skipped', 'failure', 'error'])
           PYTEST
-      - name: Verify save editor regressions
-        run: cargo test --manifest-path save-editor/Cargo.toml --locked
+      - name: Verify and build save editor
+        run: |
+          cargo test --manifest-path save-editor/Cargo.toml --locked
+          cargo build --manifest-path save-editor/Cargo.toml --locked --release
       - name: Package Linux x86-64
         run: |
           stage=package/Parasite-Eve-linux-x86_64
@@ -86,11 +88,29 @@ jobs:
           git rev-parse HEAD > "$stage/source-commit.txt"
           tar -czf Parasite-Eve-0.6-linux-x86_64.tar.gz -C package Parasite-Eve-linux-x86_64
           sha256sum Parasite-Eve-0.6-linux-x86_64.tar.gz > linux-x86_64-sha256.txt
+          editor=package/Parasite-Eve-Save-Editor-0.6-linux-x86_64
+          mkdir -p "$editor/licenses"
+          cp save-editor/target/release/pe-save-editor LICENSE.md "$editor/"
+          python3 - <<'PYEDITORLICENSE'
+          from pathlib import Path
+          import os, shutil
+          registry = Path(os.environ.get('CARGO_HOME', str(Path.home() / '.cargo'))) / 'registry/src'
+          dest = Path('package/Parasite-Eve-Save-Editor-0.6-linux-x86_64/licenses')
+          for index in registry.iterdir():
+              for crate in index.iterdir():
+                  for path in crate.rglob('*'):
+                      if path.is_file() and path.name.lower().startswith(('license', 'copying', 'notice', 'copyright')):
+                          target = dest / crate.name / path.relative_to(crate)
+                          target.parent.mkdir(parents=True, exist_ok=True)
+                          shutil.copy2(path, target)
+          PYEDITORLICENSE
+          tar -czf Parasite-Eve-Save-Editor-0.6-linux-x86_64.tar.gz -C package Parasite-Eve-Save-Editor-0.6-linux-x86_64
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: linux-x86_64-package
           path: |
             Parasite-Eve-0.6-linux-x86_64.tar.gz
+            Parasite-Eve-Save-Editor-0.6-linux-x86_64.tar.gz
             linux-x86_64-sha256.txt
             build/linux-source-only.xml
 
@@ -165,6 +185,13 @@ jobs:
           }
           git rev-parse HEAD | Set-Content "$game/source-commit.txt"
           Copy-Item save-editor/target/release/pe-save-editor.exe, LICENSE.md $editor
+          $registry = Join-Path $env:USERPROFILE '.cargo/registry/src'
+          Get-ChildItem $registry -Recurse -File | Where-Object { $_.Name -match '^(LICENSE|COPYING|NOTICE|COPYRIGHT)' } | ForEach-Object {
+            $relative = [IO.Path]::GetRelativePath($registry, $_.FullName)
+            $target = Join-Path "$editor/licenses" $relative
+            New-Item -ItemType Directory -Force (Split-Path $target) | Out-Null
+            Copy-Item $_.FullName $target
+          }
           'Open pe-save-editor.exe to edit a backup of your save. Optional: select your North American disc image for item data. The game must be closed while replacing saves.' | Set-Content "$editor/Read me.txt"
           Compress-Archive -Path $game -DestinationPath Parasite-Eve-0.6-windows-x86_64-experimental.zip
           Compress-Archive -Path $editor -DestinationPath Parasite-Eve-Save-Editor-0.6-windows-x86_64.zip

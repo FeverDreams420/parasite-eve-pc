@@ -108,10 +108,10 @@ static const unsigned char *record(const unsigned char *card,const char *name,un
     for(const char *c=name;*c;++c) id=(id^(unsigned char)*c)*0x01000193u;
     const unsigned char *t=card+0x1C90;
     if(memcmp(t,"PEMC",4)) return NULL;
-    for(unsigned at=16,total=t[6]|t[7]<<8;at<total;) {   /* records short of the window */
+    for(unsigned at=20,total=t[6]|t[7]<<8;at<total;) {   /* records short of the window */
         unsigned rid=pe_inventory_word(t+at),n=t[at+6]|t[at+7]<<8;
-        if(rid==id){*size=n;return t+at+8;}
-        at+=8+n;
+        if(rid==id){*size=n;return t+at+12;}
+        at+=12+n;
     }
     return NULL;
 }

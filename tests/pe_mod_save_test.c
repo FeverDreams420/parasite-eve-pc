@@ -64,12 +64,16 @@ static unsigned crc32(const unsigned char *p, unsigned n) {
     return ~c;
 }
 static unsigned s_at;
-static void tail_begin(unsigned char *card) { memset(card, 0, 0x2000); memcpy(card + 0x1C90, "PEMC\1\0", 6); s_at = 16; }
+static void tail_begin(unsigned char *card) { memset(card, 0, 0x2000); memcpy(card + 0x1C90, "PEMC\1\0", 6); s_at = 20; }
 static void tail_add(unsigned char *card, unsigned id, unsigned version, const void *data, unsigned size) {
     unsigned char *t = card + 0x1C90 + s_at;
     memcpy(t, &id, 4); t[4] = (unsigned char)version; t[5] = (unsigned char)(version >> 8);
-    t[6] = (unsigned char)size; t[7] = (unsigned char)(size >> 8); memcpy(t + 8, data, size);
-    s_at += 8 + size;
+    t[6] = (unsigned char)size; t[7] = (unsigned char)(size >> 8); memcpy(t + 12, data, size);
+    {   /* the record's own CRC: its first 8 bytes, then its data */
+        unsigned char buf[8 + 0x400]; unsigned c;
+        memcpy(buf, t, 8); memcpy(buf + 8, data, size); c = crc32(buf, 8 + size); memcpy(t + 8, &c, 4);
+    }
+    s_at += 12 + size;
 }
 static void tail_end(unsigned char *card) {
     unsigned char *t = card + 0x1C90;
@@ -83,12 +87,12 @@ static const unsigned char *find(const unsigned char *card, const char *name, un
     const unsigned char *t = card + 0x1C90;
     unsigned at, total = t[6] | t[7] << 8, id;
     if (memcmp(t, "PEMC", 4)) return NULL;
-    for (at = 16; at < total; at += 8 + (t[at + 6] | t[at + 7] << 8)) {   /* records short of the window */
+    for (at = 20; at < total; at += 12 + (t[at + 6] | t[at + 7] << 8)) {   /* records short of the window */
         memcpy(&id, t + at, 4);
         if (id == fnv(name)) {
             if (version) *version = t[at + 4] | t[at + 5] << 8;
             if (size) *size = t[at + 6] | t[at + 7] << 8;
-            return t + at + 8;
+            return t + at + 12;
         }
     }
     return NULL;
@@ -117,6 +121,7 @@ int main(void) {
     s_junk.junk = 120; s_junk.pity = 3; s_keys[0] = 0xC8;
     game_save();
     assert(!memcmp(s_card + 0x1C90, "PEMC", 4) && s_card[0x1C8F] == 0);
+    assert(s_card[0x1C90 + 16] == PE_MOD_API_VERSION && s_card[0x1C90 + 18] == 1);   /* the writer marker */
     assert((p = find(s_card, "pe_economy.loot", &v, &n)) && v == 2 && n == sizeof s_junk);
     assert((p = find(s_card, "pe_qol.keys", &v, &n)) && v == 1 && p[0] == 0xC8);
     memset(&s_junk, 0, sizeof s_junk); memset(s_keys, 0, sizeof s_keys);
@@ -194,7 +199,8 @@ int main(void) {
     game_save();
     assert((p = find(s_card, "pe_economy.loot", &v, NULL)) && v == 2 && p[0] == 42);   /* now in the new layout */
 
-    /* A record that fails its owner's checks, and a damaged tail, both reset. */
+    /* A record that fails its owner's checks resets. Damage to one record (another build wrote over
+     * it) resets only that record; damage to the container's header resets everything. */
     {
         struct { unsigned junk, pity; } bad = {100000, 1};
         tail_begin(other);
@@ -202,9 +208,19 @@ int main(void) {
         tail_end(other);
         game_load(other);
         assert(s_junk.junk == 0 && s_junk.pity == 7);
+        s_junk.junk = 5; s_keys[0] = 0xC8;
         game_save();
         memcpy(other, s_card, sizeof other);
-        other[0x1C90 + 20] ^= 1;
+        p = find(other, "pe_economy.loot", NULL, NULL);
+        other[p - other] ^= 1;
+        s_junk.junk = 6; s_keys[0] = 0;
+        game_load(other);
+        assert(s_junk.junk == 0 && s_junk.pity == 7 && s_keys[0] == 0xC8);
+        game_save();                                                   /* the lost record is gone, the rest kept */
+        assert(!find(s_card, "pe_economy.loot", NULL, NULL) || find(s_card, "pe_economy.loot", NULL, NULL)[0] == 0);
+        assert((p = find(s_card, "pe_qol.keys", NULL, NULL)) && p[0] == 0xC8);
+        memcpy(other, s_card, sizeof other);
+        other[0x1C90 + 6] = 0xFF; other[0x1C90 + 7] = 0xFF;          /* total: past the room */
         s_junk.junk = 5;
         game_load(other);
         assert(s_junk.junk == 0 && s_keys[0] == 0);
@@ -230,7 +246,8 @@ int main(void) {
     game_save();
     assert(!memcmp(crash + 0x1C90, s_card + 0x1C90, 0x370));
     pe_save_crash_describe(text, sizeof text, &used);
-    assert(strstr(text, "2 record(s)") && strstr(text, "pe_economy.loot (junk_mod) v2, 8 bytes, live"));
+    assert(strstr(text, "2 record(s)") && strstr(text, "writer mod API 1 / save writer 1") &&
+           strstr(text, "pe_economy.loot (junk_mod) v2, 8 bytes, live"));
 
     /* The window (0x200..0x287): the old PKEY/SORT blocks. A build without the records (an
      * official release) rewrites them; the container doesn't break, and the newer pocket wins. */

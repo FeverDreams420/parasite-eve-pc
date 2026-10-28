@@ -35,9 +35,13 @@
  * Tail layout (little-endian, no padding), the container's bytes in order around the window:
  *   container  "PEMC", u8 format 1, u8 flags 0, u16 total bytes (header included),
  *              u32 CRC-32 (IEEE, reflected) of the whole container with this field as zero,
- *              u32 CRC-32 of the window's 0x88 bytes as written with it
- *   record     u32 id (FNV-1a 32 of the name's bytes), u16 layout version, u16 size, then size bytes
- * Records are sorted by id, each id once; bytes after the container are zero. */
+ *              u32 CRC-32 of the window's 0x88 bytes as written with it,
+ *              writer marker: u16 mod API version, u16 save writer revision (pe_save.c)
+ *   record     u32 id (FNV-1a 32 of the name's bytes), u16 layout version, u16 size,
+ *              u32 CRC-32 of the id, version and size fields and the bytes, then size bytes
+ * Records are sorted by id, each id once; bytes after the container are zero. When the container's
+ * CRC fails (another build wrote over part of it), the records whose own CRC still matches load and
+ * only the others reset. */
 
 #include <stddef.h>
 #include <stdint.h>
@@ -48,8 +52,8 @@
 #define PE_SAVE_WINDOW_END  0x288
 #define PE_SAVE_WINDOW_SIZE (PE_SAVE_WINDOW_END - PE_SAVE_WINDOW_AT)
 #define PE_SAVE_ROOM        (PE_SAVE_TAIL_SIZE - PE_SAVE_WINDOW_SIZE)   /* the container: 744 bytes */
-#define PE_SAVE_HEADER_SIZE 16
-#define PE_SAVE_RECORD_HEADER_SIZE 8
+#define PE_SAVE_HEADER_SIZE 20
+#define PE_SAVE_RECORD_HEADER_SIZE 12
 
 typedef struct PeSaveRecord {
     const char *name;     /* "mod.thing", e.g. "pe_qol.keys"; it is the record's id: never rename it */

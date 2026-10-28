@@ -145,8 +145,11 @@ pe_save_register(&s_record);
   pe_qol still writes itself, because the official releases read and write them there. The records
   run around those bytes and their CRC leaves them out, so a save made in an official release keeps
   every mod's data and its pocket, and the pocket it saved wins when the save comes back here.
-- **Room:** 744 bytes (the tail's 880 less those 136; 16 for the header, 8 per record). A record that
-  doesn't fit is refused when it registers, with a line in `pe_mods.log`.
+- **Damage:** each record carries its own CRC. If another build writes over part of the records,
+  only the records it hit reset; the rest load. The header also records who wrote the save (mod API
+  version and the host's save writer revision), so later builds can tell older saves apart.
+- **Room:** 744 bytes (the tail's 880 less those 136; 20 for the header, 12 per record). A record
+  that doesn't fit is refused when it registers, with a line in `pe_mods.log`.
 
 Records today:
 

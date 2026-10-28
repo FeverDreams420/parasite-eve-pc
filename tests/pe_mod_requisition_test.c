@@ -121,11 +121,11 @@ int main(void) {
     g_GameStateFlags=2;assert(!purchase(6));g_GameStateFlags=4;assert(!purchase(6));
     g_GameStateFlags=0;g_GameStateFlagsWord=0x200;assert(!purchase(6));
     reset();uint8_t card[8192];memset(card,0xCC,sizeof card);set_tools(7);
-    /* The host's record: "PEMC" (16-byte header), then the one record (id, version 1, 4 bytes) and its bytes. */
+    /* The host's record: "PEMC" (20-byte header), then the one record (id, version 1, 4 bytes, CRC) and its bytes. */
     dispatch(PE_HOOK_SAVE_WRITE,card);assert(!memcmp(card+0x1C90,"PEMC",4) && card[0x1C8F]==0xCC);
-    assert(card[0x1C90+20]==1 && card[0x1C90+22]==4 && card[0x1C90+24]==7 && card[0x1C90+28]==0);set_tools(0);
+    assert(card[0x1C90+24]==1 && card[0x1C90+26]==4 && card[0x1C90+32]==7 && card[0x1C90+36]==0);set_tools(0);
     dispatch(PE_HOOK_SAVE_READ,card);assert(get_tools()==7 && pe_shop_price(0x16)==100);
-    card[0x1C90+24]^=1;dispatch(PE_HOOK_SAVE_READ,card);assert(get_tools()==0);
+    card[0x1C90+32]^=1;dispatch(PE_HOOK_SAVE_READ,card);assert(get_tools()==0);
     /* A save from before: the recomp's PESH block at 0x1C90 + 0x1C0 still loads, and a damaged one doesn't. */
     memset(card,0,sizeof card);
     {uint32_t old[5]={0x48534550u,1,4,0,5};uint32_t sum=0x5A17C0DEu;

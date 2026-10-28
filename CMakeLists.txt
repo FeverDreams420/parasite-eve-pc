@@ -4,7 +4,7 @@ if(CMAKE_HOST_APPLE AND NOT DEFINED CMAKE_OSX_DEPLOYMENT_TARGET
    AND (NOT DEFINED CMAKE_SYSTEM_NAME OR CMAKE_SYSTEM_NAME STREQUAL "Darwin"))
     set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "Minimum supported macOS version")
 endif()
-project(parasite-eve-pc VERSION 0.5.0 LANGUAGES C)
+project(parasite-eve-pc VERSION 0.6.0 LANGUAGES C)
 option(PE_MACOS_BUNDLE "Package the macOS application bundle" OFF)
 
 set(CMAKE_C_STANDARD 11)
@@ -610,6 +610,12 @@ if(BUILD_TESTING)
         LABELS "game-assets;room" ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy")
     add_test(NAME original-all-room-loads COMMAND test-original-actor-animation --all-room-loads)
     set_tests_properties(original-all-room-loads PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 120 LABELS "game-assets;room")
+    add_test(NAME original-widescreen-rooms COMMAND test-original-actor-animation --widescreen-rooms)
+    set_tests_properties(original-widescreen-rooms PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600
+        LABELS "game-assets;room" ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy")
+    add_test(NAME original-widescreen-animations COMMAND test-original-actor-animation --widescreen-rooms)
+    set_tests_properties(original-widescreen-animations PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600
+        LABELS "game-assets;room" ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy;PE_WS_ANIMATIONS=1")
     add_test(NAME original-m417-chrysler-load COMMAND test-original-actor-animation --m417-load)
     set_tests_properties(original-m417-chrysler-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60
         LABELS "game-assets;room" ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy")
@@ -727,6 +733,11 @@ if(BUILD_TESTING)
     pe_add_common_unit_test(test-original-shadow original-game-shadow tests/original_shadow.c
         $<TARGET_OBJECTS:parasite-eve-original-shadow>)
     target_compile_definitions(test-original-shadow PRIVATE __psyz)
+    if(PSYZ_RENDERER STREQUAL "sdl3_gpu")
+        add_test(NAME original-widescreen-gpu-capture COMMAND test-original-shadow --widescreen-gpu)
+        set_tests_properties(original-widescreen-gpu-capture PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60 LABELS "gpu"
+            ENVIRONMENT "PSYZ_HEADLESS=gpu;SDL_AUDIODRIVER=dummy")
+    endif()
 
     pe_add_common_unit_test(test-original-stat-assets original-game-stat-assets tests/original_stat_assets.c
         $<TARGET_OBJECTS:parasite-eve-original-disc>

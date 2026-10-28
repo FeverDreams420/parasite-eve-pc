@@ -33,7 +33,9 @@ static void table_is_sane(void) {
         /* the operand holds an item: the spot's own, or the other one of a roll */
         assert(s->expect[2 + s->operand] >= 1 && s->expect[2 + s->operand] <= 0xFF);
         vanilla_of[s->spot] += s->expect[2 + s->operand] == g_pe_rand_spots[s->spot].vanilla;
-        assert((s->expect[0] & 0x1FFF) == 10 || (s->expect[0] & 0x1FFF) == 167 || (s->expect[0] & 0x1FFF) == 232);
+        /* AssignValue, GiveItem, its popup, or its full-bag swap (op 169, item as operand 0) */
+        assert((s->expect[0] & 0x1FFF) == 10 || (s->expect[0] & 0x1FFF) == 167 || (s->expect[0] & 0x1FFF) == 232 ||
+               ((s->expect[0] & 0x1FFF) == 169 && s->operand == 0));
         if (i) {
             const PeRandSite *p = &g_pe_rand_sites[i - 1];
             assert(p->map < s->map || (p->map == s->map && p->at < s->at));   /* sorted, no duplicates */

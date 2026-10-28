@@ -288,7 +288,16 @@ static int pe_rand_check_record(void *data) {
     const PeRandRun *run = data;
     return run->on > 1;
 }
-static const PeSaveRecord s_record = {"pe_randomizer.run", 1, &s_run, sizeof s_run, pe_rand_check_record, NULL, NULL, NULL};
+/* The mod is off this session and the save is randomized: rooms load vanilla, so a spot the run
+ * already emptied may hold an item that is now somewhere else. The record is kept as it is. */
+static void pe_rand_release(void *data) {
+    const PeRandRun *run = data;
+    if (!run->on) return;
+    pe_mod_log(MOD_ID, "randomized save (seed %06u) loaded with the mod off: items stay vanilla", (unsigned)run->seed);
+    pe_toast("This save is randomized: turn the Randomizer mod back on to keep its items");
+}
+static const PeSaveRecord s_record = {"pe_randomizer.run", 1, &s_run, sizeof s_run, pe_rand_check_record, NULL, NULL,
+                                      pe_rand_release};
 
 static void pe_rand_random_seed(void) {
     uint32_t x = (uint32_t)time(NULL) ^ (uint32_t)clock() * 2654435761u;

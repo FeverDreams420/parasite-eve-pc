@@ -11,7 +11,8 @@ a room whose script is exactly what was scanned here.
   chest   item set at room start, given through an actor slot, with a left-behind-item variable
           (full bag: Aya can swap, the chest keeps her item). Rolls of two count as one spot.
   pickup  item set just before the give (no left-behind variable): keys on the floor.
-  gift    GiveItem with the item as an immediate, plus its "You got X" popup when it has one.
+  gift    GiveItem with the item as an immediate, plus its "You got X" popup when it has one and
+          a full-bag swap menu (op 169) that names the item itself.
 
 Left out (they stay vanilla): Wayne (M048, M052), the debug room (M360), the Chrysler Building,
 the shared museum and cruiser routines, ?? lines of chests.py, the Theater keys (their doors
@@ -94,9 +95,11 @@ def scan(path):
                 if v in FIXED_KEYS or v in CUT_KEYS: continue
                 if not (v in KEYS or m in GIFT_MAPS): continue
                 sites = [site(b, g, 0)]
-                pop = next((p for p in range(g + 16, min(len(b) - 16, g + 0x100), 4)
-                            if word(b, p) == (232 | 1 << 13) and word(b, p + 8) == v), None)
-                if pop is not None: sites.append(site(b, pop, 0))
+                # its popup (before the give in M344) and a full-bag swap (op 169) naming the item
+                for p in range(max(0, g - 0x40), min(len(b) - 16, g + 0x100), 4):
+                    if p != g and word(b, p + 8) == v and (word(b, p) == (232 | 1 << 13) or
+                            (p > g and is_step(b, p, 169, 2) and not (word(b, p) >> 17) & 7)):
+                        sites.append(site(b, p, 0))
                 gifts.append(dict(map=m, give=g, kind="GIFT", vars=[], vanilla=v, sites=sites))
     return chests, gifts
 

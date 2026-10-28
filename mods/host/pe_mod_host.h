@@ -13,6 +13,7 @@
  *   Events   pe_event_id() names a mod-defined event; pe_event_emit() runs its
  *            handlers. Mods announce things without knowing who listens.
  *   Files    pe_mod_path() builds a path beside the user's preferences.
+ *   Saves    pe_save_register() (pe_save.h): per-save state the host saves, loads and carries.
  */
 
 #include <stddef.h>

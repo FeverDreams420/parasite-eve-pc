@@ -15,7 +15,7 @@
 #include "pe_mod_menu.h"
 #include "pe_pages.h"
 #include "pe_present.h"
-#include "pe_save_tail.h"
+#include "pe_save.h"
 
 extern const PeMod *const g_pe_mods[]; /* generated: pe_mod_list.c */
 
@@ -304,7 +304,7 @@ static void pe_host_start(const PeHookInit *init) {
         pe_equip_sync_init();
         pe_present_install();
     }
-    pe_save_tail_install();                      /* always: a save made with mods off keeps their data too */
+    pe_save_install();                           /* always: a save made with mods off keeps their data too */
     if (s_interactive) pe_panel_install();
     s_started = 1;
     {                                            /* inactive mods' handlers stay registered, skipped */
@@ -321,10 +321,14 @@ int pe_host_init(const PeHookInit *init) {
 int pe_hook_dispatch(int id, void *ctx) {
     int i, handled = 0;
     if (!s_started) return 0;
+    /* The mods' saved records go back before any mod's own load handler sees the save. */
+    if (id == PE_HOOK_SAVE_READ && ctx) pe_save_on_read((const uint8_t *)ctx);
     for (i = 0; i < s_handler_count; i++) {
         if (s_handlers[i].id < id) continue;
         if (s_handlers[i].id > id) break;
         if (s_handlers[i].active && s_handlers[i].fn(ctx, s_handlers[i].user)) handled = 1;
     }
+    /* After every mod's own save handler: the records go into the save. */
+    if (id == PE_HOOK_SAVE_WRITE && ctx) pe_save_on_write((uint8_t *)ctx);
     return handled;
 }

@@ -148,6 +148,8 @@ jobs:
       - name: Build the native Windows game and test executables
         run: |
           cmake -S . -B build -G Ninja -DBUILD_TESTING=ON -DPE_MODS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo
+          cmake --build build --target test-crash-report --parallel 2
+          ctest --test-dir build --output-on-failure --no-tests=error -R '^host-crash-report$'
           cmake --build build --parallel 2
       - name: Run source-only Windows runtime checks (no retail images)
         run: |

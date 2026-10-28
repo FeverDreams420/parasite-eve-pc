@@ -9,12 +9,51 @@
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
 #include "pe1/game_state.h"
+#include "pe1/pad_state.h"
 #include "pe1/scene_room.h"
 Pe1GameState g_GameState;
 SceneRoomSectorRange g_RoomSectorTable[SCENE_ROOM_COUNT];
 int g_SceneDispatchCur;
 u32 g_ScriptVariableBank[512];
-static int loaded = 1, battle, *mode;
+static int loaded = 1, battle, *mode, free_field = 1;
+static int *always_run, *run_speed, *walk_speed, *combat_speed, *entry_speed;
+static PeMenuPerFrame move_tick;
+static BattleEntity player;
+PadPacket g_PadPackets[2];
+s32 g_FieldRenderFlagTable[32];
+int g_BattleModeState;
+BattleEntity *pe_player(void) { return &player; }
+int pe_free_field(void) { return free_field; }
+void pe_mod_log(const char *id,const char *fmt,...) { (void)id;(void)fmt; }
+int pe_menu_register_toggle(const char *p,const char *l,const char *d,int *v,PeMenuPerFrame tick) {
+    (void)p;(void)l;(void)d;(void)tick;always_run=v;return 0;
+}
+int pe_menu_register_tick(PeMenuPerFrame tick) { move_tick=tick;return 0; }
+void pe_move_register(const char *);
+static void movement_regression(void) {
+    pe_move_register("pe_qol");
+    *always_run=*run_speed=*walk_speed=*combat_speed=*entry_speed=0;
+    memset(&player,0,sizeof(player));
+    g_PadPackets[0].header=0x4100;g_PadPackets[0].buttons=0xFFFF;
+    g_FieldRenderFlagTable[0]=0x4000;
+    // Actual Central Park encounter: the game sets 3x for its entry script.
+    battle=1;free_field=0;g_BattleModeState=7;player.actionMode=4;
+    player.moveFactor=0x30000;move_tick();assert(player.moveFactor==0x30000);
+    for(int factor=0x14000;factor<=0x30000;factor+=0x4000) {
+        player.moveFactor=factor;move_tick();assert(player.moveFactor==factor);
+    }
+    // The mod restores only a factor it wrote, not an equal-looking script value.
+    battle=0;free_field=1;player.moveFactor=0x10000;
+    g_PadPackets[0].buttons=(u16)~0x10;*walk_speed=3;
+    move_tick();assert(player.moveFactor==0x1C000);
+    g_PadPackets[0].buttons=0xFFFF;move_tick();assert(player.moveFactor==0x10000);
+    player.moveFactor=0x1C000;move_tick();assert(player.moveFactor==0x1C000);
+    player.moveFactor=0x10000;g_PadPackets[0].buttons=(u16)~0x10;move_tick();
+    assert(player.moveFactor==0x1C000);
+    player.moveFactor=0x30000;battle=1;free_field=0;move_tick();assert(player.moveFactor==0x30000);
+    battle=0;free_field=1;player.moveFactor=0x10000;
+    puts("Passed movement ownership: original battle-entry/script speeds preserved; only mod-owned speed restored");
+}
 static PeHookFn on_random;
 int pe_game_loaded(void) { return loaded; }
 int pe_in_battle(void) { return battle; }
@@ -22,10 +61,19 @@ int Text_EncodeBase32(char *out, unsigned value) { (void)value; strcpy(out,"M000
 int Text_ParseMapNumber(signed char *s) { (void)s; return 1; }
 int pe_menu_register_choice(const char *p, const char *l, const char *d, int *v,
                             const char *const *n, unsigned c) {
-    (void)p; (void)l; (void)d; (void)n; assert(c == 4); mode = v; return 0;
+    (void)p; (void)d; (void)n;
+    if(!strcmp(l,"Run speed")) { assert(c==8);run_speed=v; }
+    else if(!strcmp(l,"Walk speed")) { assert(c==8);walk_speed=v; }
+    else if(!strcmp(l,"Combat speed")) { assert(c==8);combat_speed=v; }
+    else if(!strcmp(l,"Battle start speed")) { assert(c==5);entry_speed=v; }
+    else { assert(c==4);mode=v; }
+    return 0;
 }
 int pe_hook_add(int id, PeHookFn fn, void *u, int p, const char *m) {
-    (void)u; (void)p; (void)m; assert(id == PE_HOOK_SCRIPT_RANDOM); on_random = fn; return 0;
+    (void)u; (void)p; (void)m;
+    if(id==PE_HOOK_SCRIPT_RANDOM) on_random=fn;
+    else assert(id==PE_HOOK_PAD_READ || id==PE_HOOK_SCENE_START || id==PE_HOOK_SAVE_READ);
+    return 0;
 }
 void pe_battle_frequency_register(const char *);
 static unsigned word(const unsigned char *p) { unsigned v; memcpy(&v,p,4); return v; }
@@ -108,5 +156,6 @@ int main(int argc, char **argv) {
     roll.next=code+5; end=2; *mode=2; on_random(&roll,NULL); assert(end==1);
     puts("Passed frequency modes, Normal restoration, unrelated RNG rejection, truncation bounds, and battle/skip guards.");
     if (argc==3) real_rooms(argv[1],argv[2]);
+    movement_regression();
     return 0;
 }

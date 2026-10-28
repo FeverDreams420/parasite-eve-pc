@@ -51,9 +51,14 @@ static int s_run_choice = 3, s_walk_choice = 3;   /* 1.75x field movement by def
 static int s_combat_choice = 0, s_entry_choice = 0;
 static int32_t s_run_mask = 0x4000;               /* the run bit's own buttons (Circle) */
 
-static int pe_is_boost_value(int32_t mf) {
-    int i;
-    for (i = 1; i < PE_SPEED_CHOICES; ++i) if (mf == s_speed_factor[i]) return 1;
+/* A numeric match is not ownership: encounter scripts also use 1.25x..3x.
+ * Track the actor and the exact value we last wrote instead. */
+static BattleEntity *s_factor_player;
+static int32_t s_factor_value;
+static int pe_move_reset(void *ctx, void *user) {
+    (void)ctx; (void)user;
+    s_factor_player = NULL;
+    s_factor_value = 0;
     return 0;
 }
 static int32_t pe_speed(int choice) { return s_speed_factor[choice >= 0 && choice < PE_SPEED_CHOICES ? choice : 0]; }
@@ -156,8 +161,11 @@ static void pe_move_tick(void) {
     const int dpad = (p.bits & PE_RUN_MAP_DPAD) != 0, in_field = pe_free_field();
     BattleEntity *player = pe_player();
     int32_t map, want_map, mf, want;
-    int run_held, moving, running, combat;
-    if (!pe_game_loaded() || !player) return;
+    int run_held, moving, running, combat, owned;
+    if (!pe_game_loaded() || !player) {
+        pe_move_reset(NULL, NULL);
+        return;
+    }
 
     /* Always run: retarget the run entry of the mapping table (any value not ours is the game's). */
     map = g_FieldRenderFlagTable[0];
@@ -169,15 +177,21 @@ static void pe_move_tick(void) {
 
     pe_entry_walk_tick(player);
     mf = player->moveFactor;
+    if (s_factor_player != player || s_factor_value != mf) pe_move_reset(NULL, NULL);
+    owned = s_factor_player == player;
     moving = in_field && (dpad || p.stick);
     running = dpad ? (s_always_run ? !run_held : run_held) : pe_stick_runs(&p);
     combat = pe_in_battle() && g_BattleModeState == 0;
     want = mf;
-    if (combat && (mf == PE_MOVE_FACTOR_STOCK || pe_is_boost_value(mf))) want = pe_speed(s_combat_choice);
-    else if (moving && (mf == PE_MOVE_FACTOR_STOCK || pe_is_boost_value(mf)))
+    if (combat && (mf == PE_MOVE_FACTOR_STOCK || owned)) want = pe_speed(s_combat_choice);
+    else if (moving && (mf == PE_MOVE_FACTOR_STOCK || owned))
         want = pe_speed(running ? s_run_choice : s_walk_choice);
-    else if (!moving && pe_is_boost_value(mf)) want = PE_MOVE_FACTOR_STOCK;
-    if (want != mf) player->moveFactor = want;
+    else if (!moving && owned) want = PE_MOVE_FACTOR_STOCK;
+    if (want != mf) {
+        player->moveFactor = want;
+        s_factor_player = want == PE_MOVE_FACTOR_STOCK ? NULL : player;
+        s_factor_value = want;
+    }
 }
 
 void pe_move_register(const char *mod_id) {
@@ -187,6 +201,11 @@ void pe_move_register(const char *mod_id) {
     pe_menu_register_choice(PE_PAGE_MOVEMENT, "Combat speed", "How fast Aya moves during battle.", &s_combat_choice, s_speed_names, PE_SPEED_CHOICES);
     pe_menu_register_choice(PE_PAGE_MOVEMENT, "Battle start speed", "Aya's walk to her spot as a fight opens.", &s_entry_choice,
                             s_entry_names, PE_ENTRY_CHOICES);
+    pe_mod_log(mod_id, "movement: always_run=%d run=%s walk=%s combat=%s battle_start=%s",
+        s_always_run, s_speed_names[s_run_choice], s_speed_names[s_walk_choice],
+        s_speed_names[s_combat_choice], s_entry_names[s_entry_choice]);
     pe_menu_register_tick(pe_move_tick);
     pe_hook_add(PE_HOOK_PAD_READ, pe_on_pad_read, NULL, PE_PRIORITY_NORMAL, mod_id);
+    pe_hook_add(PE_HOOK_SCENE_START, pe_move_reset, NULL, PE_PRIORITY_NORMAL, mod_id);
+    pe_hook_add(PE_HOOK_SAVE_READ, pe_move_reset, NULL, PE_PRIORITY_NORMAL, mod_id);
 }

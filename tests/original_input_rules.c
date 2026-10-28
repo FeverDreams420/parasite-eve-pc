@@ -28,6 +28,7 @@ static SDL_EnumerationResult crash_test_file(void *user,const char *directory,co
         if(strstr(data,"Test room snapshot marker"))++counts[1];
         if(strstr(data,"emergency crash report") && strstr(data,"PC: 0x"))++counts[2];
     }
+    fprintf(stderr,"Crash test file: %s (%zu bytes, readable=%d)\n",path,size,data!=NULL);
     SDL_free(data);return SDL_ENUM_CONTINUE;
 }
 int main(int argc,char **argv) {
@@ -75,6 +76,7 @@ int main(int argc,char **argv) {
         assert(i?code!=0:code==0);
         int counts[3]={0};snprintf(logs,sizeof(logs),"%s/logs",directory);
         assert(SDL_EnumerateDirectory(logs,crash_test_file,counts));
+        fprintf(stderr,"Crash test %s: exit=%d files=%d full=%d emergency=%d\n",modes[i],code,counts[0],counts[1],counts[2]);
         assert(counts[0]==(i?1:0));
         if(i && i!=4)assert(counts[1]==1);
         if(i==4)assert(counts[2]==1);

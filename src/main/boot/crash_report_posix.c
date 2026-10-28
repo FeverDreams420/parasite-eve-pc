@@ -130,7 +130,7 @@ static size_t crash_text_size;
 
 static long Crash_ThreadId(void) {
 #ifdef __APPLE__
-    return (long)syscall(SYS_thread_selfid);
+    uint64_t id=0;pthread_threadid_np(NULL,&id);return (long)id;
 #else
     return (long)syscall(SYS_gettid);
 #endif

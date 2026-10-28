@@ -30,7 +30,10 @@ mods/
     pe_mod_menu.*        rows of the Mods panel and pe_mods.ini
     pe_mod_panel.c       the F1 panel: the list of mods, pages, navigation, input
     pe_pages.*           where PE Enhancements rows live (one layout for the whole suite)
+    pe_services.h        every service struct mods share (no mod includes another's headers)
     pe_game.*            game access and the game facts every mod shares (see below)
+    pe_main_menu.*       extra rows in Aya's main menu, and screens from the game's own widgets
+    pe_gametext.h        text in the game's glyph code; pe_item_table.h the game's item names
     ui/                  drawing (pe_ui_raster), the overlay quad (pe_ui_gpu), toasts
   pe_qol/              quality of life: movement, encounters, key item pocket, bag sort, Key Items menu
   pe_hello/            example mod (not built by default)
@@ -71,6 +74,8 @@ moved, disabled or updated without touching the others. Add the folder name to `
   a versioned struct of functions; a mod that finds none carries on without it.
 - **Events**: `pe_event_id("name")` and `pe_event_emit(id, ctx)` for announcements.
 
+Service definitions live in `host/pe_services.h`, never in a mod's folder.
+
 ## The Mods panel
 
 - F1 always opens on the list of mods: each mod's top page (`pe_menu_begin("My Mod")`, described
@@ -82,6 +87,16 @@ moved, disabled or updated without touching the others. Add the folder name to `
   label: renaming a row resets it). Values read from the game: `live_*` rows (not saved).
 - Read-only values (Junk, prices, results) are `info` rows, never live rows that refuse changes.
 - Every row has a one-line description; actions that cost or destroy something are press-twice.
+
+## Saves
+
+Per-game data goes in the 8 KB card block's free tail (`PE_HOOK_SAVE_WRITE` / `SAVE_READ`),
+inside the game's CRC, at the same offsets as the psxrecomp build so saves move between them:
+
+| Offset (from 0x1C90) | Block | Owner |
+|---|---|---|
+| +0x200 | `PKEY` key item pocket | pe_qol/pe_key_items.c |
+| +0x260 | `SORT` bag sort | pe_qol/pe_bag_sort.c |
 
 ## Optional encounter controls
 
@@ -102,6 +117,49 @@ not the number of enemies in a fight.
 
 pe_qol/pe_battle_frequency.c owns matching and settings. A single SCRIPT_RANDOM
 hook supplies local RNG bounds; loaded scripts and save data are not patched.
+
+## Inventory convenience
+
+Inventory / Key item pocket moves story keys and Chrysler elevator keys out
+of Aya's bag. Inventory / Key items browses them. Story count/removal hooks
+query the pocket directly, including with a full bag; no equipment or items
+are parked elsewhere. Turning it off returns keys as slots become free, while
+remaining pocketed keys still work for story checks. Key pickups and full-bag
+found-list rewards also use the pocket. The keys v1 service remains compatible
+with pe_economy's loot handling.
+
+Bag sort starts Manual for a new game. Use the game's Sort screen to choose
+an order and enable Auto, or choose Auto in F1 / Inventory. Bag changes are
+sorted only in free field; manually rearranging the same items in the game
+menu switches back to Manual. The native sorter preserves equipped slots.
+Square on Aya's Use Item list opens the native Sort screen. Sort is hidden
+from the main menu; Wayne's storage is untouched by automatic sorting.
+pe_qol/pe_inventory_menu.c owns the shortcut and transient row hiding, separate
+from sorting policy. It restores the original menu mask on save and menu exit.
+Inventory tips (on by default) say so: the title bar on the main menu's Items
+row and on an empty bag slot, and a message the first time the bag opens each
+session, including whether Auto sort is on.
+
+Key Items in Aya's main menu (pe_qol/pe_key_menu.c, while the pocket is on): a row with the
+Dressing Room Key's icon opens a view-only list of the pocket, each key with its icon and name and
+the highlighted key's game description in the title bar. Circle or Cross goes back.
+
+Extra main-menu rows and screens are a host service (host/pe_main_menu.h): a mod adds a row
+(title, icon item or its own icon drawer, shown test, open callback, order) and builds its screen
+with pe_screen_open_game (flush where the game's own screens sit) / pe_screen_rows /
+pe_screen_close, which also hide Aya's status panels and keep scrolling inside the list. The host
+owns the main-menu hooks (LIST_ROWS, MAIN_MENU_ICON, HELP_TEXT for the row names,
+MAIN_MENU_ACTION). Order: Mod Catalog 10, Key Items 20, Wardrobe 30.
+
+pe_qol/pe_key_items.c and pe_bag_sort.c each own their state, hooks and rows.
+pe_inventory.h holds private save/field helpers. PKEY and SORT use the exact
+recomp v1 card layouts and checksums. SORT stores original table identifiers,
+which map explicitly to native tables; no host pointers are serialized.
+
+Run the inventory regression checks on Windows with
+`tests/run_pe_inventory_test.ps1` after configuring build-mods. The test
+links both feature files and the real native inventory sorter; unrelated
+game paths are isolated by explicit test stubs.
 
 ## Tests
 

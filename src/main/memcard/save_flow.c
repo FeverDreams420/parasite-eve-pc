@@ -109,6 +109,7 @@ int g_MemCardEventF000Spec0004Flag, g_MemCardEventF000Spec8000Flag, g_MemCardEve
     g_SaveIoCursor += sizeof(type)
 
 int Save_SerializeTail(void) {
+    PE_HOOK(PE_HOOK_SAVE_WRITE, g_MemCardFileBuffer);
     if ((g_AyaBattleState.action && g_AyaBattleState.action != &g_SavedBattleStateTail) ||
         (g_AyaBattleState.attributes && g_AyaBattleState.attributes != &g_BattleEquipStateBlock)) return -1;
     /* The file contains the original 0x70-byte record, not host padding or

@@ -66,6 +66,24 @@ impl ItemCategory {
     }
 }
 
+/// The game's icon and kind for a weapon or armor category, as in its base item records.
+/// `kind` picks the model Aya holds and how the weapon fires; `icon` the bag picture. Armor
+/// icons differ per suit (17..=22); 18 is the common one. `ItemMetadata::default_icon_id` and
+/// `default_kind` do not match the game; prefer this, or the disc's records (`crate::disc`).
+pub fn game_icon_and_kind(category: ItemCategory) -> Option<(u8, u8)> {
+    Some(match category {
+        ItemCategory::Handgun => (1, 1),
+        ItemCategory::Shotgun => (2, 2),
+        ItemCategory::MachineGun => (4, 3),
+        ItemCategory::Rifle => (3, 4),
+        ItemCategory::GrenadeLauncher => (6, 5),
+        ItemCategory::RocketLauncher => (5, 6),
+        ItemCategory::MeleeWeapon => (7, 8),
+        ItemCategory::Armor => (18, 9),
+        _ => return None,
+    })
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct ItemMetadata {
     pub id: u8,
@@ -137,24 +155,26 @@ pub const WEAPON_MOD_TABLE: [ModMetadata; 21] = [
     ModMetadata { id: 0x03, code_name: "WMOD_ROF_5", name: "Rate of Fire x5", description: "Fires 5 rounds per attack command", is_armor_mod: false, default_group_bits: 0x20 },
     ModMetadata { id: 0x04, code_name: "WMOD_ROF_7", name: "Rate of Fire x7", description: "Fires 7 rounds per attack command", is_armor_mod: false, default_group_bits: 0x20 },
     ModMetadata { id: 0x05, code_name: "WMOD_ROF_10", name: "Rate of Fire x10", description: "Fires 10 rounds per attack command", is_armor_mod: false, default_group_bits: 0x20 },
-    ModMetadata { id: 0x06, code_name: "WMOD_RANDOM_ROF", name: "Random RoF (1.5x)", description: "Random rate of fire multiplier", is_armor_mod: false, default_group_bits: 0x00 },
-    ModMetadata { id: 0x07, code_name: "WMOD_BURST", name: "Burst (Wide Spread)", description: "Sprays bullets across multiple targets", is_armor_mod: false, default_group_bits: 0x00 },
-    ModMetadata { id: 0x08, code_name: "WMOD_RANDOM_TARGET", name: "Random Target (All)", description: "Attacks all enemies randomly with RoF", is_armor_mod: false, default_group_bits: 0x00 },
-    ModMetadata { id: 0x09, code_name: "WMOD_HEAT", name: "Heat Effect", description: "Adds fire elemental damage to bullets", is_armor_mod: false, default_group_bits: 0x40 },
-    ModMetadata { id: 0x0A, code_name: "WMOD_FROST", name: "Frost Effect", description: "Adds ice elemental damage to bullets", is_armor_mod: false, default_group_bits: 0x40 },
-    ModMetadata { id: 0x0B, code_name: "WMOD_CYANIDE", name: "Cyanide (Poison)", description: "Adds poison status effect to bullets", is_armor_mod: false, default_group_bits: 0x60 },
-    ModMetadata { id: 0x0C, code_name: "WMOD_ACID", name: "Acid Effect", description: "Adds acid DOT damage to bullets", is_armor_mod: false, default_group_bits: 0x40 },
-    ModMetadata { id: 0x0D, code_name: "WMOD_TRANQUILIZER", name: "Tranquilizer", description: "Adds stiffness/slow status to bullets", is_armor_mod: false, default_group_bits: 0x60 },
+    ModMetadata { id: 0x06, code_name: "WMOD_RANDOM_ROF", name: "Random RoF (1.5x)", description: "Random rate of fire multiplier", is_armor_mod: false, default_group_bits: 0x40 },
+    ModMetadata { id: 0x07, code_name: "WMOD_BURST", name: "Burst (Wide Spread)", description: "Sprays bullets across multiple targets", is_armor_mod: false, default_group_bits: 0x40 },
+    ModMetadata { id: 0x08, code_name: "WMOD_RANDOM_TARGET", name: "Random Target (All)", description: "Attacks all enemies randomly with RoF", is_armor_mod: false, default_group_bits: 0x40 },
+    ModMetadata { id: 0x09, code_name: "WMOD_HEAT", name: "Heat Effect", description: "Adds fire elemental damage to bullets", is_armor_mod: false, default_group_bits: 0x00 },
+    ModMetadata { id: 0x0A, code_name: "WMOD_FROST", name: "Frost Effect", description: "Adds ice elemental damage to bullets", is_armor_mod: false, default_group_bits: 0x00 },
+    ModMetadata { id: 0x0B, code_name: "WMOD_CYANIDE", name: "Cyanide (Poison)", description: "Adds poison status effect to bullets", is_armor_mod: false, default_group_bits: 0x00 },
+    ModMetadata { id: 0x0C, code_name: "WMOD_ACID", name: "Acid Effect", description: "Adds acid DOT damage to bullets", is_armor_mod: false, default_group_bits: 0x00 },
+    ModMetadata { id: 0x0D, code_name: "WMOD_TRANQUILIZER", name: "Tranquilizer", description: "Adds stiffness/slow status to bullets", is_armor_mod: false, default_group_bits: 0x00 },
     ModMetadata { id: 0x0E, code_name: "WMOD_COUNTER", name: "Counterattack", description: "Automatically counterattacks when hit", is_armor_mod: false, default_group_bits: 0x00 },
     ModMetadata { id: 0x0F, code_name: "WMOD_FIRST_ATTACK", name: "First Attack (Quickdraw)", description: "Starts battle with full ATB gauge", is_armor_mod: false, default_group_bits: 0x00 },
     ModMetadata { id: 0x10, code_name: "WMOD_STEAL_HALF", name: "Steal (Half Atk)", description: "Steals items on hit, halves attack power", is_armor_mod: false, default_group_bits: 0x80 },
     ModMetadata { id: 0x11, code_name: "WMOD_STEAL_FULL", name: "Steal (Full Atk)", description: "Steals items during attack without penalty", is_armor_mod: false, default_group_bits: 0x80 },
     ModMetadata { id: 0x12, code_name: "WMOD_CRIT_UP", name: "Critical Up", description: "Increases critical hit probability", is_armor_mod: false, default_group_bits: 0x00 },
-    ModMetadata { id: 0x13, code_name: "WMOD_COMMAND_2", name: "Command x2", description: "Allows entering 2 commands per turn", is_armor_mod: false, default_group_bits: 0xA0 },
-    ModMetadata { id: 0x14, code_name: "WMOD_COMMAND_3", name: "Command x3", description: "Allows entering 3 commands per turn", is_armor_mod: false, default_group_bits: 0xA0 },
+    ModMetadata { id: 0x13, code_name: "WMOD_COMMAND_2", name: "Command x2", description: "Allows entering 2 commands per turn", is_armor_mod: false, default_group_bits: 0x60 },
+    ModMetadata { id: 0x14, code_name: "WMOD_COMMAND_3", name: "Command x3", description: "Allows entering 3 commands per turn", is_armor_mod: false, default_group_bits: 0x60 },
 ];
 
-pub const ARMOR_MOD_TABLE: [ModMetadata; 18] = [
+/// Armor effects 0..=15 are the game's; 16 is unused. 17..=20 are the PE Enhancements economy
+/// mod's (`PE_FX_*` in `mods/host/pe_services.h`): they only work in a game with that mod on.
+pub const ARMOR_MOD_TABLE: [ModMetadata; 21] = [
     ModMetadata { id: 0x00, code_name: "AMOD_EMPTY_SLOT", name: "Empty Slot", description: "No modification installed", is_armor_mod: true, default_group_bits: 0x00 },
     ModMetadata { id: 0x01, code_name: "AMOD_RESIST_POISON", name: "Resist Poison", description: "Prevents Poison status ailment", is_armor_mod: true, default_group_bits: 0x00 },
     ModMetadata { id: 0x02, code_name: "AMOD_RESIST_STIFFNESS", name: "Resist Stiffness", description: "Prevents Stiffness/Paralysis status", is_armor_mod: true, default_group_bits: 0x00 },
@@ -168,25 +188,38 @@ pub const ARMOR_MOD_TABLE: [ModMetadata; 18] = [
     ModMetadata { id: 0x0A, code_name: "AMOD_ITEM_CAP_4", name: "Item Capacity +4", description: "Increases inventory capacity by +4 slots", is_armor_mod: true, default_group_bits: 0xA0 },
     ModMetadata { id: 0x0B, code_name: "AMOD_HP_MAX_UP", name: "HP Max Up", description: "Increases maximum HP while equipped", is_armor_mod: true, default_group_bits: 0x00 },
     ModMetadata { id: 0x0C, code_name: "AMOD_OFFENSE_UP", name: "Attack Power Up", description: "Increases Offense stat while equipped", is_armor_mod: true, default_group_bits: 0x00 },
-    ModMetadata { id: 0x0D, code_name: "AMOD_CRIT_UP", name: "Critical Up (Armor)", description: "Increases critical rate while equipped", is_armor_mod: true, default_group_bits: 0x00 },
+    ModMetadata { id: 0x0D, code_name: "AMOD_ATB_DOWN", name: "Slower Active Time", description: "Active Time gauge fills slower while equipped", is_armor_mod: true, default_group_bits: 0x00 },
     ModMetadata { id: 0x0E, code_name: "AMOD_PE_LIGHT", name: "PE Light", description: "Reduces Parasite Energy cost by 1/3", is_armor_mod: true, default_group_bits: 0x00 },
-    ModMetadata { id: 0x0F, code_name: "AMOD_PE_DEF_UP", name: "PE Defense Up", description: "Increases Parasite Energy defense", is_armor_mod: true, default_group_bits: 0x00 },
-    ModMetadata { id: 0x10, code_name: "AMOD_ATB_UP", name: "Active Time (ATB) Up", description: "Increases ATB charge speed", is_armor_mod: true, default_group_bits: 0x00 },
-    ModMetadata { id: 0x11, code_name: "AMOD_RECOVERY_UP", name: "Status Recovery Up", description: "Increases status recovery rate", is_armor_mod: true, default_group_bits: 0x00 },
+    ModMetadata { id: 0x0F, code_name: "AMOD_OFFENSE_DOWN", name: "Attack Down", description: "Lowers Offense while equipped", is_armor_mod: true, default_group_bits: 0x00 },
+    ModMetadata { id: 0x10, code_name: "AMOD_UNUSED_16", name: "Unused Effect 16", description: "Not used by the game; does nothing", is_armor_mod: true, default_group_bits: 0x00 },
+    ModMetadata { id: 0x11, code_name: "PE_FX_BARGAIN", name: "Bargain (mod)", description: "PE Enhancements economy mod: shop prices -15%", is_armor_mod: true, default_group_bits: 0x00 },
+    ModMetadata { id: 0x12, code_name: "PE_FX_SCAVENGER", name: "Scavenger (mod)", description: "PE Enhancements economy mod: battle Junk +50%", is_armor_mod: true, default_group_bits: 0x00 },
+    ModMetadata { id: 0x13, code_name: "PE_FX_LUCKY_FIND", name: "Lucky Find (mod)", description: "PE Enhancements economy mod: the rare-drop pity counter builds twice as fast", is_armor_mod: true, default_group_bits: 0x00 },
+    ModMetadata { id: 0x14, code_name: "PE_FX_SALVAGER", name: "Salvager (mod)", description: "PE Enhancements economy mod: dismantle Junk +25%", is_armor_mod: true, default_group_bits: 0x00 },
 ];
+
+/// Shown for an effect number no table names: the slot holds something, so it is never "Empty".
+pub const UNKNOWN_MOD: ModMetadata = ModMetadata { id: 0x1F, code_name: "MOD_UNKNOWN", name: "Unknown Effect", description: "An effect this editor does not know (perhaps from a game mod); kept as it is", is_armor_mod: false, default_group_bits: 0x00 };
 
 pub fn mod_metadata(mod_byte: u8, is_armor: bool) -> &'static ModMetadata {
     let idx = (mod_byte & 0x1F) as usize;
     if is_armor {
-        ARMOR_MOD_TABLE.get(idx).unwrap_or(&ARMOR_MOD_TABLE[0])
+        ARMOR_MOD_TABLE.get(idx).unwrap_or(&UNKNOWN_MOD)
     } else {
-        WEAPON_MOD_TABLE.get(idx).unwrap_or(&WEAPON_MOD_TABLE[0])
+        WEAPON_MOD_TABLE.get(idx).unwrap_or(&UNKNOWN_MOD)
     }
 }
 
+/// A mod byte as the game stores it: effect in the low 5 bits, its group above (one mod per
+/// group: 1 rate of fire, 2 multi-shot, 3 extra commands, 4 steal, 5 bag capacity; 0 none),
+/// as in the game's own base item records.
 pub fn encode_mod_byte(mod_id: u8, is_armor: bool) -> u8 {
-    let meta = mod_metadata(mod_id, is_armor);
-    (meta.id & 0x1F) | meta.default_group_bits
+    let effect = mod_id & 0x1F;
+    let group = match mod_metadata(effect, is_armor) {
+        m if m.id == effect => m.default_group_bits,
+        _ => 0,
+    };
+    effect | group
 }
 
 const fn item(

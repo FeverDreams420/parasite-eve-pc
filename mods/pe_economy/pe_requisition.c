@@ -19,8 +19,9 @@
  * Board rows are goods ids, so a row keeps its identity when the board changes; economy effects
  * use the pseudo ids 0xF000..0xF003, never real inventory values.
  *
- * Saved in the card block's free tail at 0x1C90 + 0x1C0, the recomp's "PESH" v1 layout: a 16-byte
- * header (magic, version, payload size, checksum) and the 4-byte payload. A new game resets it.
+ * Saved by the host as the "pe_economy.shop" record (host/pe_save.h); saves from before, with the
+ * recomp's "PESH" v1 block (16-byte header, then the 4-byte payload), still load. A new game resets
+ * it.
  */
 #include <stdio.h>
 #include <string.h>
@@ -31,6 +32,7 @@
 #include "pe_mod_menu.h"
 #include "pe_pages.h"
 #include "pe_requisition.h"
+#include "pe_save.h"
 #include "pe1/script_queue.h"
 
 /* Items */
@@ -55,8 +57,7 @@
 #define PE_EX_GAME_VAR     80      /* enemy power scale, 16.16; above 1.0 in the EX Game */
 #define PE_ECON_ID_FIRST   0xF000
 
-/* Save block */
-#define PE_SAVE_AT      (0x1C90 + 0x1C0)
+/* The "PESH" block of saves from before */
 #define PE_SAVE_MAGIC   0x48534550u /* "PESH" */
 #define PE_SAVE_VERSION 1u
 
@@ -309,26 +310,22 @@ static uint32_t pe_checksum(const void *payload) {
     return sum;
 }
 
-static int pe_on_save_write(void *ctx, void *user) {
-    uint8_t *at = (uint8_t *)ctx + PE_SAVE_AT;
-    const uint32_t header[4] = { PE_SAVE_MAGIC, PE_SAVE_VERSION, sizeof s_shop, pe_checksum(&s_shop) };
-    (void)user;
-    memcpy(at, header, sizeof header);
-    memcpy(at + sizeof header, &s_shop, sizeof s_shop);
+/* Saves from before: the "PESH" block. */
+static int pe_save_upgrade(void *data, const uint8_t *at, unsigned size, unsigned version) {
+    uint32_t header[4];
+    (void)data;
+    if (version != 0 || size < sizeof header + sizeof s_shop) return 1;
+    memcpy(header, at, sizeof header);
+    if (header[0] != PE_SAVE_MAGIC || header[1] != PE_SAVE_VERSION || header[2] != sizeof s_shop ||
+        header[3] != pe_checksum(at + sizeof header))
+        return 1;
+    memcpy(&s_shop, at + sizeof header, sizeof s_shop);
     return 0;
 }
 
-static int pe_on_save_read(void *ctx, void *user) {
-    const uint8_t *at = (const uint8_t *)ctx + PE_SAVE_AT;
-    uint32_t header[4];
-    (void)user;
-    memcpy(header, at, sizeof header);
-    memset(&s_shop, 0, sizeof s_shop);
-    if (header[0] == PE_SAVE_MAGIC && header[1] == PE_SAVE_VERSION && header[2] == sizeof s_shop &&
-        header[3] == pe_checksum(at + sizeof header))
-        memcpy(&s_shop, at + sizeof header, sizeof s_shop);
-    return 0;
-}
+static const PeSaveRecord s_save_record = {
+    "pe_economy.shop", 1, &s_shop, sizeof s_shop, NULL, pe_save_upgrade, NULL,
+};
 
 static int pe_on_inv_command(void *ctx, void *user) {
     (void)user;
@@ -346,8 +343,7 @@ static int pe_set_tools_bought(int n) {
 }
 
 void pe_requisition_register(const char *mod_id) {
-    pe_hook_add(PE_HOOK_SAVE_WRITE, pe_on_save_write, NULL, PE_PRIORITY_NORMAL, mod_id);
-    pe_hook_add(PE_HOOK_SAVE_READ, pe_on_save_read, NULL, PE_PRIORITY_NORMAL, mod_id);
+    pe_save_register(&s_save_record);
     pe_hook_add(PE_HOOK_INV_COMMAND, pe_on_inv_command, NULL, PE_PRIORITY_NORMAL, mod_id);
 
     pe_menu_register_int(PE_PAGE_DEBUG_LOOT, "Shop price %", "Goods prices, excluding Tools, Revive and economy mods.",

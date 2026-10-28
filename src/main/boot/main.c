@@ -1739,12 +1739,12 @@ typedef struct HostRoomSnapshot {
 } HostRoomSnapshot;
 
 static HostRoomSnapshot host_room_snapshots[2];
-static volatile int host_room_snapshot = -1; /* the complete copy, -1: none yet */
+static SDL_AtomicInt host_room_snapshot = {-1}; /* the complete copy, -1: none yet */
 
 static void Host_TakeRoomSnapshot(void) {
     static SaveRuntimeState header;
     if (g_GameStateFlags & 2) return; /* a battle: the room's own snapshot stays */
-    HostRoomSnapshot *snapshot = &host_room_snapshots[host_room_snapshot == 0];
+    HostRoomSnapshot *snapshot = &host_room_snapshots[SDL_GetAtomicInt(&host_room_snapshot) == 0];
 
     memcpy(&header, &g_SaveRuntimeState, sizeof(header));
     Save_BuildHeader();
@@ -1773,7 +1773,7 @@ static void Host_TakeRoomSnapshot(void) {
     snapshot->room = Host_CrashRoom();
     snapshot->story_day = g_GameState.current_story_day;
     snapshot->vblank = g_BootHostVBlankCount;
-    host_room_snapshot = (int)(snapshot - host_room_snapshots);
+    SDL_SetAtomicInt(&host_room_snapshot,(int)(snapshot - host_room_snapshots));
 }
 
 static void Host_CrashHex(char *out, size_t size, size_t *used, const u8 *data, size_t count, unsigned address) {
@@ -1788,7 +1788,7 @@ static void Host_CrashHex(char *out, size_t size, size_t *used, const u8 *data, 
 }
 
 static void Host_DescribeSaveData(char *out, size_t size) {
-    const int index = host_room_snapshot;
+    const int index = SDL_GetAtomicInt(&host_room_snapshot);
     size_t used = 0;
     out[0] = 0;
     Host_CrashAppend(out, size, &used, "\r\n== Room snapshot ==\r\n");

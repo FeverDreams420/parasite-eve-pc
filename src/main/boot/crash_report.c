@@ -94,6 +94,7 @@ static void Crash_BeginEmergency(const EXCEPTION_POINTERS *info) {
     Crash_EmergencyField("Exception: ",info->ExceptionRecord->ExceptionCode);
     Crash_EmergencyField("Thread: ",GetCurrentThreadId());
     Crash_EmergencyField("PC: ",(uintptr_t)info->ExceptionRecord->ExceptionAddress);
+    if(!crash_watch_event)TerminateProcess(GetCurrentProcess(),3);
     SetEvent(crash_watch_event);
 }
 
@@ -1228,6 +1229,7 @@ void CrashReport_Install(int interactive, void (*describe)(char *out, size_t siz
         if(crash_watch_event) {
             HANDLE thread=CreateThread(NULL,64u<<10,Crash_Watchdog,NULL,0,NULL);
             if(thread)CloseHandle(thread);
+            else {CloseHandle(crash_watch_event);crash_watch_event=NULL;}
         }
         atexit(Crash_Finish);
     }

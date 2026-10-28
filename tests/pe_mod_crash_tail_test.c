@@ -1,18 +1,20 @@
-/* Crash report room snapshot, save tail: the mods' save write handlers fill the
- * snapshot block as a real save does, nothing is taken while mod code is
- * running, and later saves still reach the mods. */
+/* Crash report room snapshot, save tail: the host's records fill the snapshot
+ * block as a real save writes them, without calling any mod code; nothing is
+ * taken while mod code is running, and later saves still reach the mods. */
 #include <stdio.h>
 #include <string.h>
 #include "pe_hooks.h"
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
+#include "pe_save.h"
 
 static int writes, inside_mod;
 static unsigned char card[0x2000], live[0x2000];
+static unsigned char state[4] = {'T', 'E', 'S', 'T'};
+static const PeSaveRecord record = {"pe_test.state", 1, state, sizeof state, NULL, NULL, NULL};
 
 static int on_save_write(void *ctx, void *user) {
-    (void)user;
-    memcpy((unsigned char *)ctx + 0x1C90, "TEST", 4);
+    (void)ctx; (void)user;
     writes++;
     return 0;
 }
@@ -26,7 +28,7 @@ static int on_frame(void *ctx, void *user) {
 static int test_init(void) {
     pe_hook_add(PE_HOOK_SAVE_WRITE, on_save_write, NULL, PE_PRIORITY_NORMAL, "pe_test");
     pe_hook_add(PE_HOOK_FRAME, on_frame, NULL, PE_PRIORITY_NORMAL, "pe_test");
-    return 0;
+    return pe_save_register(&record);
 }
 
 static const PeMod test_mod = {"pe_test", "Test", "1", NULL, test_init, NULL};
@@ -49,6 +51,8 @@ int pe_menu_top_page(const char *page, const char *description, int order) {
     return 0;
 }
 void pe_panel_install(void) {}
+void pe_toast(const char *text) { (void)text; }
+int pe_free_field(void) { return 1; }
 void pe_pages_describe(void) {}
 
 static int failures;
@@ -57,31 +61,50 @@ static int failures;
         if (!(cond)) { fprintf(stderr, "FAIL line %d: %s\n", __LINE__, #cond); failures++; } \
     } while (0)
 
+/* The record's bytes in a block's tail, or NULL. */
+static const unsigned char *find_state(const unsigned char *block) {
+    const unsigned char *t = block + PE_SAVE_TAIL_OFFSET;
+    unsigned total = t[6] | t[7] << 8, at;
+    if (memcmp(t, "PEMC", 4)) return NULL;
+    for (at = PE_SAVE_HEADER_SIZE; at + PE_SAVE_RECORD_HEADER_SIZE <= total;) {
+        unsigned size = t[at + 6] | t[at + 7] << 8;
+        if (size == sizeof state && !memcmp(t + at + PE_SAVE_RECORD_HEADER_SIZE, state, sizeof state))
+            return t + at + PE_SAVE_RECORD_HEADER_SIZE;
+        at += PE_SAVE_RECORD_HEADER_SIZE + size;
+    }
+    return NULL;
+}
+
 int main(void) {
     PeHookInit init = {0, NULL};
+    char report[2048];
     CHECK(pe_host_init(&init) == 0);
 
-    /* A normal save still reaches the mods. */
+    /* A normal save still reaches the mods, and holds the record. */
     pe_hook_dispatch(PE_HOOK_SAVE_WRITE, live);
-    CHECK(writes == 1 && !memcmp(live + 0x1C90, "TEST", 4));
+    CHECK(writes == 1 && find_state(live));
 
     /* Asked while mod code is running: nothing is taken. */
     inside_mod = 1;
     pe_hook_dispatch(PE_HOOK_FRAME, NULL);
     CHECK(inside_mod == -1);
-    CHECK(writes == 1 && card[0x1C90] == 0);
+    CHECK(writes == 1 && card[PE_SAVE_TAIL_OFFSET] == 0);
 
-    /* The snapshot: each handler once, into the snapshot block. */
-    memset(live, 0, sizeof(live));
+    /* The snapshot: the record, and no mod code. */
     CHECK(pe_mod_snapshot_save_tail(card) == 0);
-    CHECK(writes == 2 && !memcmp(card + 0x1C90, "TEST", 4));
+    CHECK(writes == 1 && find_state(card));
 
-    /* Every room takes one: later saves and snapshots still reach the mods. */
+    /* Every room takes one: later saves and snapshots still work. */
+    memset(live, 0, sizeof(live));
     pe_hook_dispatch(PE_HOOK_SAVE_WRITE, live);
-    CHECK(writes == 3 && !memcmp(live + 0x1C90, "TEST", 4));
+    CHECK(writes == 2 && find_state(live));
     memset(card, 0, sizeof(card));
     CHECK(pe_mod_snapshot_save_tail(card) == 0);
-    CHECK(writes == 4 && !memcmp(card + 0x1C90, "TEST", 4));
+    CHECK(writes == 2 && find_state(card));
+
+    /* The crash report lists the snapshot's records. */
+    pe_mod_crash_describe(report, sizeof report, 1);
+    CHECK(strstr(report, "pe_test.state") != NULL);
 
     if (failures) return 1;
     printf("room snapshot save tail: ok\n");

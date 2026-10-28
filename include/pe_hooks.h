@@ -36,6 +36,7 @@ typedef enum PeHookId {
     PE_HOOK_INVENTORY_ROW, /* PeHookInventoryRow: inventory row dimming, presentation only */
     PE_HOOK_POWER_AVAILABLE, /* PeHookPowerAvailable: Menu_CheckItemAffordable, can this PE power be picked now */
     PE_HOOK_POWER_COST, /* PeHookPowerCost: raw PE cost before the native armor discount */
+    PE_HOOK_NEW_GAME,    /* PeHookNewGame: a new game starts; the host has reset every save record */
     PE_HOOK_COUNT
 } PeHookId;
 
@@ -80,6 +81,18 @@ typedef struct PeHookSpell {
     unsigned spell;           /* Parasite Energy power index */
     struct BattleEntity *target;
 } PeHookSpell;
+
+/* A new game, of any kind: the title's New Game or Tutorial (the title's choice, in the boot loop),
+ * or the EX Game (Inv_DispatchCommand INV_CMD_START_NEW_GAME, which the host sends on as this). */
+typedef enum PeNewGameKind {
+    PE_NEW_GAME_TITLE = 1,     /* the title's New Game (MenuCard_RunListScreen result 1) */
+    PE_NEW_GAME_EX = 2,        /* the EX Game, from a Clear Data save */
+    PE_NEW_GAME_TUTORIAL = 3,  /* MenuCard_RunListScreen result 3 */
+} PeNewGameKind;
+
+typedef struct PeHookNewGame {
+    int kind; /* PeNewGameKind */
+} PeHookNewGame;
 
 typedef struct PeHookInit {
     int interactive;        /* 0 for headless runs: no window, no menus */

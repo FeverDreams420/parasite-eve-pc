@@ -11,6 +11,8 @@ typedef enum PeHookId {
     PE_HOOK_INIT,        /* PeHookInit: once, before the first scene */
     PE_HOOK_SCENE_START, /* NULL: a field scene finished loading, before its first frame */
     PE_HOOK_FRAME,       /* NULL: every field frame, after pad input is read */
+    PE_HOOK_BATTLE_UPDATE, /* NULL: Battle_Update entry, every battle frame */
+    PE_HOOK_ENEMY_HIT,   /* BattleEntity *: Battle_StepEnemyMovement entry, before an enemy's damage */
     PE_HOOK_HELP_TEXT,   /* u8 **: the menu title-bar line, before it is printed; may be replaced */
     PE_HOOK_INV_COMMAND, /* PeHookInvCommand: Inv_DispatchCommand entry; replaceable */
     PE_HOOK_ITEM_ADD,    /* s32 *: Inv_AddItem entry; change id, or return nonzero for handled/success */
@@ -26,6 +28,7 @@ typedef enum PeHookId {
     PE_HOOK_ACTOR_STEP,  /* PeHookActorStep: local scripted speed or animation increment */
     PE_HOOK_INVENTORY_SORTED, /* NULL: Aya's native bag sort completed */
     PE_HOOK_MAIN_MENU_ICON, /* PeHookMainMenuIcon: a main menu row's icon, before it is drawn */
+    PE_HOOK_ENEMY_HIT_END, /* BattleEntity *: original damage applied; restore temporary hit inputs */
     PE_HOOK_COUNT
 } PeHookId;
 

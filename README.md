@@ -46,6 +46,9 @@ Open **F1 → PE Enhancements** to configure them.
   still count for story checks; browse them through **Key Items** in Aya's main menu.
 - **Remembered sorting** (`pe_qol`): Auto keeps the game's own sort settings; moving items by hand
   switches back to Manual. Square in the Use Item list opens sorting.
+- **Combat rules** (`pe_rebalance`): Vanilla, Rebalanced and Custom rules for gun and armor
+  effects: Heat/Frost, Rate of Fire, gun progression bonuses, Attack All crowd damage, status
+  chances, Critical Up, Quickdraw and armor tradeoffs; weapon DPS in the help text.
 
 Mod builds are experimental; a passing build or test does not establish full in-game compatibility.
 
@@ -71,6 +74,6 @@ cmake --build build-mods --parallel
 ./build-mods/parasite-eve-pc
 ```
 
-`PE_MOD_LIST` picks the mods by folder name (default: `pe_qol`).
+`PE_MOD_LIST` picks the mods by folder name (default: `pe_qol;pe_rebalance`).
 
 For development details, see [code organization](docs/CODE_ORGANIZATION.md).

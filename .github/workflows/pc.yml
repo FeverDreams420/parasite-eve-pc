@@ -140,6 +140,40 @@ jobs:
           $cases = $report.SelectNodes('//testcase')
           $incomplete = $report.SelectNodes('//testcase/skipped | //testcase/failure | //testcase/error')
           if ($cases.Count -ne 25 -or $incomplete.Count -ne 0) { throw 'Expected 25 executed source-only cases without failures or skips' }
+      - name: Build and test Windows save editor
+        shell: pwsh
+        run: |
+          cargo test --manifest-path save-editor/Cargo.toml --locked
+          if ($LASTEXITCODE -ne 0) { throw 'Save editor regressions failed' }
+          cargo build --manifest-path save-editor/Cargo.toml --locked --release
+          if ($LASTEXITCODE -ne 0) { throw 'Save editor build failed' }
+      - name: Package Windows game and save editor
+        shell: pwsh
+        run: |
+          $game = 'package/Parasite-Eve-0.6-windows-x86_64'
+          $editor = 'package/Parasite-Eve-Save-Editor-0.6-windows-x86_64'
+          New-Item -ItemType Directory -Force "$game/docs/images", "$game/mods", "$game/licenses", $editor | Out-Null
+          Copy-Item build/parasite-eve-pc.exe, README.md, CHANGELOG.md, LICENSE.md, THIRD_PARTY_NOTICES.md $game
+          Copy-Item docs/images/gameplay.png "$game/docs/images/"
+          Copy-Item docs/CODE_ORGANIZATION.md "$game/docs/"
+          Copy-Item mods/README.md "$game/mods/"
+          Get-ChildItem third_party/psyz -Recurse -File | Where-Object { $_.Name -match '^(LICENSE|COPYING|NOTICE|COPYRIGHT)' -and $_.FullName -notmatch '[\\/]\.git[\\/]' } | ForEach-Object {
+            $relative = [IO.Path]::GetRelativePath((Get-Location).Path, $_.FullName)
+            $target = Join-Path "$game/licenses" $relative
+            New-Item -ItemType Directory -Force (Split-Path $target) | Out-Null
+            Copy-Item $_.FullName $target
+          }
+          git rev-parse HEAD | Set-Content "$game/source-commit.txt"
+          Copy-Item save-editor/target/release/pe-save-editor.exe, LICENSE.md $editor
+          'Open pe-save-editor.exe to edit a backup of your save. Optional: select your North American disc image for item data. The game must be closed while replacing saves.' | Set-Content "$editor/Read me.txt"
+          Compress-Archive -Path $game -DestinationPath Parasite-Eve-0.6-windows-x86_64-experimental.zip
+          Compress-Archive -Path $editor -DestinationPath Parasite-Eve-Save-Editor-0.6-windows-x86_64.zip
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: windows-release-packages
+          path: |
+            Parasite-Eve-0.6-windows-x86_64-experimental.zip
+            Parasite-Eve-Save-Editor-0.6-windows-x86_64.zip
       - name: Diagnose native Windows crash handler failures
         if: failure()
         run: |

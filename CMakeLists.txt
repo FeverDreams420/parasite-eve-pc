@@ -42,8 +42,7 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options("$<$<COMPILE_LANGUAGE:C>:-fno-strict-aliasing>"
         "$<$<COMPILE_LANGUAGE:C>:-ffunction-sections>"
         "$<$<COMPILE_LANGUAGE:C>:-fdata-sections>")
-    # POSIX walks frame chains. Windows uses its native unwind metadata;
-    # forcing frame pointers in large MinGW frames can break exception dispatch.
+    # POSIX walks frame chains; Windows uses its native unwind metadata.
     if(NOT WIN32)
         add_compile_options("$<$<COMPILE_LANGUAGE:C>:-fno-omit-frame-pointer>")
     endif()
@@ -792,7 +791,9 @@ if(BUILD_TESTING)
         endfunction()
         get_property(native_test_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
         foreach(native_test IN LISTS native_test_targets)
-            if(native_test MATCHES "^test-")
+            # The reporter must execute real hardware exception dispatch.
+            # Stripping its unwind data makes Windows fail-fast before a report.
+            if(native_test MATCHES "^test-" AND NOT native_test STREQUAL "test-crash-report")
                 get_target_property(native_test_sources ${native_test} SOURCES)
                 set(native_fixture_sources)
                 foreach(native_source IN LISTS native_test_sources)

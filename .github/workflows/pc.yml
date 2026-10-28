@@ -122,29 +122,6 @@ jobs:
         run: |
           git submodule update --init third_party/psyz
           git -C third_party/psyz submodule update --init external/SDL
-      - name: Check the Windows reporter before the full game build
-        run: |
-          mkdir -p build/crash-diagnostics
-          cat > build/crash-diagnostics/probe.c <<'C'
-          #include <windows.h>
-          #include <signal.h>
-          #include <stdio.h>
-          #include "pe1/crash_report.h"
-          static void describe(char *out,size_t n){snprintf(out,n,"native probe marker\n");}
-          int main(void){CrashReport_Install(0,describe);volatile int *bad=(volatile int *)1;*bad=1;return 90;}
-          C
-          gcc -O2 -g -Iinclude build/crash-diagnostics/probe.c src/main/boot/crash_report.c -o build/crash-diagnostics/probe.exe -lpsapi -lversion -lshell32 -luser32 -lgdi32
-          python - <<'PY'
-          import subprocess
-          from pathlib import Path
-          exe=Path('build/crash-diagnostics/probe.exe').resolve()
-          p=subprocess.run([str(exe)],timeout=20)
-          reports=list((exe.parent/'logs').glob('crash-*.txt'))
-          print('native probe exit',p.returncode,'reports',[(str(x),x.stat().st_size) for x in reports],flush=True)
-          if not any('native probe marker' in x.read_text(errors='replace') for x in reports):
-              subprocess.run(['gdb','--batch','-q','-ex','handle SIGSEGV nostop noprint pass','-ex','run','-ex','thread apply all bt 30','-ex','info registers','--args',str(exe)],timeout=30)
-              raise SystemExit('Native Windows access violation was not reported')
-          PY
       - name: Build the native Windows game and test executables
         run: |
           cmake -S . -B build -G Ninja -DBUILD_TESTING=ON -DPE_MODS=ON -DCMAKE_BUILD_TYPE=RelWithDebInfo

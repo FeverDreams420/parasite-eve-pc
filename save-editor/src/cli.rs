@@ -7,7 +7,7 @@ use clap::{Args, Parser, Subcommand};
 use crate::memcard::MemoryCardContainer;
 use crate::save::PeSaveSlot;
 use crate::tables::{
-    ARMOR_MOD_TABLE, ITEM_TABLE, PARASITE_SPELLS, STAT_GROWTH_NAMES, WEAPON_MOD_TABLE,
+    PARASITE_SPELLS, STAT_GROWTH_NAMES,
 };
 
 #[derive(Parser, Debug)]
@@ -17,6 +17,10 @@ use crate::tables::{
     about = "Parasite Eve (SLUS-006.62 / PC Port) Save Editor & PsyZ Memory Card Manager (GUI + CLI)"
 )]
 pub struct Cli {
+    /// Data-only custom item/effect definitions, independent of installed game mods.
+    #[arg(long, global = true)]
+    pub definitions: Option<PathBuf>,
+
     /// Optional path to open directly in GUI when no subcommand is provided (e.g. `bu00`, `.srm`, `.mcr`)
     pub path: Option<PathBuf>,
 
@@ -282,6 +286,26 @@ fn print_slot_summary(save: &PeSaveSlot, verbose: bool) {
         crc_status
     );
     println!("  Header Title : {}", save.header_title);
+    match crate::mod_save::ModData::inspect(&save.raw_bytes) {
+        Ok(data) => {
+            println!("  Mod save data: {}", data.format);
+            match crate::junk_counter::read(&save.raw_bytes) {
+                Ok(Some(junk)) => println!("    Saved Junk counter: {}", junk),
+                Ok(None) => {},
+                Err(e) => println!("    Junk counter: {}", e),
+            }
+            for warning in &data.warnings { println!("    Warning: {}", warning); }
+            if verbose {
+                for record in &data.records {
+                    println!("    {:08X} {} v{} ({} bytes)", record.id, record.name(), record.version, record.data.len());
+                }
+                if let Ok(Some(keys)) = data.keys() { println!("    Pocketed keys: {:02X?}",keys); }
+                if let Ok(Some(sort)) = data.sort() { println!("    Bag sorting: {:?}",sort); }
+            }
+        }
+        Err(e) => println!("  Mod save data: {}", e),
+    }
+
     println!(
         "  Aya Name     : {:?} (Save Name: {:?})",
         save.aya_name, save.save_name
@@ -616,7 +640,7 @@ fn cmd_list_items(filter: Option<&str>) -> Result<()> {
     let needle = filter.map(|s| s.to_lowercase());
 
     println!("=== PARASITE EVE ITEMS (0x00..=0xFF) ===");
-    for meta in ITEM_TABLE.iter() {
+    for meta in crate::tables::all_item_metadata() {
         let line = format!(
             "0x{:02X} ({:3}) | {:18} | {:24} | {}",
             meta.id,
@@ -633,8 +657,8 @@ fn cmd_list_items(filter: Option<&str>) -> Result<()> {
         println!("  {}", line);
     }
 
-    println!("\n=== WEAPON MODIFICATIONS (0x00..=0x14) ===");
-    for m in WEAPON_MOD_TABLE.iter() {
+    println!("\n=== WEAPON EFFECT DEFINITIONS ===");
+    for m in crate::custom_effects::choices(false) {
         let line = format!("0x{:02X} | Weapon   | {:24} | {}", m.id, m.name, m.description);
         if let Some(ref n) = needle {
             if !line.to_lowercase().contains(n) && !m.code_name.to_lowercase().contains(n) {
@@ -644,8 +668,8 @@ fn cmd_list_items(filter: Option<&str>) -> Result<()> {
         println!("  {}", line);
     }
 
-    println!("\n=== ARMOR MODIFICATIONS (0x00..=0x11) ===");
-    for m in ARMOR_MOD_TABLE.iter() {
+    println!("\n=== ARMOR EFFECT DEFINITIONS ===");
+    for m in crate::custom_effects::choices(true) {
         let line = format!("0x{:02X} | Armor    | {:24} | {}", m.id, m.name, m.description);
         if let Some(ref n) = needle {
             if !line.to_lowercase().contains(n) && !m.code_name.to_lowercase().contains(n) {

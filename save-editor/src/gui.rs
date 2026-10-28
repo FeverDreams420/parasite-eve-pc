@@ -8,8 +8,8 @@ use eframe::egui::{
 use crate::memcard::{MemoryCardContainer, MAX_CARD_SLOTS};
 use crate::save::{EquipmentRecord, PeSaveSlot, SCRIPT_VAR_SIZE};
 use crate::tables::{
-    item_metadata, map_location_descriptive, mod_metadata, ItemCategory, ARMOR_MOD_TABLE,
-    ITEM_TABLE, MAP_TELEPORT_PRESETS, PARASITE_SPELLS, STAT_GROWTH_NAMES, WEAPON_MOD_TABLE,
+    item_metadata, map_location_descriptive, mod_metadata, ItemCategory,
+    MAP_TELEPORT_PRESETS, PARASITE_SPELLS, STAT_GROWTH_NAMES,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -20,6 +20,7 @@ enum EditorTab {
     ArmoryRecords,
     WayneVault,
     StoryAndTeleport,
+    ModSaveData,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1083,6 +1084,7 @@ impl eframe::App for SaveEditorApp {
                         (EditorTab::ArmoryRecords, "🔫 All Equipment (128)"),
                         (EditorTab::WayneVault, "🏛 Wayne's Storage"),
                         (EditorTab::StoryAndTeleport, "🗺 Story & Teleport"),
+                        (EditorTab::ModSaveData, "Mod Save Data"),
                     ] {
                         let is_active = self.active_tab == tab;
                         let btn = egui::Button::new(
@@ -1246,6 +1248,12 @@ impl eframe::App for SaveEditorApp {
             }
             EditorTab::StoryAndTeleport => {
                 self.show_tab_story_and_teleport(ctx);
+            }
+            EditorTab::ModSaveData => {
+                egui::CentralPanel::default().show(ctx, |ui| {
+                    let save = self.container.as_mut().unwrap().slots[self.selected_slot].as_mut().unwrap();
+                    egui::ScrollArea::vertical().show(ui, |ui| crate::mod_save_gui::show(ui, save));
+                });
             }
         }
     }
@@ -1775,8 +1783,8 @@ impl SaveEditorApp {
                                 .id_salt("wayne_spec_picker")
                                 .auto_shrink([false, false])
                                 .show(ui, |ui| {
-                                    for meta in ITEM_TABLE
-                                        .iter()
+                                    for meta in crate::tables::all_item_metadata()
+                                        .into_iter()
                                         .filter(|m| m.category.is_equipment())
                                     {
                                         if interactive_card(
@@ -2233,7 +2241,7 @@ fn render_equipment_record_editor(
                 cur_meta.category.label()
             ))
             .show_ui(ui, |ui| {
-                for meta in ITEM_TABLE.iter().filter(|m| m.category.is_equipment()) {
+                for meta in crate::tables::all_item_metadata().into_iter().filter(|m| m.category.is_equipment()) {
                     if ui
                         .selectable_label(
                             rec.item_id == meta.id,
@@ -2355,11 +2363,8 @@ fn render_equipment_record_editor(
         rec.tail_capacity = rec.tail_count;
     }
 
-    let mod_slice = if is_armor {
-        &ARMOR_MOD_TABLE[..]
-    } else {
-        &WEAPON_MOD_TABLE[..]
-    };
+    let mod_slice = crate::custom_effects::choices(is_armor);
+    ui.label(crate::custom_effects::note(is_armor));
 
     egui::Grid::new(("eq_mods_table_grid", id_salt, rec.index))
         .striped(true)
@@ -2386,7 +2391,7 @@ fn render_equipment_record_editor(
                     .width(260.0)
                     .selected_text(if cur_mod_id == 0 {
                         RichText::new("— Empty Slot —").color(TEXT_MUTED)
-                    } else if cur_mod_meta.id != cur_mod_id {
+                    } else if cur_mod_meta.code_name == "MOD_UNKNOWN" {
                         RichText::new(format!("Unknown Effect #{} (kept as it is)", cur_mod_id))
                             .color(ACCENT_AMBER)
                     } else {
@@ -2476,7 +2481,7 @@ fn render_catalog_picker_for_slot(
         .id_salt(("catalog_picker_scroll", is_wayne_regular_storage))
         .auto_shrink([false, false])
         .show(ui, |ui| {
-            for meta in ITEM_TABLE.iter().skip(1) {
+            for meta in crate::tables::all_item_metadata().into_iter().skip(1) {
                 if !picker_cat.matches(meta.category) {
                     continue;
                 }

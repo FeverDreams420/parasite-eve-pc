@@ -4,6 +4,11 @@ pub mod crc;
 pub mod disc;
 pub mod gui;
 pub mod memcard;
+pub mod mod_save;
+pub mod junk_counter;
+pub mod custom_effects;
+pub mod definitions;
+mod mod_save_gui;
 pub mod save;
 pub mod tables;
 

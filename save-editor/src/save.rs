@@ -64,6 +64,9 @@ impl EquipmentRecord {
     /// base record (`Inv_FindSlotByIndex`). The verified USA templates also work
     /// without a mounted disc; no guessed stats or missing factory effects.
     pub fn from_item_template(index: usize, item_id: u8) -> Self {
+        if let Some(bytes) = crate::definitions::template(item_id) {
+            return Self::parse(index, bytes);
+        }
         if let Some(bytes) = game_data().and_then(|g| g.item_record(item_id)) {
             let mut record = Self::parse(index, &bytes);
             record.tail_capacity = record.tail_capacity.min(10);
@@ -83,6 +86,9 @@ impl EquipmentRecord {
     /// Icon (bag picture) and kind (weapon class: the model Aya holds and how it fires) for
     /// `item_id`: from the disc when loaded, else the game's value for the item's category.
     pub fn icon_and_kind_for(item_id: u8) -> (u8, u8) {
+        if let Some(bytes) = crate::definitions::template(item_id) {
+            return (bytes[0], bytes[6]);
+        }
         if let Some(rec) = game_data().and_then(|g| g.item_record(item_id)) {
             return (rec[0x00], rec[0x06]);
         }
@@ -1182,7 +1188,10 @@ impl PeSaveSlot {
         for i in 0..(rec.tail_count.max(rec.tail_capacity).min(10) as usize) {
             let raw_mod = rec.tail_data[i];
             if (raw_mod & 0x1F) != 0 {
-                names.push(mod_metadata(raw_mod, is_armor).name);
+                let meta = mod_metadata(raw_mod, is_armor);
+                if meta.code_name == "MOD_UNKNOWN" {
+                    names.push(format!("Unknown effect {} (raw 0x{:02X})", raw_mod & 31, raw_mod));
+                } else { names.push(meta.name.to_string()); }
             }
         }
         if names.is_empty() {

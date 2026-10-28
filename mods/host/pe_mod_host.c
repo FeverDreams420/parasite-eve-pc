@@ -16,6 +16,8 @@
 #include "pe_pages.h"
 #include "pe_save.h"
 
+#define PE_INV_CMD_START_NEW_GAME 1117   /* the EX Game's start (Inv_DispatchCommand) */
+
 extern const PeMod *const g_pe_mods[]; /* generated: pe_mod_list.c */
 
 enum { PE_MAX_HANDLERS = 256, PE_MAX_EVENTS = 64, PE_MAX_SERVICES = 32, PE_MAX_MODS = 32 };
@@ -368,6 +370,8 @@ int pe_hook_dispatch(int id, void *ctx) {
     if (!s_started) return 0;
     /* The mods' saved records go back before any mod's own load handler sees the save. */
     if (id == PE_HOOK_SAVE_READ && ctx) pe_save_on_read((const uint8_t *)ctx);
+    /* A new game: every record resets, and nothing carries over, before any mod hears of it. */
+    if (id == PE_HOOK_NEW_GAME) pe_save_new_game();
     for (i = 0; i < s_handler_count; i++) {
         int result;
         if (s_handlers[i].id < id) continue;
@@ -380,6 +384,10 @@ int pe_hook_dispatch(int id, void *ctx) {
     }
     /* After every mod's own save handler: the records go into the save. */
     if (id == PE_HOOK_SAVE_WRITE && ctx) pe_save_on_write((uint8_t *)ctx);
+    /* The EX Game starts with this script command; the title's New Game sends PE_HOOK_NEW_GAME
+     * itself. Mods hear both the one way. */
+    if (id == PE_HOOK_INV_COMMAND && ctx && ((const PeHookInvCommand *)ctx)->command == PE_INV_CMD_START_NEW_GAME)
+        pe_hook_dispatch(PE_HOOK_NEW_GAME, &(PeHookNewGame){PE_NEW_GAME_EX});
     return handled;
 }
 

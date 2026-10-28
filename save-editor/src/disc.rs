@@ -33,7 +33,9 @@ const GROWTH_ENTRIES: usize = 128;
 const STAT_CATEGORIES: usize = 7;
 const LEVEL_COUNT: usize = 0x63;
 const LEVEL_STATS_SIZE: usize = 0x18;
+const LEVEL_STATS_HP: usize = 0x00;
 const LEVEL_STATS_INVENTORY_CAPACITY: usize = 0x07;
+pub const HP_STAT: usize = 0;
 pub const ITEM_CAPACITY_STAT: usize = 6;
 
 /// The tables the editor needs, read from one disc.
@@ -46,6 +48,8 @@ pub struct GameData {
     growth: Vec<[i32; GROWTH_ENTRIES]>,
     /// `AyaLevelStats.inventoryCapacity` for levels 0..=98.
     capacity: [u8; LEVEL_COUNT],
+    /// `AyaLevelStats.hp` for levels 0..=98.
+    hp: [u16; LEVEL_COUNT],
 }
 
 impl GameData {
@@ -98,6 +102,21 @@ impl GameData {
             .unwrap_or(MAX_STAT_BAG_SLOTS)
     }
 
+    /// The max HP the game sets from an HP stat value (`Inv_RecalcSlotStats`): the level's HP,
+    /// times 23/20 while the equipped armor has HP Max Up (`BattleCmd_LoadWeaponModifiers`).
+    pub fn max_hp_for_stat(&self, value: u16, hp_max_up: bool) -> u16 {
+        hp_with_armor(self.hp[self.stat_level(HP_STAT, value)], hp_max_up)
+    }
+
+    /// The smallest HP stat value that gives at least `max_hp`, if any does.
+    pub fn stat_for_max_hp(&self, max_hp: u16, hp_max_up: bool) -> Option<u16> {
+        let level = self
+            .hp
+            .iter()
+            .position(|&hp| hp_with_armor(hp, hp_max_up) >= max_hp)?;
+        u16::try_from(self.growth[HP_STAT][level].max(0)).ok()
+    }
+
     /// Builds the tables from a resident pack (`PE.IMG` entry 2) and checks they look right.
     pub fn from_resident_pack(source: PathBuf, pack: &[u8]) -> Result<Self> {
         let dir = |off: usize| -> Result<usize> {
@@ -145,12 +164,18 @@ impl GameData {
         for (lv, c) in capacity.iter_mut().enumerate() {
             *c = pack[level_base + lv * LEVEL_STATS_SIZE + LEVEL_STATS_INVENTORY_CAPACITY];
         }
+        let mut hp = [0u16; LEVEL_COUNT];
+        for (lv, h) in hp.iter_mut().enumerate() {
+            let off = level_base + lv * LEVEL_STATS_SIZE + LEVEL_STATS_HP;
+            *h = u16::from_le_bytes([pack[off], pack[off + 1]]);
+        }
 
         let data = Self {
             source,
             items,
             growth,
             capacity,
+            hp,
         };
         // Every weapon and armor id (0x3F..=0xC7) has its own record on the USA disc; another
         // region's PE.IMG puts other data at these sectors.
@@ -183,6 +208,17 @@ impl GameData {
         }
         Self::from_resident_pack(path.to_path_buf(), &pack)
     }
+}
+
+/// Stat value of the top growth level (98); the HP and Item Capacity tables both reach it here.
+pub const TOP_LEVEL_STAT: u16 = 980;
+
+/// Max HP at the top HP level without armor help; HP Max Up armor makes it 999.
+pub const MAX_STAT_MAX_HP: u16 = 869;
+
+/// `Inv_RecalcSlotStats`: `hp * (20 + g_StatScaleBase[0]) / 20`, the scale being 3 for HP Max Up.
+pub fn hp_with_armor(hp: u16, hp_max_up: bool) -> u16 {
+    (hp as u32 * if hp_max_up { 23 } else { 20 } / 20) as u16
 }
 
 /// The bag size the Item Capacity stat gives at its top level (Aya's own slots; armor mods add
@@ -462,6 +498,8 @@ mod tests {
         for lv in 0..LEVEL_COUNT {
             pack[level_base + lv * LEVEL_STATS_SIZE + LEVEL_STATS_INVENTORY_CAPACITY] =
                 (10 + lv).min(46) as u8;
+            let off = level_base + lv * LEVEL_STATS_SIZE + LEVEL_STATS_HP;
+            pack[off..off + 2].copy_from_slice(&(45 + lv as u16 * 8).to_le_bytes());
         }
         pack
     }
@@ -481,6 +519,12 @@ mod tests {
         assert_eq!(data.stat_for_bag_slots(46), Some(360));
         assert_eq!(data.stat_for_bag_slots(50), None);
         assert_eq!(data.max_bag_slots(), 46);
+        assert_eq!(data.max_hp_for_stat(0, false), 45);
+        assert_eq!(data.max_hp_for_stat(1000, false), 829);
+        assert_eq!(data.max_hp_for_stat(1000, true), 953);
+        assert_eq!(data.stat_for_max_hp(100, false), Some(70));
+        assert_eq!(data.stat_for_max_hp(900, true), Some(930));
+        assert_eq!(data.stat_for_max_hp(999, false), None);
     }
 
     #[test]
@@ -515,5 +559,9 @@ mod tests {
         assert_eq!(data.max_bag_slots(), MAX_STAT_BAG_SLOTS);
         assert_eq!(data.bag_slots_for_stat(1000), MAX_STAT_BAG_SLOTS);
         assert_eq!(data.bag_slots_for_stat(0), 10);
+        assert_eq!(data.max_hp_for_stat(0, false), 45);
+        assert_eq!(data.max_hp_for_stat(TOP_LEVEL_STAT, false), MAX_STAT_MAX_HP);
+        assert_eq!(data.max_hp_for_stat(TOP_LEVEL_STAT, true), 999);
+        assert_eq!(data.stat_for_max_hp(999, true), Some(TOP_LEVEL_STAT));
     }
 }

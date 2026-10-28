@@ -103,7 +103,8 @@ pub struct EditArgs {
     #[arg(long)]
     pub hp: Option<u16>,
 
-    /// Set maximum HP (1..=999)
+    /// Set maximum HP (1..=999). The game sets it from the HP stat, so the stat is raised to
+    /// match (exactly with a disc). The top is 869, or 999 with HP Max Up armor equipped.
     #[arg(long)]
     pub max_hp: Option<u16>,
 
@@ -161,7 +162,8 @@ pub struct EditArgs {
     #[arg(long)]
     pub add_item: Vec<String>,
 
-    /// Cheat: Max Aya stats (Lv 99, 999/999 HP, 99,999 BP, 46 item slots, max stat growth)
+    /// Cheat: Max Aya stats (Lv 99, top HP: 869, or 999 with HP Max Up armor; 99,999 BP, 46 item
+    /// slots, max stat growth)
     #[arg(long)]
     pub max_aya: bool,
 

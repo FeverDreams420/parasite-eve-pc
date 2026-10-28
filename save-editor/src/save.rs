@@ -5,7 +5,10 @@ use crate::charset::{decode_sjis_title, format_sjis_title_bytes, pe_decode, pe_e
 use crate::crc::{
     calc_save_crc16, read_stored_crc, update_save_crc16, SAVE_BLOCK_SIZE, SAVE_CRC_OFFSET,
 };
-use crate::disc::{game_data, ITEM_CAPACITY_STAT, MAX_STAT_BAG_SLOTS};
+use crate::disc::{
+    game_data, hp_with_armor, HP_STAT, ITEM_CAPACITY_STAT, MAX_STAT_BAG_SLOTS, MAX_STAT_MAX_HP,
+    TOP_LEVEL_STAT,
+};
 use crate::tables::{
     encode_mod_byte, game_icon_and_kind, item_metadata, map_location_descriptive, mod_metadata,
     save_header_location_name, ItemCategory, PARASITE_SPELLS,
@@ -17,7 +20,9 @@ pub const SCRIPT_VAR_OFFSET: usize = 0x13E4;
 pub const SCRIPT_VAR_SIZE: usize = 0x0800;
 pub const BATTLE_STATE_OFFSET: usize = 0x1BFC;
 /// Item Capacity stat value of the top level (98), which gives `MAX_STAT_BAG_SLOTS`.
-pub const MAX_BAG_ITEM_CAPACITY_STAT: u16 = 980;
+pub const MAX_BAG_ITEM_CAPACITY_STAT: u16 = TOP_LEVEL_STAT;
+/// Armor mod id of HP Max Up (`AMOD_HP_MAX_UP`).
+const ARMOR_MOD_HP_MAX_UP: u8 = 0x0B;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct EquipmentRecord {
@@ -518,6 +523,10 @@ impl PeSaveSlot {
         let orig_item_capacity =
             u16::from_le_bytes(self.raw_bytes[stat_off..stat_off + 2].try_into().unwrap());
         self.sync_bag_with_item_capacity(orig_slot_count, orig_item_capacity);
+        let hp_off = RT_OFFSET + 0x48 + HP_STAT * 2;
+        let orig_hp_stat =
+            u16::from_le_bytes(self.raw_bytes[hp_off..hp_off + 2].try_into().unwrap());
+        self.sync_max_hp_with_hp_stat(orig_max_hp, orig_hp_stat);
 
         let battle_state_needs_sync = self.max_hp != orig_max_hp
             || self.current_hp != orig_cur_hp
@@ -649,6 +658,64 @@ impl PeSaveSlot {
             }
             self.inventory_slot_count = g.bag_slots_for_stat(*stat);
         }
+    }
+
+    /// Whether the equipped armor carries HP Max Up, which lifts max HP by 3/20
+    /// (`BattleCmd_LoadWeaponModifiers` reads the mods in the armor's first `tail_count` slots).
+    pub fn armor_has_hp_max_up(&self) -> bool {
+        let Some(&val) = usize::try_from(self.equipped_armor_slot)
+            .ok()
+            .and_then(|slot| self.inventory_items.get(slot))
+        else {
+            return false;
+        };
+        let Some(rec) = usize::try_from(val as i32 - 0x100)
+            .ok()
+            .and_then(|i| self.equipment.get(i))
+            .filter(|r| r.is_active())
+        else {
+            return false;
+        };
+        (0..(rec.tail_count as usize).min(11)).any(|i| rec.mod_id_at(i) == ARMOR_MOD_HP_MAX_UP)
+    }
+
+    /// The highest max HP the game allows with the armor Aya has on now.
+    pub fn max_hp_limit(&self) -> u16 {
+        hp_with_armor(MAX_STAT_MAX_HP, self.armor_has_hp_max_up())
+    }
+
+    /// The game recomputes max HP from the HP stat at the start of every battle, on level ups and
+    /// in the status menu (`Inv_RecalcSlotStats`), so an edited max HP only sticks when the stat
+    /// gives it. A changed stat sets max HP; otherwise a changed max HP sets the stat. The top
+    /// is 869, or 999 while the equipped armor has HP Max Up. Current HP is kept within max HP.
+    fn sync_max_hp_with_hp_stat(&mut self, orig_max_hp: u16, orig_stat: u16) {
+        let hp_max_up = self.armor_has_hp_max_up();
+        let limit = self.max_hp_limit();
+        let stat = &mut self.stats_levels[HP_STAT];
+        match game_data() {
+            Some(g) => {
+                if *stat != orig_stat {
+                    self.max_hp = g.max_hp_for_stat(*stat, hp_max_up);
+                } else if self.max_hp != orig_max_hp {
+                    let wanted = self.max_hp.min(limit);
+                    if g.max_hp_for_stat(*stat, hp_max_up) != wanted {
+                        if let Some(v) = g.stat_for_max_hp(wanted, hp_max_up) {
+                            *stat = v;
+                        }
+                    }
+                    self.max_hp = g.max_hp_for_stat(*stat, hp_max_up);
+                }
+            }
+            None => {
+                if self.max_hp != orig_max_hp && self.max_hp >= limit {
+                    *stat = (*stat).max(TOP_LEVEL_STAT);
+                }
+                if *stat >= TOP_LEVEL_STAT && (*stat != orig_stat || self.max_hp != orig_max_hp) {
+                    self.max_hp = limit;
+                }
+            }
+        }
+        self.current_hp = self.current_hp.min(self.max_hp);
     }
 
     pub fn is_crc_valid(&self) -> bool {
@@ -837,8 +904,9 @@ impl PeSaveSlot {
     pub fn apply_cheat_max_aya(&mut self) {
         self.set_display_level(99);
         self.total_exp = 9_999_999;
-        self.max_hp = 999;
-        self.current_hp = 999;
+        // The game's own top: 869, or 999 with HP Max Up armor equipped (see `to_bytes`).
+        self.max_hp = self.max_hp_limit();
+        self.current_hp = self.max_hp;
         self.bonus_points = 99_999;
         self.inventory_slot_count = MAX_STAT_BAG_SLOTS;
         self.pe_bonus_pool = 999;

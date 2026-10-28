@@ -61,8 +61,9 @@ mod tests {
             crate::save::PeSaveSlot::from_bytes(&bytes, 0, &slot.filename).expect("reparse slot");
         assert!(reparsed.is_crc_valid());
         assert_eq!(reparsed.display_level(), 99);
-        assert_eq!(reparsed.current_hp, 999);
-        assert_eq!(reparsed.max_hp, 999);
+        // The game's top max HP for the armor Aya has on: 869, or 999 with HP Max Up.
+        assert_eq!(reparsed.max_hp, reparsed.max_hp_limit());
+        assert_eq!(reparsed.current_hp, reparsed.max_hp);
         assert_eq!(reparsed.bonus_points, 99_999);
         // The Item Capacity stat gives at most 46 slots; the game resets anything above it.
         assert_eq!(reparsed.inventory_slot_count, 46);
@@ -101,6 +102,38 @@ mod tests {
         let reparsed = crate::save::PeSaveSlot::from_bytes(&bytes, 0, &slot.filename).unwrap();
         assert!(reparsed.is_crc_valid());
         assert_eq!(&bytes[0x1C90..0x2000], &tail[..]);
+    }
+
+    #[test]
+    fn test_max_hp_follows_hp_stat_and_armor_without_disc() {
+        let sample_path =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples/Parasite_Eve_PS1_Sample_Card.srm");
+        let mut container = MemoryCardContainer::open(&sample_path).expect("open sample .srm card");
+        let slot = container.slots[0].as_mut().unwrap();
+        slot.equipped_armor_slot = -1;
+        let _ = slot.to_bytes();
+
+        // No armor: 999 is out of reach, the game's top is 869 and the HP stat goes to its top level.
+        slot.max_hp = 999;
+        slot.current_hp = 999;
+        let bytes = slot.to_bytes();
+        let reparsed = crate::save::PeSaveSlot::from_bytes(&bytes, 0, &slot.filename).unwrap();
+        assert_eq!((reparsed.max_hp, reparsed.current_hp), (869, 869));
+        assert!(reparsed.stats_levels[0] >= crate::disc::TOP_LEVEL_STAT);
+
+        // Armor with HP Max Up equipped: 999.
+        let val = slot.allocate_equipment_from_item(0xC7).unwrap();
+        let rec = &mut slot.equipment[(val - 0x100) as usize];
+        rec.tail_count = rec.tail_count.max(1);
+        rec.set_mod_at(0, 0x0B);
+        let pos = slot.inventory_items.iter().position(|&v| v == 0).unwrap();
+        slot.inventory_items[pos] = val;
+        slot.equipped_armor_slot = pos as i8;
+        assert!(slot.armor_has_hp_max_up());
+        slot.apply_cheat_max_aya();
+        let bytes = slot.to_bytes();
+        let reparsed = crate::save::PeSaveSlot::from_bytes(&bytes, 0, &slot.filename).unwrap();
+        assert_eq!((reparsed.max_hp, reparsed.current_hp), (999, 999));
     }
 
     #[test]

@@ -102,6 +102,10 @@ const BAG_SIZE_HELP: &str = "The game sets the bag size from the Item Capacity s
     so saving raises or lowers that stat to match (exactly with a game disc loaded). Armor with \
     Item Capacity mods adds up to 50 in game.";
 
+const MAX_HP_HELP: &str = "The game recomputes max HP from the HP stat at every battle, so saving \
+    raises or lowers that stat to match (exactly with a game disc loaded). The top is 869, or 999 \
+    while the equipped armor has HP Max Up.";
+
 // Theme Palette Constants
 const BG_DARKEST: Color32 = Color32::from_rgb(11, 16, 14);
 const BG_PANEL: Color32 = Color32::from_rgb(16, 23, 20);
@@ -1116,7 +1120,8 @@ impl eframe::App for SaveEditorApp {
                         |ui| {
                             ui.set_min_width(270.0);
                             if ui
-                                .button("✨ Max Aya (Lv 99 • 999 HP • 99,999 BP • 46 Slots)")
+                                .button("✨ Max Aya (Lv 99 • Max HP • 99,999 BP • 46 Slots)")
+                                .on_hover_text(MAX_HP_HELP)
                                 .clicked()
                             {
                                 save.apply_cheat_max_aya();
@@ -2525,7 +2530,8 @@ fn render_tab_character_and_stats(ui: &mut egui::Ui, save: &mut PeSaveSlot) {
                             ui.end_row();
 
                             ui.label("Maximum HP:");
-                            ui.add(egui::Slider::new(&mut save.max_hp, 1..=999));
+                            ui.add(egui::Slider::new(&mut save.max_hp, 1..=999))
+                                .on_hover_text(MAX_HP_HELP);
                             ui.end_row();
 
                             ui.label("Total Experience (EXP):");

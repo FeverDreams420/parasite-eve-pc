@@ -156,6 +156,24 @@ session override. A save made with the switch on retains it.
 
 Each feature has its own file and registration function in pe_qol.
 
+## Half-bar turns
+
+Combat / Parasite Energy includes the recomp's half-bar ATB rules. Rebalanced
+allows Items, Quick PE powers and weapon changes at half a bar; armor changes
+and escape remain full-bar by default. Quick powers default to Heal 1/2,
+Detox, Medic, Scan, Slow and Confuse. On a half bar every other power shows
+dimmed in the PE menu, like a power Aya can't afford (PE_HOOK_POWER_AVAILABLE),
+so Energy Shot and the rest need a full bar. Cancelling refunds the borrowed
+gauge; attacks still pay a full bar through refill debt. Vanilla disables
+half-bar actions. The gold gauge indicator uses native HUD quads.
+
+Runtime turn accounting lives in pe_rebalance/pe_atb_items.c; settings remain
+on the PE rules page. No card-save blocks are required.
+
+Regression coverage is retained in tests/pe_mod_atb_test.c. It links only the
+half-bar and PE-balance feature sources against native headers, with test-owned
+game state and mod-host callbacks, to exercise turn accounting and rule presets.
+
 ## Battle frequency
 
 Combat / Battle frequency ports the recomp's Normal, More (2x), Lots (4x),
@@ -167,6 +185,35 @@ not the number of enemies in a fight.
 
 pe_qol/pe_battle_frequency.c owns matching and settings. A single SCRIPT_RANDOM
 hook supplies local RNG bounds; loaded scripts and save data are not patched.
+
+## Panacea and medicine combining
+
+Panacea (item 0x19) restores 400 HP and cures ailments in battle or the field,
+while preserving ailment immunities. It uses Medicine 4's icon and healing
+effect. The Parasite Energy rules page enables it in Rebalanced and disables
+it in Vanilla; names remain readable for already-carried Panacea.
+
+Combat / Combine items provides the recomp recipes through the shared F1
+panel: two Medicine 1/2/3 become the next tier, or Medicine 4 plus Full Cure
+become Panacea. Junk economy must be enabled, both ingredients must be in
+Aya's bag, and combining is outside battle and game menus. Press Combine
+twice; the bag is checked again before consuming anything.
+
+In Aya's item menu a medicine whose partner is in the bag gets a fourth
+action, Combine, under Use / Move / Discard; it combines at once and closes
+the list (Combine items / Combine in item menu). Items with an available Combine
+recipe remain white in Aya's bag even at full health; Use keeps its native
+availability and dimming. The Combine module owns this presentation through
+PE_HOOK_INVENTORY_ROW without changing selection bits. Checks:
+tests/run_pe_combine_colour_test.ps1. It uses PE_HOOK_ITEM_ACTIONS:
+the action list just opened, whose row count, row drawer and panel input step
+a mod may replace. Text helpers for the game's glyph code are in
+host/pe_gametext.h.
+
+pe_rebalance/pe_panacea.c owns effects, labels and use flags; pe_combine.c
+owns recipes and confirmation. They share only their feature header and
+use the versioned Junk service for the optional economy dependency. Existing
+item IDs use the normal game save; no new save block is needed.
 
 ## Inventory convenience
 

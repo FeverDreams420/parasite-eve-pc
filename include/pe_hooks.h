@@ -13,6 +13,7 @@ typedef enum PeHookId {
     PE_HOOK_FRAME,       /* NULL: every field frame, after pad input is read */
     PE_HOOK_BATTLE_UPDATE, /* NULL: Battle_Update entry, every battle frame */
     PE_HOOK_ENEMY_HIT,   /* BattleEntity *: Battle_StepEnemyMovement entry, before an enemy's damage */
+    PE_HOOK_SPELL,       /* PeHookSpell: Battle_ApplySpellEffect entry (battle and menu) */
     PE_HOOK_HELP_TEXT,   /* u8 **: the menu title-bar line, before it is printed; may be replaced */
     PE_HOOK_INV_COMMAND, /* PeHookInvCommand: Inv_DispatchCommand entry; replaceable */
     PE_HOOK_ITEM_ADD,    /* s32 *: Inv_AddItem entry; change id, or return nonzero for handled/success */
@@ -26,9 +27,15 @@ typedef enum PeHookId {
     PE_HOOK_PLAYER_MOVE, /* PeHookPlayerMove: local multiplier for a player-input movement step */
     PE_HOOK_PAD_MAP,     /* PeHookPadMap: local run-button mapping for this poll */
     PE_HOOK_ACTOR_STEP,  /* PeHookActorStep: local scripted speed or animation increment */
+    PE_HOOK_ITEM_USE,    /* int *: Battle_ApplyDamage item id before its effects */
+    PE_HOOK_TEXT_LOOKUP, /* PeHookTextLookup: item name/description lookup result */
     PE_HOOK_INVENTORY_SORTED, /* NULL: Aya's native bag sort completed */
+    PE_HOOK_ITEM_ACTIONS, /* PeHookItemActions: an item's action list (Use / Move / Discard ...) just opened */
     PE_HOOK_MAIN_MENU_ICON, /* PeHookMainMenuIcon: a main menu row's icon, before it is drawn */
     PE_HOOK_ENEMY_HIT_END, /* BattleEntity *: original damage applied; restore temporary hit inputs */
+    PE_HOOK_INVENTORY_ROW, /* PeHookInventoryRow: inventory row dimming, presentation only */
+    PE_HOOK_POWER_AVAILABLE, /* PeHookPowerAvailable: Menu_CheckItemAffordable, can this PE power be picked now */
+    PE_HOOK_POWER_COST, /* PeHookPowerCost: raw PE cost before the native armor discount */
     PE_HOOK_COUNT
 } PeHookId;
 
@@ -59,15 +66,41 @@ typedef struct PeHookScriptRandom {
     const unsigned int *next;
 } PeHookScriptRandom;
 
+typedef struct PeHookTextLookup {
+    unsigned table, index; /* table 8 = item names, 12 = item descriptions */
+    void **text;
+} PeHookTextLookup;
+
 typedef struct PeHookInvCommand {
     int command, value;
     int result; /* a handler returning nonzero replaces the command with this result */
 } PeHookInvCommand;
 
+typedef struct PeHookSpell {
+    unsigned spell;           /* Parasite Energy power index */
+    struct BattleEntity *target;
+} PeHookSpell;
+
 typedef struct PeHookInit {
     int interactive;        /* 0 for headless runs: no window, no menus */
     const char *prefs_file; /* per-user preferences file; mods keep their files beside it */
 } PeHookInit;
+
+typedef struct PeHookInventoryRow {
+    struct MenuWidgetNode *node;
+    int slot;
+    int *dimmed;
+} PeHookInventoryRow;
+
+typedef struct PeHookPowerCost {
+    int power;
+    int *cost; /* integer PE points before the native armor discount */
+} PeHookPowerCost;
+
+typedef struct PeHookPowerAvailable {
+    int power;    /* Parasite Energy power index (0 Heal 1 .. 19 Liberate) */
+    int *enabled; /* the game's answer (PE, HP, ammo); a mod may clear it */
+} PeHookPowerAvailable;
 
 typedef struct PeHookListRows {
     struct MenuWidgetNode *node;
@@ -78,6 +111,15 @@ typedef struct PeHookMenuAction {
     int action;                   /* 0-8 the game's rows; 9 = a row past the last one */
     struct MenuWidgetNode *list;  /* the main list node */
 } PeHookMenuAction;
+
+/* The panel's update and the list's draw and rows may be replaced; g_MenuItemActionStateTable
+ * [context] gives the game's action of each row. */
+typedef struct PeHookItemActions {
+    struct MenuWidgetNode *panel; /* update = Menu_StepEquipScreen */
+    struct MenuWidgetNode *list;  /* draw = Menu_DrawContextActionList, 3 rows */
+    int context;                  /* g_MenuItemActionContext: 0 consumables, 1 and 2 others */
+    int list_id, slot;            /* g_MenuActiveItemList (0 = Aya's bag), g_MenuActiveItemSlot */
+} PeHookItemActions;
 
 typedef struct PeHookMainMenuIcon {
     int row;     /* the list row */

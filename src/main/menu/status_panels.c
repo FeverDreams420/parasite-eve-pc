@@ -342,6 +342,7 @@ int Menu_CheckItemAffordable(int actionId)
     if (action < 3 || action == 18) {
         if (g_AyaHpCurrent[0] >= g_AyaHpMax[0]) enabled = 0;
     }
+    PE_HOOK(PE_HOOK_POWER_AVAILABLE, (&(PeHookPowerAvailable){action, &enabled}));
     return enabled;
 }
 

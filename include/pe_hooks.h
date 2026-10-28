@@ -39,10 +39,12 @@ typedef enum PeHookId {
     PE_HOOK_TEXTBOXES,   /* NULL: Menu_DrawTextboxEntries entry, before the dialogue boxes draw */
     PE_HOOK_ITEM_ACTIONS, /* PeHookItemActions: an item's action list (Use / Move / Discard ...) just opened */
     PE_HOOK_MAIN_MENU_ICON, /* PeHookMainMenuIcon: a main menu row's icon, before it is drawn */
+    PE_HOOK_ENEMY_HIT_END, /* BattleEntity *: original damage applied; restore temporary hit inputs */
     PE_HOOK_PLAYER_BANK, /* NULL: Scene_LoadEntityTexture entry, Aya's model / texture load step;
                           * g_SceneAreaType (her outfit bank) may be changed while entity_texture_phase is 0 */
     PE_HOOK_INVENTORY_ROW, /* PeHookInventoryRow: inventory row dimming, presentation only */
     PE_HOOK_POWER_AVAILABLE, /* PeHookPowerAvailable: Menu_CheckItemAffordable, can this PE power be picked now */
+    PE_HOOK_POWER_COST, /* PeHookPowerCost: raw PE cost before the native armor discount */
     PE_HOOK_PLAYER_ROWS, /* NULL: before Aya's actor takes bank_slots[0] and her rows (g_GameState.bank_rows):
                           * the end of Scene_LoadEntityTexture (every room load: the room's actor
                           * spawn reads them) and Scene_InitEntityPlayer step 0x27 (scene start) */
@@ -136,6 +138,11 @@ typedef struct PeHookInventoryRow {
     int slot;
     int *dimmed;
 } PeHookInventoryRow;
+
+typedef struct PeHookPowerCost {
+    int power;
+    int *cost; /* integer PE points before the native armor discount */
+} PeHookPowerCost;
 
 typedef struct PeHookPowerAvailable {
     int power;    /* Parasite Energy power index (0 Heal 1 .. 19 Liberate) */

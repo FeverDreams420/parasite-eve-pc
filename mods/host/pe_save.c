@@ -248,6 +248,13 @@ static int pe_pack(uint8_t *out, const uint8_t *live, int *dropped) {
             list[j] = list[j - 1];
             list[j - 1] = t;
         }
+    /* No participating records: retain the original tail byte for byte,
+     * including data from writers this host does not understand. */
+    if (!n) {
+        memcpy(out, s_tail, PE_SAVE_TAIL_SIZE);
+        memcpy(out + PE_SAVE_WINDOW_AT, win, sizeof win);
+        return 0;
+    }
     memset(lin, 0, sizeof lin);
     memcpy(lin, PE_SAVE_MAGIC, 4);
     lin[4] = PE_SAVE_FORMAT;
@@ -338,7 +345,7 @@ int pe_save_register(const PeSaveRecord *r) {
     const char *mod = pe_mod_current();
     uint32_t id;
     int i;
-    if (!r || !r->name || !*r->name || !r->data || !r->size || r->version < 1 || r->version > 0xFFFF) {
+    if (!r || !r->name || !*r->name || !r->data || !r->size || r->size > PE_SAVE_ROOM - PE_SAVE_HEADER_SIZE - PE_SAVE_RECORD_HEADER_SIZE || r->version < 1 || r->version > 0xFFFF) {
         pe_mod_log(mod, "save: bad record, not registered");
         return -1;
     }
@@ -373,7 +380,7 @@ void pe_save_on_read(const uint8_t *block) {
             pe_load_one(i);
         } else if (s_reg[i].record->release) {
             pe_load_one(i);
-            s_reg[i].released = s_reg[i].release_due = !s_reg[i].kept;
+            s_reg[i].released = s_reg[i].release_due = !s_reg[i].kept && pe_carried(s_reg[i].id) != NULL;
         }
 }
 
@@ -435,6 +442,10 @@ void pe_save_crash_describe(char *out, size_t size, size_t *used) {
     if (s_crash_count == -2) {
         PE_OUT("format %u from a newer build, kept as it is (mods run from their defaults).\r\n",
                (unsigned)s_crash_tail[4]);
+        return;
+    }
+    if (!s_crash_count && memcmp(s_crash_tail, PE_SAVE_MAGIC, 4)) {
+        PE_OUT("No mod records; original save tail preserved.\r\n");
         return;
     }
     if (s_crash_count < 0) {

@@ -6,7 +6,7 @@
 static PeDisc *movieAudioImage;
 static PeDiscFile movieAudioFile;
 static int MenuCard_ReadMovieAudio(struct PsyzCdRead *read) {
-    if(!movieAudioImage || !read || read->size!=2352 ||
+    if(!movieAudioImage || movieAudioImage!=g_CdImage || !movieAudioImage->stream || !read || !read->buffer || read->size!=2352 ||
        read->sector<movieAudioFile.sector ||
        read->sector-movieAudioFile.sector>=((u64)movieAudioFile.size+2047)/2048)
         return -1;
@@ -18,20 +18,20 @@ static int MenuCard_ReadMovieAudio(struct PsyzCdRead *read) {
 static void MenuCard_StopMovieAudio(void) {
     Psyz_AudioLock();
     int active=movieAudioImage!=NULL;
-    Psyz_AudioUnlock();
     if(active){
-        CdControlB(8,NULL,NULL);
-        Psyz_AudioLock();
         Psyz_CdSetReadCB(NULL);
         movieAudioImage=NULL;
-        Psyz_AudioUnlock();
+        memset(&movieAudioFile,0,sizeof(movieAudioFile));
     }
+    Psyz_AudioUnlock();
+    if(active)CdControlB(8,NULL,NULL);
 }
 static int MenuCard_StartMovieAudio(PeDisc *image,const PeDiscFile *file) {
     u8 raw[2352],filter[2],mode=200;
-    u32 count=(u32)(((u64)file->size+2047)/2048),sector;
     CdlLOC position;
     MenuCard_StopMovieAudio();
+    if(!image || !image->stream || !file || file->directory || image->sector_size!=2352)return 0;
+    u32 count=(u32)(((u64)file->size+2047)/2048),sector;
     for(sector=0;sector<count;sector++){
         if(!pe_disc_read_raw(image,file,sector,raw))return 0;
         if((raw[18]&0x44)==0x44)break;

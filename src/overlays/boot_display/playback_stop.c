@@ -10,15 +10,11 @@
 s32 BootDisplay_WaitForCdAndRestoreCallbacks(void) {
     s32 result=0;
     Psyz_AudioLock();
-    int active=g_BootDisplayPlaybackActive;
+    int active=BootDisplay_DetachPlayback();
     Psyz_AudioUnlock();
     if(active){
         /* CD completion enters the kernel; IRQ callbacks may need audio. */
         if(CdControlB(8,NULL,NULL)<=0)result=-1;
-        Psyz_AudioLock();
-        Psyz_CdSetReadCB(NULL);
-        g_BootDisplayPlaybackActive=0;
-        Psyz_AudioUnlock();
     }
     VSyncCallback(Boot_VsyncCallback);
     return result;

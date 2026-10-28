@@ -1231,6 +1231,15 @@ static int original_credit_playback(PeDisc *disc)
         if(BootDisplay_StartPlayback()!=-1 || g_BootDisplayPlaybackActive)return 0;
         g_CdImage=disc;disc->sector_size=sector_size;g_BootDisplayPlaybackSectorBuffer=buffer;g_BootDisplayPlaybackEndPos=end;
     }
+    /* Rejecting a replacement also retires the previously active stream. */
+    if(BootDisplay_StartPlayback())return 0;
+    char *old_buffer=g_BootDisplayPlaybackSectorBuffer;
+    g_BootDisplayPlaybackSectorBuffer=NULL;
+    if(BootDisplay_StartPlayback()!=-1 || g_BootDisplayPlaybackActive || Psyz_CdPullSamples(actual,1024))return 0;
+    g_BootDisplayPlaybackSectorBuffer=old_buffer;
+    struct PsyzCdRead late_read={.sector=(u32)start,.size=2352,.buffer=actual};
+    if(BootDisplay_StepPlaybackTransfer(&late_read)!=-1)return 0;
+    if(BootDisplay_WaitForCdAndRestoreCallbacks() || BootDisplay_WaitForCdAndRestoreCallbacks())return 0;
     for(unsigned fault=0;fault<2;++fault){
         g_BootDisplayState=g_BootDisplayDone=0;
         g_BootDisplayPlaybackEndPos=start+3;g_BootDisplayPlaybackFile.size=3*2048;
@@ -1973,6 +1982,36 @@ static int original_movie_uploads(PeDisc *disc)
         DecDCToutCallback(NULL);
         if(first)MenuCardFirst_ResetDisplayState();else MenuCard_ResetDisplayState();
         if(Psyz_CdPullSamples(samples,1024)!=0){fprintf(stderr,"Movie XA continued after stop\n");valid=0;}
+    }
+    /* Replacement failure, decode/read failure, disc change and repeated
+     * teardown must all retire XA immediately in both original players. */
+    for(unsigned first=0;first<2;++first)for(unsigned fault=0;fault<4;++fault) {
+        u8 *buffers[]={arena};short samples[2048];
+        g_CdImage=disc;g_DrawEnabled.bits=0;
+        if(!(first?MenuCardFirst_InitVideoBuffers(1,buffers):MenuCard_InitVideoBuffers(1,buffers)) ||
+           !(first?MenuCardFirst_OpenVideo(1):MenuCard_OpenVideo(1)))return 0;
+        if(Psyz_CdPullSamples(samples,1024)!=1024)return 0;
+        if(fault==0) {
+            if(first?MenuCardFirst_OpenVideo(47):MenuCard_OpenVideo(47))return 0;
+        } else if(fault==1) {
+            g_CdImage=NULL;
+            if(first?MenuCardFirst_OpenVideo(1):MenuCard_OpenVideo(1))return 0;
+        } else if(fault==2) {
+            u64 size=disc->image_size;disc->image_size=0;
+            int playing=first?MenuCardFirst_StepVideo():MenuCard_StepVideo();
+            disc->image_size=size;
+            if(playing)return 0;
+        } else {
+            CdRom_BindImage(NULL,NULL);
+        }
+        if(Psyz_CdPullSamples(samples,1024)!=0)return fprintf(stderr,"Stale movie audio first=%u fault=%u\n",first,fault),0;
+        for(unsigned repeat=0;repeat<2;++repeat)
+            if(first)MenuCardFirst_ResetDisplayState();else MenuCard_ResetDisplayState();
+        if(fault==3) {
+            PeDiscFile archive;
+            if(!pe_disc_find(disc,"PE.IMG",&archive))return 0;
+            CdRom_BindImage(disc,&archive);
+        } else g_CdImage=disc;
     }
     if(!paused)Psyz_AudioUnpause();
     g_MenuSaveBgFadeState=background;

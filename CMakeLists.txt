@@ -68,6 +68,7 @@ endfunction()
 # Original scene/archive module owns file-image I/O and completion flags.
 add_library(parasite-eve-original-disc OBJECT src/main/cdrom/scene_assets.c)
 pe_configure_object_library(parasite-eve-original-disc)
+target_link_libraries(parasite-eve-original-disc PRIVATE psyz)
 
 # The executable starts the original game and compiles its modules in place.
 add_executable(parasite-eve-pc src/main/boot/main.c)
@@ -686,6 +687,7 @@ if(BUILD_TESTING)
     # Rename its real I/O symbols to keep them distinct from the fixture doubles.
     add_library(parasite-eve-test-disc OBJECT src/main/cdrom/scene_assets.c)
     pe_configure_object_library(parasite-eve-test-disc)
+    target_link_libraries(parasite-eve-test-disc PRIVATE psyz)
     target_compile_definitions(parasite-eve-test-disc PRIVATE
         CdRom_ReadSectorsFromLba=CdRom_ImageReadSectorsFromLba
         CdRom_PollReady=CdRom_ImagePollReady

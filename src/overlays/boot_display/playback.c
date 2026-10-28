@@ -15,7 +15,18 @@ static int playbackEnded, playbackError;
 s32 g_BootDisplayPlaybackActive;
 s32 g_BootDisplayPlaybackEnded, g_BootDisplayReportedPos;
 
+/* Caller holds audio: detaching waits for an in-flight sample read and prevents
+ * any later one from touching the old image/buffer, even when CdStop fails. */
+int BootDisplay_DetachPlayback(void) {
+    int active=g_BootDisplayPlaybackActive;
+    if(playbackImage)Psyz_CdSetReadCB(NULL);
+    playbackImage=NULL;
+    g_BootDisplayPlaybackActive=0;
+    return active;
+}
+
 s32 BootDisplay_StartPlayback(void) {
+    if(g_BootDisplayPlaybackActive)BootDisplay_WaitForCdAndRestoreCallbacks();
     if(!g_CdImage || !g_CdImage->stream || g_CdImage->sector_size!=2352 ||
        !g_BootDisplayPlaybackSectorBuffer ||
        g_BootDisplayPlaybackStartPos<0 ||
@@ -63,6 +74,7 @@ int BootDisplay_IssuePlaybackRead(int command, int parameter) {
 }
 
 s32 BootDisplay_StepPlaybackTransfer(struct PsyzCdRead *read) {
+    if(!playbackImage)return -1;
     if(!read || read->size!=2352 || !read->buffer || !playbackImage ||
        playbackImage!=g_CdImage){playbackError=1;return -1;}
     if(read->sector>=(u32)g_BootDisplayPlaybackEndPos){playbackEnded=1;return -1;}
@@ -86,7 +98,7 @@ void BootDisplay_CheckPlaybackTime(void) {
     int mute=0,query=0;
     Psyz_AudioLock();
     if(g_BootDisplayPlaybackActive){
-        if(playbackError){g_BootDisplayState=g_BootDisplayDone=-1;g_BootDisplayPlaybackEnded=1;}
+        if(playbackError || playbackImage!=g_CdImage){g_BootDisplayState=g_BootDisplayDone=-1;g_BootDisplayPlaybackEnded=1;}
         else if(playbackEnded || g_BootDisplayPlaybackCurrentPos>=g_BootDisplayPlaybackEndPos){
             mute=1;g_BootDisplayPlaybackEnded=1;
         }else query=1;

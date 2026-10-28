@@ -101,15 +101,16 @@ static int pe_rand_scene(void *ctx, void *user) {
     (void)ctx;
     (void)user;
     /* Title (boot or reset: no story day yet). New Game there sends no command: the game just goes on
-     * from this state into Day 1, so the first room with a day and no save loaded in between, at a
-     * play time of under a minute, is a New Game. */
+     * from this state into Day 1, so the first room with a day and no save loaded in between, still at
+     * the start of the story, is a New Game. g_PlayTimeFrameCounter is the story progress counter (the
+     * crash report's "progress"), under 60 until well into Day 1. */
     if (g_GameState.current_story_day < 0) {
         s_from_title = 1;
         return 0;
     }
     if (s_from_title) {
         s_from_title = 0;
-        if (g_PlayTimeFrameCounter < 60u * 60u) pe_rand_new_game();
+        if (g_PlayTimeFrameCounter < 60u) pe_rand_new_game();
     }
     if (!room || map < 1 || map > SCENE_ROOM_COUNT || !pe_rand_ready()) return 0;
     while (first < PE_RAND_SITES && g_pe_rand_sites[first].map < map) ++first;
@@ -142,10 +143,24 @@ static int pe_rand_scene(void *ctx, void *user) {
     return 0;
 }
 
+/* The spot's own item: vanilla, this run's, or what its sites in the loaded room hold now (both
+ * items of a roll). */
+static int pe_rand_spot_item(const uint8_t *room, size_t bytes, int map, unsigned spot, unsigned item) {
+    if (item == g_pe_rand_spots[spot].vanilla) return 1;
+    if (s_layout_ready && s_run.on && pe_rand_supported() && item == s_layout[spot]) return 1;
+    for (unsigned i = 0; i < PE_RAND_SITES; ++i) {
+        const PeRandSite *s = &g_pe_rand_sites[i];
+        if (s->map == map && s->spot == spot && s->at <= bytes && bytes - s->at >= 16 &&
+            pe_get32(room + s->at + 8 + 4 * s->operand) == item) return 1;
+    }
+    return 0;
+}
+
 /* A table spot giving its item: a rand_give row (play log), on or off, for tools/keylogic.py,
  * which works out from a run which keys each spot needs. During a script step the cursor is just past
  * it, so a GiveItem (two operands, 16 bytes) starts 16 bytes back. Only rows for the table's own give
- * steps are written; steals, drops and menus aren't script gives. */
+ * steps are written; steals, drops and menus aren't script gives. A battle that starts right after a
+ * give leaves the cursor there, so its rewards look like that step: only the spot's own item counts. */
 static int pe_rand_item_add(void *ctx, void *user) {
     const uint8_t *room = (const uint8_t *)g_GameState.loaded_scene_assets;
     const int *item = ctx;
@@ -160,8 +175,9 @@ static int pe_rand_item_add(void *ctx, void *user) {
     if ((pe_get32(room + at) & 0x1FFFu) != 167u) return 0;
     for (unsigned i = 0; i < PE_RAND_GIVES && g_pe_rand_gives[i].map <= map; ++i)
         if (g_pe_rand_gives[i].map == map && g_pe_rand_gives[i].at == at) {
-            pe_log("rand_give", "map=%d at=%06X spot=%u item=0x%02X", map, (unsigned)at,
-                   (unsigned)g_pe_rand_gives[i].spot, (unsigned)*item);
+            if (pe_rand_spot_item(room, bytes, map, g_pe_rand_gives[i].spot, (unsigned)*item))
+                pe_log("rand_give", "map=%d at=%06X spot=%u item=0x%02X", map, (unsigned)at,
+                       (unsigned)g_pe_rand_gives[i].spot, (unsigned)*item);
             break;
         }
     return 0;

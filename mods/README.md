@@ -478,7 +478,8 @@ spoiler) beside the preferences.
 - Key logic comes from real play, not from reading the map: locks are gates inside rooms, and story
   flags open the way as much as keys do. Each spot's `needs` (keys held, and those keys' own spots
   reached, when a run first got there: never fewer than it really needs) and `before` (keys whose lock
-  came later, so a key never lands where a player may already have walked past for good) come from
+  came later, with the spot's room seen still open then: the lock is in that room, or the run went back
+  into it afterwards, so a key never lands where a player may already have walked past for good) come from
   play logs: the mod writes `rand_newgame`, `rand_give` (a table spot giving, by script position) and
   `rand_lock` (the game asking for a key) rows, on or off, through the play log (pe_tools). Then
   `tools/keylogic.py <pe_play_log.csv...> > needs.txt` and `tools/spottable.py <disc> needs.txt` (in mods/pe_randomizer).

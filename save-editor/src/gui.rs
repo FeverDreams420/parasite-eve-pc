@@ -106,6 +106,10 @@ const MAX_HP_HELP: &str = "The game recomputes max HP from the HP stat at every 
     raises or lowers that stat to match (exactly with a game disc loaded). The top is 869, or 999 \
     while the equipped armor has HP Max Up.";
 
+const SORT_HELP: &str = "Weapons, armor, ammo, medicine, other items, then key items; empty slots \
+    last. Copies of one weapon or armor go best first. The equipped gun and armor stay equipped. \
+    Takes effect when you save.";
+
 // Theme Palette Constants
 const BG_DARKEST: Color32 = Color32::from_rgb(11, 16, 14);
 const BG_PANEL: Color32 = Color32::from_rgb(16, 23, 20);
@@ -1415,6 +1419,14 @@ impl SaveEditorApp {
                             )
                             .on_hover_text(BAG_SIZE_HELP);
                             ui.checkbox(&mut self.show_locked_inv_slots, "Show Locked (..50)");
+                            ui.separator();
+                            if ui
+                                .button("⇅ Sort Bag")
+                                .on_hover_text(SORT_HELP)
+                                .clicked()
+                            {
+                                save.sort_aya_bag();
+                            }
                         });
                     });
 
@@ -1854,6 +1866,14 @@ impl SaveEditorApp {
                         WayneSubTab::RegularItems,
                         "💊 Wayne's Regular Item Storage (100 Slots)",
                     );
+                    ui.separator();
+                    if ui
+                        .button("⇅ Sort Wayne's Storage")
+                        .on_hover_text(SORT_HELP)
+                        .clicked()
+                    {
+                        save.sort_wayne_storage();
+                    }
                 });
                 ui.add_space(4.0);
 

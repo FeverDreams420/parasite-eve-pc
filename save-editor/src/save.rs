@@ -888,6 +888,85 @@ impl PeSaveSlot {
         Ok(empty_slot)
     }
 
+    /// Sort order of a slot value: weapons, armor, ammo, medicine, other items, key items; then by
+    /// item id, and copies of one weapon or armor by their total stats, best first.
+    fn sort_key(&self, val: i16) -> (u8, u16, i32) {
+        let rank = |c: ItemCategory| match c {
+            ItemCategory::Handgun => 0,
+            ItemCategory::MachineGun => 1,
+            ItemCategory::Rifle => 2,
+            ItemCategory::Shotgun => 3,
+            ItemCategory::GrenadeLauncher => 4,
+            ItemCategory::RocketLauncher => 5,
+            ItemCategory::MeleeWeapon => 6,
+            ItemCategory::Armor => 7,
+            ItemCategory::Ammo | ItemCategory::Crate => 8,
+            ItemCategory::Consumable => 9,
+            ItemCategory::StatUpgrade => 10,
+            ItemCategory::Tool => 11,
+            ItemCategory::ParasiteEnergy => 12,
+            ItemCategory::TradingCard => 13,
+            ItemCategory::KeyItem => 14,
+            ItemCategory::Empty => 15,
+        };
+        match val {
+            1..=0xFF => (rank(item_metadata(val as u8).category), val as u16, 0),
+            0x100..=0x17F => match self.equipment.get((val - 0x100) as usize) {
+                Some(rec) if rec.is_active() => {
+                    let cat = item_metadata(rec.item_id).category;
+                    let cat = if cat.is_equipment() {
+                        cat
+                    } else if rec.is_armor() {
+                        ItemCategory::Armor
+                    } else {
+                        ItemCategory::MeleeWeapon
+                    };
+                    (rank(cat), rec.item_id as u16, -rec.effective_stats().iter().sum::<i32>())
+                }
+                _ => (16, val as u16, 0),
+            },
+            0x200..=0x208 => (rank(ItemCategory::Ammo), val as u16, 0),
+            _ => (16, val as u16, 0),
+        }
+    }
+
+    /// Sorts a list in place, filled slots first (empty ones at the end).
+    fn sort_values(&self, list: &mut [i16]) {
+        list.sort_by_key(|&v| (v == 0, if v == 0 { (0, 0, 0) } else { self.sort_key(v) }));
+    }
+
+    /// Sorts Aya's bag. The equipped weapon and armor stay equipped (their slot numbers follow
+    /// them), as the game's own Sort does.
+    pub fn sort_aya_bag(&mut self) {
+        let held = |slot: i8, items: &[i16]| {
+            usize::try_from(slot)
+                .ok()
+                .and_then(|s| items.get(s).copied())
+                .filter(|&v| v != 0)
+        };
+        let weapon = held(self.equipped_weapon_slot, &self.inventory_items);
+        let armor = held(self.equipped_armor_slot, &self.inventory_items);
+        let mut items = std::mem::take(&mut self.inventory_items);
+        self.sort_values(&mut items);
+        let find = |v: Option<i16>, old: i8| match v {
+            Some(v) => items.iter().position(|&x| x == v).map_or(old, |p| p as i8),
+            None => old,
+        };
+        self.equipped_weapon_slot = find(weapon, self.equipped_weapon_slot);
+        self.equipped_armor_slot = find(armor, self.equipped_armor_slot);
+        self.inventory_items = items;
+    }
+
+    /// Sorts Wayne's storage: his item shelf and his equipment vault.
+    pub fn sort_wayne_storage(&mut self) {
+        let mut storage = std::mem::take(&mut self.storage);
+        let mut special = std::mem::take(&mut self.special_storage);
+        self.sort_values(&mut storage);
+        self.sort_values(&mut special);
+        self.storage = storage;
+        self.special_storage = special;
+    }
+
     /// Decodes the 16x16 4bpp PS1 save icon at `0x60..0x100` into a 16x16 RGBA8 image (1024 bytes).
     pub fn decode_icon_rgba(&self) -> [u8; 16 * 16 * 4] {
         let mut rgba = [0u8; 16 * 16 * 4];

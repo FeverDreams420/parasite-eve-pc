@@ -87,6 +87,42 @@ mod tests {
     }
 
     #[test]
+    fn test_sort_orders_bag_and_storage_and_keeps_equipment_on() {
+        let sample_path =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples/Parasite_Eve_PS1_Sample_Card.srm");
+        let mut container = MemoryCardContainer::open(&sample_path).expect("open sample .srm card");
+        let slot = container.slots[0].as_mut().unwrap();
+        slot.add_item_to_inventory(0x06).unwrap(); // Medicine 1
+        slot.add_item_to_inventory(0xC7).unwrap(); // Cm Suit 2
+        slot.add_item_to_inventory(0x78).unwrap(); // P90
+        slot.inventory_items.swap(0, 3); // a gap and some disorder
+        slot.inventory_items[1] = 0;
+        let weapon = slot.inventory_items[slot.equipped_weapon_slot as usize];
+        let armor = slot.inventory_items[slot.equipped_armor_slot as usize];
+        let mut before: Vec<i16> = slot.inventory_items.clone();
+
+        slot.sort_aya_bag();
+        let after = &slot.inventory_items;
+        let mut a = after.clone();
+        before.sort();
+        a.sort();
+        assert_eq!(a, before, "same items");
+        let filled = after.iter().take_while(|&&v| v != 0).count();
+        assert!(after[filled..].iter().all(|&v| v == 0), "empty slots last");
+        let pos = |v: i16| after.iter().position(|&x| x == v).unwrap();
+        let p90 = pos(after.iter().copied().find(|&v| v >= 0x100 && slot.equipment[(v - 0x100) as usize].item_id == 0x78).unwrap());
+        let suit = pos(after.iter().copied().find(|&v| v >= 0x100 && slot.equipment[(v - 0x100) as usize].item_id == 0xC7).unwrap());
+        assert!(p90 < suit && suit < pos(0x06), "weapons, then armor, then medicine");
+        assert_eq!(after[slot.equipped_weapon_slot as usize], weapon);
+        assert_eq!(after[slot.equipped_armor_slot as usize], armor);
+
+        slot.storage[5] = 0x06;
+        slot.storage[2] = 0x38;
+        slot.sort_wayne_storage();
+        assert!(slot.storage.iter().position(|&v| v == 0x06) < slot.storage.iter().position(|&v| v == 0));
+    }
+
+    #[test]
     fn test_mod_bytes_use_the_games_groups_and_names() {
         use crate::tables::{encode_mod_byte, mod_metadata};
         // The P90's own record holds Rate of Fire x10 and Attack All as 0x25 and 0x48.

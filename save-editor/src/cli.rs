@@ -162,6 +162,15 @@ pub struct EditArgs {
     #[arg(long)]
     pub add_item: Vec<String>,
 
+    /// Sort Aya's bag (weapons, armor, ammo, medicine, other, key items; the equipped gun and
+    /// armor stay equipped)
+    #[arg(long)]
+    pub sort_bag: bool,
+
+    /// Sort Wayne's item shelf and equipment vault
+    #[arg(long)]
+    pub sort_wayne: bool,
+
     /// Cheat: Max Aya stats (Lv 99, top HP: 869, or 999 with HP Max Up armor; 99,999 BP, 46 item
     /// slots, max stat growth)
     #[arg(long)]
@@ -508,6 +517,13 @@ fn cmd_edit(args: EditArgs) -> Result<()> {
             "Added item 0x{:02X} to inventory slot #{}",
             item_id, added_slot
         );
+    }
+
+    if args.sort_bag {
+        save.sort_aya_bag();
+    }
+    if args.sort_wayne {
+        save.sort_wayne_storage();
     }
 
     let _ = save.to_bytes();

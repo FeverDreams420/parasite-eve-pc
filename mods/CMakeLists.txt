@@ -10,6 +10,7 @@ set(pe_host_sources
     host/pe_pages.c         # PE Enhancements page layout
     host/pe_game.c          # game access helpers
     host/pe_main_menu.c     # extra rows in Aya's main menu, screens from game widgets
+    host/pe_save_tail.c     # the save's free tail carried forward (mods off keep their data)
     host/ui/pe_ui_raster.c  # drawing: boxes and text
     host/ui/pe_ui_gpu.c     # the overlay quad
     host/ui/pe_toast.c)     # one-line messages

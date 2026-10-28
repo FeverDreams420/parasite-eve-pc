@@ -1,3 +1,46 @@
+/* Reproduce the IRQ/kernel -> SPU/audio half of the observed deadlock while
+ * the original movie shutdown runs on the main thread. Each attempt starts
+ * with the IRQ holding the kernel; its delayed SPU write gives shutdown time
+ * to reach its CD command. A watchdog fails cleanly instead of stranding CI. */
+static SDL_Semaphore *movie_lock_held,*movie_lock_proceed,*movie_lock_finished;
+static long movie_lock_irq(void) {
+    SDL_SignalSemaphore(movie_lock_held);
+    SDL_WaitSemaphore(movie_lock_proceed);
+    SDL_Delay(20);
+    Psyz_SpuWrite(0x18C,0);
+    return 0;
+}
+static int movie_lock_worker(void *unused) {
+    (void)unused;DeliverEvent(0xFA0000FFu,0x1000);return 0;
+}
+static int movie_lock_watchdog(void *unused) {
+    (void)unused;
+    if(!SDL_WaitSemaphoreTimeout(movie_lock_finished,10000)) {
+        fprintf(stderr,"Movie CD command deadlocked against kernel IRQ/SPU write\n");fflush(stderr);_Exit(1);
+    }
+    return 0;
+}
+static int original_movie_audio_lock_order(void) {
+    if(!SDL_Init(SDL_INIT_EVENTS) || !SDL_SetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_AUDIO_CLOCK","video",true) || Psyz_AudioInit())return 0;
+    movie_lock_held=SDL_CreateSemaphore(0);movie_lock_proceed=SDL_CreateSemaphore(0);movie_lock_finished=SDL_CreateSemaphore(0);
+    if(!movie_lock_held || !movie_lock_proceed || !movie_lock_finished)return 0;
+    long event=OpenEvent(0xFA0000FFu,0x1000,0x1000,movie_lock_irq);
+    if(event==-1 || !EnableEvent(event))return 0;
+    SDL_Thread *watchdog=SDL_CreateThread(movie_lock_watchdog,"Movie lock watchdog",NULL);if(!watchdog)return 0;
+    for(unsigned attempt=0;attempt<32;++attempt) {
+        g_BootDisplayPlaybackActive=1;
+        SDL_Thread *irq=SDL_CreateThread(movie_lock_worker,"Movie lock IRQ",NULL);if(!irq)return 0;
+        SDL_WaitSemaphore(movie_lock_held);
+        SDL_SignalSemaphore(movie_lock_proceed);
+        if(BootDisplay_WaitForCdAndRestoreCallbacks() || g_BootDisplayPlaybackActive)return 0;
+        SDL_WaitThread(irq,NULL);
+    }
+    SDL_SignalSemaphore(movie_lock_finished);SDL_WaitThread(watchdog,NULL);
+    CloseEvent(event);Psyz_AudioDestroy();
+    SDL_DestroySemaphore(movie_lock_held);SDL_DestroySemaphore(movie_lock_proceed);SDL_DestroySemaphore(movie_lock_finished);
+    puts("Original movie shutdown: 32 contended kernel-IRQ/SPU/CD lock-order cycles completed without deadlock");return 1;
+}
+
 static int original_enemy_death(void)
 {
     extern void Battle_StepEntityAnimState(BattleEntity *);
@@ -1169,6 +1212,7 @@ static int original_credit_playback(PeDisc *disc)
     /* Campaign FMVs can reach credits without opening an SDL audio stream. */
     Psyz_AudioDestroy();
     int start_status=BootDisplay_StartPlayback();
+    Psyz_AudioPause(); /* only this fixture's explicit PCM pulls consume XA */
     if(start_status){fprintf(stderr,"Credits playback start failed: %d\n",start_status);return 0;}
     if(BootDisplay_SetCdFilter(1))return 0;
     size_t observed=Psyz_CdPullSamples(actual,frames);unsigned nonzero=0;
@@ -1188,6 +1232,15 @@ static int original_credit_playback(PeDisc *disc)
         if(BootDisplay_StartPlayback()!=-1 || g_BootDisplayPlaybackActive)return 0;
         g_CdImage=disc;disc->sector_size=sector_size;g_BootDisplayPlaybackSectorBuffer=buffer;g_BootDisplayPlaybackEndPos=end;
     }
+    /* Rejecting a replacement also retires the previously active stream. */
+    if(BootDisplay_StartPlayback())return 0;
+    char *old_buffer=g_BootDisplayPlaybackSectorBuffer;
+    g_BootDisplayPlaybackSectorBuffer=NULL;
+    if(BootDisplay_StartPlayback()!=-1 || g_BootDisplayPlaybackActive || Psyz_CdPullSamples(actual,1024))return 0;
+    g_BootDisplayPlaybackSectorBuffer=old_buffer;
+    struct PsyzCdRead late_read={.sector=(u32)start,.size=2352,.buffer=actual};
+    if(BootDisplay_StepPlaybackTransfer(&late_read)!=-1)return 0;
+    if(BootDisplay_WaitForCdAndRestoreCallbacks() || BootDisplay_WaitForCdAndRestoreCallbacks())return 0;
     for(unsigned fault=0;fault<2;++fault){
         g_BootDisplayState=g_BootDisplayDone=0;
         g_BootDisplayPlaybackEndPos=start+3;g_BootDisplayPlaybackFile.size=3*2048;
@@ -1206,6 +1259,7 @@ static int original_credit_playback(PeDisc *disc)
         Boot_BuildRenderFlagTable();g_GameStateFlags=images?0x20000:0;
         credits_vblanks=credits_pcm_frames=credits_pcm_nonzero=0;
         credits_seen_images=credits_pixel_probes=credits_visible_pixels=0;credits_probe_frame=UINT32_MAX;
+        Psyz_AudioPause();
         VSyncCallbacks(0,credits_drive_audio);
         status=BootDisplay_RunDisplay();VSyncCallbacks(0,NULL);
         printf("Original credits full sprite flow: images=%u status=%d frame=%u timer=%d state=%d done=%d vblanks=%u pcm=%u nonzero=%u seen=%08x probes=%u pixels=%u\n",
@@ -1930,6 +1984,36 @@ static int original_movie_uploads(PeDisc *disc)
         DecDCToutCallback(NULL);
         if(first)MenuCardFirst_ResetDisplayState();else MenuCard_ResetDisplayState();
         if(Psyz_CdPullSamples(samples,1024)!=0){fprintf(stderr,"Movie XA continued after stop\n");valid=0;}
+    }
+    /* Replacement failure, decode/read failure, disc change and repeated
+     * teardown must all retire XA immediately in both original players. */
+    for(unsigned first=0;first<2;++first)for(unsigned fault=0;fault<4;++fault) {
+        u8 *buffers[]={arena};short samples[2048];
+        g_CdImage=disc;g_DrawEnabled.bits=0;
+        if(!(first?MenuCardFirst_InitVideoBuffers(1,buffers):MenuCard_InitVideoBuffers(1,buffers)) ||
+           !(first?MenuCardFirst_OpenVideo(1):MenuCard_OpenVideo(1)))return 0;
+        if(Psyz_CdPullSamples(samples,1024)!=1024)return 0;
+        if(fault==0) {
+            if(first?MenuCardFirst_OpenVideo(47):MenuCard_OpenVideo(47))return 0;
+        } else if(fault==1) {
+            g_CdImage=NULL;
+            if(first?MenuCardFirst_OpenVideo(1):MenuCard_OpenVideo(1))return 0;
+        } else if(fault==2) {
+            u64 size=disc->image_size;disc->image_size=0;
+            int playing=first?MenuCardFirst_StepVideo():MenuCard_StepVideo();
+            disc->image_size=size;
+            if(playing)return 0;
+        } else {
+            CdRom_BindImage(NULL,NULL);
+        }
+        if(Psyz_CdPullSamples(samples,1024)!=0)return fprintf(stderr,"Stale movie audio first=%u fault=%u\n",first,fault),0;
+        for(unsigned repeat=0;repeat<2;++repeat)
+            if(first)MenuCardFirst_ResetDisplayState();else MenuCard_ResetDisplayState();
+        if(fault==3) {
+            PeDiscFile archive;
+            if(!pe_disc_find(disc,"PE.IMG",&archive))return 0;
+            CdRom_BindImage(disc,&archive);
+        } else g_CdImage=disc;
     }
     if(!paused)Psyz_AudioUnpause();
     g_MenuSaveBgFadeState=background;

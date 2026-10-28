@@ -106,6 +106,13 @@ A mod that registers into another mod's service at init lists that mod in its `r
 - Read-only values (Junk, prices, results) are `info` rows, never live rows that refuse changes.
 - Every row has a one-line description; actions that cost or destroy something are press-twice.
 
+Movement speed uses the local `PLAYER_MOVE` hook in the original input movement
+handlers. It never writes the actor's `moveFactor`: cutscenes and battle-entry
+scripts own that value, including values that match a mod speed option.
+Always Run changes a local input mask, never the game's mapping table. Battle-start
+speed scales the local script speed before its destination clamp, and the local
+animation increment; it never writes the actor's velocity or `animStep`.
+These options keep no per-actor ownership state to restore after a scene or save load.
 ## Saves
 
 Per-save data goes through the host, the same way for every mod (`host/pe_save.h`): register each

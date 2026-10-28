@@ -14,7 +14,7 @@
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
 #include "pe_pages.h"
-#include "pe_save_tail.h"
+#include "pe_save.h"
 
 extern const PeMod *const g_pe_mods[]; /* generated: pe_mod_list.c */
 
@@ -327,7 +327,7 @@ static void pe_host_start(const PeHookInit *init) {
     if (s_all_on) {                              /* off: nothing but F1 touches the game */
         pe_main_menu_init();
     }
-    pe_save_tail_install();                      /* always: a save made with mods off keeps their data too */
+    pe_save_install();                           /* always: a save made with mods off keeps their data too */
     if (s_interactive) pe_panel_install();
     s_started = 1;
     {                                            /* inactive mods' handlers stay registered, skipped */
@@ -366,6 +366,8 @@ static const char *pe_hook_name(int id) {
 int pe_hook_dispatch(int id, void *ctx) {
     int i, handled = 0;
     if (!s_started) return 0;
+    /* The mods' saved records go back before any mod's own load handler sees the save. */
+    if (id == PE_HOOK_SAVE_READ && ctx) pe_save_on_read((const uint8_t *)ctx);
     for (i = 0; i < s_handler_count; i++) {
         int result;
         if (s_handlers[i].id < id) continue;
@@ -376,17 +378,19 @@ int pe_hook_dispatch(int id, void *ctx) {
         pe_mod_call_end();
         if (result) handled = 1;
     }
+    /* After every mod's own save handler: the records go into the save. */
+    if (id == PE_HOOK_SAVE_WRITE && ctx) pe_save_on_write((uint8_t *)ctx);
     return handled;
 }
 
 /* ---- crash report room snapshot: save tail ----
- * The save write handlers fill the block exactly as a real save does: every
- * mod's per-save data, whatever its layout. Called when a room starts, on the
- * game thread, never inside the crash handler. Not while mod code is running,
- * since its data may be half changed. */
+ * The host's records fill the block as a real save would write them (pe_save.h), from memory: no
+ * mod code runs, so no mod's save handler runs each room. Called when a room starts, on
+ * the game thread, never inside the crash handler. Not while mod code is running, since its data
+ * may be half changed. */
 int pe_mod_snapshot_save_tail(unsigned char *block) {
     if (s_call_depth) return -1;
-    pe_hook_dispatch(PE_HOOK_SAVE_WRITE, block);
+    pe_save_crash_tail(block);
     return 0;
 }
 
@@ -459,5 +463,7 @@ void pe_mod_crash_describe(char *out, size_t size, int on_game_thread) {
         settings++;
     }
     if (!settings) PE_OUT("  none\r\n");
+    PE_OUT("Mods' save data (the room snapshot): ");
+    pe_save_crash_describe(out, size, &n);
 #undef PE_OUT
 }

@@ -69,6 +69,9 @@ int main(void)
     if(pe_hook_add(PE_HOOK_ACTOR_STEP,entry_speed_hook,NULL,0,"host"))return 7;
     const int factors[]={65536,98304,131072,196608,262144};
     unsigned arrivals=0;
+    int (*const moves[])(int **)={Script_MoveTowardPoint,Render_CameraTrackEntityAngle,
+        Render_CameraTrackRelativeOffset,Render_CameraTrackEntityZoom};
+    for(unsigned method=0;method<4;++method)
     for(unsigned choice=0;choice<5;++choice)for(unsigned axis=0;axis<4;++axis)
     for(int distance=1;distance<=60;++distance) {
         actor=(FieldActor){0};actor.state=&state;actor.move_factor=65536;actor.move_speed=4096;
@@ -76,11 +79,14 @@ int main(void)
         ScriptNode move_node={0};g_ScriptNodePool=&move_node;
         int x=axis==0?distance*65536:axis==1?-distance*65536:0;
         int z=axis==2?distance*65536:axis==3?-distance*65536:0;
-        int turn=0;int *args[]={&x,&z,&turn};entry_factor=factors[choice];
+        int turn=0,type=6,sub=0;int *args[]={&x,&z,&turn};entry_factor=factors[choice];
+        FieldActor target={0};target.type_id=type;target.pos_x=x;target.pos_z=z;
+        g_FieldActorListHead=&target;
+        if(method==3){args[0]=&type;args[1]=&sub;}
         int arrived=0;
         for(unsigned frame=0;frame<20;++frame) {
             g_ScriptCursorAddress=(uintptr_t)(script+5);
-            if(Script_MoveTowardPoint(args)) {arrived=1;break;}
+            if(moves[method](args)) {arrived=1;break;}
             actor.pos_x+=actor.motion_x;actor.pos_z+=actor.motion_z;
         }
         if(!arrived || actor.pos_x!=x || actor.pos_z!=z || actor.motion_x || actor.motion_z ||
@@ -89,7 +95,7 @@ int main(void)
     }
     printf("Original scripted movement: %u exact destination arrivals at all five entry speeds passed\n",arrivals);
 #endif
-    g_PlayerEntity=0;g_FieldMoveLock=0;
+    g_PlayerEntity=g_FieldActorListHead=0;g_FieldMoveLock=0;
     puts("Original callback-before-motion order, freeze, input locks and word wrap passed");
     return 0;
 }

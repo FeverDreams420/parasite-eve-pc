@@ -1,13 +1,194 @@
-#ifdef PE_HOST_SETTINGS_TEST
+#if defined(PE_CRASH_REPORT_TEST)
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
+#include <SDL3/SDL.h>
+#include <assert.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "pe1/crash_report.h"
+#ifndef _WIN32
+#include <sys/stat.h>
+#else
+#include <windows.h>
+#endif
+static int blocked_report;
+static void crash_test_describe(char *out,size_t size) {
+    if(blocked_report)for(;;)SDL_Delay(100);
+    snprintf(out,size,"Test room snapshot marker\n");
+}
+static SDL_EnumerationResult crash_test_file(void *user,const char *directory,const char *name) {
+    if(strncmp(name,"crash-",6) || !strstr(name,".txt") || strstr(name,".tmp"))return SDL_ENUM_CONTINUE;
+    char path[4096];snprintf(path,sizeof(path),"%s/%s",directory,name);
+    size_t size=0;char *data=SDL_LoadFile(path,&size);
+    if(data && size) {
+        int *counts=user;++counts[0];
+        if(strstr(data,"Test room snapshot marker"))++counts[1];
+        if(strstr(data,"emergency crash report") && strstr(data,"PC: 0x"))++counts[2];
+    }
+    fprintf(stderr,"Crash test file: %s (%zu bytes, readable=%d)\n",path,size,data!=NULL);
+    SDL_free(data);return SDL_ENUM_CONTINUE;
+}
+int main(int argc,char **argv) {
+    if(argc==3 && !strcmp(argv[1],"--child")) {
+        blocked_report=!strcmp(argv[2],"blocked");
+        CrashReport_Install(0,crash_test_describe);
+        if(!strcmp(argv[2],"normal"))return 0;
+        if(!strcmp(argv[2],"stdio")) {
+#ifdef _WIN32
+            _lock_file(stderr);
+#else
+            flockfile(stderr);
+#endif
+        }
+#ifdef _WIN32
+        if(!strcmp(argv[2],"segv")) {
+            volatile int *bad=(volatile int *)(uintptr_t)1;*bad=1;
+        }
+#endif
+        raise(!strcmp(argv[2],"segv")?SIGSEGV:SIGABRT);
+        return 90;
+    }
+    assert(SDL_Init(0));
+    const char *modes[]={"normal","abort","segv","stdio","blocked"};
+    for(unsigned i=0;i<5;++i) {
+        char directory[4096],logs[4096];
+        snprintf(directory,sizeof(directory),"%spe-crash-test-%llu-%u",SDL_GetBasePath(),(unsigned long long)SDL_GetTicksNS(),i);
+        assert(SDL_CreateDirectory(directory));
+        char executable[4096];snprintf(executable,sizeof(executable),"%s/crash-test.exe",directory);
+        assert(SDL_CopyFile(argv[0],executable));
+#ifndef _WIN32
+        assert(!chmod(executable,0700));
+#endif
+        const char *args[]={executable,"--child",modes[i],NULL};
+        SDL_PropertiesID props=SDL_CreateProperties();
+        SDL_SetPointerProperty(props,SDL_PROP_PROCESS_CREATE_ARGS_POINTER,(void *)args);
+        SDL_SetStringProperty(props,SDL_PROP_PROCESS_CREATE_WORKING_DIRECTORY_STRING,directory);
+        SDL_Process *child=SDL_CreateProcessWithProperties(props);SDL_DestroyProperties(props);assert(child);
+        int code=0;Uint64 started=SDL_GetTicks();
+        while(!SDL_WaitProcess(child,false,&code)) {
+            if(SDL_GetTicks()-started>20000){SDL_KillProcess(child,true);assert(!"Crash reporter exceeded its deadline");}
+            SDL_Delay(10);
+        }
+        SDL_DestroyProcess(child);
+        assert(i?code!=0:code==0);
+        int counts[3]={0};snprintf(logs,sizeof(logs),"%s/logs",directory);
+        assert(SDL_EnumerateDirectory(logs,crash_test_file,counts));
+        fprintf(stderr,"Crash test %s: exit=%d files=%d full=%d emergency=%d\n",modes[i],code,counts[0],counts[1],counts[2]);
+        assert(counts[0]==(i?1:0));
+        if(i && i!=4)assert(counts[1]==1);
+        if(i==4)assert(counts[2]==1);
+    }
+    puts("Crash reporting: normal cleanup, abort, SIGSEGV, held stdio lock and blocked reporter fallback passed headlessly");
+    return 0;
+}
+#else
+#if defined(PE_MOD_SETTINGS_TEST)
+#undef NDEBUG
+#include <SDL3/SDL.h>
+#include <assert.h>
+#include <stdio.h>
+#include <string.h>
+#include "../mods/host/pe_mod_host.h"
+static int save_fault, save_errors;
+static const char *mod_test_directory;
+static SDL_IOStream *ModTestOpen(const char *path, const char *mode) {
+    if (save_fault == 1) { SDL_SetError("injected open failure"); return NULL; }
+    return SDL_IOFromFile(path, mode);
+}
+static size_t ModTestWrite(SDL_IOStream *io, const void *data, size_t size) {
+    return SDL_WriteIO(io, data, save_fault == 2 ? size / 2 : size);
+}
+static bool ModTestFlush(SDL_IOStream *io) {
+    return save_fault != 3 && SDL_FlushIO(io);
+}
+static bool ModTestClose(SDL_IOStream *io) {
+    bool closed = SDL_CloseIO(io);
+    return save_fault != 4 && closed;
+}
+static bool ModTestRename(const char *old, const char *new_path) {
+    return save_fault != 5 && SDL_RenamePath(old, new_path);
+}
+#define SDL_IOFromFile ModTestOpen
+#define SDL_WriteIO ModTestWrite
+#define SDL_FlushIO ModTestFlush
+#define SDL_CloseIO ModTestClose
+#define SDL_RenamePath ModTestRename
+#include "../mods/host/pe_mod_menu.c"
+#undef SDL_IOFromFile
+#undef SDL_WriteIO
+#undef SDL_FlushIO
+#undef SDL_CloseIO
+#undef SDL_RenamePath
+int pe_mod_path(char *out, size_t capacity, const char *file) {
+    int n = snprintf(out, capacity, "%s/%s", mod_test_directory, file);
+    return n > 0 && (size_t)n < capacity ? 0 : -1;
+}
+void pe_mod_log(const char *id, const char *format, ...) {
+    (void)id; (void)format; ++save_errors;
+}
+void pe_toast(const char *text) { (void)text; }
+int pe_mod_active(const char *id) { (void)id; return 1; }
+const char *pe_mod_current(void) { return NULL; }
+void pe_mod_call_begin(const char *mod_id, const char *what, const char *detail) {
+    (void)mod_id; (void)what; (void)detail;
+}
+void pe_mod_call_end(void) {}
+int pe_hook_add(int id, PeHookFn fn, void *user, int priority, const char *mod) {
+    (void)id; (void)fn; (void)user; (void)priority; (void)mod; return 0;
+}
+int main(int argc, char **argv) {
+    assert(argc == 2); mod_test_directory = argv[1];
+    assert(SDL_CreateDirectory(mod_test_directory));
+    char path[4096]; assert(!pe_mod_path(path, sizeof(path), "pe_mods.ini"));
+    const char *old = "# preserved settings\nOld/Option=7\n";
+    assert(SDL_SaveFile(path, old, strlen(old)));
+    pe_menu_load_settings();
+    static int enabled = 1;
+    assert(!pe_menu_register_toggle(NULL, "Test option", "", &enabled, NULL));
+    for (save_fault = 1; save_fault <= 5; ++save_fault) {
+        int before = save_errors;
+        pe_menu_save_settings();
+        assert(save_errors > before);
+        size_t bytes; char *data = SDL_LoadFile(path, &bytes);
+        assert(data && bytes == strlen(old) && !memcmp(data, old, bytes)); SDL_free(data);
+        int count = -1;
+        char **files = SDL_GlobDirectory(mod_test_directory, "*.tmp", 0, &count);
+        assert(files && count == 0); SDL_free(files);
+    }
+    save_fault = 0; pe_menu_save_settings();
+    size_t bytes; char *data = SDL_LoadFile(path, &bytes);
+    assert(data && strstr(data, "Old/Option=7") && strstr(data, "Test option=1")); SDL_free(data);
+    assert(SDL_RemovePath(path));
+    save_fault = 2; pe_menu_save_settings();
+    SDL_PathInfo info; assert(!SDL_GetPathInfo(path, &info));
+    save_fault = 0; pe_menu_save_settings(); assert(SDL_GetPathInfo(path, &info));
+    puts("PASS: atomic mod settings preserve previous bytes on open/write/flush/close/rename failures; first save and unknown settings retained");
+    return 0;
+}
+
+#elif defined(PE_HOST_SETTINGS_TEST)
 extern long SetRCnt(long spec, unsigned short target, long mode);
 extern long GetRCnt(long spec);
 #undef NDEBUG
 #include <SDL3/SDL.h>
 #include <assert.h>
+#ifdef _WIN32
+#include <direct.h>
+#define TestChdir _chdir
+#else
+#include <unistd.h>
+#define TestChdir chdir
+#endif
 #include <stdio.h>
 
+static SDL_Keycode TestLayoutKey(SDL_Scancode scancode, SDL_Keymod modifiers, bool key_event);
+static SDL_Keycode test_layout_key;
 static bool TestPresent(SDL_Renderer *renderer);
 static bool TestWait(SDL_Event *event, Sint32 timeout);
+static bool test_card_rename_failure;
 static bool TestRename(const char *from, const char *to);
 static bool TestMessageBox(SDL_MessageBoxFlags flags, const char *title, const char *message, SDL_Window *window);
 
@@ -15,17 +196,120 @@ static bool TestMessageBox(SDL_MessageBoxFlags flags, const char *title, const c
 #define SDL_WaitEventTimeout TestWait
 #define SDL_RenamePath TestRename
 #define SDL_ShowSimpleMessageBox TestMessageBox
+#define SDL_GetKeyFromScancode TestLayoutKey
 #define main original_game_main
 #include "../src/main/boot/main.c"
 #undef main
+#undef SDL_GetKeyFromScancode
 #undef SDL_RenderPresent
 #undef SDL_WaitEventTimeout
 #undef SDL_RenamePath
 #undef SDL_ShowSimpleMessageBox
+#include <kernel.h>
+extern void *firstfile(const char *name, void *entry);
+extern void *nextfile(void *entry);
+
+static SDL_Keycode TestLayoutKey(SDL_Scancode scancode, SDL_Keymod modifiers, bool key_event) {
+    return test_layout_key ? test_layout_key : SDL_GetKeyFromScancode(scancode, modifiers, key_event);
+}
+
+static void TestKeyboardLayoutLabels(void) {
+    HostOverlayState state = {0};
+    state.bind_device = HOST_BIND_KEYBOARD;
+    int saved = host_options.keys[0];
+    host_options.keys[0] = SDL_SCANCODE_Z;
+    test_layout_key = SDLK_Y;
+    assert(!strcmp(Host_ControlBindingValueName(&state, 0), "Y"));
+    test_layout_key = SDLK_W;
+    assert(!strcmp(Host_ControlBindingValueName(&state, 0), "W"));
+    /* A changed layout takes effect on the next paint, without rebinding. */
+    test_layout_key = SDLK_Z;
+    assert(!strcmp(Host_ControlBindingValueName(&state, 0), "Z"));
+    test_layout_key = 0x0437; /* Cyrillic name is unsupported by this font. */
+    assert(!strcmp(Host_ControlBindingValueName(&state, 0), "Z"));
+    assert(host_options.keys[0] == SDL_SCANCODE_Z);
+    host_options.keys[0] = saved;
+    test_layout_key = 0;
+    puts("PASS: active keyboard layout labels, live changes and non-Latin fallback");
+}
+
+static const char *test_directory;
+
+static void TestUserCardMigration(void) {
+    char *cwd = SDL_GetCurrentDirectory();
+    char root[4096], source[4096], target[4096], prefs[4096];
+    snprintf(root, sizeof(root), "%s/legacy-cards-%llx", test_directory, (unsigned long long)SDL_GetPerformanceCounter());
+    assert(SDL_CreateDirectory(root));
+    snprintf(source, sizeof(source), "%s/bu00", root); assert(SDL_CreateDirectory(source));
+    snprintf(source, sizeof(source), "%s/bu10", root); assert(SDL_CreateDirectory(source));
+    const char *names[] = {"BASLUS-006620000000A", "BASLUS-006620000001B"};
+    unsigned char data[8192]; memset(data, 0x37, sizeof(data));
+    for (unsigned port = 0; port < 2; ++port) {
+        snprintf(source, sizeof(source), "%s/bu%u0/%s", root, port, names[port]);
+        assert(SDL_SaveFile(source, data, sizeof(data)));
+    }
+    snprintf(prefs, sizeof(prefs), "%s", host_options.user_file);
+    /* Exercise UTF-8 and paths longer than the old 256-byte SDK buffers. */
+    snprintf(host_options.user_file, sizeof(host_options.user_file),
+        "%s/user-zażółć/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/"
+        "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/"
+        "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc/preferences.toml", root);
+    assert(!TestChdir(root));
+    int prepared = Host_InstallCardPaths(NULL);
+    if (!prepared) fprintf(stderr, "card import failed: %s\n", SDL_GetError());
+    assert(prepared);
+    for (unsigned port = 0; port < 2; ++port) {
+        char device[64]; snprintf(device, sizeof(device), "bu%u0:%s", port, names[port]);
+        assert(!Host_CardPath(target, device, sizeof(target)));
+        assert(strlen(target) > 256);
+        int fd = psyz_open(device, 1); assert(fd >= 0);
+        unsigned char readback[8192];
+        assert(psyz_read(fd, readback, sizeof(readback)) == sizeof(readback));
+        assert(!psyz_close(fd)); assert(!memcmp(data, readback, sizeof(data)));
+        char pattern[16]; snprintf(pattern, sizeof(pattern), "bu%u0:*", port);
+        struct DIRENTRY entry;
+        assert(firstfile(pattern, &entry)); assert(entry.size == 8192);
+        while (nextfile(&entry)) {}
+        /* A newer destination must win over a legacy file with the same name. */
+        unsigned char newer[8192]; memset(newer, 0x59, sizeof(newer));
+        assert(SDL_SaveFile(target, newer, sizeof(newer)));
+        char directory[4096]; snprintf(directory, sizeof(directory), "%s/bu%u0", root, port);
+        HostCardImport imported = {.ok = 1};
+        assert(SDL_EnumerateDirectory(directory, Host_ImportCard, &imported) && imported.ok && imported.count == 0);
+        size_t size; void *contents = SDL_LoadFile(target, &size);
+        assert(contents && size == sizeof(newer) && !memcmp(contents, newer, size)); SDL_free(contents);
+        /* Source remains intact. A deleted imported save must stay deleted. */
+        snprintf(source, sizeof(source), "%s/bu%u0/%s", root, port, names[port]);
+        SDL_PathInfo info; assert(SDL_GetPathInfo(source, &info) && info.size == 8192);
+        assert(SDL_RemovePath(target));
+        assert(Host_InstallCardPaths(NULL));
+        assert(!SDL_GetPathInfo(target, &info));
+    }
+    char marker[4200];
+    assert(!Host_CardPath(target, "bu00:*", sizeof(target)));
+    snprintf(marker, sizeof(marker), "%.*s.legacy-imported", (int)strlen(target) - 5, target);
+    assert(SDL_RemovePath(marker));
+    test_card_rename_failure = true;
+    assert(!Host_InstallCardPaths(NULL));
+    SDL_PathInfo marker_info; assert(!SDL_GetPathInfo(marker, &marker_info));
+    for (unsigned port = 0; port < 2; ++port) {
+        char device[64]; snprintf(device, sizeof(device), "bu%u0:%s", port, names[port]);
+        assert(!Host_CardPath(target, device, sizeof(target)));
+        assert(!SDL_GetPathInfo(target, &marker_info));
+    }
+    test_card_rename_failure = false;
+    assert(Host_InstallCardPaths(NULL));
+    assert(SDL_GetPathInfo(marker, &marker_info));
+    assert(!TestChdir(cwd)); SDL_free(cwd);
+    int same_card = psyz_open("bu00:BASLUS-006620000000A", 1);
+    assert(same_card >= 0); assert(!psyz_close(same_card));
+    snprintf(host_options.user_file, sizeof(host_options.user_file), "%s", prefs);
+    Psyz_AdjustPathCB(NULL);
+    puts("PASS: both legacy cards imported once, originals retained, UTF-8/long user paths read and enumerated");
+}
 
 static int presents;
 static SDL_AtomicInt panel_ready;
-static const char *test_directory;
 
 static bool TestMessageBox(SDL_MessageBoxFlags flags, const char *title, const char *message, SDL_Window *window) {
     (void)flags;
@@ -36,6 +320,7 @@ static bool TestMessageBox(SDL_MessageBoxFlags flags, const char *title, const c
 }
 
 static bool TestRename(const char *from, const char *to) {
+    if (test_card_rename_failure && strstr(from, "bu10")) return false;
     bool result = SDL_RenamePath(from, to);
     fprintf(stderr, "host-settings: preferences rename=%d error=%s\n", result, result ? "" : SDL_GetError());
     return result;
@@ -351,6 +636,7 @@ int main(int argc, char **argv) {
     assert(SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software"));
     assert(SDL_Init(SDL_INIT_VIDEO));
     Host_InitOptions(0);
+    TestKeyboardLayoutLabels();
     Psyz_VideoSetVsyncMode(PSYZ_VSYNC_OFF);
     unsigned frozen = (unsigned)Psyz_VideoVSync(-1);
     Psyz_PauseHostClock_SDL3(true);
@@ -383,6 +669,8 @@ int main(int argc, char **argv) {
 
     host_options.enabled = 1;
     snprintf(host_options.user_file, sizeof(host_options.user_file), "%s/preferences.toml", test_directory);
+
+    TestUserCardMigration();
 
     char card_path[4096];
     char expected_card[4096];
@@ -437,6 +725,24 @@ int main(int argc, char **argv) {
     assert(!Host_ParseOptionValue("graphics", "model_filtering", invalid_effect));
     assert(host_options.antialiasing == 1 && host_options.model_filtering == 1);
     host_options.antialiasing = host_options.model_filtering = 0;
+
+    assert(!host_options.widescreen);
+    assert(Host_ParseOptionValue("graphics", "widescreen", enabled_effect));
+    assert(Host_SaveOptions());
+    host_options.widescreen = 0;
+    Host_LoadOptions(host_options.user_file);
+    assert(host_options.widescreen == 1);
+    assert(!Host_ParseOptionValue("graphics", "widescreen", invalid_effect));
+    assert(host_options.widescreen == 1);
+    /* Widescreen is the third Aspect ratio choice. */
+    assert(kGraphics[2].get == GetAspect && kGraphics[2].count == 3 && kGraphics[2].get() == 2);
+    kGraphics[2].set(1);
+    assert(!host_options.widescreen && host_options.aspect == 1 && kGraphics[2].get() == 1);
+    kGraphics[2].set(2);
+    assert(host_options.widescreen && !host_options.aspect && kGraphics[2].get() == 2);
+    kGraphics[2].set(0);
+    assert(!host_options.widescreen && !host_options.aspect && kGraphics[2].get() == 0);
+    assert(COUNT_OF(kGraphics) <= OVERLAY_VISIBLE_CONTROLS);
 
     char invalid[4096];
     snprintf(invalid, sizeof(invalid), "%s/invalid.toml", test_directory);
@@ -584,6 +890,46 @@ int main(int argc, char **argv) {
     host_options.keys[HOST_SPEED_BINDING] = SDL_SCANCODE_G;
     Host_LoadOptions(host_options.user_file);
     assert(host_options.keys[HOST_SPEED_BINDING] == HOST_UNBOUND_KEY);
+
+    /* Mixed sources, independent controllers, removal and modal resets. */
+    host_options.keys[HOST_SPEED_BINDING] = SDL_SCANCODE_G;
+    host_options.buttons[HOST_SPEED_BINDING] = SDL_GAMEPAD_BUTTON_BACK;
+    SDL_Event pad = {0}; pad.type = SDL_EVENT_GAMEPAD_BUTTON_DOWN;
+    pad.gbutton.which = 11; pad.gbutton.button = SDL_GAMEPAD_BUTTON_BACK;
+    Host_ResetSpeedHold();
+    assert(Host_SettingsEvent(&speed_key));
+    assert(Host_SettingsEvent(&pad));
+    speed_key.type = SDL_EVENT_KEY_UP;
+    assert(Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == host_options.speed_factor);
+    pad.gbutton.which = 22; assert(Host_SettingsEvent(&pad));
+    SDL_Event removed = {0}; removed.type = SDL_EVENT_GAMEPAD_REMOVED; removed.gdevice.which = 11;
+    assert(!Host_SettingsEvent(&removed) && Psyz_VideoGetSpeed() == host_options.speed_factor);
+    removed.gdevice.which = 22;
+    assert(!Host_SettingsEvent(&removed) && Psyz_VideoGetSpeed() == 1);
+    speed_key.type = SDL_EVENT_KEY_DOWN; assert(Host_SettingsEvent(&speed_key));
+    pad.gbutton.which = 11; assert(Host_SettingsEvent(&pad));
+    assert(!Host_SettingsEvent(&removed) && Psyz_VideoGetSpeed() == host_options.speed_factor);
+    removed.gdevice.which = 11;
+    assert(!Host_SettingsEvent(&removed) && Psyz_VideoGetSpeed() == host_options.speed_factor);
+    speed_key.type = SDL_EVENT_KEY_UP; assert(Host_SettingsEvent(&speed_key) && Psyz_VideoGetSpeed() == 1);
+    host_options.buttons[HOST_SPEED_BINDING] = SDL_GAMEPAD_BUTTON_COUNT;
+    pad.type = SDL_EVENT_GAMEPAD_AXIS_MOTION; pad.gaxis.which = 33;
+    pad.gaxis.axis = SDL_GAMEPAD_AXIS_LEFT_TRIGGER; pad.gaxis.value = 17000;
+    assert(!Host_SettingsEvent(&pad) && Psyz_VideoGetSpeed() == host_options.speed_factor);
+    pad.gaxis.value = 10000;
+    assert(!Host_SettingsEvent(&pad) && Psyz_VideoGetSpeed() == host_options.speed_factor);
+    Host_ResetSpeedHold();
+    assert(!Host_SettingsEvent(&pad) && Psyz_VideoGetSpeed() == 1);
+    pad.gaxis.value = 17000; Host_SettingsEvent(&pad);
+    removed.gdevice.which = 33;
+    assert(!Host_SettingsEvent(&removed) && Psyz_VideoGetSpeed() == 1);
+    Host_SettingsEvent(&pad); Psyz_VideoSetSpeed(1); /* Mods panel consumes releases. */
+    pad.gaxis.value = 10000;
+    assert(!Host_SettingsEvent(&pad) && Psyz_VideoGetSpeed() == 1);
+    Host_ResetSpeedHold();
+    host_options.keys[HOST_SPEED_BINDING] = HOST_UNBOUND_KEY;
+    host_options.buttons[HOST_SPEED_BINDING] = HOST_UNBOUND_BUTTON;
+    puts("PASS: speed hold combines sources, handles two pads, disconnects and resets trigger hysteresis");
 
     /* Field run threshold is a Controls stepper, not a rebinding row. */
     assert(host_options.analog_run_threshold == 85);
@@ -1007,3 +1353,5 @@ int main(void) {
 }
 
 #endif
+
+#endif /* PE_CRASH_REPORT_TEST */

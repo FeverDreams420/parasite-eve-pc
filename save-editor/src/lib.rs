@@ -13,6 +13,44 @@ mod tests {
     use crate::memcard::MemoryCardContainer;
 
     #[test]
+    fn inventory_preflight_rejects_broken_references_without_writing() {
+        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples/Parasite_Eve_PS1_Sample_Card.srm");
+        let mut card = MemoryCardContainer::open(&path).unwrap();
+        for slot in card.slots.iter().flatten() { slot.validate_inventory().unwrap(); }
+        let mut slot = card.slots[0].as_ref().unwrap().clone();
+        slot.inventory_items.fill(0);slot.storage.fill(0);slot.special_storage.fill(0);
+        for item in &mut slot.equipment { item.icon_id = 0; }
+        slot.equipped_weapon_slot = 0;slot.equipped_armor_slot = -1;
+        slot.equipment[0] = crate::save::EquipmentRecord::from_item_template(0, 0x78);
+        slot.inventory_items[0] = 0x100;
+        slot.validate_inventory().unwrap();
+        for fault in 0..9 {
+            let mut bad = slot.clone();
+            match fault {
+                0 => bad.inventory_items[49] = 0x100,
+                1 => bad.storage[99] = 0x100,
+                2 => bad.special_storage[81] = 0x100,
+                3 => bad.equipment[0].tail_count = 11,
+                4 => bad.equipment[0].tail_capacity = 11,
+                5 => bad.equipment[0].icon_id = 0,
+                6 => bad.equipped_weapon_slot = -2,
+                7 => bad.equipped_armor_slot = 0,
+                _ => bad.equipment[0].index = 127,
+            }
+            assert!(bad.validate_inventory().is_err(), "fault {}", fault);
+            card.slots[0] = Some(bad);
+            let target = std::env::temp_dir().join(format!("pe-invalid-card-{}-{}.srm", std::process::id(), fault));
+            std::fs::write(&target, b"previous save").unwrap();
+            assert!(card.export_to_ps1_card_image(&target).is_err());
+            assert_eq!(std::fs::read(&target).unwrap(), b"previous save");
+            std::fs::remove_file(target).unwrap();
+        }
+        slot.inventory_items[1] = 0x200;slot.storage[0] = 0x200;
+        slot.equipment[0].bonus_stats = [999, 500, 123];
+        slot.validate_inventory().unwrap();
+    }
+
+    #[test]
     fn test_real_ps1_sample_card_parsing_and_crc() {
         let sample_path =
             PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples/Parasite_Eve_PS1_Sample_Card.srm");

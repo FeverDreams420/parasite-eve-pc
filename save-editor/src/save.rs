@@ -422,6 +422,54 @@ impl PeSaveSlot {
         })
     }
 
+    /// Check structural references before any save/export writes a container.
+    /// Stat bonuses, ammo and legitimate custom effects are left untouched.
+    pub fn validate_inventory(&self) -> Result<()> {
+        if self.inventory_slot_count > 50 || self.inventory_items.len() != 50
+            || self.storage.len() != 100 || self.special_storage.len() != 82
+            || self.equipment.len() != 128 {
+            bail!("Invalid inventory dimensions");
+        }
+        for (index, item) in self.equipment.iter().enumerate() {
+            if item.index != index {
+                bail!("Equipment record {} has an invalid index", index);
+            }
+            if item.icon_id != 0 && (item.item_id == 0 || item.kind >= 24
+                || item.tail_count > 10 || item.tail_capacity > 10) {
+                bail!("Equipment record {} has invalid type or modification slots", index);
+            }
+        }
+        let mut seen = [false; 128];
+        for list in [&self.inventory_items, &self.storage, &self.special_storage] {
+            for &value in list {
+                let id = value as u16;
+                if id <= 255 || (0x200..=0x208).contains(&id) { continue; }
+                if !(0x100..0x180).contains(&id) {
+                    bail!("Invalid inventory reference 0x{:04X}", id);
+                }
+                let index = (id - 0x100) as usize;
+                if self.equipment[index].icon_id == 0 || seen[index] {
+                    bail!("Equipment record {} is missing or referenced more than once", index);
+                }
+                seen[index] = true;
+            }
+        }
+        for (armor, slot) in [(false, self.equipped_weapon_slot), (true, self.equipped_armor_slot)] {
+            if slot == -1 { continue; }
+            if !(0..50).contains(&slot) { bail!("Invalid equipped inventory slot {}", slot); }
+            let id = self.inventory_items[slot as usize] as u16;
+            let kind = if (0x100..0x180).contains(&id) {
+                self.equipment[(id - 0x100) as usize].kind
+            } else if (1..=255).contains(&id) {
+                item_metadata(id as u8).default_kind
+            } else { 0 };
+            if if armor { kind != 9 } else { !(1..=8).contains(&kind) } {
+                bail!("Equipped slot {} does not contain compatible equipment", slot);
+            }
+        }
+        Ok(())
+    }
+
     /// Serializes all modified fields back into `self.raw_bytes`, syncs `g_AyaBattleState`,
     /// updates the Shift-JIS header title if relevant fields changed, and recalculates the CRC-16 at `0x1C8C`.
     pub fn to_bytes(&mut self) -> Vec<u8> {

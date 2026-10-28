@@ -3,17 +3,21 @@
  * an older build; saves from before still load; New Game clears; a damaged tail resets; and the
  * crash copy holds what a save would, without calling any mod code. The game's own save path is
  * modelled as it is: a cleared 8 KB buffer, then PE_HOOK_SAVE_WRITE. */
+#ifdef NDEBUG
+#undef NDEBUG
+#endif
 #include <assert.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
 #include "pe_mod_host.h"
 #include "pe_save.h"
 
-static PeHookFn s_new_game, s_frame;
+static PeHookFn s_frame;
 int pe_hook_add(int id, PeHookFn fn, void *user, int priority, const char *mod_id) {
     (void)user; (void)priority; (void)mod_id;
-    assert(id == PE_HOOK_INV_COMMAND || id == PE_HOOK_FRAME);
-    if (id == PE_HOOK_FRAME) s_frame = fn; else s_new_game = fn;
+    assert(id == PE_HOOK_FRAME);
+    s_frame = fn;
     return 0;
 }
 int pe_free_field(void) { return 1; }
@@ -112,9 +116,24 @@ static const unsigned char *find(const unsigned char *card, const char *name, un
     return NULL;
 }
 
-int main(void) {
+int main(int argc,char **argv) {
+    if(argc==2 && !strcmp(argv[1],"--opaque")) {
+        unsigned char input[0x2000]={0},output[0x2000]={0},snapshot[0x2000]={0};
+        s_junk_on=s_keys_on=s_pocket_on=0;s_current="pocket_mod";
+        assert(pe_save_register(&s_pocket_rec)==0);pe_save_install();
+        for(unsigned i=PE_SAVE_TAIL_OFFSET;i<sizeof input;++i)input[i]=(unsigned char)(i*13+7);
+        pe_save_on_read(input);s_frame(NULL,NULL);
+        assert(s_releases==0);pe_save_on_write(output);pe_save_crash_tail(snapshot);
+        assert(!memcmp(input+PE_SAVE_TAIL_OFFSET,output+PE_SAVE_TAIL_OFFSET,PE_SAVE_TAIL_SIZE));
+        assert(!memcmp(input+PE_SAVE_TAIL_OFFSET,snapshot+PE_SAVE_TAIL_OFFSET,PE_SAVE_TAIL_SIZE));
+        puts("Mods off: all 880 opaque tail bytes survive saving and room snapshots");return 0;
+    }
+    if(argc==2 && !strcmp(argv[1],"--overflow")) {
+        static unsigned char byte;
+        static const PeSaveRecord bad={"test.overflow",1,&byte,UINT_MAX,NULL,NULL,NULL};
+        assert(pe_save_register(&bad)==-1);return 0;
+    }
     unsigned char other[0x2000], crash[0x2000];
-    PeHookInvCommand new_game = {1117, 0, 0};
     unsigned v, n;
     const unsigned char *p;
     char text[512];
@@ -248,7 +267,7 @@ int main(void) {
     game_save();
     game_load(s_card);
     s_keys_on = 0;
-    s_new_game(&new_game, NULL);
+    pe_save_new_game();                                          /* as the host on PE_HOOK_NEW_GAME */
     assert(s_junk.junk == 0);
     game_save();
     assert(!find(s_card, "pe_qol.keys", NULL, NULL));

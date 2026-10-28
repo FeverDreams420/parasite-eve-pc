@@ -47,7 +47,6 @@
 
 #define MOD_ID "pe_economy"
 #define PE_INV_CMD_REMOVE_ITEM    1112
-#define PE_INV_CMD_START_NEW_GAME 1117
 #define PE_ITEM_JUNK        0x14
 #define PE_ITEM_SUPER_JUNK  0x0B
 #define PE_ITEM_DUPER_JUNK  0x0C
@@ -528,13 +527,6 @@ static int pe_on_inv_command(void *ctx, void *user) {
     const PeHookInvCommand *c = (const PeHookInvCommand *)ctx;
     int slot;
     (void)user;
-    if (c->command == PE_INV_CMD_START_NEW_GAME) {   /* difficulty and the switch stay */
-        const uint8_t preset = s_st.preset < 3 ? s_st.preset : 1;
-        memset(&s_st, 0, sizeof s_st);
-        s_st.preset = preset;
-        s_st.disabled = (uint8_t)!s_enabled;
-        return 0;
-    }
     if (c->command != PE_INV_CMD_REMOVE_ITEM || c->value != PE_ITEM_JUNK) return 0;
     pe_restore_active_list();
     if (!s_handin_left || !s_st.junk) return 0;

@@ -124,7 +124,11 @@ pe_save_register(&s_record);
   unchanged and the mods start from their defaults. Write the state as a struct with a
   `_Static_assert` on its size, so a changed layout can't ship without a new version.
 - **Mods off:** a record whose mod is off, failed to start or isn't in the build carries from the
-  loaded save into every later save unchanged. New Game resets everything.
+  loaded save into every later save unchanged.
+- **New game:** `PE_HOOK_NEW_GAME` (`PeHookNewGame`: the title's New Game or Tutorial, or the EX Game).
+  The host resets every record and drops the carried ones before any mod hears it, so a record
+  needs no handler of its own; reset anything else per game there. Don't test for script command
+  1117: only the EX Game sends it, and a New Game from the title after a loaded save sends nothing.
 - **Crash reports:** `pe_save_crash_tail()` copies the same records from memory without calling any
   mod code, so a save rebuilt from a report holds every mod's data. The room snapshot the crash
   report takes when a room starts uses it, and the report lists its records.

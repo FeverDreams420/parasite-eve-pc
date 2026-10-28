@@ -68,10 +68,11 @@ typedef struct PeSaveRecord {
     int (*upgrade)(void *data, const uint8_t *old, unsigned size, unsigned version);
     /* Optional. Defaults, for a save without this record and for New Game. Without it: zeros. */
     void (*reset)(void *data);
-    /* Optional. The mod is off this session: after a load the record goes into data as usual, then
-     * release() gives back to the game what only the record holds (pocketed keys to the bag), so the
-     * game plays as the original, and leaves in data what it couldn't. The host then saves the
-     * record from data. The only mod code that runs for a mod that is off. */
+    /* Optional. The mod is off this session: after a load the record goes into data as usual, and
+     * on the first free field frame after (the room has settled the game's state) release() gives
+     * back to the game what only the record holds (pocketed keys to the bag), so the game plays as
+     * the original, and leaves in data what it couldn't. The host saves the record from data. The
+     * only mod code that runs for a mod that is off. */
     void (*release)(void *data);
 } PeSaveRecord;
 

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "pe_game.h"
 #include "pe_mod_host.h"
 #include "pe_save.h"
 
@@ -28,12 +29,15 @@ typedef struct {
 
 /* Registered records: the running mods' state. kept = the loaded save holds a newer layout than
  * this build reads, so its carried bytes are written back instead of the (reset) state. released =
- * its mod is off and release() ran on the loaded record: it is saved from memory like a live one. */
+ * its mod is off and its record was loaded for release(): it is saved from memory like a live one.
+ * release_due = release() hasn't run yet: it runs on the first free field frame after the load,
+ * once the room has settled the game's state (the bag's size counts the armor's bag mods only
+ * then); until it runs the record is saved as loaded. */
 static struct {
     const PeSaveRecord *record;
     const char *mod_id;
     uint32_t id;
-    int kept, released;
+    int kept, released, release_due;
 } s_reg[PE_SAVE_MAX_RECORDS];
 static int s_reg_count;
 static unsigned s_reg_bytes = PE_SAVE_HEADER_SIZE;
@@ -366,16 +370,24 @@ void pe_save_on_read(const uint8_t *block) {
     pe_carry(block + PE_SAVE_TAIL_OFFSET, 1);
     for (i = 0; i < s_reg_count; ++i)
         if (pe_mod_active(s_reg[i].mod_id)) {
-            s_reg[i].released = 0;
+            s_reg[i].released = s_reg[i].release_due = 0;
             pe_load_one(i);
         } else if (s_reg[i].record->release) {
             pe_load_one(i);
-            s_reg[i].released = !s_reg[i].kept;
-            if (s_reg[i].released) {
-                s_reg[i].record->release(s_reg[i].record->data);
-                pe_mod_log(s_reg[i].mod_id, "save: %s released (the mod is off)", s_reg[i].record->name);
-            }
+            s_reg[i].released = s_reg[i].release_due = !s_reg[i].kept;
         }
+}
+
+static int pe_on_frame(void *ctx, void *user) {
+    int i;
+    (void)ctx; (void)user;
+    for (i = 0; i < s_reg_count; ++i)
+        if (s_reg[i].release_due && pe_free_field()) {
+            s_reg[i].release_due = 0;
+            pe_mod_log(s_reg[i].mod_id, "save: %s released (the mod is off)", s_reg[i].record->name);
+            s_reg[i].record->release(s_reg[i].record->data);
+        }
+    return 0;
 }
 
 void pe_save_on_write(uint8_t *block) {
@@ -395,7 +407,7 @@ void pe_save_new_game(void) {
     s_foreign = 0;
     memset(&s_car_info, 0, sizeof s_car_info);
     for (i = 0; i < s_reg_count; ++i) {
-        s_reg[i].kept = s_reg[i].released = 0;
+        s_reg[i].kept = s_reg[i].released = s_reg[i].release_due = 0;
         if (pe_mod_active(s_reg[i].mod_id)) pe_reset(i);
     }
 }
@@ -461,4 +473,5 @@ static int pe_on_command(void *ctx, void *user) {
 
 void pe_save_install(void) {
     pe_hook_add(PE_HOOK_INV_COMMAND, pe_on_command, NULL, -1000, "host");
+    pe_hook_add(PE_HOOK_FRAME, pe_on_frame, NULL, -1000, "host");
 }

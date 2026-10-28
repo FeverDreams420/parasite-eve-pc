@@ -9,13 +9,14 @@
 #include "pe_mod_host.h"
 #include "pe_save.h"
 
-static PeHookFn s_new_game;
+static PeHookFn s_new_game, s_frame;
 int pe_hook_add(int id, PeHookFn fn, void *user, int priority, const char *mod_id) {
     (void)user; (void)priority; (void)mod_id;
-    assert(id == PE_HOOK_INV_COMMAND);
-    s_new_game = fn;
+    assert(id == PE_HOOK_INV_COMMAND || id == PE_HOOK_FRAME);
+    if (id == PE_HOOK_FRAME) s_frame = fn; else s_new_game = fn;
     return 0;
 }
+int pe_free_field(void) { return 1; }
 static const char *s_current = "junk_mod";
 static int s_junk_on = 1, s_keys_on = 1, s_pocket_on = 1;
 const char *pe_mod_current(void) { return s_current; }
@@ -62,7 +63,8 @@ static const PeSaveRecord s_pocket_rec = { "test.pocket", 1, s_pocket, sizeof s_
 
 static unsigned char s_card[0x2000];
 static void game_save(void) { memset(s_card, 0, sizeof s_card); pe_save_on_write(s_card); }   /* Save_BuildCardFile */
-static void game_load(const unsigned char *card) { pe_save_on_read(card); }
+/* The load, then the room's first free field frame (where release() runs). */
+static void game_load(const unsigned char *card) { pe_save_on_read(card); s_frame(NULL, NULL); }
 
 static unsigned fnv(const char *name) {
     unsigned h = 0x811C9DC5u;
@@ -273,7 +275,9 @@ int main(void) {
         assert(s_releases == 0);
         s_pocket_on = 0;
         memset(s_pocket, 0, sizeof s_pocket);
-        game_load(s_card);
+        pe_save_on_read(s_card);                                       /* loaded, no free field yet */
+        assert(s_releases == 0 && s_pocket[0] == 0xC8 && s_pocket[1] == 0xC9);
+        s_frame(NULL, NULL);
         assert(s_releases == 1 && s_returned == 0xC8 && s_pocket[0] == 0xC9);
         game_save();
         assert((p = find(s_card, "test.pocket", NULL, NULL)) && p[0] == 0xC9 && p[2] == 0);

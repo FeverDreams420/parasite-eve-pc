@@ -8,7 +8,7 @@
  * saves its own state from memory:
  *
  *   Save       the host copies every running mod's state into the card block's free tail
- *              (0x1C90..0x1FFF, inside the game's CRC) as named records.
+ *              (0x1C90..0x1FFF, inside the game's CRC) as named records, around the window below.
  *   Load       the host puts each record back into its mod's memory before any mod's own
  *              PE_HOOK_SAVE_READ handler runs. A record from an older layout goes through the
  *              mod's upgrade(); a newer layout this build can't read is kept as it is, so saving
@@ -25,9 +25,17 @@
  * Saves from builds before this (fixed blocks PELT, PECT, PESH, PKEY, SORT at their own offsets)
  * are read as version 0 records holding the old block; each owner's upgrade() reads it.
  *
- * Tail layout (little-endian, no padding):
+ * The window: tail bytes 0x200..0x287 stay the old PKEY (key pocket) and SORT blocks, which
+ * pe_qol still writes there itself, because builds without this host (the official releases)
+ * read and write them. The container runs around the window and its CRC leaves it out, so those
+ * builds can't damage it; it holds a CRC of the window as it wrote it, and when the window
+ * changed since (another build saved here), the window's blocks are newer than the records and
+ * reach their owners' upgrade() as version 0. A block whose owner is off carries forward.
+ *
+ * Tail layout (little-endian, no padding), the container's bytes in order around the window:
  *   container  "PEMC", u8 format 1, u8 flags 0, u16 total bytes (header included),
- *              u32 CRC-32 (IEEE, reflected) of the whole container with this field as zero
+ *              u32 CRC-32 (IEEE, reflected) of the whole container with this field as zero,
+ *              u32 CRC-32 of the window's 0x88 bytes as written with it
  *   record     u32 id (FNV-1a 32 of the name's bytes), u16 layout version, u16 size, then size bytes
  * Records are sorted by id, each id once; bytes after the container are zero. */
 
@@ -36,7 +44,11 @@
 
 #define PE_SAVE_TAIL_OFFSET 0x1C90
 #define PE_SAVE_TAIL_SIZE   (0x2000 - PE_SAVE_TAIL_OFFSET)
-#define PE_SAVE_HEADER_SIZE 12
+#define PE_SAVE_WINDOW_AT   0x200   /* the old PKEY and SORT blocks (tail offsets) */
+#define PE_SAVE_WINDOW_END  0x288
+#define PE_SAVE_WINDOW_SIZE (PE_SAVE_WINDOW_END - PE_SAVE_WINDOW_AT)
+#define PE_SAVE_ROOM        (PE_SAVE_TAIL_SIZE - PE_SAVE_WINDOW_SIZE)   /* the container: 744 bytes */
+#define PE_SAVE_HEADER_SIZE 16
 #define PE_SAVE_RECORD_HEADER_SIZE 8
 
 typedef struct PeSaveRecord {

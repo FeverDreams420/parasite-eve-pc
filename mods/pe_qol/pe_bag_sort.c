@@ -1,7 +1,8 @@
 /* Remembered bag sorting from recomp pe_bag_sort.c. The native game does the
  * sorting and keeps equipped slots attached to their items. Only pointer-free
- * setting IDs are saved, as the host's "pe_qol.sort" record (host/pe_save.h); saves from before,
- * with the recomp's "SORT" v1 block, still load. */
+ * setting IDs are saved, as the host's "pe_qol.sort" record (host/pe_save.h). The recomp's "SORT"
+ * v1 block is still written at its old spot (the host's save window) for builds without the
+ * host's records; saves from before, or saved by such a build since, load from it. */
 #include "pe_inventory.h"
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
@@ -10,6 +11,7 @@
 #include "pe1/inventory_sort.h"
 #include "pe1/inventory_state.h"
 
+enum { PE_SORT_TAIL = 0x1C90 + 0x260 };
 static struct {
     uint32_t mode, rank_ptr, type_ptr, weapon_stat, armor_stat, row_hidden;
 } s_sort;
@@ -97,8 +99,9 @@ static void pe_sort_tick(void) {
     pe_snapshot();
 }
 static int pe_sort_save(void *ctx, void *user) {
-    (void)ctx; (void)user;
+    (void)user;
     s_sort.row_hidden = 0; /* Menu hiding is transient; never persist it. */
+    pe_inventory_save(ctx, PE_SORT_TAIL, &s_sort, sizeof s_sort, 0x54524F53u, 0x736F7274u);   /* the window */
     return 0;
 }
 static void pe_sort_reset(void *data) { (void)data; memset(&s_sort, 0, sizeof s_sort); s_seen = s_sorting = 0; }

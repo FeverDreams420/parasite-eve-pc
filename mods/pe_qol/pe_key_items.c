@@ -1,8 +1,9 @@
 /* Key pocket from recomp pe_key_items.c, adapted to native query hooks.
  * Keys remain visible to story counts/removals even with a full bag or while
  * disabling the pocket. Nothing is parked outside the bag or save block.
- * Saved by the host as the "pe_qol.keys" record (host/pe_save.h); saves from before, with the
- * recomp's "PKEY" block, still load. */
+ * Saved by the host as the "pe_qol.keys" record (host/pe_save.h). The recomp's "PKEY" block is
+ * still written at its old spot (the host's save window), so builds without the host's records
+ * keep the pocket; saves from before, or saved by such a build since, load from it. */
 #include <stdio.h>
 #include "pe_inventory.h"
 #include "pe_mod_host.h"
@@ -13,7 +14,7 @@
 #include "pe1/battle_update.h"
 #include "pe1/text.h"
 
-enum { PE_KEY_MAX = 32 };
+enum { PE_KEY_MAX = 32, PE_KEY_TAIL = 0x1C90 + 0x200 };
 static struct { uint16_t count, pad, ids[PE_KEY_MAX]; } s_keys;
 _Static_assert(sizeof s_keys == 68, "the PKEY block of older saves holds 68 bytes of this state");
 static int s_enabled = 1, s_selected;
@@ -102,6 +103,12 @@ static int pe_key_command(void *ctx, void *user) {
     }
     return 0;
 }
+/* The old block too, for builds that only read that (host/pe_save.h, the window). */
+static int pe_key_save(void *ctx, void *user) {
+    (void)user;
+    pe_inventory_save(ctx, PE_KEY_TAIL, &s_keys, sizeof s_keys, 0x59454B50u, 0x6B657973u);
+    return 0;
+}
 static void pe_key_reset(void *data) { (void)data; memset(&s_keys, 0, sizeof s_keys); s_selected = 0; }
 static int pe_key_check(void *data) {
     (void)data;
@@ -148,5 +155,6 @@ void pe_key_items_register(const char *mod_id) {
     pe_hook_add(PE_HOOK_ITEM_ADD, pe_key_add, NULL, PE_PRIORITY_LATE + 10, mod_id);
     pe_hook_add(PE_HOOK_ITEM_COUNT, pe_key_count, NULL, PE_PRIORITY_NORMAL, mod_id);
     pe_hook_add(PE_HOOK_INV_COMMAND, pe_key_command, NULL, PE_PRIORITY_NORMAL, mod_id);
+    pe_hook_add(PE_HOOK_SAVE_WRITE, pe_key_save, NULL, PE_PRIORITY_NORMAL, mod_id);
     pe_save_register(&s_key_record);
 }

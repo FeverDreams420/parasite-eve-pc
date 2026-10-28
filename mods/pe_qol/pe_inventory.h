@@ -4,8 +4,9 @@
 #include <string.h>
 #include "pe_game.h"
 
-/* Feature-private helpers. pe_inventory_load reads the recomp's blocks in saves
- * from before the host kept mods' data; native pointers never enter a save. */
+/* Feature-private helpers. The PKEY and SORT blocks keep the recomp's exact disk
+ * layout in the host's save window (host/pe_save.h), for builds without the host's
+ * records; native pointers never enter a memory-card save. */
 static inline int pe_inventory_limit(void) {
     int n = Inv_GetAyaSlotLimit();
     return n < 0 ? 0 : n > 50 ? 50 : n;
@@ -17,6 +18,12 @@ static inline uint32_t pe_inventory_checksum(const void *data, unsigned n, uint3
 }
 static inline uint32_t pe_inventory_word(const void *p) { uint32_t v; memcpy(&v, p, 4); return v; }
 static inline void pe_inventory_put(void *p, uint32_t v) { memcpy(p, &v, 4); }
+static inline void pe_inventory_save(void *card, unsigned at, const void *data, unsigned n,
+                                     uint32_t magic, uint32_t seed) {
+    uint8_t *p = (uint8_t *)card + at;
+    pe_inventory_put(p, magic); pe_inventory_put(p + 4, 1); pe_inventory_put(p + 8, n);
+    pe_inventory_put(p + 12, pe_inventory_checksum(data, n, seed)); memcpy(p + 16, data, n);
+}
 static inline int pe_inventory_load(const void *card, unsigned at, void *data, unsigned n,
                                     uint32_t magic, uint32_t seed) {
     const uint8_t *p = (const uint8_t *)card + at;

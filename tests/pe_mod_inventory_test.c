@@ -108,7 +108,7 @@ static const unsigned char *record(const unsigned char *card,const char *name,un
     for(const char *c=name;*c;++c) id=(id^(unsigned char)*c)*0x01000193u;
     const unsigned char *t=card+0x1C90;
     if(memcmp(t,"PEMC",4)) return NULL;
-    for(unsigned at=12,total=t[6]|t[7]<<8;at<total;) {
+    for(unsigned at=16,total=t[6]|t[7]<<8;at<total;) {   /* records short of the window */
         unsigned rid=pe_inventory_word(t+at),n=t[at+6]|t[at+7]<<8;
         if(rid==id){*size=n;return t+at+8;}
         at+=8+n;
@@ -146,6 +146,7 @@ int main(void) {
     g_AyaInventoryItems[0]=0;ticks[0]();assert(g_AyaInventoryItems[0]==0xC8);
     memset(card,0xA5,sizeof card);pe_hook_dispatch(PE_HOOK_SAVE_WRITE,card);
     assert((saved=record(card,"pe_qol.keys",&size))&&size==68);
+    assert(pe_inventory_word(card+0x1E90)==0x59454B50u&&!memcmp(card+0x1EA0,saved,68)); /* and the old PKEY block, for older builds */
     assert(card[0x1C8F]==0xA5); /* nothing before the tail is touched */
     reset();pe_hook_dispatch(PE_HOOK_SAVE_READ,card);assert(keys->take(0xCA));
     /* A recomp PKEY v1 block can be loaded byte-for-byte. */
@@ -188,6 +189,7 @@ int main(void) {
     g_GameStateFlags=0;assert(set_sort(1));ticks[1]();assert(get_sort());
     memset(card,0,sizeof card);pe_hook_dispatch(PE_HOOK_SAVE_WRITE,card);
     assert((saved=record(card,"pe_qol.sort",&size))&&size==24);
+    assert(pe_inventory_word(card+0x1EF0)==0x54524F53u&&!memcmp(card+0x1F00,saved,24)); /* and the old SORT block */
     assert(pe_inventory_word(saved+4)==0x800923F8u); /* original table ID, never a host pointer */
     struct {uint32_t mode,rank,type,weapon,armor,hidden;} old_sort={1,0x80092428u,0x80092468u,2,1,0};
     memset(card,0,sizeof card);old_block(card,0x1EF0,&old_sort,sizeof old_sort,0x54524F53u,0x736F7274u);

@@ -141,8 +141,12 @@ pe_save_register(&s_record);
 - **Crash reports:** `pe_save_crash_tail()` copies the same records from memory without calling any
   mod code, so a save rebuilt from a report holds every mod's data. The room snapshot the crash
   report takes when a room starts uses it, and the report lists its records.
-- **Room:** 880 bytes in all (12 for the tail's header, 8 per record). A record that doesn't fit is
-  refused when it registers, with a line in `pe_mods.log`.
+- **Older builds:** tail bytes 0x200..0x287 stay the old PKEY (key pocket) and SORT blocks, which
+  pe_qol still writes itself, because the official releases read and write them there. The records
+  run around those bytes and their CRC leaves them out, so a save made in an official release keeps
+  every mod's data and its pocket, and the pocket it saved wins when the save comes back here.
+- **Room:** 744 bytes (the tail's 880 less those 136; 16 for the header, 8 per record). A record that
+  doesn't fit is refused when it registers, with a line in `pe_mods.log`.
 
 Records today:
 

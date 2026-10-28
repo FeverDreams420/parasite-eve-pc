@@ -39,7 +39,14 @@ static int junk_upgrade(void *d, const unsigned char *old, unsigned size, unsign
     return 0;
 }
 static const PeSaveRecord s_junk_rec = { "pe_economy.loot", 2, &s_junk, sizeof s_junk, junk_check, junk_upgrade, junk_reset };
-static const PeSaveRecord s_keys_rec = { "test.keys", 1, s_keys, sizeof s_keys, NULL, NULL, NULL };
+/* Named like pe_qol's pocket, so its old block lives in the window (pe_save.h). */
+static int keys_upgrade(void *d, const unsigned char *old, unsigned size, unsigned version) {
+    (void)d;
+    if (version != 0 || size < 16 + sizeof s_keys || memcmp(old, "PKEY", 4)) return 1;
+    memcpy(s_keys, old + 16, sizeof s_keys);
+    return 0;
+}
+static const PeSaveRecord s_keys_rec = { "pe_qol.keys", 1, s_keys, sizeof s_keys, NULL, keys_upgrade, NULL };
 
 static unsigned char s_card[0x2000];
 static void game_save(void) { memset(s_card, 0, sizeof s_card); pe_save_on_write(s_card); }   /* Save_BuildCardFile */
@@ -57,7 +64,7 @@ static unsigned crc32(const unsigned char *p, unsigned n) {
     return ~c;
 }
 static unsigned s_at;
-static void tail_begin(unsigned char *card) { memset(card, 0, 0x2000); memcpy(card + 0x1C90, "PEMC\1\0", 6); s_at = 12; }
+static void tail_begin(unsigned char *card) { memset(card, 0, 0x2000); memcpy(card + 0x1C90, "PEMC\1\0", 6); s_at = 16; }
 static void tail_add(unsigned char *card, unsigned id, unsigned version, const void *data, unsigned size) {
     unsigned char *t = card + 0x1C90 + s_at;
     memcpy(t, &id, 4); t[4] = (unsigned char)version; t[5] = (unsigned char)(version >> 8);
@@ -68,6 +75,7 @@ static void tail_end(unsigned char *card) {
     unsigned char *t = card + 0x1C90;
     unsigned c;
     t[6] = (unsigned char)s_at; t[7] = (unsigned char)(s_at >> 8); memset(t + 8, 0, 4);
+    c = crc32(t + 0x200, 0x88); memcpy(t + 12, &c, 4);                 /* the window as written */
     c = crc32(t, s_at); memcpy(t + 8, &c, 4);
 }
 /* A record in a saved tail, NULL if absent. */
@@ -75,7 +83,7 @@ static const unsigned char *find(const unsigned char *card, const char *name, un
     const unsigned char *t = card + 0x1C90;
     unsigned at, total = t[6] | t[7] << 8, id;
     if (memcmp(t, "PEMC", 4)) return NULL;
-    for (at = 12; at < total; at += 8 + (t[at + 6] | t[at + 7] << 8)) {
+    for (at = 16; at < total; at += 8 + (t[at + 6] | t[at + 7] << 8)) {   /* records short of the window */
         memcpy(&id, t + at, 4);
         if (id == fnv(name)) {
             if (version) *version = t[at + 4] | t[at + 5] << 8;
@@ -110,7 +118,7 @@ int main(void) {
     game_save();
     assert(!memcmp(s_card + 0x1C90, "PEMC", 4) && s_card[0x1C8F] == 0);
     assert((p = find(s_card, "pe_economy.loot", &v, &n)) && v == 2 && n == sizeof s_junk);
-    assert((p = find(s_card, "test.keys", &v, &n)) && v == 1 && p[0] == 0xC8);
+    assert((p = find(s_card, "pe_qol.keys", &v, &n)) && v == 1 && p[0] == 0xC8);
     memset(&s_junk, 0, sizeof s_junk); memset(s_keys, 0, sizeof s_keys);
     game_load(s_card);
     assert(s_junk.junk == 120 && s_junk.pity == 3 && s_keys[0] == 0xC8);
@@ -125,7 +133,7 @@ int main(void) {
     s_keys[0] = 0;                                                     /* not running: its memory doesn't count */
     s_junk.junk = 130;
     game_save();
-    assert((p = find(s_card, "test.keys", NULL, NULL)) && p[0] == 0xC8);
+    assert((p = find(s_card, "pe_qol.keys", NULL, NULL)) && p[0] == 0xC8);
     assert((p = find(s_card, "pe_economy.loot", NULL, NULL)) && p[0] == 130);
     game_load(s_card);
     s_keys_on = 1;
@@ -210,7 +218,7 @@ int main(void) {
     s_new_game(&new_game, NULL);
     assert(s_junk.junk == 0);
     game_save();
-    assert(!find(s_card, "test.keys", NULL, NULL));
+    assert(!find(s_card, "pe_qol.keys", NULL, NULL));
     s_keys_on = 1;
 
     /* The crash copy: what a save made now holds, with no mod code called and nothing changed. */
@@ -224,7 +232,60 @@ int main(void) {
     pe_save_crash_describe(text, sizeof text, &used);
     assert(strstr(text, "2 record(s)") && strstr(text, "pe_economy.loot (junk_mod) v2, 8 bytes, live"));
 
+    /* The window (0x200..0x287): the old PKEY/SORT blocks. A build without the records (an
+     * official release) rewrites them; the container doesn't break, and the newer pocket wins. */
+    {
+        unsigned char *w;
+        s_junk.junk = 410; s_keys[0] = 0xC8;
+        game_save();
+        assert(s_card[0x1C90 + 0x200] == 0);                           /* no owner wrote a block: none */
+        memcpy(other, s_card, sizeof other);
+        w = other + 0x1C90 + 0x200;                                    /* the official build saves */
+        memcpy(w, "PKEY", 4); w[16] = 0xD1;
+        memcpy(other + 0x1C90 + 0x260, "SORT", 4);
+        memset(&s_junk, 0, sizeof s_junk); memset(s_keys, 0, sizeof s_keys);
+        game_load(other);
+        assert(s_junk.junk == 410 && s_keys[0] == 0xD1);
+        /* Saved here again: the pocket's record follows, and the window as this save holds it. */
+        game_save();
+        assert((p = find(s_card, "pe_qol.keys", NULL, NULL)) && p[0] == 0xD1);
+        /* The owner off: its block in the window carries forward, still newer than the record. */
+        memcpy(s_card + 0x1C90 + 0x200, w, 0x54);
+        s_keys_on = 0;
+        game_load(s_card);
+        game_save();
+        assert(!memcmp(s_card + 0x1C90 + 0x200, w, 0x54));
+        assert(!memcmp(s_card + 0x1C90 + 0x260, "SORT", 4));
+        s_keys_on = 1;
+    }
+
+    /* A container longer than the window runs around it, and a block written into the window
+     * afterwards doesn't damage it. */
+    {
+        static unsigned char big[0x220];
+        static const PeSaveRecord big_rec = { "test.big2", 1, big, sizeof big, NULL, NULL, NULL };
+        unsigned i;
+        for (i = 0; i < sizeof big; ++i) big[i] = (unsigned char)(i * 7 + 1);
+        assert(pe_save_register(&big_rec) == 0);
+        unsigned char before[0x88];
+        memcpy(before, s_card + 0x1C90 + 0x200, sizeof before);
+        s_junk.junk = 515;
+        game_save();
+        /* The container skipped it: the pocket's block as its running owner wrote it (nothing, here),
+         * the sort block carried. */
+        for (i = 0x200; i < 0x260; ++i) assert(s_card[0x1C90 + i] == 0);
+        assert(!memcmp(s_card + 0x1C90 + 0x260, before + 0x60, 0x28));
+        assert(s_card[0x1C90 + 0x288] != 0);                               /* and went on after it */
+        memcpy(other, s_card, sizeof other);
+        memcpy(other + 0x1C90 + 0x200, "PKEY", 4);
+        memset(big, 0, sizeof big); s_junk.junk = 0;
+        game_load(other);
+        assert(s_junk.junk == 515);
+        for (i = 0; i < sizeof big; ++i) assert(big[i] == (unsigned char)(i * 7 + 1));
+    }
+
     puts("Save record checks passed: one way for every mod, mods off and unknown mods keep theirs, newer "
-         "layouts survive, old saves load, damage resets, New Game clears, crash copy runs no mod code.");
+         "layouts survive, old saves load, damage resets, New Game clears, crash copy runs no mod code, "
+         "the old blocks' window stays readable by older builds.");
     return 0;
 }

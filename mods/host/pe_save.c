@@ -30,7 +30,7 @@ static unsigned s_reg_bytes = PE_SAVE_HEADER_SIZE;
 
 /* Carried: the records of the save loaded or last written, pointing into s_tail. foreign = the
  * loaded tail is a container format newer than this build: s_tail is written back as it is. */
-static uint8_t s_tail[PE_SAVE_TAIL_SIZE];
+static uint8_t s_tail[PE_SAVE_TAIL_SIZE], s_lin[PE_SAVE_ROOM];
 static PeSaveEntry s_car[PE_SAVE_MAX_ENTRIES];
 static int s_car_count, s_foreign;
 
@@ -81,33 +81,62 @@ static const char *pe_name_of(uint32_t id, const char **mod_id) {
     return NULL;
 }
 
-/* The records in a tail: a container, else the old fixed blocks. -1: a damaged container;
- * -2: a container in a format (or with flags) newer than this build reads. */
-static int pe_parse(const uint8_t *tail, PeSaveEntry *out) {
+/* The container's bytes run through the tail around the reserved window (pe_save.h). */
+static void pe_gather(const uint8_t *tail, uint8_t *lin) {
+    memcpy(lin, tail, PE_SAVE_WINDOW_AT);
+    memcpy(lin + PE_SAVE_WINDOW_AT, tail + PE_SAVE_WINDOW_END, PE_SAVE_TAIL_SIZE - PE_SAVE_WINDOW_END);
+}
+static void pe_scatter(const uint8_t *lin, uint8_t *tail) {
+    memcpy(tail, lin, PE_SAVE_WINDOW_AT);
+    memcpy(tail + PE_SAVE_WINDOW_END, lin + PE_SAVE_WINDOW_AT, PE_SAVE_TAIL_SIZE - PE_SAVE_WINDOW_END);
+}
+static int pe_in_window(int i) { return s_legacy[i].at >= PE_SAVE_WINDOW_AT && s_legacy[i].at < PE_SAVE_WINDOW_END; }
+
+/* The records in a tail: a container (its bytes gathered into lin), else the old fixed blocks.
+ * -1: a damaged container; -2: a container in a format (or with flags) newer than this build. */
+static int pe_parse(const uint8_t *tail, uint8_t *lin, PeSaveEntry *out) {
     unsigned total, at;
-    int n = 0, i;
+    uint32_t crc;
+    int n = 0, i, j;
     if (!memcmp(tail, PE_SAVE_MAGIC, 4)) {
-        uint8_t copy[PE_SAVE_TAIL_SIZE];
         total = pe_get16(tail + 6);
         if (tail[4] > PE_SAVE_FORMAT || (tail[4] == PE_SAVE_FORMAT && tail[5] != 0)) return -2;
-        if (tail[4] != PE_SAVE_FORMAT || total < PE_SAVE_HEADER_SIZE || total > PE_SAVE_TAIL_SIZE)
-            return -1;
-        memcpy(copy, tail, total);
-        memset(copy + 8, 0, 4);
-        if (pe_crc32(copy, total) != pe_get32(tail + 8)) return -1;
+        if (tail[4] != PE_SAVE_FORMAT || total < PE_SAVE_HEADER_SIZE || total > PE_SAVE_ROOM) return -1;
+        pe_gather(tail, lin);
+        crc = pe_get32(lin + 8);
+        memset(lin + 8, 0, 4);
+        i = pe_crc32(lin, total) != crc;
+        pe_put32(lin + 8, crc);
+        if (i) return -1;
         for (at = PE_SAVE_HEADER_SIZE; at < total;) {
             if (total - at < PE_SAVE_RECORD_HEADER_SIZE || n == PE_SAVE_MAX_ENTRIES) return -1;
-            out[n].id = pe_get32(tail + at);
-            out[n].version = pe_get16(tail + at + 4);
-            out[n].size = pe_get16(tail + at + 6);
+            out[n].id = pe_get32(lin + at);
+            out[n].version = pe_get16(lin + at + 4);
+            out[n].size = pe_get16(lin + at + 6);
             at += PE_SAVE_RECORD_HEADER_SIZE;
             if (out[n].size > total - at) return -1;
-            out[n].bytes = tail + at;
+            out[n].bytes = lin + at;
             at += out[n].size;
             for (i = 0; i < n; ++i)
                 if (out[i].id == out[n].id) return -1;
             ++n;
         }
+        /* The window changed since this container was written: a build that still writes the old
+         * blocks saved here since. Its blocks are newer than our records of them. */
+        if (pe_crc32(tail + PE_SAVE_WINDOW_AT, PE_SAVE_WINDOW_SIZE) != pe_get32(lin + 12))
+            for (i = 0; i < PE_LEGACY_COUNT; ++i) {
+                uint32_t id = pe_fnv(s_legacy[i].name);
+                if (!pe_in_window(i) || memcmp(tail + s_legacy[i].at, s_legacy[i].magic, 4)) continue;
+                for (j = 0; j < n && out[j].id != id; ++j) {}
+                if (j == n) {
+                    if (n == PE_SAVE_MAX_ENTRIES) continue;
+                    ++n;
+                }
+                out[j].id = id;
+                out[j].version = 0;
+                out[j].size = (uint16_t)s_legacy[i].size;
+                out[j].bytes = tail + s_legacy[i].at;
+            }
         return n;
     }
     for (i = 0; i < PE_LEGACY_COUNT; ++i)
@@ -128,16 +157,35 @@ static const PeSaveEntry *pe_carried(uint32_t id) {
     return NULL;
 }
 
+/* The window a save made now holds: each old block as its owner just wrote it into live (the
+ * save's own tail) while that owner runs, else as carried from the loaded save. */
+static void pe_window(uint8_t *win, const uint8_t *live) {
+    int i, j;
+    memcpy(win, s_tail + PE_SAVE_WINDOW_AT, PE_SAVE_WINDOW_SIZE);
+    if (!live) return;
+    for (i = 0; i < PE_LEGACY_COUNT; ++i) {
+        uint32_t id = pe_fnv(s_legacy[i].name);
+        if (!pe_in_window(i)) continue;
+        for (j = 0; j < s_reg_count && s_reg[j].id != id; ++j) {}
+        if (j < s_reg_count && pe_mod_active(s_reg[j].mod_id))
+            memcpy(win + s_legacy[i].at - PE_SAVE_WINDOW_AT, live + s_legacy[i].at, s_legacy[i].size);
+    }
+}
+
 /* The records a save made now holds, into out (a whole tail): running mods' state first, then
- * carried records (mods off, newer layouts, mods not in this build) while room is left. Reads
- * memory only, so the crash report can use it. Returns the number of records. */
-static int pe_pack(uint8_t *out, int *dropped) {
+ * carried records (mods off, newer layouts, mods not in this build) while room is left, around
+ * the window (live: the save's own tail, whose window the old blocks' owners wrote; NULL: the
+ * carried window). Reads memory only, so the crash report can use it. Returns the record count. */
+static int pe_pack(uint8_t *out, const uint8_t *live, int *dropped) {
     PeSaveEntry list[PE_SAVE_MAX_ENTRIES];
+    uint8_t lin[PE_SAVE_ROOM], win[PE_SAVE_WINDOW_SIZE];
     unsigned total = PE_SAVE_HEADER_SIZE, at;
     int n = 0, i, j;
     *dropped = 0;
+    pe_window(win, live);            /* first: live may be out itself */
     if (s_foreign) {                 /* a newer build's container: back as it was, nothing added */
         memcpy(out, s_tail, PE_SAVE_TAIL_SIZE);
+        memcpy(out + PE_SAVE_WINDOW_AT, win, sizeof win);
         return 0;
     }
     for (i = 0; i < s_reg_count; ++i) {
@@ -152,7 +200,7 @@ static int pe_pack(uint8_t *out, int *dropped) {
     for (i = 0; i < s_car_count; ++i) {
         for (j = 0; j < n && list[j].id != s_car[i].id; ++j) {}
         if (j < n) continue;
-        if (n == PE_SAVE_MAX_ENTRIES || total + PE_SAVE_RECORD_HEADER_SIZE + s_car[i].size > PE_SAVE_TAIL_SIZE) {
+        if (n == PE_SAVE_MAX_ENTRIES || total + PE_SAVE_RECORD_HEADER_SIZE + s_car[i].size > PE_SAVE_ROOM) {
             ++*dropped;
             continue;
         }
@@ -165,25 +213,29 @@ static int pe_pack(uint8_t *out, int *dropped) {
             list[j] = list[j - 1];
             list[j - 1] = t;
         }
-    memset(out, 0, PE_SAVE_TAIL_SIZE);
-    memcpy(out, PE_SAVE_MAGIC, 4);
-    out[4] = PE_SAVE_FORMAT;
-    pe_put16(out + 6, total);
+    memset(lin, 0, sizeof lin);
+    memcpy(lin, PE_SAVE_MAGIC, 4);
+    lin[4] = PE_SAVE_FORMAT;
+    pe_put16(lin + 6, total);
+    pe_put32(lin + 12, pe_crc32(win, sizeof win));
     for (i = 0, at = PE_SAVE_HEADER_SIZE; i < n; ++i) {
-        pe_put32(out + at, list[i].id);
-        pe_put16(out + at + 4, list[i].version);
-        pe_put16(out + at + 6, list[i].size);
-        memmove(out + at + PE_SAVE_RECORD_HEADER_SIZE, list[i].bytes, list[i].size);
+        pe_put32(lin + at, list[i].id);
+        pe_put16(lin + at + 4, list[i].version);
+        pe_put16(lin + at + 6, list[i].size);
+        memcpy(lin + at + PE_SAVE_RECORD_HEADER_SIZE, list[i].bytes, list[i].size);
         at += PE_SAVE_RECORD_HEADER_SIZE + list[i].size;
     }
-    pe_put32(out + 8, pe_crc32(out, total));
+    pe_put32(lin + 8, pe_crc32(lin, total));
+    memset(out, 0, PE_SAVE_TAIL_SIZE);
+    pe_scatter(lin, out);
+    memcpy(out + PE_SAVE_WINDOW_AT, win, sizeof win);
     return n;
 }
 
 static void pe_carry(const uint8_t *tail) {
     int n;
     if (tail != s_tail) memcpy(s_tail, tail, sizeof s_tail);
-    n = pe_parse(s_tail, s_car);
+    n = pe_parse(s_tail, s_lin, s_car);
     s_car_count = n < 0 ? 0 : n;
     s_foreign = n == -2;
     if (n == -1) pe_mod_log(NULL, "save: the mods' save data is damaged; mods start from their defaults");
@@ -253,9 +305,9 @@ int pe_save_register(const PeSaveRecord *r) {
             return -1;
         }
     if (s_reg_count == PE_SAVE_MAX_RECORDS ||
-        s_reg_bytes + PE_SAVE_RECORD_HEADER_SIZE + r->size > PE_SAVE_TAIL_SIZE) {
+        s_reg_bytes + PE_SAVE_RECORD_HEADER_SIZE + r->size > PE_SAVE_ROOM) {
         pe_mod_log(mod, "save: no room for %s (%u bytes; %u of %u in use), not registered", r->name, r->size,
-                   s_reg_bytes, (unsigned)PE_SAVE_TAIL_SIZE);
+                   s_reg_bytes, (unsigned)PE_SAVE_ROOM);
         return -1;
     }
     s_reg[s_reg_count].record = r;
@@ -276,7 +328,7 @@ void pe_save_on_read(const uint8_t *block) {
 
 void pe_save_on_write(uint8_t *block) {
     int dropped;
-    pe_pack(block + PE_SAVE_TAIL_OFFSET, &dropped);
+    pe_pack(block + PE_SAVE_TAIL_OFFSET, block + PE_SAVE_TAIL_OFFSET, &dropped);
     if (dropped) {
         pe_mod_log(NULL, "save: no room for %d record(s) of mods not running; left out of this save", dropped);
         pe_toast("Mod data of a mod that is off didn't fit in this save");
@@ -296,14 +348,14 @@ void pe_save_new_game(void) {
 }
 
 /* ---- crash report ---- */
-static uint8_t s_crash_tail[PE_SAVE_TAIL_SIZE];
+static uint8_t s_crash_tail[PE_SAVE_TAIL_SIZE], s_crash_lin[PE_SAVE_ROOM];
 static PeSaveEntry s_crash_list[PE_SAVE_MAX_ENTRIES];
 static int s_crash_count = -1, s_crash_dropped;
 
 void pe_save_crash_tail(uint8_t *block) {
-    pe_pack(s_crash_tail, &s_crash_dropped);
+    pe_pack(s_crash_tail, NULL, &s_crash_dropped);
     memcpy(block + PE_SAVE_TAIL_OFFSET, s_crash_tail, sizeof s_crash_tail);
-    s_crash_count = pe_parse(s_crash_tail, s_crash_list);
+    s_crash_count = pe_parse(s_crash_tail, s_crash_lin, s_crash_list);
 }
 
 void pe_save_crash_describe(char *out, size_t size, size_t *used) {
@@ -325,7 +377,7 @@ void pe_save_crash_describe(char *out, size_t size, size_t *used) {
         return;
     }
     PE_OUT("%d record(s), %u of %u bytes%s\r\n", s_crash_count, (unsigned)pe_get16(s_crash_tail + 6),
-           (unsigned)PE_SAVE_TAIL_SIZE, s_crash_dropped ? "; some carried records didn't fit" : "");
+           (unsigned)PE_SAVE_ROOM, s_crash_dropped ? "; some carried records didn't fit" : "");
     for (i = 0; i < s_crash_count; ++i) {
         const char *mod = NULL, *name = pe_name_of(s_crash_list[i].id, &mod), *from = "carried from the loaded save";
         for (j = 0; j < s_reg_count; ++j)

@@ -63,6 +63,10 @@ typedef struct PeLogLine { const char *tag, *text; } PeLogLine;
 void pe_toast(const char *text);
 
 /* host internals shared by its own files */
+/* Around every call into a mod: what crash reports name as the running mod code
+ * (what: "hook", "per-frame tick", "F1 row"...; detail: which one, or NULL). */
+void pe_mod_call_begin(const char *mod_id, const char *what, const char *detail);
+void pe_mod_call_end(void);
 void pe_menu_load_settings(void);
 void pe_menu_save_settings(void);
 void pe_panel_install(void);

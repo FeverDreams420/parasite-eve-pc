@@ -1,4 +1,5 @@
 #include "pe1/aya.h"
+#include "pe_hooks.h"
 #include "pe1/draw_state.h"
 #include "pe1/draw_wipe_rect.h"
 #include "pe1/inventory.h"
@@ -371,7 +372,11 @@ void Menu_DrawItemSlot(int arg0) {
     }
 
     Draw_OffsetCursor(-2, -2);
-    Draw_AllocSprite(var_s0 + 0x56);
+    {
+        PeHookMainMenuIcon icon = {arg0, var_s0, var_s0 + 0x56};
+        PE_HOOK(PE_HOOK_MAIN_MENU_ICON, &icon);
+        Draw_AllocSprite(icon.sprite);
+    }
 }
 
 void Menu_DrawSelectableEquipSlotRow(int slot) {

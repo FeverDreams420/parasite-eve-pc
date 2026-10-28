@@ -40,6 +40,7 @@ target_compile_definitions(psyz PRIVATE __psyz)
 # Set this after configuring PsyZ: its SDK/SDL targets retain their own options.
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     add_compile_options("$<$<COMPILE_LANGUAGE:C>:-fno-strict-aliasing>"
+        "$<$<COMPILE_LANGUAGE:C>:-fno-omit-frame-pointer>"
         "$<$<COMPILE_LANGUAGE:C>:-ffunction-sections>"
         "$<$<COMPILE_LANGUAGE:C>:-fdata-sections>")
 elseif(MSVC)
@@ -71,10 +72,10 @@ pe_configure_object_library(parasite-eve-original-disc)
 target_link_libraries(parasite-eve-original-disc PRIVATE psyz)
 
 # The executable starts the original game and compiles its modules in place.
-add_executable(parasite-eve-pc src/main/boot/main.c)
+add_executable(parasite-eve-pc src/main/boot/main.c src/main/boot/crash_report.c src/main/boot/crash_report_posix.c)
 target_include_directories(parasite-eve-pc PRIVATE include)
-target_link_libraries(parasite-eve-pc PRIVATE psyz)
-target_compile_definitions(parasite-eve-pc PRIVATE __psyz)
+target_link_libraries(parasite-eve-pc PRIVATE psyz ${CMAKE_DL_LIBS})
+target_compile_definitions(parasite-eve-pc PRIVATE __psyz PE_VERSION="${PROJECT_VERSION}")
 if(APPLE AND PE_MACOS_BUNDLE)
     set_target_properties(parasite-eve-pc PROPERTIES
         MACOSX_BUNDLE TRUE
@@ -397,6 +398,15 @@ function(pe_add_common_unit_test target_name test_name source_file)
 endfunction()
 
 if(BUILD_TESTING)
+    if(NOT EMSCRIPTEN)
+        add_executable(test-crash-report tests/original_input_rules.c
+            src/main/boot/crash_report.c src/main/boot/crash_report_posix.c)
+        target_include_directories(test-crash-report PRIVATE include)
+        target_compile_definitions(test-crash-report PRIVATE PE_CRASH_REPORT_TEST=1)
+        target_link_libraries(test-crash-report PRIVATE psyz)
+        add_test(NAME host-crash-report COMMAND test-crash-report)
+        set_tests_properties(host-crash-report PROPERTIES TIMEOUT 60)
+    endif()
     add_executable(test-original-akao-layout tests/original_akao_layout.c)
     target_include_directories(test-original-akao-layout PRIVATE include)
     add_test(NAME original-game-akao-layout COMMAND test-original-akao-layout)

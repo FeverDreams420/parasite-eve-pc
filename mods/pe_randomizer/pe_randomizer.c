@@ -20,6 +20,7 @@
 #include "pe_mod_menu.h"
 #include "pe_save.h"
 #include "pe1/game_state.h"
+#include "pe1/game_timers.h"
 #include "pe1/inventory.h"
 #include "pe1/scene_room.h"
 #include "pe1/script_state.h"
@@ -40,6 +41,7 @@ static PeRandRun s_run, s_layout_for;
 static uint16_t s_layout[PE_RAND_SPOTS];
 static PeRandResult s_result;
 static int s_layout_ready;
+static int s_from_title = 1;   /* at the title, no save loaded since: the next room with a day may be a New Game */
 static int s_enabled, s_difficulty = PE_RAND_MEDIUM, s_digit[6];
 static unsigned char s_room_warned[SCENE_ROOM_COUNT + 1];
 static const char *const s_difficulty_names[] = {"Easy", "Medium", "Hard"};
@@ -89,6 +91,8 @@ static int pe_rand_ready(void) {
 static uint32_t pe_get32(const uint8_t *p) { return p[0] | p[1] << 8 | p[2] << 16 | (uint32_t)p[3] << 24; }
 static void pe_put32(uint8_t *p, uint32_t v) { p[0] = (uint8_t)v; p[1] = (uint8_t)(v >> 8); p[2] = (uint8_t)(v >> 16); p[3] = (uint8_t)(v >> 24); }
 
+static void pe_rand_new_game(void);
+
 static int pe_rand_scene(void *ctx, void *user) {
     uint8_t *room = (uint8_t *)g_GameState.loaded_scene_assets;
     int map = pe_room_number();
@@ -96,6 +100,17 @@ static int pe_rand_scene(void *ctx, void *user) {
     size_t bytes;
     (void)ctx;
     (void)user;
+    /* Title (boot or reset: no story day yet). New Game there sends no command: the game just goes on
+     * from this state into Day 1, so the first room with a day and no save loaded in between, at a
+     * play time of under a minute, is a New Game. */
+    if (g_GameState.current_story_day < 0) {
+        s_from_title = 1;
+        return 0;
+    }
+    if (s_from_title) {
+        s_from_title = 0;
+        if (g_PlayTimeFrameCounter < 60u * 60u) pe_rand_new_game();
+    }
     if (!room || map < 1 || map > SCENE_ROOM_COUNT || !pe_rand_ready()) return 0;
     while (first < PE_RAND_SITES && g_pe_rand_sites[first].map < map) ++first;
     for (end = first; end < PE_RAND_SITES && g_pe_rand_sites[end].map == map; ++end) {}
@@ -210,13 +225,10 @@ static void pe_rand_spoiler(void) {
     if (rename(temp, path) != 0) { remove(temp); pe_toast("Randomizer: couldn't write the spoiler file"); }
 }
 
-static int pe_rand_command(void *ctx, void *user) {
-    const PeHookInvCommand *c = ctx;
+/* The only place a run's settings are taken. */
+static void pe_rand_new_game(void) {
     char line[96];
-    (void)user;
-    if (!c || c->command != PE_INV_CMD_START_NEW_GAME) return 0;
     memset(s_lock_logged, 0, sizeof s_lock_logged);   /* a new run: its locks are logged again */
-    /* the host has just reset the record (off); this is the only place a run's settings are taken */
     s_run.on = s_enabled != 0;
     s_run.difficulty = (uint8_t)(s_difficulty >= 0 && s_difficulty < PE_RAND_DIFFICULTIES ? s_difficulty : PE_RAND_MEDIUM);
     s_run.logic = PE_RAND_LOGIC_VERSION;
@@ -224,13 +236,21 @@ static int pe_rand_command(void *ctx, void *user) {
     s_run.seed = pe_rand_seed();
     if (!s_run.on || !pe_rand_ready()) {
         pe_log("rand_newgame", "on=0 keys_moved=0");
-        return 0;
+        return;
     }
     pe_log("rand_newgame", "on=1 seed=%06u difficulty=%u keys_moved=%u", (unsigned)s_run.seed,
            (unsigned)s_run.difficulty, s_result.keys_moved);
     if (s_run.difficulty != PE_RAND_HARD) pe_rand_spoiler();
     snprintf(line, sizeof line, "Randomizer: seed %06u, %s", (unsigned)s_run.seed, s_difficulty_names[s_run.difficulty]);
     pe_toast(line);
+}
+
+/* New Game after the end (M431's clear-game path), where the host has just reset the record (off).
+ * New Game on the title sends no command: see pe_rand_scene. */
+static int pe_rand_command(void *ctx, void *user) {
+    const PeHookInvCommand *c = ctx;
+    (void)user;
+    if (c && c->command == PE_INV_CMD_START_NEW_GAME) pe_rand_new_game();
     return 0;
 }
 
@@ -238,6 +258,7 @@ static int pe_rand_save_read(void *ctx, void *user) {
     (void)ctx;
     (void)user;
     s_layout_ready = 0;
+    s_from_title = 0;
     if (s_run.on && !pe_rand_supported()) {
         pe_toast("Randomizer: this save's layout is from another version; items stay vanilla");
         pe_mod_log(MOD_ID, "save from logic %u / table %u, this build %u / %u: items stay vanilla",

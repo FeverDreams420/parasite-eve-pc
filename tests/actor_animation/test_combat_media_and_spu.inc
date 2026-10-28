@@ -1212,6 +1212,7 @@ static int original_credit_playback(PeDisc *disc)
     /* Campaign FMVs can reach credits without opening an SDL audio stream. */
     Psyz_AudioDestroy();
     int start_status=BootDisplay_StartPlayback();
+    Psyz_AudioPause(); /* only this fixture's explicit PCM pulls consume XA */
     if(start_status){fprintf(stderr,"Credits playback start failed: %d\n",start_status);return 0;}
     if(BootDisplay_SetCdFilter(1))return 0;
     size_t observed=Psyz_CdPullSamples(actual,frames);unsigned nonzero=0;
@@ -1258,6 +1259,7 @@ static int original_credit_playback(PeDisc *disc)
         Boot_BuildRenderFlagTable();g_GameStateFlags=images?0x20000:0;
         credits_vblanks=credits_pcm_frames=credits_pcm_nonzero=0;
         credits_seen_images=credits_pixel_probes=credits_visible_pixels=0;credits_probe_frame=UINT32_MAX;
+        Psyz_AudioPause();
         VSyncCallbacks(0,credits_drive_audio);
         status=BootDisplay_RunDisplay();VSyncCallbacks(0,NULL);
         printf("Original credits full sprite flow: images=%u status=%d frame=%u timer=%d state=%d done=%d vblanks=%u pcm=%u nonzero=%u seen=%08x probes=%u pixels=%u\n",

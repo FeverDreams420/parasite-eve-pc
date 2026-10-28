@@ -83,6 +83,10 @@ moved, disabled or updated without touching the others. Add the folder name to `
 - Read-only values (Junk, prices, results) are `info` rows, never live rows that refuse changes.
 - Every row has a one-line description; actions that cost or destroy something are press-twice.
 
+Movement speed uses the local `PLAYER_MOVE` hook in the original input movement
+handlers. It never writes the actor's `moveFactor`: cutscenes and battle-entry
+scripts own that value, including values that match a mod speed option.
+
 ## Optional encounter controls
 
 No random battles (Combat) reads the game's own saved switch. Turning it off

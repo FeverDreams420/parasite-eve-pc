@@ -21,6 +21,7 @@ u32 g_ScriptVariableBank[512];
 static int loaded = 1, battle, *mode, free_field = 1;
 static int *always_run, *run_speed, *walk_speed, *combat_speed, *entry_speed;
 static PeMenuPerFrame move_tick;
+static PeHookFn on_player_move;
 static BattleEntity player;
 PadPacket g_PadPackets[2];
 s32 g_FieldRenderFlagTable[32];
@@ -35,27 +36,40 @@ int pe_menu_register_tick(PeMenuPerFrame tick) { move_tick=tick;return 0; }
 void pe_move_register(const char *);
 static void movement_regression(void) {
     pe_move_register("pe_qol");
+    assert(move_tick && on_player_move);
     *always_run=*run_speed=*walk_speed=*combat_speed=*entry_speed=0;
     memset(&player,0,sizeof(player));
     g_PadPackets[0].header=0x4100;g_PadPackets[0].buttons=0xFFFF;
     g_FieldRenderFlagTable[0]=0x4000;
     // Actual Central Park encounter: the game sets 3x for its entry script.
     battle=1;free_field=0;g_BattleModeState=7;player.actionMode=4;
-    player.moveFactor=0x30000;move_tick();assert(player.moveFactor==0x30000);
-    for(int factor=0x14000;factor<=0x30000;factor+=0x4000) {
+    for(int factor=0x10000;factor<=0x30000;factor+=0x4000) {
         player.moveFactor=factor;move_tick();assert(player.moveFactor==factor);
+        int local=factor;PeHookPlayerMove step={&player,&local,1,1};
+        on_player_move(&step,NULL);assert(local==factor && player.moveFactor==factor);
     }
-    // The mod restores only a factor it wrote, not an equal-looking script value.
+    // Each speed affects only a local input calculation; it cannot survive
+    // into a menu, room reload or cutscene, even if the script uses that speed.
     battle=0;free_field=1;player.moveFactor=0x10000;
-    g_PadPackets[0].buttons=(u16)~0x10;*walk_speed=3;
-    move_tick();assert(player.moveFactor==0x1C000);
-    g_PadPackets[0].buttons=0xFFFF;move_tick();assert(player.moveFactor==0x10000);
-    player.moveFactor=0x1C000;move_tick();assert(player.moveFactor==0x1C000);
-    player.moveFactor=0x10000;g_PadPackets[0].buttons=(u16)~0x10;move_tick();
-    assert(player.moveFactor==0x1C000);
-    player.moveFactor=0x30000;battle=1;free_field=0;move_tick();assert(player.moveFactor==0x30000);
-    battle=0;free_field=1;player.moveFactor=0x10000;
-    puts("Passed movement ownership: original battle-entry/script speeds preserved; only mod-owned speed restored");
+    for(int speed=0;speed<8;++speed) {
+        const int factors[]={0x10000,0x14000,0x18000,0x1C000,0x20000,0x24000,0x28000,0x30000};
+        *walk_speed=speed;int local=player.moveFactor;
+        PeHookPlayerMove step={&player,&local,0,0};on_player_move(&step,NULL);
+        assert(local==factors[speed] && player.moveFactor==0x10000);
+        player.moveFactor=factors[speed];battle=1;free_field=0;move_tick();
+        assert(player.moveFactor==factors[speed]);
+        battle=0;free_field=1;player.moveFactor=0x10000;
+    }
+    *run_speed=5;*walk_speed=3;*combat_speed=2;
+    int local=0x10000;PeHookPlayerMove step={&player,&local,1,0};
+    on_player_move(&step,NULL);assert(local==0x24000);
+    local=0x10000;step.combat=1;battle=1;free_field=0;g_BattleModeState=0;
+    on_player_move(&step,NULL);assert(local==0x18000);
+    local=0x30000;on_player_move(&step,NULL);assert(local==0x30000);
+    local=0x10000;step.actor=&step;on_player_move(&step,NULL);assert(local==0x10000);
+    step.actor=&player;loaded=0;on_player_move(&step,NULL);assert(local==0x10000);loaded=1;
+    battle=0;free_field=1;
+    puts("Passed movement options: eight local input speeds, run/combat selection, scripts, transitions and non-player actors preserve original actor factors");
 }
 static PeHookFn on_random;
 int pe_game_loaded(void) { return loaded; }
@@ -75,7 +89,8 @@ int pe_menu_register_choice(const char *p, const char *l, const char *d, int *v,
 int pe_hook_add(int id, PeHookFn fn, void *u, int p, const char *m) {
     (void)u; (void)p; (void)m;
     if(id==PE_HOOK_SCRIPT_RANDOM) on_random=fn;
-    else assert(id==PE_HOOK_PAD_READ || id==PE_HOOK_SCENE_START || id==PE_HOOK_SAVE_READ);
+    else if(id==PE_HOOK_PLAYER_MOVE) on_player_move=fn;
+    else assert(id==PE_HOOK_PAD_READ);
     return 0;
 }
 void pe_battle_frequency_register(const char *);

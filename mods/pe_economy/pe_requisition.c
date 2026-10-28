@@ -53,7 +53,6 @@
 #define PE_KIND_CLUB       8
 #define PE_KIND_POOL_FIRST 16      /* ammo kinds 16..18 fill pools 0..2 */
 
-#define PE_INV_CMD_START_NEW_GAME 1117
 #define PE_EX_GAME_VAR     80      /* enemy power scale, 16.16; above 1.0 in the EX Game */
 #define PE_ECON_ID_FIRST   0xF000
 
@@ -327,12 +326,6 @@ static const PeSaveRecord s_save_record = {
     "pe_economy.shop", 1, &s_shop, sizeof s_shop, NULL, pe_save_upgrade, NULL,
 };
 
-static int pe_on_inv_command(void *ctx, void *user) {
-    (void)user;
-    if (((const PeHookInvCommand *)ctx)->command == PE_INV_CMD_START_NEW_GAME) memset(&s_shop, 0, sizeof s_shop);
-    return 0;
-}
-
 /* ---- registration ---- */
 
 static int pe_get_tools_bought(void) { return s_shop.tools_bought; }
@@ -344,7 +337,6 @@ static int pe_set_tools_bought(int n) {
 
 void pe_requisition_register(const char *mod_id) {
     pe_save_register(&s_save_record);
-    pe_hook_add(PE_HOOK_INV_COMMAND, pe_on_inv_command, NULL, PE_PRIORITY_NORMAL, mod_id);
 
     pe_menu_register_int(PE_PAGE_DEBUG_LOOT, "Shop price %", "Goods prices, excluding Tools, Revive and economy mods.",
                          &s_price_pct, 10, 300, 5);

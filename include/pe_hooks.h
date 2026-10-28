@@ -65,6 +65,10 @@ int pe_hook_dispatch(int id, void *ctx);
 /* Crash report Mods section: the mods and their state, and the mod code that was running.
  * Runs inside the crash handler, so it only reads values. */
 void pe_mod_crash_describe(char *out, size_t size, int on_game_thread);
+/* Crash report Save tail section: runs the save write hook into block (a zeroed
+ * 8 KB card block) as a real save would. -1 when mod code was running at the
+ * crash; the block stays zeroed. Later save writes no longer reach the mods. */
+int pe_mod_crash_save_tail(unsigned char *block);
 #define PE_HOOK(id, ctx) \
     ((id) == PE_HOOK_INIT ? pe_host_init((const PeHookInit *)(const void *)(ctx)) : pe_hook_dispatch((id), (ctx)))
 #else

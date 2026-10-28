@@ -48,4 +48,11 @@ if(BUILD_TESTING)
     target_compile_definitions(test-mod-settings PRIVATE PE_MOD_SETTINGS_TEST=1 __psyz)
     target_link_libraries(test-mod-settings PRIVATE psyz)
     add_test(NAME mod-settings-save-safety COMMAND test-mod-settings "${CMAKE_CURRENT_BINARY_DIR}/settings-evidence")
+
+    add_executable(test-mod-crash-tail ${PROJECT_SOURCE_DIR}/tests/pe_mod_crash_tail_test.c host/pe_mod_host.c)
+    target_include_directories(test-mod-crash-tail PRIVATE ${PROJECT_SOURCE_DIR}/include host
+        "$<TARGET_PROPERTY:SDL3::SDL3,INTERFACE_INCLUDE_DIRECTORIES>")
+    target_compile_definitions(test-mod-crash-tail PRIVATE __psyz PE_MODS=1)
+    target_link_libraries(test-mod-crash-tail PRIVATE psyz)
+    add_test(NAME mod-crash-save-tail COMMAND test-mod-crash-tail)
 endif()

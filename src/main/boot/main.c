@@ -1715,9 +1715,29 @@ static void Host_DescribeCrash(char *out, size_t size) {
  * clears the battle flags). Save_BuildHeader fills the header fields as the
  * save menu does. Save_SerializeTail refuses when Aya's two record links are
  * not the saved records, which only a damaged record does, so those links
- * are set back for the copy and restored. */
+ * are set back for the copy and restored.
+ * With mods, a second section holds the save's free tail from 0x1C90 (each
+ * mod's per-save data), filled by the mods' save write handlers into a blank
+ * card block before Save_SerializeTail, whose own hook call then reaches no
+ * mod. Its contents are opaque: the layout depends on the mods loaded. */
+static void Host_CrashHex(char *out, size_t size, size_t *used, const u8 *data, size_t count, unsigned address) {
+    for (size_t i = 0; i < count && *used + 1 < size; ++i) {
+        const char *end = i % 32 == 31 || i + 1 == count ? "\r\n" : "";
+        if (i % 32) {
+            Host_CrashAppend(out, size, used, " %02X%s", data[i], end);
+        } else {
+            Host_CrashAppend(out, size, used, "%04X: %02X%s", address + (unsigned)i, data[i], end);
+        }
+    }
+}
+
 static void Host_DescribeSaveData(char *out, size_t size) {
     static u8 data[0x12E4 + 0x8A8];
+#ifdef PE_MODS
+    static u8 card[0x2000];
+    memset(card, 0, sizeof(card));
+    const int have_mod_tail = pe_mod_crash_save_tail(card) == 0;
+#endif
     Save_BuildHeader();
     memcpy(data, &g_SaveRuntimeState, 0x12E4);
     u8 *cursor = g_SaveIoCursor;
@@ -1741,14 +1761,16 @@ static void Host_DescribeSaveData(char *out, size_t size) {
     Host_CrashAppend(out, size, &used, "\r\n== Save data (save file bytes from 0x0100) ==\r\n%s%s",
                      links_fixed ? "Note: Aya's battle record links were damaged; written as the saved records.\r\n" : "",
                      have_tail ? "" : "Story progress from 0x13E4 not available: the game could not save at this moment.\r\n");
-    for (size_t i = 0; i < count && used + 1 < size; ++i) {
-        const char *end = i % 32 == 31 || i + 1 == count ? "\r\n" : "";
-        if (i % 32) {
-            Host_CrashAppend(out, size, &used, " %02X%s", data[i], end);
-        } else {
-            Host_CrashAppend(out, size, &used, "%04X: %02X%s", 0x100u + (unsigned)i, data[i], end);
-        }
+    Host_CrashHex(out, size, &used, data, count, 0x100u);
+#ifdef PE_MODS
+    Host_CrashAppend(out, size, &used, "\r\n== Save tail (save file bytes from 0x1C90) ==\r\n");
+    if (have_mod_tail) {
+        Host_CrashHex(out, size, &used, card + 0x1C90, sizeof(card) - 0x1C90, 0x1C90u);
+    } else {
+        Host_CrashAppend(out, size, &used,
+                         "Not available: mod code was running at the crash, so the mods' save data was not taken.\r\n");
     }
+#endif
 }
 
 static void Host_PrintHelp(const char *program_name) {

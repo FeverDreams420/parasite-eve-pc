@@ -341,15 +341,34 @@ int pe_host_init(const PeHookInit *init) {
 
 static const char *pe_hook_name(int id) {
     static const char *const names[PE_HOOK_COUNT] = {
-        "init", "scene start", "frame", "inventory command", "save read", "pad read", "script random",
+        [PE_HOOK_INIT] = "init",
+        [PE_HOOK_SCENE_START] = "scene start",
+        [PE_HOOK_FRAME] = "frame",
+        [PE_HOOK_HELP_TEXT] = "help text",
+        [PE_HOOK_INV_COMMAND] = "inventory command",
+        [PE_HOOK_ITEM_ADD] = "item add",
+        [PE_HOOK_SAVE_WRITE] = "save write",
+        [PE_HOOK_SAVE_READ] = "save read",
+        [PE_HOOK_ITEM_COUNT] = "item count",
+        [PE_HOOK_PAD_READ] = "pad read",
+        [PE_HOOK_LIST_ROWS] = "list rows",
+        [PE_HOOK_MAIN_MENU_ACTION] = "main menu action",
+        [PE_HOOK_SCRIPT_RANDOM] = "script random",
+        [PE_HOOK_INVENTORY_SORTED] = "inventory sorted",
+        [PE_HOOK_MAIN_MENU_ICON] = "main menu icon",
     };
     if (id >= 0 && id < PE_HOOK_COUNT) return names[id] ? names[id] : "?";
     return id - PE_HOOK_COUNT < s_event_count ? s_events[id - PE_HOOK_COUNT] : "?";
 }
 
+/* Set by the crash report's save copy: from then on save writes reach the mods
+ * only for that block, so each handler runs once. */
+static const void *s_crash_block;
+
 int pe_hook_dispatch(int id, void *ctx) {
     int i, handled = 0;
     if (!s_started) return 0;
+    if (id == PE_HOOK_SAVE_WRITE && s_crash_block && ctx != s_crash_block) return 0;
     for (i = 0; i < s_handler_count; i++) {
         int result;
         if (s_handlers[i].id < id) continue;
@@ -361,6 +380,17 @@ int pe_hook_dispatch(int id, void *ctx) {
         if (result) handled = 1;
     }
     return handled;
+}
+
+/* ---- crash report save tail ----
+ * The save write handlers fill the block exactly as a real save does: every
+ * mod's per-save data, whatever its layout. Not when mod code was running at
+ * the crash, since its data may be half changed. */
+int pe_mod_crash_save_tail(unsigned char *block) {
+    s_crash_block = block;
+    if (s_call_depth) return -1;
+    pe_hook_dispatch(PE_HOOK_SAVE_WRITE, block);
+    return 0;
 }
 
 /* ---- crash report Mods section (runs inside the crash handler: reads only) ---- */

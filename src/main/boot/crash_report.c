@@ -63,6 +63,8 @@ static struct {
     void (*describe_mods)(char *out, size_t size, int on_game_thread);
     void (*describe_save)(char *out, size_t size);
     volatile LONG crashing;
+    volatile DWORD report_thread;
+    wchar_t report_path[MAX_PATH];
 } crash = {.log = INVALID_HANDLE_VALUE};
 
 static char crash_text[CRASH_TEXT_SIZE];
@@ -1085,12 +1087,30 @@ static void Crash_WriteLog(HANDLE out) {
     }
 }
 
+/* Building the report crashed again (its sections run game and mod code, such
+ * as the mods' save write handlers): keep what was built so far. */
+static void Crash_KeepPartial(void) {
+    static const char note[] = "\r\n== The report stops here ==\r\n"
+                               "The game crashed again while this report was being written.\r\n";
+    DWORD written;
+    HANDLE file = CreateFileW(crash.report_path, GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (file == INVALID_HANDLE_VALUE) {
+        return;
+    }
+    WriteFile(file, crash_text, (DWORD)crash_text_size, &written, NULL);
+    WriteFile(file, note, sizeof(note) - 1, &written, NULL);
+    CloseHandle(file);
+}
+
 static void Crash_Report(EXCEPTION_POINTERS *info) {
     wchar_t name[64], path[MAX_PATH];
     SYSTEMTIME now;
     DWORD written;
 
     if (InterlockedExchange(&crash.crashing, 1) || !crash.dir[0]) {
+        if (crash.report_thread == GetCurrentThreadId() && crash.report_path[0]) {
+            Crash_KeepPartial();
+        }
         TerminateProcess(GetCurrentProcess(), 3);
     }
     fflush(stderr);
@@ -1101,6 +1121,8 @@ static void Crash_Report(EXCEPTION_POINTERS *info) {
                now.wYear, now.wMonth, now.wDay, now.wHour, now.wMinute, now.wSecond);
     name[63] = 0;
     Crash_Path(path, name, L"");
+    memcpy(crash.report_path, path, sizeof(path));
+    crash.report_thread = GetCurrentThreadId();
 
     Crash_TakeStacks(info);
     Crash_BuildText(info);

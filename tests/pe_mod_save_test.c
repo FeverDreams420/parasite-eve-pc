@@ -148,6 +148,35 @@ int main(void) {
         assert((p = find(s_card, "pe_economy.loot", &v, &n)) && v == 3 && n == 12 && p[0] == 9);   /* not overwritten */
     }
 
+    /* A container format newer than this build: kept as it is through saves, mods from defaults;
+     * New Game or a normal save loaded afterwards clears it. */
+    {
+        tail_begin(other);
+        other[0x1C90 + 4] = 2;
+        tail_add(other, fnv("pe_economy.loot"), 9, "future", 6);
+        tail_end(other);
+        s_junk.junk = 55;
+        game_load(other);
+        assert(s_junk.junk == 0 && s_junk.pity == 7);
+        s_junk.junk = 66;
+        game_save();
+        assert(!memcmp(s_card + 0x1C90, other + 0x1C90, 0x370));
+        game_save();
+        assert(!memcmp(s_card + 0x1C90, other + 0x1C90, 0x370));
+        memset(crash, 0, sizeof crash);
+        pe_save_crash_tail(crash);
+        assert(!memcmp(crash + 0x1C90, other + 0x1C90, 0x370));
+        used = 0;
+        pe_save_crash_describe(text, sizeof text, &used);
+        assert(strstr(text, "format 2 from a newer build"));
+        used = 0;
+        memset(other, 0, sizeof other);
+        game_load(other);                                              /* a vanilla save */
+        s_junk.junk = 12;
+        game_save();
+        assert((p = find(s_card, "pe_economy.loot", &v, NULL)) && v == 2 && p[0] == 12);
+    }
+
     /* A save from before: the old fixed blocks go to their owners' upgrade(). */
     memset(other, 0, sizeof other);
     memcpy(other + 0x1C90, "PELT", 4);

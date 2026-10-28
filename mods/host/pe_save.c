@@ -28,10 +28,11 @@ static struct {
 static int s_reg_count;
 static unsigned s_reg_bytes = PE_SAVE_HEADER_SIZE;
 
-/* Carried: the records of the save loaded or last written, pointing into s_tail. */
+/* Carried: the records of the save loaded or last written, pointing into s_tail. foreign = the
+ * loaded tail is a container format newer than this build: s_tail is written back as it is. */
 static uint8_t s_tail[PE_SAVE_TAIL_SIZE];
 static PeSaveEntry s_car[PE_SAVE_MAX_ENTRIES];
-static int s_car_count;
+static int s_car_count, s_foreign;
 
 /* Saves from before: each mod's fixed block, read as a version 0 record holding the block. */
 static const struct { const char *name; unsigned at, size; char magic[5]; } s_legacy[] = {
@@ -80,14 +81,16 @@ static const char *pe_name_of(uint32_t id, const char **mod_id) {
     return NULL;
 }
 
-/* The records in a tail: a container, else the old fixed blocks. -1: a damaged container. */
+/* The records in a tail: a container, else the old fixed blocks. -1: a damaged container;
+ * -2: a container in a format (or with flags) newer than this build reads. */
 static int pe_parse(const uint8_t *tail, PeSaveEntry *out) {
     unsigned total, at;
     int n = 0, i;
     if (!memcmp(tail, PE_SAVE_MAGIC, 4)) {
         uint8_t copy[PE_SAVE_TAIL_SIZE];
         total = pe_get16(tail + 6);
-        if (tail[4] != PE_SAVE_FORMAT || tail[5] != 0 || total < PE_SAVE_HEADER_SIZE || total > PE_SAVE_TAIL_SIZE)
+        if (tail[4] > PE_SAVE_FORMAT || (tail[4] == PE_SAVE_FORMAT && tail[5] != 0)) return -2;
+        if (tail[4] != PE_SAVE_FORMAT || total < PE_SAVE_HEADER_SIZE || total > PE_SAVE_TAIL_SIZE)
             return -1;
         memcpy(copy, tail, total);
         memset(copy + 8, 0, 4);
@@ -133,6 +136,10 @@ static int pe_pack(uint8_t *out, int *dropped) {
     unsigned total = PE_SAVE_HEADER_SIZE, at;
     int n = 0, i, j;
     *dropped = 0;
+    if (s_foreign) {                 /* a newer build's container: back as it was, nothing added */
+        memcpy(out, s_tail, PE_SAVE_TAIL_SIZE);
+        return 0;
+    }
     for (i = 0; i < s_reg_count; ++i) {
         if (s_reg[i].kept || !pe_mod_active(s_reg[i].mod_id)) continue;
         list[n].id = s_reg[i].id;
@@ -178,7 +185,13 @@ static void pe_carry(const uint8_t *tail) {
     if (tail != s_tail) memcpy(s_tail, tail, sizeof s_tail);
     n = pe_parse(s_tail, s_car);
     s_car_count = n < 0 ? 0 : n;
-    if (n < 0) pe_mod_log(NULL, "save: the mods' save data is damaged; mods start from their defaults");
+    s_foreign = n == -2;
+    if (n == -1) pe_mod_log(NULL, "save: the mods' save data is damaged; mods start from their defaults");
+    if (n == -2) {
+        pe_mod_log(NULL, "save: the mods' save data is format %u, newer than this build's %u: kept as it is, "
+                   "mods start from their defaults and their progress isn't saved", (unsigned)s_tail[4], PE_SAVE_FORMAT);
+        pe_toast("This save's mod data is from a newer build: kept, but mods start fresh");
+    }
 }
 
 static void pe_reset(int i) {
@@ -268,13 +281,14 @@ void pe_save_on_write(uint8_t *block) {
         pe_mod_log(NULL, "save: no room for %d record(s) of mods not running; left out of this save", dropped);
         pe_toast("Mod data of a mod that is off didn't fit in this save");
     }
-    pe_carry(block + PE_SAVE_TAIL_OFFSET);
+    if (!s_foreign) pe_carry(block + PE_SAVE_TAIL_OFFSET);   /* foreign: s_tail already holds it */
 }
 
 void pe_save_new_game(void) {
     int i;
     memset(s_tail, 0, sizeof s_tail);
     s_car_count = 0;
+    s_foreign = 0;
     for (i = 0; i < s_reg_count; ++i) {
         s_reg[i].kept = 0;
         if (pe_mod_active(s_reg[i].mod_id)) pe_reset(i);
@@ -301,6 +315,11 @@ void pe_save_crash_describe(char *out, size_t size, size_t *used) {
             if (w_ > 0) *used += (size_t)w_ < size - *used ? (size_t)w_ : size - *used - 1; \
         }                                                                        \
     } while (0)
+    if (s_crash_count == -2) {
+        PE_OUT("format %u from a newer build, kept as it is (mods run from their defaults).\r\n",
+               (unsigned)s_crash_tail[4]);
+        return;
+    }
     if (s_crash_count < 0) {
         PE_OUT("Not taken.\r\n");
         return;

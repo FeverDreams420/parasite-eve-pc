@@ -15,6 +15,8 @@
  *              doesn't destroy it, and the mod starts from its defaults.
  *   Mods off   a record whose mod is off, failed to start or isn't in this build is carried from
  *              the loaded save into every later save unchanged.
+ *   Newer      a container format (or flags) newer than this build reads is kept as it is: every
+ *              save writes it back unchanged and the mods start from their defaults.
  *   New Game   every record is reset and nothing carries over.
  *   Crash      pe_save_crash_tail() copies the same records from memory without calling any mod
  *              code, for a crash report: a save rebuilt from the report holds every mod's data,

@@ -387,13 +387,13 @@ int pe_hook_dispatch(int id, void *ctx) {
 }
 
 /* ---- crash report room snapshot: save tail ----
- * The save write handlers fill the block exactly as a real save does: every
- * mod's per-save data, whatever its layout. Called when a room starts, on the
- * game thread, never inside the crash handler. Not while mod code is running,
- * since its data may be half changed. */
+ * The host's records fill the block as a real save would write them (pe_save.h), from memory: no
+ * mod code runs, so the play logger doesn't log a save each room. Called when a room starts, on
+ * the game thread, never inside the crash handler. Not while mod code is running, since its data
+ * may be half changed. */
 int pe_mod_snapshot_save_tail(unsigned char *block) {
     if (s_call_depth) return -1;
-    pe_hook_dispatch(PE_HOOK_SAVE_WRITE, block);
+    pe_save_crash_tail(block);
     return 0;
 }
 
@@ -466,5 +466,7 @@ void pe_mod_crash_describe(char *out, size_t size, int on_game_thread) {
         settings++;
     }
     if (!settings) PE_OUT("  none\r\n");
+    PE_OUT("Mods' save data (the room snapshot): ");
+    pe_save_crash_describe(out, size, &n);
 #undef PE_OUT
 }

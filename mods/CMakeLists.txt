@@ -58,7 +58,7 @@ if(BUILD_TESTING)
     target_link_libraries(test-mod-settings PRIVATE psyz)
     add_test(NAME mod-settings-save-safety COMMAND test-mod-settings "${CMAKE_CURRENT_BINARY_DIR}/settings-evidence")
 
-    add_executable(test-mod-crash-tail ${PROJECT_SOURCE_DIR}/tests/pe_mod_crash_tail_test.c host/pe_mod_host.c host/pe_save_tail.c)
+    add_executable(test-mod-crash-tail ${PROJECT_SOURCE_DIR}/tests/pe_mod_crash_tail_test.c host/pe_mod_host.c host/pe_save.c)
     target_include_directories(test-mod-crash-tail PRIVATE ${PROJECT_SOURCE_DIR}/include host
         "$<TARGET_PROPERTY:SDL3::SDL3,INTERFACE_INCLUDE_DIRECTORIES>")
     target_compile_definitions(test-mod-crash-tail PRIVATE __psyz PE_MODS=1)
@@ -68,7 +68,7 @@ endif()
 
 if(BUILD_TESTING AND "pe_qol" IN_LIST PE_MOD_LIST)
     add_executable(test-mod-inventory ${PROJECT_SOURCE_DIR}/tests/pe_mod_inventory_test.c
-        pe_qol/pe_key_items.c pe_qol/pe_bag_sort.c ${PROJECT_SOURCE_DIR}/src/main/item/armor_capacity.c)
+        pe_qol/pe_key_items.c pe_qol/pe_bag_sort.c host/pe_save.c ${PROJECT_SOURCE_DIR}/src/main/item/armor_capacity.c)
     add_executable(test-mod-inventory-menu ${PROJECT_SOURCE_DIR}/tests/pe_mod_inventory_menu_test.c
         pe_qol/pe_inventory_menu.c)
     foreach(target test-mod-inventory test-mod-inventory-menu)
@@ -86,9 +86,9 @@ if(BUILD_TESTING AND "pe_qol" IN_LIST PE_MOD_LIST)
 endif()
 
 if(BUILD_TESTING)
-    add_executable(test-mod-save-tail ${PROJECT_SOURCE_DIR}/tests/pe_mod_save_tail_test.c host/pe_save_tail.c)
-    target_include_directories(test-mod-save-tail PRIVATE ${PROJECT_SOURCE_DIR}/include host)
-    target_compile_definitions(test-mod-save-tail PRIVATE __psyz PE_MODS=1)
-    target_link_libraries(test-mod-save-tail PRIVATE psyz)
-    add_test(NAME mod-preserve-save-tail COMMAND test-mod-save-tail)
+    add_executable(test-mod-save ${PROJECT_SOURCE_DIR}/tests/pe_mod_save_test.c host/pe_save.c)
+    target_include_directories(test-mod-save PRIVATE ${PROJECT_SOURCE_DIR}/include host)
+    target_compile_definitions(test-mod-save PRIVATE __psyz PE_MODS=1)
+    target_link_libraries(test-mod-save PRIVATE psyz)
+    add_test(NAME mod-save-records COMMAND test-mod-save)
 endif()

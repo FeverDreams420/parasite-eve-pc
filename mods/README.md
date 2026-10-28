@@ -133,10 +133,14 @@ pe_save_register(&s_record);
   (zeros without one).
 - **Layouts:** raise the version when the layout changes and read older ones in `upgrade()`. A record
   newer than the build can read is kept as it is, so playing on an older build doesn't destroy it.
+  The same goes for the whole tail when its container format is newer: every save writes it back
+  unchanged and the mods start from their defaults. Write the state as a struct with a
+  `_Static_assert` on its size, so a changed layout can't ship without a new version.
 - **Mods off:** a record whose mod is off, failed to start or isn't in the build carries from the
   loaded save into every later save unchanged. New Game resets everything.
 - **Crash reports:** `pe_save_crash_tail()` copies the same records from memory without calling any
-  mod code, so a save rebuilt from a report holds every mod's data.
+  mod code, so a save rebuilt from a report holds every mod's data. The room snapshot the crash
+  report takes when a room starts uses it, and the report lists its records.
 - **Room:** 880 bytes in all (12 for the tail's header, 8 per record). A record that doesn't fit is
   refused when it registers, with a line in `pe_mods.log`.
 

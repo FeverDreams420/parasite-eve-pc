@@ -74,6 +74,9 @@ static struct {
     uint8_t disabled;           /* "Junk economy" switched off for this game */
     uint8_t econ_since, permit_since;
 } s_st = { .preset = 1 };
+/* s_st is the "pe_economy.loot" record as it is: a change of layout needs a new record version
+ * and an upgrade() for v1, or every player's Junk resets on load. */
+_Static_assert(sizeof s_st == 36, "pe_economy.loot v1 holds these 36 bytes: raise the version for a new layout");
 
 static int s_enabled = 1;
 static int s_handin_mode;       /* 0 = up to Wayne's next gun, 1 = all */

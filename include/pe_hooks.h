@@ -38,8 +38,11 @@ typedef enum PeHookId {
     PE_HOOK_EQUIP_EFFECT, /* PeHookEquipEffect: effect icon draw; nonzero replaces sprite */
     PE_HOOK_ITEM_ACTIONS, /* PeHookItemActions: an item's action list (Use / Move / Discard ...) just opened */
     PE_HOOK_MAIN_MENU_ICON, /* PeHookMainMenuIcon: a main menu row's icon, before it is drawn */
+    PE_HOOK_ENEMY_HIT_END, /* BattleEntity *: original damage applied; restore temporary hit inputs */
     PE_HOOK_INVENTORY_ROW, /* PeHookInventoryRow: inventory row dimming, presentation only */
     PE_HOOK_POWER_AVAILABLE, /* PeHookPowerAvailable: Menu_CheckItemAffordable, can this PE power be picked now */
+    PE_HOOK_POWER_COST, /* PeHookPowerCost: raw PE cost before the native armor discount */
+    PE_HOOK_NEW_GAME,    /* PeHookNewGame: a new game starts; the host has reset every save record */
     PE_HOOK_COUNT
 } PeHookId;
 
@@ -97,6 +100,18 @@ typedef struct PeHookSpell {
     struct BattleEntity *target;
 } PeHookSpell;
 
+/* A new game, of any kind: the title's New Game or Tutorial (the title's choice, in the boot loop),
+ * or the EX Game (Inv_DispatchCommand INV_CMD_START_NEW_GAME, which the host sends on as this). */
+typedef enum PeNewGameKind {
+    PE_NEW_GAME_TITLE = 1,     /* the title's New Game (MenuCard_RunListScreen result 1) */
+    PE_NEW_GAME_EX = 2,        /* the EX Game, from a Clear Data save */
+    PE_NEW_GAME_TUTORIAL = 3,  /* MenuCard_RunListScreen result 3 */
+} PeNewGameKind;
+
+typedef struct PeHookNewGame {
+    int kind; /* PeNewGameKind */
+} PeHookNewGame;
+
 typedef struct PeHookInit {
     int interactive;        /* 0 for headless runs: no window, no menus */
     const char *prefs_file; /* per-user preferences file; mods keep their files beside it */
@@ -107,6 +122,11 @@ typedef struct PeHookInventoryRow {
     int slot;
     int *dimmed;
 } PeHookInventoryRow;
+
+typedef struct PeHookPowerCost {
+    int power;
+    int *cost; /* integer PE points before the native armor discount */
+} PeHookPowerCost;
 
 typedef struct PeHookPowerAvailable {
     int power;    /* Parasite Energy power index (0 Heal 1 .. 19 Liberate) */

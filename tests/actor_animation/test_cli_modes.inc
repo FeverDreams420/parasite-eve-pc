@@ -1267,6 +1267,9 @@
         int result=original_credit_video_clock(&disc);pe_disc_close(&disc);return result?0:155;
     }
     if(argc==2 && !strcmp(argv[1],"--credits-playback")){
+        /* PCM is pulled explicitly below, including after audio re-init.
+         * A real-time SDL consumer would race those exact sample comparisons. */
+        if(!SDL_SetEnvironmentVariable(SDL_GetEnvironment(),"PSYZ_AUDIO_CLOCK","video",true))return 1;
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;
         int result=original_credit_playback(&disc);pe_disc_close(&disc);return result?0:155;

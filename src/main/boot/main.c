@@ -2,6 +2,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,11 +15,17 @@
 #include "pe1/boot_disc_check.h"
 #include "pe1/boot_display.h"
 #include "pe1/boot_services.h"
+#include "pe1/asset_table.h"
+#include "pe1/aya.h"
+#include "pe1/crash_report.h"
+#include "pe1/game_state_types.h"
 #include "pe1/field_bg_load.h"
 #include "pe1/game_state.h"
 #include "pe1/game_timers.h"
 #include "pe1/pad_state.h"
 #include "pe1/psyq_gpu.h"
+#include "pe1/save.h"
+#include "pe1/save_tail_state.h"
 #include "pe1/scene_dispatch.h"
 #include "pe_hooks.h"
 
@@ -1612,12 +1619,209 @@ static void Host_InstallSettingsOverlay(void) {
 #define STATE_FLAG_READY 0x00000100U
 
 #ifndef PE_HOST_SETTINGS_TEST
+/* Appends to a crash report section; text past its end is dropped. */
+static void Host_CrashAppend(char *out, size_t size, size_t *used, const char *format, ...) {
+    if (*used >= size) return;
+    va_list args;
+    va_start(args, format);
+    const int n = vsnprintf(out + *used, size - *used, format, args);
+    va_end(args);
+    if (n > 0) *used += (size_t)n < size - *used ? (size_t)n : size - *used - 1;
+}
+
+/* File name only: reports are shared, and folders can hold the user's name. */
+static const char *Host_CrashFileName(const char *path) {
+    const char *name = path;
+    for (const char *s = path; *s; ++s) {
+        if (*s == '/' || *s == '\\') name = s + 1;
+    }
+    return *name ? name : "(not set)";
+}
+
+/* The room number, decoded as mods/host/pe_game.c does (-1: the token is not
+ * a room). Only reads values. */
+static int Host_CrashRoom(void) {
+    const unsigned token = (unsigned)g_SceneDispatchToken;
+    int room = 0;
+    for (int i = 2; i < 5 && room >= 0; ++i) {
+        const char c = (char)g_Base32CharTable[(token >> ((5 - i) * 5 + 2)) & 0x1Fu];
+        room = c >= '0' && c <= '9' ? room * 10 + (c - '0') : -1;
+    }
+    return room;
+}
+
+/* Crash report: what the game was doing and every desktop setting. Runs
+ * inside the crash handler, so it only reads values. */
+static void Host_DescribeCrash(char *out, size_t size) {
+    const unsigned token = (unsigned)g_SceneDispatchToken;
+    const int room = Host_CrashRoom();
+    const unsigned speed = Psyz_VideoGetSpeed();
+    size_t used = 0;
+    out[0] = 0;
+    Host_CrashAppend(out, size, &used,
+                     "Game: room %d, scene token 0x%08X (current 0x%08X), disc %u, VBlank %u, game frame %u\r\n"
+                     "Game state: flags 0x%08X / 0x%08X, %s\r\n"
+                     "Aya: HP %u/%u, level %u, EXP %u\r\n"
+                     "Story: day %d on the save card (progress %u), story day %d (next %d), day flags 0x%02X\r\n",
+                     room, token, (unsigned)g_SceneDispatchCur, (unsigned)g_PeImageMountFlags,
+                     (unsigned)g_BootHostVBlankCount, g_GlobalFrameCounter[0],
+                     (unsigned)g_GameStateFlags, (unsigned)g_GameStateFlagsWord,
+                     (g_GameStateFlags & 2) ? "in battle" : "not in battle",
+                     (unsigned)g_AyaSaveState.current_hp, (unsigned)g_AyaSaveState.max_hp,
+                     (unsigned)g_AyaSaveState.level + 1u, (unsigned)g_AyaSaveState.total_exp,
+                     Save_ClassifyPlaytime((int)g_PlayTimeFrameCounter), (unsigned)g_PlayTimeFrameCounter,
+                     g_GameState.current_story_day, g_GameState.pending_story_day,
+                     (unsigned)g_GameState.story_day_flags);
+    if (speed > 1) {
+        Host_CrashAppend(out, size, &used, "Speed-up: ON at the crash, the game was running at %ux\r\n", speed);
+    } else {
+        Host_CrashAppend(out, size, &used, "Speed-up: off at the crash (normal speed)\r\n");
+    }
+
+    /* The same names as the settings screen (settings_overlay.h). */
+    Host_CrashAppend(out, size, &used,
+                     "\r\n== Settings ==\r\n"
+                     "Settings file: %s\r\n"
+                     "Graphics: render resolution %ux (renderer %ux), fullscreen %s, aspect ratio %s, "
+                     "dithering %s, geometry correction %s, antialiasing %s, model textures %s\r\n"
+                     "Audio: master volume %u%%\r\n"
+                     "Controls: speed-up %ux while held, field run threshold %u\r\n"
+                     "Discs: disc 1 %s, disc 2 %s\r\n",
+                     host_options.enabled && *host_options.user_file ? Host_CrashFileName(host_options.user_file)
+                                                                      : "none (defaults, not saved)",
+                     host_options.scale, Psyz_VideoGetInternalResolution(), kSwitchNames[host_options.fullscreen != 0],
+                     kAspectNames[host_options.aspect != 0], kDitherNames[host_options.dither != 0],
+                     kSwitchNames[host_options.geometry_correction != 0], kAntialiasNames[host_options.antialiasing != 0],
+                     kFilterNames[host_options.model_filtering != 0], host_options.volume, host_options.speed_factor,
+                     host_options.analog_run_threshold, Host_CrashFileName(host_options.discs[0]),
+                     Host_CrashFileName(host_options.discs[1]));
+    Host_CrashAppend(out, size, &used, "Keyboard:");
+    for (unsigned i = 0; i < HOST_BINDING_COUNT; ++i) {
+        const int key = host_options.keys[i];
+        const char *name = key != HOST_UNBOUND_KEY ? SDL_GetScancodeName((SDL_Scancode)key) : NULL;
+        Host_CrashAppend(out, size, &used, "%s %s = %s", i ? "," : "", host_button_names[i],
+                         name && *name ? name : "none");
+    }
+    Host_CrashAppend(out, size, &used, "\r\nController:");
+    for (unsigned i = 0; i < HOST_BINDING_COUNT; ++i) {
+        const int button = host_options.buttons[i];
+        const char *name = button == SDL_GAMEPAD_BUTTON_COUNT       ? "Left trigger"
+                           : button == SDL_GAMEPAD_BUTTON_COUNT + 1 ? "Right trigger"
+                           : button != HOST_UNBOUND_BUTTON ? SDL_GetGamepadStringForButton((SDL_GamepadButton)button)
+                                                           : NULL;
+        Host_CrashAppend(out, size, &used, "%s %s = %s", i ? "," : "", host_button_names[i],
+                         name && *name ? name : "none");
+    }
+    Host_CrashAppend(out, size, &used, "\r\n");
+}
+
+/* Crash report room snapshot: what a save made at the start of the current
+ * room would hold, file offsets 0x100 up to the checksum at 0x1C8C (Aya,
+ * items, key items, equipment, storage, then script variables, day and Aya's
+ * battle record), and with mods the save's free tail from 0x1C90 (each mod's
+ * per-save data, filled by the mods' save write handlers into a blank card
+ * block; its layout depends on the mods loaded). Taken whole each time a room
+ * starts outside a battle, on the game thread, so a save can be rebuilt from
+ * any report and the crash handler only copies it out. Two copies: a crash
+ * while one is being taken reports the other, never a part of one.
+ * Save_BuildHeader fills the header fields as the save menu does; the game's
+ * own copy of them is put back afterwards. Save_SerializeTailData refuses when
+ * Aya's two record links are not the saved records, which only a damaged
+ * record does, so those links are set back for the copy and restored. */
+typedef struct HostRoomSnapshot {
+    u8 data[0x12E4 + 0x8A8];
+#ifdef PE_MODS
+    u8 card[0x2000];
+    int have_mod_tail;
+#endif
+    int room, story_day, links_fixed;
+    u32 vblank;
+} HostRoomSnapshot;
+
+static HostRoomSnapshot host_room_snapshots[2];
+static SDL_AtomicInt host_room_snapshot = {-1}; /* the complete copy, -1: none yet */
+
+static void Host_TakeRoomSnapshot(void) {
+    static SaveRuntimeState header;
+    if (g_GameStateFlags & 2) return; /* a battle: the room's own snapshot stays */
+    HostRoomSnapshot *snapshot = &host_room_snapshots[SDL_GetAtomicInt(&host_room_snapshot) == 0];
+
+    memcpy(&header, &g_SaveRuntimeState, sizeof(header));
+    Save_BuildHeader();
+    memcpy(snapshot->data, &g_SaveRuntimeState, 0x12E4);
+    memcpy(&g_SaveRuntimeState, &header, sizeof(header));
+
+    u8 *cursor = g_SaveIoCursor;
+    BattleStateTail *action = g_AyaBattleState.action;
+    BattleAttributes *attributes = g_AyaBattleState.attributes;
+    snapshot->links_fixed = (action && action != &g_SavedBattleStateTail) ||
+                            (attributes && attributes != &g_BattleEquipStateBlock);
+    if (snapshot->links_fixed) {
+        g_AyaBattleState.action = &g_SavedBattleStateTail;
+        g_AyaBattleState.attributes = &g_BattleEquipStateBlock;
+    }
+    g_SaveIoCursor = snapshot->data + 0x12E4;
+    const int have_tail = Save_SerializeTailData() == 0;
+    g_SaveIoCursor = cursor;
+    g_AyaBattleState.action = action;
+    g_AyaBattleState.attributes = attributes;
+    if (!have_tail) return;
+#ifdef PE_MODS
+    memset(snapshot->card, 0, sizeof(snapshot->card));
+    snapshot->have_mod_tail = pe_mod_snapshot_save_tail(snapshot->card) == 0;
+#endif
+    snapshot->room = Host_CrashRoom();
+    snapshot->story_day = g_GameState.current_story_day;
+    snapshot->vblank = g_BootHostVBlankCount;
+    SDL_SetAtomicInt(&host_room_snapshot,(int)(snapshot - host_room_snapshots));
+}
+
+static void Host_CrashHex(char *out, size_t size, size_t *used, const u8 *data, size_t count, unsigned address) {
+    for (size_t i = 0; i < count && *used + 1 < size; ++i) {
+        const char *end = i % 32 == 31 || i + 1 == count ? "\r\n" : "";
+        if (i % 32) {
+            Host_CrashAppend(out, size, used, " %02X%s", data[i], end);
+        } else {
+            Host_CrashAppend(out, size, used, "%04X: %02X%s", address + (unsigned)i, data[i], end);
+        }
+    }
+}
+
+static void Host_DescribeSaveData(char *out, size_t size) {
+    const int index = SDL_GetAtomicInt(&host_room_snapshot);
+    size_t used = 0;
+    out[0] = 0;
+    Host_CrashAppend(out, size, &used, "\r\n== Room snapshot ==\r\n");
+    if (index < 0) {
+        Host_CrashAppend(out, size, &used, "None: no room had started yet, so there is no save data.\r\n");
+        return;
+    }
+    const HostRoomSnapshot *snapshot = &host_room_snapshots[index];
+    Host_CrashAppend(out, size, &used,
+                     "Taken when room %d started, story day %d, %u seconds before the crash. The save data below "
+                     "is all from that moment.\r\n%s",
+                     snapshot->room, snapshot->story_day, (unsigned)((g_BootHostVBlankCount - snapshot->vblank) / 60u),
+                     snapshot->links_fixed ? "Note: Aya's battle record links were damaged; written as the saved records.\r\n" : "");
+    Host_CrashAppend(out, size, &used, "\r\n== Save data (save file bytes from 0x0100) ==\r\n");
+    Host_CrashHex(out, size, &used, snapshot->data, sizeof(snapshot->data), 0x100u);
+#ifdef PE_MODS
+    Host_CrashAppend(out, size, &used, "\r\n== Save tail (save file bytes from 0x1C90) ==\r\n");
+    if (snapshot->have_mod_tail) {
+        Host_CrashHex(out, size, &used, snapshot->card + 0x1C90, sizeof(snapshot->card) - 0x1C90, 0x1C90u);
+    } else {
+        Host_CrashAppend(out, size, &used,
+                         "Not available: mod code was running when the room started, so the mods' save data was not taken.\r\n");
+    }
+#endif
+}
+
 static void Host_PrintHelp(const char *program_name) {
     printf(
         "Usage: %s [--disc <USA Disc 1 CUE/BIN>] [--disc2 <USA Disc 2 CUE/BIN>] [--choose-discs] "
         "[--geometry-correction 0|1] [--antialiasing 0|1] [--model-filtering 0|1] "
         "[--headless | --headless-gpu] [--internal-resolution 1..8] [--frame-limit N] [--control-at N] "
-        "[--dump-vram PATH] [--dump-frame PATH] [--dump-audio PATH] [--pad-at VBLANK:BUTTON_MASK ...]\n",
+        "[--dump-vram PATH] [--dump-frame PATH] [--dump-audio PATH] [--pad-at VBLANK:BUTTON_MASK ...] "
+        "[--test-crash-after N | --test-abort-after N]\n",
         program_name
     );
     printf("Without --disc, opens a native multi-select CUE/BIN dialog. --choose-discs selects new images. ESC opens desktop settings.\n");
@@ -1626,6 +1830,7 @@ static void Host_PrintHelp(const char *program_name) {
     printf("--dump-audio writes stereo 44100 Hz signed-16-bit little-endian PCM; requires headless and PSYZ_AUDIO_CLOCK=video.\n");
     printf("Headless control: --control-at N pauses for stdin commands: advance FRAMES BUTTON_MASK, graphics PGXP AA FILTER (0/1; advances 8 blanks), or quit (requires --frame-limit).\n");
     printf("Headless fixtures only: --diagnostic-hp-at VBLANK:EXPECTED_HP:VALUE (requires --frame-limit; output is marked coverage-only)\n");
+    printf("--test-crash-after N / --test-abort-after N crash on purpose at VBlank N to check the crash report (its path is printed).\n");
 }
 
 static int Host_ParsePadEventArg(const char *spec, int argc) {
@@ -1713,6 +1918,12 @@ int main(int argc, char **argv) {
         }
     }
 
+    CrashReport_Install(interactive, Host_DescribeCrash);
+    CrashReport_SetSaveData(Host_DescribeSaveData);
+    g_BootSceneStarted = Host_TakeRoomSnapshot;
+#ifdef PE_MODS
+    CrashReport_SetMods(pe_mod_crash_describe);
+#endif
     Host_InitOptions(interactive);
     unsigned internal_resolution = host_options.scale;
     int resolution_argument = 0;
@@ -1782,6 +1993,17 @@ int main(int argc, char **argv) {
                 return EXIT_FAILURE;
             }
             g_BootHostControlAt = (u32)tick;
+        } else if (!strcmp(argv[arg], "--test-crash-after") || !strcmp(argv[arg], "--test-abort-after")) {
+            char *end = NULL;
+            errno = 0;
+            int abort_crash = !strcmp(argv[arg], "--test-abort-after");
+            unsigned long tick = arg + 1 < argc ? strtoul(argv[++arg], &end, 10) : 0;
+            if (!tick || tick > INT_MAX || errno || *end || g_BootHostCrashAt) {
+                fprintf(stderr, "Invalid or duplicate test crash VBlank\n");
+                return EXIT_FAILURE;
+            }
+            g_BootHostCrashAt = (u32)tick;
+            g_BootHostCrashAbort = abort_crash;
         } else if (!strcmp(argv[arg], "--dump-vram")) {
             if (arg + 1 >= argc || g_BootHostVramPath) {
                 fprintf(stderr, "Missing or duplicate capture path\n");
@@ -1956,8 +2178,9 @@ image_error:
 images_ready:;
     host_options.scale = internal_resolution;
     g_BootHostGraphicsOptions = Host_ControlGraphics;
-    if (interactive) {
-        /* Copy both before replacing picker storage: selection can be reversed. */
+    {
+        /* Keep CLI/headless disc names accurate in reports too. Copy both
+         * before replacing picker storage: selection can be reversed. */
         char ordered[2][4096] = {{0}};
         for (unsigned i = 0; i < 2; ++i) {
             const char *path = NULL;
@@ -1969,6 +2192,8 @@ images_ready:;
             snprintf(ordered[i], sizeof(ordered[i]), "%s", path ? path : "");
         }
         memcpy(host_options.discs, ordered, sizeof(ordered));
+    }
+    if (interactive) {
         host_images = images;
         g_CdImageRequest = Host_RequestImage;
         g_BootMovieSkipConfirm = Host_ConfirmMovieSkip;
@@ -2117,6 +2342,7 @@ shutdown:
     g_CdImageVolumes[0] = g_CdImageVolumes[1] = NULL;
     g_CdImageRequest = NULL;
     g_BootMovieSkipConfirm = NULL;
+    g_BootSceneStarted = NULL;
     host_images = NULL;
     pe_disc_close(&images[0]);
     pe_disc_close(&images[1]);

@@ -25,6 +25,8 @@ The left stick provides analog movement. **Escape → Controls → Field run thr
 Settings and selected disc paths are saved automatically. Memory cards are kept in `memory-cards` beside your user preferences. Older `bu00`/`bu10` cards from the launch or executable folder are imported once, keeping the original files.
 Optional geometry correction, antialiasing and model texture filtering are in **Escape → Graphics**.
 
+If the game crashes, it saves a report and shows where to find it. Attach that file when reporting the problem on Discord.
+
 ## Mods
 
 Downloads include an optional mod host. When building from source, enable it with `-DPE_MODS=ON`: the
@@ -40,6 +42,10 @@ Open **F1 → PE Enhancements** to configure them.
   (walking and running default to 1.75×).
 - **Encounters** (`pe_qol`): no random battles, or Normal, 2×, 4× or Every Check frequency. Story
   and room rules still apply; this changes how often fights happen, not their size.
+- **Key-item pocket** (`pe_qol`): story keys and Chrysler elevator keys stay out of the bag but
+  still count for story checks; browse them through **Key Items** in Aya's main menu.
+- **Remembered sorting** (`pe_qol`): Auto keeps the game's own sort settings; moving items by hand
+  switches back to Manual. Square in the Use Item list opens sorting.
 
 Mod builds are experimental; a passing build or test does not establish full in-game compatibility.
 

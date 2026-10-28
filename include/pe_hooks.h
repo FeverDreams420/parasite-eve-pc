@@ -11,13 +11,21 @@ typedef enum PeHookId {
     PE_HOOK_INIT,        /* PeHookInit: once, before the first scene */
     PE_HOOK_SCENE_START, /* NULL: a field scene finished loading, before its first frame */
     PE_HOOK_FRAME,       /* NULL: every field frame, after pad input is read */
+    PE_HOOK_HELP_TEXT,   /* u8 **: the menu title-bar line, before it is printed; may be replaced */
     PE_HOOK_INV_COMMAND, /* PeHookInvCommand: Inv_DispatchCommand entry; replaceable */
+    PE_HOOK_ITEM_ADD,    /* s32 *: Inv_AddItem entry; change id, or return nonzero for handled/success */
+    PE_HOOK_SAVE_WRITE,  /* u8 *: the 8 KB card block, before its CRC (free tail from 0x1C90) */
     PE_HOOK_SAVE_READ,   /* u8 *: the 8 KB card block of a save being loaded */
+    PE_HOOK_ITEM_COUNT,  /* int **: Script_CountItemsByValue ({&item, &result}); nonzero uses supplied result */
     PE_HOOK_PAD_READ,    /* NULL: Field_HandleStateTransition, before it reads g_PadPackets */
+    PE_HOOK_LIST_ROWS,   /* PeHookListRows: Draw_SetPrimCallback entry; the row count may change */
+    PE_HOOK_MAIN_MENU_ACTION, /* PeHookMenuAction: Aya's main menu confirm; replaceable */
     PE_HOOK_SCRIPT_RANDOM, /* PeHookScriptRandom: local RNG bounds, before a script roll */
     PE_HOOK_PLAYER_MOVE, /* PeHookPlayerMove: local multiplier for a player-input movement step */
     PE_HOOK_PAD_MAP,     /* PeHookPadMap: local run-button mapping for this poll */
     PE_HOOK_ACTOR_STEP,  /* PeHookActorStep: local scripted speed or animation increment */
+    PE_HOOK_INVENTORY_SORTED, /* NULL: Aya's native bag sort completed */
+    PE_HOOK_MAIN_MENU_ICON, /* PeHookMainMenuIcon: a main menu row's icon, before it is drawn */
     PE_HOOK_COUNT
 } PeHookId;
 
@@ -58,9 +66,33 @@ typedef struct PeHookInit {
     const char *prefs_file; /* per-user preferences file; mods keep their files beside it */
 } PeHookInit;
 
+typedef struct PeHookListRows {
+    struct MenuWidgetNode *node;
+    int *count;
+} PeHookListRows;
+
+typedef struct PeHookMenuAction {
+    int action;                   /* 0-8 the game's rows; 9 = a row past the last one */
+    struct MenuWidgetNode *list;  /* the main list node */
+} PeHookMenuAction;
+
+typedef struct PeHookMainMenuIcon {
+    int row;     /* the list row */
+    int action;  /* 0-8 the game's rows; 9 = a row past the last one */
+    int sprite;  /* action + 0x56; may be changed */
+} PeHookMainMenuIcon;
+
 #ifdef PE_MODS
+#include <stddef.h>
 int pe_host_init(const PeHookInit *init);
 int pe_hook_dispatch(int id, void *ctx);
+/* Crash report Mods section: the mods and their state, and the mod code that was running.
+ * Runs inside the crash handler, so it only reads values. */
+void pe_mod_crash_describe(char *out, size_t size, int on_game_thread);
+/* Crash report room snapshot: runs the save write hook into block (a zeroed
+ * 8 KB card block) as a real save would, when a room starts. -1 while mod code
+ * is running; the block stays zeroed. */
+int pe_mod_snapshot_save_tail(unsigned char *block);
 #define PE_HOOK(id, ctx) \
     ((id) == PE_HOOK_INIT ? pe_host_init((const PeHookInit *)(const void *)(ctx)) : pe_hook_dispatch((id), (ctx)))
 #else

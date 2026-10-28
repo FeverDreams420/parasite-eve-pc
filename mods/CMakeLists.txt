@@ -64,6 +64,13 @@ if(BUILD_TESTING)
     target_compile_definitions(test-mod-crash-tail PRIVATE __psyz PE_MODS=1)
     target_link_libraries(test-mod-crash-tail PRIVATE psyz)
     add_test(NAME mod-crash-save-tail COMMAND test-mod-crash-tail)
+
+    add_executable(test-mod-run-alone ${PROJECT_SOURCE_DIR}/tests/pe_mod_run_alone_test.c host/pe_mod_host.c host/pe_save.c)
+    target_include_directories(test-mod-run-alone PRIVATE ${PROJECT_SOURCE_DIR}/include host
+        "$<TARGET_PROPERTY:SDL3::SDL3,INTERFACE_INCLUDE_DIRECTORIES>")
+    target_compile_definitions(test-mod-run-alone PRIVATE __psyz PE_MODS=1)
+    target_link_libraries(test-mod-run-alone PRIVATE psyz)
+    add_test(NAME mod-run-alone COMMAND test-mod-run-alone)
 endif()
 
 if(BUILD_TESTING AND "pe_qol" IN_LIST PE_MOD_LIST)

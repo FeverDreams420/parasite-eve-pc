@@ -18,6 +18,9 @@ them never takes one. Runs in common, again. Runs where the randomizer moved key
 keys_moved > 0) are left out: there, holding a key and having reached its spot are two different
 things.
 
+The rows come through the play log (pe_tools), which doesn't run in a randomized session (the
+randomizer runs alone then): log with Randomize new games off, the randomizer itself on.
+
 A run starts at a rand_newgame row. Loading this run's own saves is fine (keys from later in the run count
 too: over-estimate again). The play_s column is the story progress counter / 60 (the game's
 "play time" variable is its progress): a save further on than the run has got is from another game,
@@ -52,7 +55,7 @@ def runs(path):
         if len(row) != len(COLUMNS): continue
         r = dict(zip(COLUMNS, row))
         play = int(r["play_s"]) if r["play_s"].isdigit() else None
-        if r["kind"] == "rand_newgame":   # the mod's own: the logger's newgame row comes a moment later
+        if r["kind"] == "rand_newgame":   # the mod's own (the logger writes a newgame row of its own too)
             if run and run["ok"]: yield path, n, finish()
             n += 1
             moved = int(fields(r["detail"]).get("keys_moved", "0"))

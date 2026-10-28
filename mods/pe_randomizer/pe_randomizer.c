@@ -3,6 +3,10 @@
  * with (a save record), so loading always gives the same layout; F1 changes only reach the next New
  * Game. Battle drops, Wayne, the Chrysler Building and the Theater keys stay vanilla.
  *
+ * Randomized play is the original game plus this mod only: with "Randomize new games" on when the
+ * game starts, the randomizer runs alone (pe_mod_run_alone) and no other mod starts. Turning it on
+ * or off reaches the next start, like Manage mods.
+ *
  * How items move: when a room has loaded (PE_HOOK_SCENE_START, before its first frame; the room data
  * is in g_GameState.loaded_scene_assets in the disc's layout), the item operands of its spots are
  * rewritten in the loaded script, all or none per room. The game's own code then runs unchanged:
@@ -20,7 +24,6 @@
 #include "pe_mod_menu.h"
 #include "pe_save.h"
 #include "pe1/game_state.h"
-#include "pe1/game_timers.h"
 #include "pe1/inventory.h"
 #include "pe1/scene_room.h"
 #include "pe1/script_state.h"
@@ -28,7 +31,6 @@
 #include "pe_rand_spots.h"
 
 #define MOD_ID "pe_randomizer"
-#define PE_INV_CMD_START_NEW_GAME 1117
 
 /* What this game was started with: saved as the "pe_randomizer.run" record. */
 typedef struct PeRandRun {
@@ -41,8 +43,8 @@ static PeRandRun s_run, s_layout_for;
 static uint16_t s_layout[PE_RAND_SPOTS];
 static PeRandResult s_result;
 static int s_layout_ready;
-static int s_from_title = 1;   /* at the title, no save loaded since: the next room with a day may be a New Game */
 static int s_enabled, s_difficulty = PE_RAND_MEDIUM, s_digit[6];
+static int s_alone;            /* "Randomize new games" was on at start: this session runs no other mod */
 static unsigned char s_room_warned[SCENE_ROOM_COUNT + 1];
 static const char *const s_difficulty_names[] = {"Easy", "Medium", "Hard"};
 static const char *const s_digit_labels[] = {"Digit 1", "Digit 2", "Digit 3", "Digit 4", "Digit 5", "Digit 6"};
@@ -91,8 +93,6 @@ static int pe_rand_ready(void) {
 static uint32_t pe_get32(const uint8_t *p) { return p[0] | p[1] << 8 | p[2] << 16 | (uint32_t)p[3] << 24; }
 static void pe_put32(uint8_t *p, uint32_t v) { p[0] = (uint8_t)v; p[1] = (uint8_t)(v >> 8); p[2] = (uint8_t)(v >> 16); p[3] = (uint8_t)(v >> 24); }
 
-static void pe_rand_new_game(void);
-
 static int pe_rand_scene(void *ctx, void *user) {
     uint8_t *room = (uint8_t *)g_GameState.loaded_scene_assets;
     int map = pe_room_number();
@@ -100,18 +100,6 @@ static int pe_rand_scene(void *ctx, void *user) {
     size_t bytes;
     (void)ctx;
     (void)user;
-    /* Title (boot or reset: no story day yet). New Game there sends no command: the game just goes on
-     * from this state into Day 1, so the first room with a day and no save loaded in between, still at
-     * the start of the story, is a New Game. g_PlayTimeFrameCounter is the story progress counter (the
-     * crash report's "progress"), under 60 until well into Day 1. */
-    if (g_GameState.current_story_day < 0) {
-        s_from_title = 1;
-        return 0;
-    }
-    if (s_from_title) {
-        s_from_title = 0;
-        if (g_PlayTimeFrameCounter < 60u) pe_rand_new_game();
-    }
     if (!room || map < 1 || map > SCENE_ROOM_COUNT || !pe_rand_ready()) return 0;
     while (first < PE_RAND_SITES && g_pe_rand_sites[first].map < map) ++first;
     for (end = first; end < PE_RAND_SITES && g_pe_rand_sites[end].map == map; ++end) {}
@@ -241,32 +229,29 @@ static void pe_rand_spoiler(void) {
     if (rename(temp, path) != 0) { remove(temp); pe_toast("Randomizer: couldn't write the spoiler file"); }
 }
 
-/* The only place a run's settings are taken. */
-static void pe_rand_new_game(void) {
+/* Every new game (the title's New Game or Tutorial, or the EX Game), after the host has reset the
+ * record: the only place a run's settings are taken. Only a session where the randomizer runs alone
+ * randomizes, and never the Tutorial. */
+static int pe_rand_new_game(void *ctx, void *user) {
+    const PeHookNewGame *game = ctx;
     char line[96];
+    (void)user;
     memset(s_lock_logged, 0, sizeof s_lock_logged);   /* a new run: its locks are logged again */
-    s_run.on = s_enabled != 0;
+    if (s_enabled && !s_alone) pe_toast("Randomizer: restart the game first; this New Game isn't randomized");
+    s_run.on = s_alone && s_enabled && game && game->kind != PE_NEW_GAME_TUTORIAL;
     s_run.difficulty = (uint8_t)(s_difficulty >= 0 && s_difficulty < PE_RAND_DIFFICULTIES ? s_difficulty : PE_RAND_MEDIUM);
     s_run.logic = PE_RAND_LOGIC_VERSION;
     s_run.table = PE_RAND_TABLE_VERSION;
     s_run.seed = pe_rand_seed();
     if (!s_run.on || !pe_rand_ready()) {
         pe_log("rand_newgame", "on=0 keys_moved=0");
-        return;
+        return 0;
     }
     pe_log("rand_newgame", "on=1 seed=%06u difficulty=%u keys_moved=%u", (unsigned)s_run.seed,
            (unsigned)s_run.difficulty, s_result.keys_moved);
     if (s_run.difficulty != PE_RAND_HARD) pe_rand_spoiler();
     snprintf(line, sizeof line, "Randomizer: seed %06u, %s", (unsigned)s_run.seed, s_difficulty_names[s_run.difficulty]);
     pe_toast(line);
-}
-
-/* New Game after the end (M431's clear-game path), where the host has just reset the record (off).
- * New Game on the title sends no command: see pe_rand_scene. */
-static int pe_rand_command(void *ctx, void *user) {
-    const PeHookInvCommand *c = ctx;
-    (void)user;
-    if (c && c->command == PE_INV_CMD_START_NEW_GAME) pe_rand_new_game();
     return 0;
 }
 
@@ -274,11 +259,14 @@ static int pe_rand_save_read(void *ctx, void *user) {
     (void)ctx;
     (void)user;
     s_layout_ready = 0;
-    s_from_title = 0;
     if (s_run.on && !pe_rand_supported()) {
         pe_toast("Randomizer: this save's layout is from another version; items stay vanilla");
         pe_mod_log(MOD_ID, "save from logic %u / table %u, this build %u / %u: items stay vanilla",
                    (unsigned)s_run.logic, (unsigned)s_run.table, PE_RAND_LOGIC_VERSION, PE_RAND_TABLE_VERSION);
+    } else if (s_run.on && !s_alone) {
+        /* its layout stays (a moved key must stay where the run put it), but other mods are running */
+        pe_toast("This save is randomized: turn Randomize new games on and restart, so no other mod runs");
+        pe_mod_log(MOD_ID, "randomized save (seed %06u) loaded while other mods run", (unsigned)s_run.seed);
     }
     return 0;
 }
@@ -319,8 +307,10 @@ static void pe_rand_run_text(char *out, unsigned size) {
 static int pe_rand_init(void) {
     pe_menu_begin("Randomizer");
     pe_menu_top_page("Randomizer", "Shuffle items from a seed. Set before New Game.", 50);
-    pe_menu_register_toggle(0, "Randomize new games", "New Game shuffles items with this seed. A game keeps the seed it began with.",
-                            &s_enabled, NULL);
+    pe_menu_register_toggle(0, "Randomize new games", "New Game shuffles items with this seed. Applies the next time the game "
+                            "starts; while on, no other mod runs. A game keeps the seed it began with.", &s_enabled, NULL);
+    /* the saved value is in s_enabled now: a randomized session is this mod and the original game only */
+    s_alone = s_enabled && pe_mod_run_alone() == 0;
     pe_menu_register_choice(0, "Difficulty", "Easy: same story day. Medium: anywhere, keys in their area. Hard: keys anywhere logic allows.",
                             &s_difficulty, s_difficulty_names, PE_RAND_DIFFICULTIES);
     pe_menu_register_info(0, "Seed", "Six digits: the same seed and difficulty give the same items.", pe_rand_seed_text);
@@ -332,7 +322,7 @@ static int pe_rand_init(void) {
                           pe_rand_run_text);
     pe_menu_begin(0);
     pe_hook_add(PE_HOOK_SCENE_START, pe_rand_scene, NULL, PE_PRIORITY_NORMAL, MOD_ID);
-    pe_hook_add(PE_HOOK_INV_COMMAND, pe_rand_command, NULL, PE_PRIORITY_NORMAL, MOD_ID);
+    pe_hook_add(PE_HOOK_NEW_GAME, pe_rand_new_game, NULL, PE_PRIORITY_NORMAL, MOD_ID);
     pe_hook_add(PE_HOOK_SAVE_READ, pe_rand_save_read, NULL, PE_PRIORITY_NORMAL, MOD_ID);
     /* these read only: rows for keylogic.py */
     pe_hook_add(PE_HOOK_ITEM_ADD, pe_rand_item_add, NULL, PE_PRIORITY_EARLY, MOD_ID);

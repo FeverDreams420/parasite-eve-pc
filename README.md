@@ -29,7 +29,7 @@ If the game crashes, it saves a report and shows where to find it. Attach that f
 
 ## Mods
 
-Downloads include an optional mod host. When building from source, enable it with `-DPE_MODS=ON`: the
+Downloads include an optional mod host. When building from source, enable it with `-DPE_MODS=ON`. Without it, the
 `PE_HOOK(...)` lines in the game compile to nothing. In a mod build, **F1** opens the Mods panel;
 mods start only after **F1 → Manage mods → All mods** is turned on and the game restarted.
 Settings are saved in `pe_mods.ini`. See [the mod guide](mods/README.md) for writing a mod.
@@ -53,8 +53,6 @@ Open **F1 → PE Enhancements** to configure them.
   power costs.
 - **Half-bar turns** (`pe_rebalance`): items, Quick PE powers and weapon changes on half a bar,
   with a gauge indicator; attacks and other powers still need a full bar.
-- **Medicine combining and Panacea** (`pe_rebalance`): two Medicine 1/2/3 become the next tier;
-  Medicine 4 and Full Cure become Panacea (400 HP and cures ailments).
 
 Mod builds are experimental; a passing build or test does not establish full in-game compatibility.
 

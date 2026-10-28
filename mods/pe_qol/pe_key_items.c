@@ -93,7 +93,6 @@ static int pe_key_count(void *ctx, void *user) {
 static int pe_key_command(void *ctx, void *user) {
     PeHookInvCommand *c = ctx;
     (void)user;
-    if (c->command == 1117) { memset(&s_keys, 0, sizeof s_keys); s_selected = 0; return 0; }
     if (!pe_game_loaded()) return 0;
     int i = pe_find((unsigned)c->value);
     if (i < 0) return 0;

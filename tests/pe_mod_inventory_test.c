@@ -67,6 +67,7 @@ int pe_hook_add(int id,PeHookFn fn,void *u,int p,const char *m) {
 int pe_hook_dispatch(int id,void *ctx) {
     int handled=0;
     if(id==PE_HOOK_SAVE_READ) pe_save_on_read(ctx);
+    if(id==PE_HOOK_NEW_GAME) pe_save_new_game();
     for(int i=0;i<hook_count;++i) if(hooks[i].id==id) handled|=hooks[i].fn(ctx,NULL);
     if(id==PE_HOOK_SAVE_WRITE) pe_save_on_write(ctx);
     return handled;
@@ -94,7 +95,7 @@ int pe_menu_register_live_choice(const char *p,const char *l,const char *d,const
     (void)p;(void)l;(void)d;(void)names;assert(count==2);get_sort=get;set_sort=set;return 0;
 }
 static void reset(void) {
-    PeHookInvCommand c={1117,0,0};pe_hook_dispatch(PE_HOOK_INV_COMMAND,&c);
+    PeHookNewGame c={PE_NEW_GAME_TITLE};pe_hook_dispatch(PE_HOOK_NEW_GAME,&c);
     memset(&g_SaveRuntimeState,0,sizeof g_SaveRuntimeState);
     g_AyaSaveState.equipped_weapon_slot=0;g_AyaSaveState.equipped_armor_slot=-1;
     g_GameStateFlags=0;g_GameStateFlagsWord=0;loaded=1;*pocket_enabled=1;

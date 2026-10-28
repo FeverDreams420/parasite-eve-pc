@@ -2314,7 +2314,10 @@ images_ready:;
                     fprintf(stderr, "Title assets failed: %d\n", title_status);
                     goto shutdown;
                 }
-                Draw_InitDisplay(MenuCard_RunListScreen());
+                int title_choice = MenuCard_RunListScreen();
+                if (title_choice == PE_NEW_GAME_TITLE || title_choice == PE_NEW_GAME_TUTORIAL)
+                    PE_HOOK(PE_HOOK_NEW_GAME, (&(PeHookNewGame){title_choice}));
+                Draw_InitDisplay(title_choice);
                 g_GameState.flags |= 3;
                 break;
             }

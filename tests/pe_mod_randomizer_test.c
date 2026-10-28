@@ -45,10 +45,19 @@ static void table_is_sane(void) {
     for (unsigned i = 0; i < PE_RAND_SPOTS; ++i) assert(sites_of[i] && vanilla_of[i]);
 }
 
+/* Spots i and j have a site in the same room (map). */
+static int share_room(unsigned i, unsigned j) {
+    for (unsigned a = 0; a < PE_RAND_SITES; ++a)
+        for (unsigned b = 0; b < PE_RAND_SITES; ++b)
+            if (g_pe_rand_sites[a].spot == i && g_pe_rand_sites[b].spot == j &&
+                g_pe_rand_sites[a].map == g_pe_rand_sites[b].map) return 1;
+    return 0;
+}
+
 static void every_seed_passes(void) {
     static uint16_t a[PE_RAND_SPOTS], b[PE_RAND_SPOTS];
     for (int d = 0; d < PE_RAND_DIFFICULTIES; ++d) {
-        unsigned changed = 0;
+        unsigned changed = 0, moved = 0;
         for (uint32_t seed = 0; seed < 2000; ++seed) {
             PeRandResult ra, rb;
             pe_rand_generate(g_pe_rand_spots, PE_RAND_SPOTS, seed, d, test_gift_safe, a, &ra);
@@ -57,19 +66,27 @@ static void every_seed_passes(void) {
             if (why) { fprintf(stderr, "difficulty %d seed %u: %s\n", d, (unsigned)seed, why); assert(0); }
             assert(!memcmp(a, b, sizeof a) && !memcmp(&ra, &rb, sizeof ra));
             assert(!ra.fallback && ra.attempts >= 1);
-            /* the table has no logic data yet: keys stay on every difficulty */
-            assert(ra.keys_locked && !ra.keys_moved);
-            for (unsigned i = 0; i < PE_RAND_SPOTS; ++i) changed += a[i] != g_pe_rand_spots[i].vanilla;
+            /* hand logic (tools/keys-by-hand.txt): Easy keeps keys, the others move them only into a
+             * chest of the key's own room */
+            assert(!ra.keys_locked && (d != PE_RAND_EASY || !ra.keys_moved));
+            moved += ra.keys_moved;
+            for (unsigned i = 0; i < PE_RAND_SPOTS; ++i) {
+                changed += a[i] != g_pe_rand_spots[i].vanilla;
+                for (unsigned k = 0; k < PE_RAND_SPOTS; ++k)
+                    if ((g_pe_rand_spots[k].flags & PE_RAND_KEY) && a[i] == g_pe_rand_spots[k].vanilla && i != k)
+                        assert(g_pe_rand_spots[i].kind == PE_RAND_CHEST && share_room(i, k));
+            }
         }
         assert(changed > 2000 * 20);   /* it does shuffle */
+        assert(d == PE_RAND_EASY || moved > 2000);
     }
 }
 
 static void golden_layouts(void) {
     static const uint32_t golden[PE_RAND_DIFFICULTIES][4] = {
-        {0xC82C39F6, 0x8AE72E56, 0xD7C1CDB6, 0xC7760AA6},
-        {0xE25D9ABE, 0xD2C3AE9E, 0x5DF5804E, 0x2458569E},
-        {0x8E84A746, 0x834D19AE, 0x5A9A45E6, 0x297319D6},
+        {0x27A4876E, 0x119C1986, 0xD5157356, 0x37A30A16},
+        {0x5050CF46, 0x62B0F67E, 0xEF97A39E, 0xE05A3526},
+        {0x41EC8A2E, 0xE2230DF6, 0x78CBED6E, 0x7518903E},
     };
     static uint16_t out[PE_RAND_SPOTS];
     int print = !golden[0][0];

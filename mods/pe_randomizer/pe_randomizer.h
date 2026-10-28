@@ -10,8 +10,8 @@
 /* Raise PE_RAND_LOGIC_VERSION whenever the same seed would give a different layout (the generator,
  * its rules or PE_RAND_TABLE_VERSION). A save keeps the versions it was made with; a build that
  * doesn't know them leaves that game's items vanilla rather than moving them under the player. */
-#define PE_RAND_LOGIC_VERSION 1
-#define PE_RAND_TABLE_VERSION 1
+#define PE_RAND_LOGIC_VERSION 2
+#define PE_RAND_TABLE_VERSION 2
 
 enum { PE_RAND_EASY, PE_RAND_MEDIUM, PE_RAND_HARD, PE_RAND_DIFFICULTIES };
 
@@ -21,7 +21,8 @@ enum { PE_RAND_EASY, PE_RAND_MEDIUM, PE_RAND_HARD, PE_RAND_DIFFICULTIES };
 enum { PE_RAND_CHEST, PE_RAND_PICKUP, PE_RAND_GIFT };
 enum { PE_RAND_KEY = 1 };   /* spot flag: its vanilla item is a key item that unlocks something */
 
-/* Key logic, from real play (tools/keylogic.py). Bit k is the k-th key spot of the table
+/* Key logic, from real play (tools/keylogic.py) or, until there is some, tools/keys-by-hand.txt
+ * (a key only into a chest of its own room). Bit k is the k-th key spot of the table
  * (table order) and means both: key k is held, and key k's own spot has been reached (picking a key up
  * can also move the story on, and that spot still does it when it gives something else).
  *   needs   bits that reach the spot: an over-estimate (a run reached it with them).

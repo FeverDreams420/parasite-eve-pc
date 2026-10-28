@@ -1,0 +1,41 @@
+# Key logic written by hand (same format as keylogic.py's output): python -I spottable.py <disc.bin> keys-by-hand.txt
+#
+# One rule only: a key may go to a chest in the same room as its own spot (any version of that room).
+# The player is in that room exactly when they would have picked the key up, so every key turns up
+# when it does in the unmodified game. Rooms holding a key check (keyscan.py CHECK rows) are left out,
+# so no chest sits behind a lock of its own room: M154 (Elevator Key) keeps its key. Keys without a
+# chest in their room keep theirs too. Medium and Hard move the same keys.
+#
+# needs: the keys of the days before (all the game asks while a day's keys arrive as in vanilla).
+# before: the room's own key(s) only. Days 2 and 5 have no candidate chest and stay without data.
+# Replace with keylogic.py output from logged play when there is one.
+
+# Day 3 key spots
+M103+024C68 needs=CA before=   # Special Good Luck Charm
+M114+016FF8 needs=CA before=   # NYPD Weapons Storage Key
+M121+02DF1C needs=CA before=   # NYPD Locker Key
+M125+016D64 needs=CA before=   # Helpful Good Luck Charm
+M139+014518 needs=CA before=   # Fuse 1
+M141+02E568 needs=CA before=   # Fuse 2
+M145+020FDC needs=CA before=   # Fuse 3
+M147+031E5C needs=CA before=   # Green Magnetic Cardkey
+M154+03AEBC needs=CA before=   # Elevator Key (its check is in the same room: no chest takes it)
+M325+0086D8 needs=CA before=   # St. Francis Hospital Key
+M328+02E73C needs=CA before=   # Blue Magnetic Cardkey
+
+# Day 3 chests in a key's room
+M114+016CA4 needs=CA before=D6      # Weapons Storage Key's room
+M139+015890 needs=CA before=CE      # Fuse 1's room
+M139+015FEC needs=CA before=CE      # Fuse 1's room
+M141+02FD08 needs=CA before=CF,D2   # Fuse 2's room; M328, its other version, gives the Blue Magnetic Cardkey
+M145+021F74 needs=CA before=D0      # Fuse 3's room
+M145+0226F8 needs=CA before=D0      # Fuse 3's room
+M147+0341AC needs=CA before=D3      # Green Magnetic Cardkey's room
+M325+00957C needs=CA before=D1      # St. Francis Hospital Key's room
+
+# Day 4 key spots
+M165+01D2AC needs=CA,CC,CD,CE,CF,D0,D1,D2,D3,D6,D7,DA before=   # Good Luck Charm
+M190+00BB6C needs=CA,CC,CD,CE,CF,D0,D1,D2,D3,D6,D7,DA before=   # Subway Gate Key
+
+# Day 4 chests in a key's room
+M165+01EE4C needs=CA,CC,CD,CE,CF,D0,D1,D2,D3,D6,D7,DA before=CB   # Good Luck Charm's room

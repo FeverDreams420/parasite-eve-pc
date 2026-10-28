@@ -495,6 +495,11 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   A key moves only within its own story day, into a chest with data, and only on days where every key
   spot has data; until a log fills a day, that day's keys stay where they are. Filling in data changes
   layouts: raise PE_RAND_TABLE_VERSION with it.
+- Until there is logged data, the table is made with `tools/keys-by-hand.txt`: a key may only go to a
+  chest in its own spot's room (any version of it), so every key still turns up when it does in the
+  game, and rooms with a key check of their own are left out. Medium and Hard move the same 8 keys
+  (Weapons Storage Key, the three Fuses, both Magnetic Cardkeys, St. Francis Hospital Key, Chinatown's
+  Good Luck Charm); the others stay. Hard's wider moves need logged data.
 
 Checks: tests/run_pe_randomizer_test.ps1 (table sanity, 2000 seeds per difficulty pass the checks and
 repeat, logic tables where keys move, a key spot reached counting with the key, partial data,

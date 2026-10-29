@@ -63,6 +63,8 @@ jobs:
           assert not any(r.findall('.//' + tag) for tag in ['skipped', 'failure', 'error'])
           PYTEST
       - name: Verify and build save editor
+        env:
+          PE_MOD_SAVE_ORACLE: ${{ github.workspace }}/build/mods/test-editor-mod-save
         run: |
           cargo test --manifest-path save-editor/Cargo.toml --locked
           cargo build --manifest-path save-editor/Cargo.toml --locked --release
@@ -166,6 +168,8 @@ jobs:
           if ($cases.Count -ne 25 -or $incomplete.Count -ne 0) { throw 'Expected 25 executed source-only cases without failures or skips' }
       - name: Build and test Windows save editor
         shell: pwsh
+        env:
+          PE_MOD_SAVE_ORACLE: ${{ github.workspace }}/build/mods/test-editor-mod-save.exe
         run: |
           cargo test --manifest-path save-editor/Cargo.toml --locked
           if ($LASTEXITCODE -ne 0) { throw 'Save editor regressions failed' }

@@ -132,3 +132,17 @@ if(BUILD_TESTING AND "pe_rebalance" IN_LIST PE_MOD_LIST)
     add_test(NAME mod-pe-cost COMMAND test-mod-pe --cost)
     add_test(NAME mod-pe-actor COMMAND test-mod-pe --actor)
 endif()
+
+# Rust save-editor interoperability uses the actual C serializer, including the
+# compatibility window. Keep assertions active in release builds of this oracle.
+if(BUILD_TESTING)
+    add_executable(test-editor-mod-save ${PROJECT_SOURCE_DIR}/tests/pe_editor_mod_fixture.c host/pe_save.c)
+    target_include_directories(test-editor-mod-save PRIVATE ${PROJECT_SOURCE_DIR}/include host)
+    target_compile_definitions(test-editor-mod-save PRIVATE __psyz PE_MODS=1)
+    target_link_libraries(test-editor-mod-save PRIVATE psyz)
+    if(MSVC)
+        target_compile_options(test-editor-mod-save PRIVATE /UNDEBUG)
+    else()
+        target_compile_options(test-editor-mod-save PRIVATE -UNDEBUG)
+    endif()
+endif()

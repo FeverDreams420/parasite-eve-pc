@@ -41,3 +41,9 @@ Reviewed text corrections are retained as per-entry overrides. M195’s lower re
 Chinatown M161–M163: the straight-row road reinterpretation is rejected. Restore the original irregular herringbone road from each native layer using `source-material-regions.json` and full-context `source-materials/` inputs. M164 is an interior; M165 already retains the original pattern. The reviewed overlay changes only road support and tile gutters; native reference halves and all other atlas pixels remain identical. Private provenance and before/after previews are in `corrections/chinatown-source-road/`. Do not restore `M162/road-v2.png` as a generation reference.
 
 M192 group 1: eight door poses use one existing HD carved-wood material projected onto the native door plane. Imagegen supplies only a localized handle-free wood patch; the original protruding handles keep their own per-pose restoration. Original silhouettes, independent layer coverage and controller timings remain unchanged. Private projection matrices, provenance, overrides and phase audits are in `corrections/M192/`; preserve its per-entry overrides when repacking.
+
+For distribution, run `../hd-poc/compress_pack.py pack-with-0.1 pack-0.1-png
+--version 0.1` after applying all reviewed corrections. This creates a separate
+lossless PNG pack, checks every decoded pixel and updates file hashes without
+modifying the BMP authoring pack. `audit_pack.py` and `composite.py` accept either
+format. Repacking and correction tools continue to use the BMP authoring sources.

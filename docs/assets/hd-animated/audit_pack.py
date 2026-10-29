@@ -4,7 +4,7 @@ import json, numpy as np,hashlib,argparse
 p=argparse.ArgumentParser();p.add_argument("--pack",default="pack");p.add_argument("--report",default="pack-audit.json");a=p.parse_args()
 R=Path(__file__).resolve().parent;ts=json.loads((R/'tasks.json').read_text())['tasks'];vs=json.loads((R/'views.json').read_text());pack=R/a.pack;records=[];protected_texels=0;regions=json.loads((R/'native-detail-regions.json').read_text()) if (R/'native-detail-regions.json').exists() else []
 for t in ts:
- path=pack/(t['key']+'.bmp');assert path.exists(),('missing',t['room'],t['entry'],t['key'])
+ path=pack/(t['key']+'.png');path=path if path.exists() else pack/(t['key']+'.bmp');assert path.exists(),('missing',t['room'],t['entry'],t['key'])
  im=np.array(Image.open(path).convert('RGB'));refs=np.load(R/'refs'/t['ref']);cols=min(16,len(refs));rows=(len(refs)+cols-1)//cols;assert im.shape==(rows*136,cols*68,3)
  for i,ref in enumerate(refs):
   x=i%cols*68;y=i//cols*68+rows*68;rgb=np.stack([(ref&31)*255//31,((ref>>5)&31)*255//31,((ref>>10)&31)*255//31],axis=-1).astype('uint8');rgb=np.repeat(np.repeat(rgb,4,0),4,1);assert np.array_equal(im[y+2:y+66,x+2:x+66],rgb),(t['key'],i,'native reference mismatch')

@@ -29,3 +29,29 @@ state, native VRAM and continuous PCM. That route visits 25 of the 33 maps;
 optional maps such as M037 require separate packed-composition and offscreen
 preview checks. A visual review is still necessary: numeric parity does not
 prove artistic fidelity.
+
+## Lossless PNG distribution packs
+
+The SDL_GPU atlas loader accepts PNG and BMP. The game prefers `<key>.png`, then
+tries `<key>.bmp`, retaining native rendering if neither atlas loads. PNG changes
+storage only: decoded pixels, native reference colors, coverage and shader input
+remain the same. GPU texture memory is unchanged.
+
+After assembling and reviewing the BMP working pack, create a separate distribution
+pack with Python and Pillow:
+
+```
+python docs/assets/hd-poc/compress_pack.py SOURCE DESTINATION --version 0.1
+```
+
+The converter checks source hashes and compares every decoded PNG pixel with its
+source. It records file hashes, decoded-pixel hashes and compression totals in the
+manifest. An existing destination is rejected; a failed conversion removes its
+staging directory. Original BMP working packs and reviewed correction overrides
+remain intact. The current combined 4069-atlas pack shrinks from 8,962,308,558 to
+1,375,341,132 image bytes (about 85% smaller), with identical decoded pixels.
+
+Offline converter regression: `python tests/hd_pack_png.py` (requires Pillow).
+The PsyZ GPU regression compares PNG/BMP rendered pixels and native VRAM; the
+original-game HD integration test can use either pack format through
+`PE_TEST_HD_BACKGROUNDS`.

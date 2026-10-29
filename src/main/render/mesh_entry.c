@@ -88,9 +88,14 @@ int Render_LoadMeshEntry(GeomEntry *entry, RenderTilePacket *buffer, void **end)
         u32 index=(u32)(entry-entries);
         atlas_key=Render_HdHash(hd_geometry_key,&index,4);
         char filename[4096];
-        int size=snprintf(filename,sizeof(filename),"%s/%016" PRIx64 ".bmp",hd_background_path,atlas_key);
-        if (size<0 || (size_t)size>=sizeof(filename) || Psyz_GpuLoadSpriteAtlas(atlas_key,filename)!=1)
-            atlas_key=0;
+        const char *formats[]={"png","bmp"};
+        int loaded=0;
+        for (unsigned format=0;format<2 && !loaded;++format) {
+            int size=snprintf(filename,sizeof(filename),"%s/%016" PRIx64 ".%s",hd_background_path,atlas_key,formats[format]);
+            if (size>=0 && (size_t)size<sizeof(filename))
+                loaded=Psyz_GpuLoadSpriteAtlas(atlas_key,filename)==1;
+        }
+        if (!loaded) atlas_key=0;
     }
     entry->u30.prim = buffer;
     /* The page pointer and disp_x are stored through pointers to the fields.

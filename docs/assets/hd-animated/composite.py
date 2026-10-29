@@ -30,7 +30,7 @@ for vi,view in enumerate(vs):
    visible.update(c['slots'][phase]['entry']for c in controls);sets.append(('sync',phase,visible))
  native={t['key']:np.load(R/'refs'/t['ref']) for t in ts};hd={}
  for t in ts:
-  path=R/a.pack/(t['key']+'.bmp')
+  path=R/a.pack/(t['key']+'.png');path=path if path.exists() else R/a.pack/(t['key']+'.bmp')
   if path.exists():hd[t['key']]=np.array(Image.open(path).convert('RGB'))
  w,h=view['canvas_size']
  for cid,phase,visible in sets:

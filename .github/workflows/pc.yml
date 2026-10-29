@@ -170,7 +170,7 @@ jobs:
           [xml]$report = Get-Content build/windows-source-only.xml
           $cases = $report.SelectNodes('//testcase')
           $incomplete = $report.SelectNodes('//testcase/skipped | //testcase/failure | //testcase/error')
-          if ($cases.Count -ne 25 -or $incomplete.Count -ne 0) { throw 'Expected 25 executed source-only cases without failures or skips' }
+          if ($cases.Count -ne 26 -or $incomplete.Count -ne 0) { throw 'Expected 26 executed source-only cases without failures or skips' }
           [xml]$features = Get-Content build/mod-features.xml
           if ($features.SelectNodes('//testcase').Count -ne 12 -or $features.SelectNodes('//testcase/skipped | //testcase/failure | //testcase/error').Count -ne 0) { throw 'Expected all 12 mod feature regressions without failures or skips' }
       - name: Build and test Windows save editor

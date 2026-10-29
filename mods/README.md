@@ -497,9 +497,15 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   layouts: raise PE_RAND_TABLE_VERSION with it.
 - Until there is logged data, the table is made with `tools/keys-by-hand.txt`: a key may only go to a
   chest in its own spot's room (any version of it), so every key still turns up when it does in the
-  game, and rooms with a key check of their own are left out. Medium and Hard move the same 8 keys
-  (Weapons Storage Key, the three Fuses, both Magnetic Cardkeys, St. Francis Hospital Key, Chinatown's
-  Good Luck Charm); the others stay. Hard's wider moves need logged data.
+  game, and rooms with a key check of their own are left out. Medium and Hard move the same keys; the
+  others stay. Hard's wider moves need logged data.
+- The Day 3 hospital is mapped by hand instead (`tools/hospital-map.txt`, every gate a door guard from
+  the all-rooms ctest's listing): the power-off rooms (M320-M339, the twins of M129-M145) are entered one
+  way and left only through the fuse box. `tools/hospital_logic.py` turns the map into keys-by-hand's
+  lines: the Fuses, St. Francis Hospital Key and Blue Magnetic Cardkey go to power-off chests, the Green
+  Magnetic Cardkey only to M146/M147 (its door has no story check, and opening it early closes the way to
+  the power-off rooms), the Elevator Key and the Helpful Good Luck Charm to a chest that stays reachable.
+  With the Weapons Storage Key and Chinatown's Good Luck Charm, 10 keys can move.
 - Key moves are off for now (`PE_RAND_MOVE_KEYS` 0 in pe_randomizer.h): they aren't play-tested, so
   every difficulty keeps key items in their places. Setting it to 1 turns the moves above back on
   (raise PE_RAND_LOGIC_VERSION with it).

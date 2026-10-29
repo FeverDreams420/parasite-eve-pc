@@ -10,8 +10,8 @@
 /* Raise PE_RAND_LOGIC_VERSION whenever the same seed would give a different layout (the generator,
  * its rules or PE_RAND_TABLE_VERSION). A save keeps the versions it was made with; a build that
  * doesn't know them leaves that game's items vanilla rather than moving them under the player. */
-#define PE_RAND_LOGIC_VERSION 3
-#define PE_RAND_TABLE_VERSION 2
+#define PE_RAND_LOGIC_VERSION 4
+#define PE_RAND_TABLE_VERSION 3
 
 enum { PE_RAND_EASY, PE_RAND_MEDIUM, PE_RAND_HARD, PE_RAND_DIFFICULTIES };
 

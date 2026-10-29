@@ -55,10 +55,30 @@ static int share_room(unsigned i, unsigned j) {
     return 0;
 }
 
+/* Spot i has a site in a room from lo to hi. */
+static int in_rooms(unsigned i, unsigned lo, unsigned hi) {
+    for (unsigned a = 0; a < PE_RAND_SITES; ++a)
+        if (g_pe_rand_sites[a].spot == i && g_pe_rand_sites[a].map >= lo && g_pe_rand_sites[a].map <= hi) return 1;
+    return 0;
+}
+
+/* Where key item `key` may sit at spot i (not its own), from tools/hospital-map.txt and the same-room
+ * rule elsewhere. Hospital: fuses and the St. Francis / Blue keys in the power-off rooms (M320-M339, the
+ * only way to the fuse box); the Green Cardkey only where the box must come first (M146/M147); the
+ * Elevator Key and the charm in a chest that stays reachable to the end (a site in M125-M154). */
+static int key_may_sit(unsigned key, unsigned i, unsigned k) {
+    switch (key) {
+    case 0xCE: case 0xCF: case 0xD0: case 0xD1: case 0xD2: return in_rooms(i, 320, 339);
+    case 0xD3: return in_rooms(i, 146, 147);
+    case 0xCC: case 0xDA: return in_rooms(i, 125, 154);
+    default: return share_room(i, k);
+    }
+}
+
 static void every_seed_passes(void) {
     static uint16_t a[PE_RAND_SPOTS], b[PE_RAND_SPOTS];
     for (int d = 0; d < PE_RAND_DIFFICULTIES; ++d) {
-        unsigned changed = 0, moved = 0;
+        unsigned changed = 0, moved = 0, other_room = 0;
         for (uint32_t seed = 0; seed < 2000; ++seed) {
             PeRandResult ra, rb;
             pe_rand_generate(g_pe_rand_spots, PE_RAND_SPOTS, seed, d, test_gift_safe, a, &ra);
@@ -67,28 +87,30 @@ static void every_seed_passes(void) {
             if (why) { fprintf(stderr, "difficulty %d seed %u: %s\n", d, (unsigned)seed, why); assert(0); }
             assert(!memcmp(a, b, sizeof a) && !memcmp(&ra, &rb, sizeof ra));
             assert(!ra.fallback && ra.attempts >= 1);
-            /* hand logic (tools/keys-by-hand.txt): Easy keeps keys, the others move them only into a
-             * chest of the key's own room; with PE_RAND_MOVE_KEYS at 0 no difficulty moves them */
+            /* hand logic (tools/keys-by-hand.txt): Easy keeps keys, the others move them only where
+             * key_may_sit allows; with PE_RAND_MOVE_KEYS at 0 no difficulty moves them */
             assert(PE_RAND_MOVE_KEYS ? !ra.keys_locked && (d != PE_RAND_EASY || !ra.keys_moved)
                                      : ra.keys_locked && !ra.keys_moved);
             moved += ra.keys_moved;
             for (unsigned i = 0; i < PE_RAND_SPOTS; ++i) {
                 changed += a[i] != g_pe_rand_spots[i].vanilla;
                 for (unsigned k = 0; k < PE_RAND_SPOTS; ++k)
-                    if ((g_pe_rand_spots[k].flags & PE_RAND_KEY) && a[i] == g_pe_rand_spots[k].vanilla && i != k)
-                        assert(g_pe_rand_spots[i].kind == PE_RAND_CHEST && share_room(i, k));
+                    if ((g_pe_rand_spots[k].flags & PE_RAND_KEY) && a[i] == g_pe_rand_spots[k].vanilla && i != k) {
+                        assert(g_pe_rand_spots[i].kind == PE_RAND_CHEST && key_may_sit(a[i], i, k));
+                        other_room += !share_room(i, k);
+                    }
             }
         }
         assert(changed > 2000 * 20);   /* it does shuffle */
-        assert(d == PE_RAND_EASY || (PE_RAND_MOVE_KEYS ? moved > 2000 : !moved));
+        assert(d == PE_RAND_EASY || (PE_RAND_MOVE_KEYS ? moved > 2000 && other_room > 2000 : !moved));
     }
 }
 
 static void golden_layouts(void) {
     static const uint32_t golden[PE_RAND_DIFFICULTIES][4] = {
-        {0x65009DB6, 0x6B0BF03E, 0x1FFC63C6, 0x274873AE},
-        {0xC4B55B8E, 0x442018FE, 0x3CDAA1CE, 0x3B762A76},
-        {0x8C6DBA5E, 0x428FBE26, 0xC0E0F616, 0xD2D4FCAE},
+        {0x15D5917E, 0x737FC18E, 0xB3A5229E, 0x6D04ED76},
+        {0x6C133066, 0x9401410E, 0x6B0CDD26, 0x35E1163E},
+        {0x77D8B236, 0x5B1E6476, 0x656EBC76, 0x5CD169B6},
     };
     static uint16_t out[PE_RAND_SPOTS];
     int print = !golden[0][0];

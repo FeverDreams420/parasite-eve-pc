@@ -1,4 +1,5 @@
 #include "common.h"
+#include "pe_hooks.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1178,6 +1179,21 @@ int Scene_LoadRoom(unsigned int roomId)
         next_geometry_disk_entry_offset = header.entry_offset;
     }
 
+    /* Task offsets are serialized 32-bit values, never native pointers.
+     * Bound both their record and payload before committing scene state. */
+    size_t room_bytes = (size_t)g_RoomSectorTable[map].roomSectors * 2048;
+    size_t task_table = directory->taskBlock & 0x3FFFFF;
+    if (!(directory->taskBlock >> 22) || task_table % _Alignof(SceneRoomRecord) || task_table > room_bytes ||
+        sizeof(SceneRoomRecord) > room_bytes - task_table) goto invalid_tasks;
+    SceneRoomRecord *task = (SceneRoomRecord *)((u8 *)room + task_table);
+    u32 task_bytes;
+    memcpy(&task_bytes, task, 4); task_bytes &= 0xFFFFFF;
+    size_t task_offset = task->source.offsetAndSlot & 0xFFFFFF;
+    if (task_offset > room_bytes || task_bytes > room_bytes - task_offset)
+        goto invalid_tasks;
+    RelocBlock *tasks = Script_RelocBlock((u8 *)room + task_offset, task_bytes);
+    if (!tasks) goto invalid_tasks;
+
     state->requested_entity_bank = directory->entityBank;
     state->room_type = directory->roomType;
 
@@ -1194,8 +1210,7 @@ int Scene_LoadRoom(unsigned int roomId)
             SCENE_ROOM_PAYLOAD(room, &record[i]);
     }
 
-    state->bank_reset_944[0] =
-        Script_RelocBlock(SCENE_ROOM_PAYLOAD(room, SceneRoom_FirstRecord(room, directory->taskBlock)));
+    state->bank_reset_944[0] = tasks;
     state->bank_reset_948[0] = SCENE_ROOM_PAYLOAD(room, SceneRoom_FirstRecord(room, directory->taskData));
     free(geometry_owner);
     geometry_owner = next_geometry;
@@ -1303,6 +1318,11 @@ int Scene_LoadRoom(unsigned int roomId)
     }
     return 0;
 
+invalid_tasks:
+    free(next_geometry);
+    fprintf(stderr, "Scene_LoadRoom: invalid task block for M%03d\n", map + 1);
+    return -3;
+
 invalid_geometry:
     free(next_geometry);
     fprintf(stderr, "Scene_LoadRoom: invalid native geometry for M%03d\n", map + 1);
@@ -1366,6 +1386,7 @@ int CdRom_DetectDiscChange(void) {
 /* Load the area textures and model/action bank through the original phases. */
 int Scene_LoadEntityTexture(void)
 {
+    PE_HOOK(PE_HOOK_PLAYER_BANK, NULL);
     int bank = g_SceneAreaType;
     u32 lba = g_GameState.pe_image_base_lba;
     Pe1GameState *state = &g_GameState;
@@ -1413,6 +1434,10 @@ retry:
         break;
     case 3:
         blob = (SceneAssetBlob *)state->scene_load_scratch;
+        if (PE_HOOK(PE_HOOK_PLAYER_TEXTURES, blob)) {
+            state->entity_texture_phase = 4;
+            break;
+        }
         directory = SceneAsset_ResolveOffset(blob, blob->directoryOffset);
         timOffset = directory->timEntries & 0x3fffff;
         firstTim = SceneAsset_ResolveOffset(blob, timOffset);
@@ -1474,6 +1499,7 @@ retry:
         state->entity_texture_phase = 0;
         state->loaded_entity_bank = state->requested_entity_bank;
         state->flags &= ~0x200000;
+        PE_HOOK(PE_HOOK_PLAYER_ROWS, NULL);
         return 0;
     default:
         return 0;
@@ -1547,6 +1573,7 @@ s32 Scene_InitEntityPlayer(s32 resume) {
         gameState->scene_init_phase = 0x27;
         return 1;
     case 39:
+        PE_HOOK(PE_HOOK_PLAYER_ROWS, NULL);
         {
             FieldActor *player = g_PlayerEntity;
             player->model_state.model_header = g_GameState.bank_slots[0];

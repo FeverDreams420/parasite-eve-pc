@@ -3,10 +3,13 @@
 u16 GetClut(int x, int y);
 u16 GetTPage(int tp, int abr, int x, int y);
 #include "pe1/render_prim.h"
+#include "pe1/psyq_gpu.h"
 #include <psyz/gpu.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <inttypes.h>
+#include <string.h>
+#include <psyz/video.h>
 
 static uint64_t hd_geometry_key;
 static const char *hd_background_path;
@@ -25,10 +28,122 @@ static int Render_HdCommand(const u_long *words, int available, void *unused) {
     return 3;
 }
 
+/* Optional presentation-only side tiles. Their commands are explicitly ignored
+ * by native VRAM rendering; the original mesh remains the gameplay authority.
+ * PEW1 is little endian, with no native pointers or host structure padding. */
+#define HD_WIDE_GROUPS 256
+#define HD_WIDE_CELLS 4096
+static struct {
+    unsigned count;
+    uint64_t key;
+    int left, right;
+    short *xy;
+    RenderTilePacket *packets[2];
+} hd_wide[HD_WIDE_GROUPS];
+
+static void Render_ResetHdWidescreen(void) {
+    /* Queued ordering tables may still point at these two packet buffers. */
+    for (unsigned i=0;i<HD_WIDE_GROUPS;++i)
+        if(hd_wide[i].count){DrawSync(0);break;}
+    for (unsigned i=0;i<HD_WIDE_GROUPS;++i) {
+        free(hd_wide[i].xy);
+        free(hd_wide[i].packets[0]);free(hd_wide[i].packets[1]);
+    }
+    memset(hd_wide,0,sizeof(hd_wide));
+}
+
+static int Render_ReadHdWide(FILE *file, unsigned bytes, uint64_t *value) {
+    *value=0;
+    for (unsigned i=0;i<bytes;++i) {
+        int byte=fgetc(file);if(byte==EOF)return 0;
+        *value|=(uint64_t)(unsigned)byte<<(8*i);
+    }
+    return 1;
+}
+
+static void Render_LoadHdWidescreen(void) {
+    char filename[4096];
+    int size=snprintf(filename,sizeof(filename),"%s/%016" PRIx64 "-wide.bin",hd_background_path,hd_geometry_key);
+    if(size<0 || (size_t)size>=sizeof(filename))return;
+    FILE *file=fopen(filename,"rb");if(!file)return;
+    uint64_t magic,groups,value;
+    unsigned total=0;
+    int valid=Render_ReadHdWide(file,4,&magic) && magic==0x31574550u &&
+        Render_ReadHdWide(file,4,&groups) && groups<=HD_WIDE_GROUPS;
+    for(unsigned i=0;valid && i<groups;++i) {
+        uint64_t group,count,key,left,right,top,bottom;
+        valid=Render_ReadHdWide(file,4,&group) && group<HD_WIDE_GROUPS &&
+            !hd_wide[group].count && Render_ReadHdWide(file,4,&count) && count>0 && count<=HD_WIDE_CELLS-total &&
+            Render_ReadHdWide(file,8,&key) && key && Render_ReadHdWide(file,4,&left) &&
+            Render_ReadHdWide(file,4,&right) && Render_ReadHdWide(file,4,&top) && Render_ReadHdWide(file,4,&bottom);
+        if(!valid)break;
+        int l=(int32_t)(uint32_t)left,r=(int32_t)(uint32_t)right;
+        int y0=(int32_t)(uint32_t)top,y1=(int32_t)(uint32_t)bottom;
+        if(l < -2048 || r>4096 || l>=r || y0 < -2048 || y1>4096 || y0>=y1){valid=0;break;}
+        total+=(unsigned)count;
+        hd_wide[group].xy=malloc((size_t)count*2*sizeof(short));
+        hd_wide[group].packets[0]=calloc((size_t)count,sizeof(RenderTilePacket));
+        hd_wide[group].packets[1]=calloc((size_t)count,sizeof(RenderTilePacket));
+        if(!hd_wide[group].xy || !hd_wide[group].packets[0] || !hd_wide[group].packets[1]){valid=0;break;}
+        for(unsigned n=0;valid && n<count*2;++n) {
+            valid=Render_ReadHdWide(file,2,&value);
+            hd_wide[group].xy[n]=(int16_t)(uint16_t)value;
+        }
+        for(unsigned n=0;valid && n<count;++n) {
+            int x=hd_wide[group].xy[n*2],y=hd_wide[group].xy[n*2+1];
+            if(x<l || x>=r || y<y0 || y>=y1)valid=0;
+        }
+        if(!valid)break;
+        size=snprintf(filename,sizeof(filename),"%s/%016" PRIx64 ".png",hd_background_path,key);
+        if(size<0 || (size_t)size>=sizeof(filename) || Psyz_GpuLoadSpriteAtlas(key,filename)!=1){valid=0;break;}
+        hd_wide[group].count=(unsigned)count;hd_wide[group].key=key;
+        hd_wide[group].left=l;hd_wide[group].right=r;
+    }
+    if(valid && fgetc(file)!=EOF)valid=0;
+    fclose(file);
+    if(!valid){Render_ResetHdWidescreen();Psyz_GpuResetSpriteAtlases();fprintf(stderr,"Ignoring incomplete HD widescreen geometry %016" PRIx64 "\n",hd_geometry_key);}
+}
+
+int Render_GetHdWidescreenPicture(int *left,int *right) {
+    if(!hd_geometry_key || !g_GeomState || !Psyz_VideoGetWidescreen())return 0;
+    unsigned group=g_GeomScroll.state.position.groupSelect;
+    if(!hd_wide[group].count)return 0;
+    *left=hd_wide[group].left+(short)g_GeomState->out_disp_x;
+    *right=hd_wide[group].right+(short)g_GeomState->out_disp_x;
+    return 1;
+}
+
+void Render_LinkHdWidescreenBackdrop(int slot,RenderNativeTag *ordering) {
+    int left,right;
+    if(slot<0 || slot>1 || !Render_GetHdWidescreenPicture(&left,&right))return;
+    unsigned group=g_GeomScroll.state.position.groupSelect;
+    const GeomEntry *entries=(const void *)((const u8 *)g_GeomState+g_GeomState->entry_offset);
+    const RenderTilePacket *color=NULL;
+    /* Original fades/tints update these packets, not the source artwork. */
+    for(unsigned n=0;n<g_GeomState->entry_count06;++n) {
+        if(entries[n].group==group && (entries[n].head.b.flags&2) && entries[n].prim_count && entries[n].u30.prim) {
+            color=(const RenderTilePacket *)entries[n].u30.prim+slot*entries[n].prim_count;break;
+        }
+    }
+    for(unsigned i=0;i<hd_wide[group].count;++i) {
+        RenderTilePacket *sprite=&hd_wide[group].packets[slot][i];
+        int x=hd_wide[group].xy[i*2]+(short)g_GeomState->out_disp_x;
+        int y=hd_wide[group].xy[i*2+1]+(short)g_GeomState->out_disp_y;
+        if(x+16 < -112 || x>432 || y+16<0 || y>240)continue;
+        sprite->length=7;sprite->hd_command=0xF8800000u|i;
+        sprite->hd_key_low=(u32)hd_wide[group].key;sprite->hd_key_high=(u32)(hd_wide[group].key>>32);
+        sprite->packed_marker=0x005A4D50u;sprite->code=0x7c;
+        sprite->r=color?color->r:128;sprite->g=color?color->g:128;sprite->b=color?color->b:128;
+        sprite->x=(u16)x;sprite->y=(u16)y;
+        sprite->address=ordering[4095].address;ordering[4095].address=(uintptr_t)sprite;
+    }
+}
+
 /* Hash immutable descriptors before scripts animate the native entries. The
  * exporter hashes the same little-endian fields, independent of host pointers. */
 void Render_PrepareHdBackgrounds(void) {
     const uint64_t previous_key=hd_geometry_key;
+    Render_ResetHdWidescreen();
     hd_background_path=getenv("PE_HD_BACKGROUNDS");
     hd_geometry_key=0;
     if (!hd_background_path || !*hd_background_path) {
@@ -48,6 +163,7 @@ void Render_PrepareHdBackgrounds(void) {
     }
     if (previous_key!=hash) Psyz_GpuResetSpriteAtlases();
     hd_geometry_key=hash;
+    Render_LoadHdWidescreen();
     fprintf(stderr,"HD background geometry %016" PRIx64 " (%u entries)\n",hash,(unsigned)g_GeomState->entry_count06);
 }
 

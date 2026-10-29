@@ -55,3 +55,39 @@ Offline converter regression: `python tests/hd_pack_png.py` (requires Pillow).
 The PsyZ GPU regression compares PNG/BMP rendered pixels and native VRAM; the
 original-game HD integration test can use either pack format through
 `PE_TEST_HD_BACKGROUNDS`.
+
+
+## Title and widescreen artwork
+
+The PNG pack can contain `title.png`, a wide title backdrop. The title module
+keeps the original native RGB24 menu, including its animated options and input.
+The presenter substitutes the HD background, crops its center in 4:3 and shows
+its full width in 16:9. Missing artwork retains the native title.
+
+Optional `<geometry-key>-wide.bin` sidecars describe additional side tiles by
+original view group. Their PNG materials use the existing atlas cache. The room
+renderer anchors them to the original scrolling coordinates, behind the original
+scene, and inherits its original fade/tint packet colors. Their explicit GPU marker discards them from native VRAM and from 4:3
+presentation. They currently require SDL_GPU at an internal resolution above 1x,
+like the existing HD mesh path. At 1x they are not displayed.
+
+Artwork coverage is **not complete**. The first installed static candidates are
+M001 and M002. The working catalog has 490 background views, with 488 still
+pending. Wider native rooms continue using their original stored picture; other
+unprepared rooms retain the existing widescreen behavior. Animated edge material
+must follow the original phases rather than freeze an independently generated
+still. The static export tool refuses views containing animation controllers or script-switched/scrolling layers.
+
+`docs/assets/hd-widescreen/prepare.py` registers a reviewed outpainting against
+its current 4x center, rejects poor feature alignment and uncovered margins, and
+packages only the added sides. Original atlas pixels are never rewritten.
+Sources, prompts, registration evidence and private artwork are kept with the
+asset checkpoint. The title extraction and prompt are in `docs/assets/hd-title/`.
+The converter preserves checksum-verified `extras` (title and widescreen files)
+when producing a separate distribution pack.
+
+Regression coverage includes title/UI/native-VRAM separation, widescreen-only
+GPU materials, and `original-game-hd-widescreen`: a real fresh-game replay checks
+exact 4:3 output, state/VRAM/PCM parity and persistent side artwork during a
+stationary-camera dialogue. The latter requires `PE_TEST_DISC` and
+`PE_TEST_HD_BACKGROUNDS` pointing to the reviewed M002 pack, otherwise it skips.

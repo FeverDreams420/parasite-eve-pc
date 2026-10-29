@@ -123,6 +123,7 @@ PE1_STATIC_ASSERT(sizeof(GeomEntry) == 0x30 + 2*sizeof(void *), geom_entry_size)
 PE1_STATIC_ASSERT(PE1_OFFSETOF(GeomEntry, u34) == 0x30 + sizeof(void *), geom_entry_page_offset);
 struct RenderTilePacket;
 void Render_PrepareHdBackgrounds(void);
+int Render_GetHdWidescreenPicture(int *left, int *right);
 int Render_LoadMeshEntry(GeomEntry *entry, struct RenderTilePacket *buffer, void **end);
 
 

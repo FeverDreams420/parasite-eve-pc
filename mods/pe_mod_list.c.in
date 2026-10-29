@@ -1,0 +1,8 @@
+/* Generated from PE_MOD_LIST (mods/CMakeLists.txt). */
+#include <stddef.h>
+#include "pe_mod_host.h"
+
+@pe_mod_decls@
+const PeMod *const g_pe_mods[] = {
+@pe_mod_refs@    NULL
+};

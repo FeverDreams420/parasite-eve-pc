@@ -56,6 +56,19 @@ def convert(source, destination, workers=4, version=None):
                 converted[key] = result
                 if len(converted) % 100 == 0:
                     print(f"{len(converted)}/{len(jobs)}", flush=True)
+        # Title artwork and widescreen indices/materials are versioned and
+        # checked with the pack, even though they are not original mesh entries.
+        reserved = {"manifest.json", *(r["file"].casefold() for r in converted.values())}
+        for extra in manifest.get("extras", []):
+            filename = extra["file"]
+            if not filename or filename in (".", "..") or Path(filename).name != filename or any(c in filename for c in "/\\:") or filename.casefold() in reserved:
+                raise ValueError(f"Invalid or conflicting extra filename: {filename!r}")
+            reserved.add(filename.casefold())
+            original = (source / filename).read_bytes()
+            digest = hashlib.sha256(original).hexdigest()
+            if extra.get("sha256") != digest:
+                raise ValueError(f"Source checksum mismatch: {filename}")
+            (staging / filename).write_bytes(original)
         manifest["atlases"] = [{**record, **converted[record["key"]]} for record in records]
         manifest["image_format"] = "png"
         if version is not None:

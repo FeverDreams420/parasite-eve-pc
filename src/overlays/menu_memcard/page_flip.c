@@ -1,3 +1,6 @@
+#include <psyz/video.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include "common.h"
 #include "pe1/boot_disc_check.h"
 #include "pe1/boot_display.h"
@@ -17,6 +20,12 @@ void MenuCard_FlipScreenPages(void) {
     MemcardScreenBuffer *screen;
     RECT main_rect;
 
+    const char *pack=getenv("PE_HD_BACKGROUNDS");
+    if (pack && *pack) {
+        char filename[4096];int length=snprintf(filename,sizeof(filename),"%s/title.png",pack);
+        if (length>=0 && (size_t)length<sizeof(filename))
+            Psyz_VideoSetRgb24Backdrop(filename,g_MemcardImageBundle+g_MemcardImageOffsets[0]+sizeof(MemcardImage),320,204,20,16);
+    }
     for (i = 0; i < 2; i++) {
         page = g_MemcardScreenPage == 0;
         g_MemcardCurrentScreen = g_MemcardScreenBuffers[page];

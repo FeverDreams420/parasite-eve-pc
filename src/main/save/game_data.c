@@ -1,4 +1,5 @@
 #include "common.h"
+#include "pe_hooks.h"
 #include <string.h>
 #include "pe1/asset_table.h"
 #include "pe1/aya.h"
@@ -604,6 +605,8 @@ static inline void SetCapacity(int value) {
 }
 
 int Inv_DispatchCommand(int command, int value, int other, int *unused) {
+    PeHookInvCommand hook = {command, value, 0};
+    if (PE_HOOK(PE_HOOK_INV_COMMAND, &hook)) return hook.result;
     switch (command) {
     case INV_CMD_COUNT_OCCUPIED: {
         s16 *p;

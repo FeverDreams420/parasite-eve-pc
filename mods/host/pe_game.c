@@ -1,0 +1,70 @@
+#include "pe_game.h"
+#include "pe1/asset_table.h"
+#include "pe1/game_state.h"
+#include "pe1/game_timers.h"
+#include "pe1/scene_dispatch.h"
+
+int pe_room_number(void) {
+    const unsigned token = (unsigned)g_SceneDispatchToken;
+    int n = 0, i;
+    for (i = 2; i < 5; ++i) {
+        const char c = (char)g_Base32CharTable[(token >> ((5 - i) * 5 + 2)) & 0x1Fu];
+        if (c < '0' || c > '9') return -1;
+        n = n * 10 + (c - '0');
+    }
+    return n;
+}
+
+BattleEntity *pe_player(void) { return D_8009D254; }
+
+Combatant *pe_aya_core(void) {
+    BattleEntity *player = D_8009D254;
+    return player ? (Combatant *)player->core : NULL;
+}
+
+int pe_game_loaded(void) { return g_AyaSaveState.max_hp != 0 && D_8009D254 != NULL; }
+
+int pe_save_loaded(void) { return g_AyaSaveState.max_hp != 0; }
+
+int pe_in_battle(void) { return (g_GameStateFlags & 2) != 0; }
+
+int pe_free_field(void) { return !(g_GameStateFlags & 0x2006u) && !(g_GameStateFlagsWord & 0xB600u); }
+
+/* ---- facts about the game ---- */
+#define PE_SCRIPT_VAR_WAYNE 48
+
+unsigned pe_wayne_count(void) { return (u16)g_ScriptVariableBank[PE_SCRIPT_VAR_WAYNE]; }
+void pe_set_wayne_count(unsigned count) { g_ScriptVariableBank[PE_SCRIPT_VAR_WAYNE] = count; }
+
+ItemDataRecord *pe_equipped(int armor) {
+    int slot = armor ? g_AyaSaveState.equipped_armor_slot : g_AyaSaveState.equipped_weapon_slot;
+    int value;
+    if (slot < 0 || slot >= 50) return NULL;
+    value = g_AyaSaveState.inventory_items[slot];
+    if (value < 0x100 || value >= 0x180) return NULL;
+    return &g_InventoryRuntime.equipment[value - 0x100];
+}
+
+ItemDataRecord *pe_base_item(unsigned id) {
+    return id >= 1 && id <= 0xFF ? Item_LookupBaseData(id - 1) : NULL;
+}
+
+int pe_rec_has_effect(const ItemDataRecord *rec, int effect) {
+    int n, m;
+    if (!rec) return 0;
+    n = rec->tailCount > 10 ? 10 : rec->tailCount;
+    for (m = 0; m < n; ++m)
+        if ((rec->tailData[m] & 0x1F) == effect) return 1;
+    return 0;
+}
+
+unsigned pe_isqrt(unsigned v) {
+    unsigned r = 0, b = 1u << 30;
+    while (b > v) b >>= 2;
+    while (b) {
+        if (v >= r + b) { v -= r + b; r = (r >> 1) + b; }
+        else r >>= 1;
+        b >>= 2;
+    }
+    return r;
+}

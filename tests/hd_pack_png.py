@@ -54,6 +54,26 @@ class PackConversion(unittest.TestCase):
         self.assertFalse(self.destination.exists())
         self.assertFalse(list(self.root.glob("converted.partial-*")))
 
+    def test_title_and_widescreen_extras_are_preserved(self):
+        self.manifest["extras"] = []
+        for filename in ("title.png", "0123456789abcdef-wide.bin"):
+            content = b"checked pack extra " + filename.encode()
+            (self.source / filename).write_bytes(content)
+            self.manifest["extras"].append(dict(file=filename, sha256=hashlib.sha256(content).hexdigest()))
+        self.write_manifest()
+        module.convert(self.source, self.destination)
+        for extra in self.manifest["extras"]:
+            self.assertEqual((self.source / extra["file"]).read_bytes(), (self.destination / extra["file"]).read_bytes())
+
+    def test_extra_checksum_and_path_fail_atomically(self):
+        for filename in ("title.png", "../outside.bin", "manifest.json", "C:title.png", "0000000000000001.PNG"):
+            self.manifest["extras"] = [dict(file=filename, sha256="0"*64)]
+            if filename == "title.png": (self.source / filename).write_bytes(b"damaged title")
+            self.write_manifest()
+            with self.assertRaises(ValueError): module.convert(self.source, self.destination)
+            self.assertFalse(self.destination.exists())
+            self.assertFalse(list(self.root.glob("converted.partial-*")))
+
     def test_existing_pack_is_not_overwritten(self):
         self.destination.mkdir()
         marker = self.destination / "working-version"

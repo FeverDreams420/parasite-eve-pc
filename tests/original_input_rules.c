@@ -650,6 +650,17 @@ static void TestHdInstaller(void) {
         if(!bad){assert(HdVerify(dest));SDL_strlcpy(host_hd.active,dest,sizeof(host_hd.active));host_hd.verify_only=1;SDL_SetAtomicInt(&host_hd.cancel,1);HdWorker(NULL);assert(!host_hd.success);assert(strstr(host_hd.result_message,"Cancelled"));SDL_SetAtomicInt(&host_hd.cancel,0);}
         HdClean(dest);SDL_RemovePath(zip_path);
     }
+    char unicode_dir[4096],saved_file[4096];
+    SDL_strlcpy(saved_file,host_options.user_file,sizeof(saved_file));
+    int saved_enabled=host_options.enabled;unsigned saved_volume=host_options.volume;
+    assert(HdPath(unicode_dir,sizeof(unicode_dir),test_directory,"settings-zażółć"));
+    assert(SDL_CreateDirectory(unicode_dir));
+    assert(HdPath(host_options.user_file,sizeof(host_options.user_file),unicode_dir,"parasite-eve.toml"));
+    host_options.enabled=1;host_options.volume=37;assert(Host_SaveOptions());
+    host_options.volume=88;Host_LoadOptions(host_options.user_file);assert(host_options.volume==37);
+    assert(SDL_RemovePath(host_options.user_file));assert(SDL_RemovePath(unicode_dir));
+    SDL_strlcpy(host_options.user_file,saved_file,sizeof(host_options.user_file));
+    host_options.enabled=saved_enabled;host_options.volume=saved_volume;
     memset(&host_hd,0,sizeof(host_hd));
     puts("HD installer: SHA vectors, paths, valid extraction, ZIP CRC failure and cancellation passed");
 }

@@ -10,6 +10,7 @@ u16 GetTPage(int tp, int abr, int x, int y);
 #include <inttypes.h>
 #include <string.h>
 #include <psyz/video.h>
+#include <SDL3/SDL.h>
 
 static uint64_t hd_geometry_key;
 static char hd_background_directory[4096];
@@ -54,10 +55,10 @@ static void Render_ResetHdWidescreen(void) {
     memset(hd_wide,0,sizeof(hd_wide));
 }
 
-static int Render_ReadHdWide(FILE *file, unsigned bytes, uint64_t *value) {
+static int Render_ReadHdWide(SDL_IOStream *file, unsigned bytes, uint64_t *value) {
     *value=0;
     for (unsigned i=0;i<bytes;++i) {
-        int byte=fgetc(file);if(byte==EOF)return 0;
+        unsigned char byte;if(SDL_ReadIO(file,&byte,1)!=1)return 0;
         *value|=(uint64_t)(unsigned)byte<<(8*i);
     }
     return 1;
@@ -67,7 +68,7 @@ static void Render_LoadHdWidescreen(void) {
     char filename[4096];
     int size=snprintf(filename,sizeof(filename),"%s/%016" PRIx64 "-wide.bin",hd_background_path,hd_geometry_key);
     if(size<0 || (size_t)size>=sizeof(filename))return;
-    FILE *file=fopen(filename,"rb");if(!file)return;
+    SDL_IOStream *file=SDL_IOFromFile(filename,"rb");if(!file)return;
     uint64_t magic,groups,value;
     unsigned total=0;
     int valid=Render_ReadHdWide(file,4,&magic) && magic==0x31574550u &&
@@ -105,8 +106,8 @@ static void Render_LoadHdWidescreen(void) {
         hd_wide[group].count=(unsigned)count;hd_wide[group].key=key;
         hd_wide[group].left=l;hd_wide[group].right=r;
     }
-    if(valid && fgetc(file)!=EOF)valid=0;
-    fclose(file);
+    unsigned char trailing;if(valid && SDL_ReadIO(file,&trailing,1)!=0)valid=0;
+    SDL_CloseIO(file);
     if(!valid){Render_ResetHdWidescreen();Psyz_GpuResetSpriteAtlases();fprintf(stderr,"Ignoring incomplete HD widescreen geometry %016" PRIx64 "\n",hd_geometry_key);}
 }
 
@@ -150,7 +151,7 @@ void Render_LinkHdWidescreenBackdrop(int slot,RenderNativeTag *ordering) {
 void Render_PrepareHdBackgrounds(void) {
     const uint64_t previous_key=hd_geometry_key;
     Render_ResetHdWidescreen();
-    const char *pack=getenv("PE_HD_BACKGROUNDS");
+    const char *pack=SDL_getenv("PE_HD_BACKGROUNDS");
     snprintf(hd_background_directory,sizeof(hd_background_directory),"%s",pack?pack:"");
     hd_prepared_state=g_GeomState;
     hd_geometry_key=0;
@@ -175,7 +176,7 @@ void Render_PrepareHdBackgrounds(void) {
  * re-hash descriptors after scripts have animated them. */
 void Render_RefreshHdBackgrounds(void) {
     if (!hd_geometry_key || !g_GeomState || hd_prepared_state!=g_GeomState) return;
-    const char *pack=getenv("PE_HD_BACKGROUNDS");
+    const char *pack=SDL_getenv("PE_HD_BACKGROUNDS");
     DrawSync(0);
     Render_ResetHdWidescreen();
     Psyz_GpuResetSpriteAtlases();

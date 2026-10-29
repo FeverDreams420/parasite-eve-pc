@@ -1,4 +1,5 @@
 #include <psyz/video.h>
+#include <SDL3/SDL.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -19,7 +20,7 @@ static unsigned char title_reference[320*204*3];
 static int title_reference_valid;
 void MenuCard_RefreshHdBackground(void) {
     if (!title_reference_valid) return;
-    const char *pack=getenv("PE_HD_BACKGROUNDS");
+    const char *pack=SDL_getenv("PE_HD_BACKGROUNDS");
     if (pack && *pack) {
         char filename[4096];const char *formats[]={"webp","png"};
         for(unsigned format=0;format<2;++format) {

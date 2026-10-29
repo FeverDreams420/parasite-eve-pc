@@ -42,7 +42,7 @@ class Installer(unittest.TestCase):
     return subprocess.run([str(BINARY),command],env={**env,**(extra or {})},cwd=root,capture_output=True,text=True,timeout=45)
    pointer=config/'mods/upscale/active.json'
    try:
-    result=run();self.assertEqual(result.returncode,0,result.stdout+result.stderr);old=pointer.read_bytes();installed=pathlib.Path(json.loads(old)['directory']);self.assertEqual((installed/(KEY+'.webp')).read_bytes(),b'background material')
+    result=run();self.assertEqual(result.returncode,0,result.stdout+result.stderr);self.assertTrue(pointer.is_file(),f'Installer wrote to the wrong Unicode path: {result.stdout} / {result.stderr}; files: {list(root.rglob(chr(42)))}');old=pointer.read_bytes();installed=pathlib.Path(json.loads(old)['directory']);self.assertEqual((installed/(KEY+'.webp')).read_bytes(),b'background material')
     self.assertIn('X-PE-Version',server.client_headers);self.assertIn('X-PE-Build',server.client_headers);self.assertIn('ParasiteEve/',server.client_headers['User-Agent'])
     self.assertEqual(server.downloads,1);result=run();self.assertEqual(result.returncode,0,result.stdout);self.assertEqual(server.downloads,1);self.assertEqual(pointer.read_bytes(),old)
     self.assertEqual(run('--verify-backgrounds').returncode,0)

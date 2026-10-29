@@ -231,7 +231,7 @@ static int HdWorker(void *unused){
     (void)unused;char archive[4096]={0},staging[4096]={0},final[4096],actual[65],url[512],id[80];cJSON *catalog=NULL;host_hd.success=0;host_hd.result_activate=0;
     SDL_strlcpy(host_hd.result_message,"Download failed. Your previous pack is unchanged.",sizeof(host_hd.result_message));
     if(host_hd.verify_only){host_hd.success=HdVerify(host_hd.active);SDL_strlcpy(host_hd.result_message,host_hd.success?"Installed pack verified.":"Verification failed. Download a fresh copy.",sizeof(host_hd.result_message));goto end;}
-    const char *base=getenv("PE_HD_SERVER");if(!base||!*base)base="https://pe.polanka.ovh";
+    const char *base=SDL_getenv("PE_HD_SERVER");if(!base||!*base)base="https://pe.polanka.ovh";
     unsigned local_port=0;char trailing;int local=sscanf(base,"http://127.0.0.1:%u%c",&local_port,&trailing)==1&&local_port>0&&local_port<=65535;
     if(strcmp(base,"https://pe.polanka.ovh")&&!local){SDL_strlcpy(host_hd.result_message,"Invalid mod server override.",sizeof(host_hd.result_message));goto end;}
     snprintf(id,sizeof(id),"pe-%016llx-%08x",(unsigned long long)SDL_GetPerformanceCounter(),(unsigned)SDL_rand(0x7fffffff));
@@ -287,18 +287,18 @@ static void Host_HdInit(void){
     const char *slash=strrchr(host_options.user_file,'/');const char *back=strrchr(host_options.user_file,'\\');if(back&&(!slash||back>slash))slash=back;if(!slash)return;
     int n=snprintf(host_hd.root,sizeof(host_hd.root),"%.*s/mods/upscale",(int)(slash-host_options.user_file),host_options.user_file);if(n<0||(size_t)n>=sizeof(host_hd.root)||!SDL_CreateDirectory(host_hd.root))return;
     char path[4096];if(HdPath(path,sizeof(path),host_hd.root,"active.json")){cJSON *j=HdJsonFile(path,16384);const char *directory=HdString(j,"directory"),*version=HdString(j,"version"),*sha=HdString(j,"sha256");if(directory&&version&&sha&&strlen(directory)<sizeof(host_hd.active)&&strlen(version)<sizeof(host_hd.version)&&HdHex(sha)&&!strncmp(directory,host_hd.root,strlen(host_hd.root))&&directory[strlen(host_hd.root)]=='/'){SDL_strlcpy(host_hd.active,directory,sizeof(host_hd.active));SDL_strlcpy(host_hd.version,version,sizeof(host_hd.version));SDL_strlcpy(host_hd.archive_sha,sha,sizeof(host_hd.archive_sha));host_hd.enabled=host_options.hd_backgrounds;}cJSON_Delete(j);}
-    const char *dev=getenv("PE_HD_BACKGROUNDS");if(dev&&*dev){host_hd.development=1;host_hd.enabled=1;SDL_strlcpy(host_hd.active,dev,sizeof(host_hd.active));}
+    const char *dev=SDL_getenv("PE_HD_BACKGROUNDS");if(dev&&*dev){host_hd.development=1;host_hd.enabled=1;SDL_strlcpy(host_hd.active,dev,sizeof(host_hd.active));}
     else if(*host_hd.active)SDL_setenv_unsafe("PE_HD_BACKGROUNDS",host_hd.active,1);
     Psyz_GpuSetSpriteAtlasesEnabled(host_hd.enabled);curl_global_init(CURL_GLOBAL_DEFAULT);
 }
 static void Host_HdStop(void){if(host_hd.thread){SDL_CompareAndSwapAtomicInt(&host_hd.cancel,0,1);SDL_WaitThread(host_hd.thread,NULL);host_hd.thread=NULL;}curl_global_cleanup();}
 
 static int Host_HdCli(int verify) {
-    const char *override=getenv("PE_CONFIG_HOME");char *pref=NULL;
+    const char *override=SDL_getenv("PE_CONFIG_HOME");char *pref=NULL;
     if(!override||!*override){pref=SDL_GetPrefPath("","Parasite Eve");override=pref;}
     if(!override||snprintf(host_options.user_file,sizeof(host_options.user_file),"%s/parasite-eve.toml",override)>=(int)sizeof(host_options.user_file)){SDL_free(pref);return 1;}
     SDL_CreateDirectory(override);SDL_free(pref);Host_HdInit();Host_HdAction(verify?2:1);
-    int cancel_at=0;const char *cancel_env=getenv("PE_HD_TEST_CANCEL_AT");const char *test_server=getenv("PE_HD_SERVER");
+    int cancel_at=0;const char *cancel_env=SDL_getenv("PE_HD_TEST_CANCEL_AT");const char *test_server=SDL_getenv("PE_HD_SERVER");
     if(cancel_env&&test_server&&!strncmp(test_server,"http://127.0.0.1:",17))cancel_at=atoi(cancel_env);
     int last=-1;while(Host_HdBusy()){int n=Host_HdPercent();if(cancel_at>0&&cancel_at<96&&n>=cancel_at){SDL_CompareAndSwapAtomicInt(&host_hd.cancel,0,1);cancel_at=0;}if(n!=last){printf("Background pack: %d%%\n",n);fflush(stdout);last=n;}SDL_Delay(25);Host_HdPoll();}
     puts(Host_HdStatus());int result=host_hd.success?0:1;Host_HdStop();return result;
@@ -472,8 +472,21 @@ static int Host_ParseOptionValue(const char *section, const char *key, char *val
     return 1;
 }
 
+/* SDL paths are UTF-8; the Windows CRT's narrow fopen uses the local ANSI
+ * code page. Keep the existing TOML parser/writer on a Unicode FILE stream. */
+static FILE *Host_OptionsFile(const char *path,const char *mode) {
+#ifdef _WIN32
+    wchar_t *wide_path=(wchar_t *)SDL_iconv_string("UTF-16LE","UTF-8",path,strlen(path)+1);
+    wchar_t *wide_mode=(wchar_t *)SDL_iconv_string("UTF-16LE","UTF-8",mode,strlen(mode)+1);
+    FILE *file=wide_path&&wide_mode?_wfopen(wide_path,wide_mode):NULL;
+    SDL_free(wide_path);SDL_free(wide_mode);return file;
+#else
+    return fopen(path,mode);
+#endif
+}
+
 static void Host_LoadOptions(const char *path) {
-    FILE *file = fopen(path, "r");
+    FILE *file = Host_OptionsFile(path, "r");
     if (!file) {
         return;
     }
@@ -539,7 +552,7 @@ static int Host_SaveOptions(void) {
 
     char temporary[4120];
     snprintf(temporary, sizeof(temporary), "%s.tmp", host_options.user_file);
-    FILE *file = fopen(temporary, "w");
+    FILE *file = Host_OptionsFile(temporary, "w");
     if (!file) {
         return 0;
     }
@@ -2432,7 +2445,7 @@ images_ready:;
         memcpy(host_options.discs, ordered, sizeof(ordered));
     }
     if(!interactive) {
-        const char *config_home=getenv("PE_CONFIG_HOME");
+        const char *config_home=SDL_getenv("PE_CONFIG_HOME");
         if(config_home&&*config_home) {
             int n=snprintf(host_options.user_file,sizeof(host_options.user_file),"%s/parasite-eve.toml",config_home);
             if(n>0&&(size_t)n<sizeof(host_options.user_file))Host_HdInit();

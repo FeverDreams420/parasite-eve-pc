@@ -188,4 +188,26 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
     # Only the summary line counts as a pass: a run cut short with exit code 0 must fail.
     set_tests_properties(mod-randomizer-exits PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer exits:")
+
+    # Room scripts run headless at given story values: which actors a room places, what its start writes.
+    add_executable(test-mod-randomizer-run ${PROJECT_SOURCE_DIR}/tests/pe_mod_randomizer_run_test.c
+        $<TARGET_OBJECTS:parasite-eve-test-disc>
+        $<TARGET_OBJECTS:parasite-eve-original-akao>
+        $<TARGET_OBJECTS:parasite-eve-original-camera>
+        ${PE_COMMON_GAME_OBJECTS}
+        $<TARGET_OBJECTS:pe-mods>
+        $<TARGET_OBJECTS:parasite-eve-original-actor-animation>
+        $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
+        $<TARGET_OBJECTS:parasite-eve-original-pad>
+        $<TARGET_OBJECTS:parasite-eve-original-shadow>)
+    target_include_directories(test-mod-randomizer-run PRIVATE ${PROJECT_SOURCE_DIR}/include
+        "$<TARGET_PROPERTY:SDL3::SDL3,INTERFACE_INCLUDE_DIRECTORIES>")
+    target_compile_definitions(test-mod-randomizer-run PRIVATE __psyz PE_MODS=1)
+    target_link_libraries(test-mod-randomizer-run PRIVATE psyz)
+    # Without a runs file: every room once at V0x4a = 0. mods/pe_randomizer/tools/runlist.py writes a
+    # fuller runs file from the story walk; run the test binary on it by hand.
+    add_test(NAME mod-randomizer-run COMMAND test-mod-randomizer-run
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-run.txt")
+    set_tests_properties(mod-randomizer-run PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
+        ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer runs:")
 endif()

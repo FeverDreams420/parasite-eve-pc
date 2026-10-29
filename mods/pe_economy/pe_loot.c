@@ -121,7 +121,7 @@ static int pe_bag_limit(void) {
     int limit = g_AyaSaveState.inventory_slot_count + g_InvBonusSlotCount;
     return limit > PE_BAG_SLOTS ? PE_BAG_SLOTS : limit;
 }
-static void pe_add_junk(uint32_t n) { s_st.junk = s_st.junk + n > 99999u ? 99999u : s_st.junk + n; }
+static void pe_add_junk(uint32_t n) { s_st.junk = n >= 99999u - s_st.junk ? 99999u : s_st.junk + n; }
 static uint32_t pe_bundle_value(int v) { return v == PE_ITEM_SUPER_JUNK ? 75u : v == PE_ITEM_DUPER_JUNK ? 150u : 0u; }
 
 static uint32_t pe_bag_count_of(int v) {

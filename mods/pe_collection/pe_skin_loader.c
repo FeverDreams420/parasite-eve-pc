@@ -126,7 +126,7 @@ static PeSkin *pe_load_failed(const char *folder, const char *file) {
 static void pe_read_rooms(PeSkin *k) {
     if (pe_read(k->folder, "rooms.bin", &k->rooms) && !memcmp(k->rooms.data, "PERR", 4)) {
         const u32 n = rd32(k->rooms.data, 4);
-        if (8u + 12u * n <= k->rooms.size) k->nrooms = n;
+        if (n <= (k->rooms.size - 8u) / 12u) k->nrooms = n;
     }
 }
 
@@ -269,22 +269,27 @@ static int pe_day(void) {
 }
 
 /* ---- room animations ---- */
-static u32 pe_row_length(const u8 *p) {
+static u32 pe_row_length(const u8 *p, u32 size) {
+    if (size < 12u) return 0;
     const unsigned flags = p[0], last = p[1], frames = p[2];
     const u32 stride = ((frames >> 1) + 1u) * 4u;
     const int shrt = (flags & 3u) == 2u;
     const u32 bstride = shrt ? stride : ((frames >> 2) + 1u) * 4u;
     u32 cur = 12u, k;
-    for (k = 0; k < 3; ++k) cur += (p[cur] | p[cur + 1] << 8) ? 4u : stride;
-    for (k = 0; k < (last + 1u) * 3u; ++k) {
-        cur += (shrt ? (p[cur] | p[cur + 1] << 8) != 0 : p[cur] != 0) ? 4u : bstride;
-        if (cur > 0x10000u) return 0;
+    for (k = 0; k < 3; ++k) {
+        if (cur > size || size - cur < 4u) return 0;
+        cur += (p[cur] | p[cur + 1] << 8) ? 4u : stride;
     }
+    for (k = 0; k < (last + 1u) * 3u; ++k) {
+        if (cur > size || size - cur < 4u) return 0;
+        cur += (shrt ? (p[cur] | p[cur + 1] << 8) != 0 : p[cur] != 0) ? 4u : bstride;
+    }
+    if (cur > size) return 0;
     return cur;
 }
 
 static u32 pe_fingerprint(const u8 *p) {
-    const u32 n = p ? pe_row_length(p) : 0;
+    const u32 n = p ? pe_row_length(p, 0x10000u) : 0;
     u32 h = 0x811C9DC5u, i;
     if (n < 372u) return 0;
     for (i = 0; i < n; ++i) h = (h ^ p[i]) * 0x01000193u;
@@ -302,7 +307,8 @@ static void *pe_room_copy(const PeSkin *k, const void *p) {
         const u32 f = rd32(t, 12u * (u32)mid);
         if (f == fp) {
             const u32 off = rd32(t, 12u * (u32)mid + 4), size = rd32(t, 12u * (u32)mid + 8);
-            return off + size <= k->rooms.size ? k->rooms.data + off : NULL;
+            if (off > k->rooms.size || size > k->rooms.size - off) return NULL;
+            return pe_row_length(k->rooms.data + off, size) ? k->rooms.data + off : NULL;
         }
         if (f < fp) lo = mid + 1;
         else hi = mid - 1;

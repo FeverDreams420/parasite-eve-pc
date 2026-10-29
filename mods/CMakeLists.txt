@@ -165,4 +165,25 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
     add_test(NAME mod-randomizer-rooms COMMAND test-mod-randomizer-rooms
         "${CMAKE_CURRENT_BINARY_DIR}/randomizer-rooms.txt")
     set_tests_properties(mod-randomizer-rooms PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets")
+
+    # The New York map (door target M0000): destinations, their enable bits and the room each pick loads.
+    add_executable(test-mod-randomizer-exits ${PROJECT_SOURCE_DIR}/tests/pe_mod_randomizer_exits_test.c
+        $<TARGET_OBJECTS:parasite-eve-test-disc>
+        $<TARGET_OBJECTS:parasite-eve-original-akao>
+        $<TARGET_OBJECTS:parasite-eve-original-camera>
+        ${PE_COMMON_GAME_OBJECTS}
+        $<TARGET_OBJECTS:pe-mods>
+        $<TARGET_OBJECTS:parasite-eve-original-actor-animation>
+        $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
+        $<TARGET_OBJECTS:parasite-eve-original-pad>
+        $<TARGET_OBJECTS:parasite-eve-original-shadow>)
+    target_include_directories(test-mod-randomizer-exits PRIVATE ${PROJECT_SOURCE_DIR}/include
+        "$<TARGET_PROPERTY:SDL3::SDL3,INTERFACE_INCLUDE_DIRECTORIES>")
+    target_compile_definitions(test-mod-randomizer-exits PRIVATE __psyz PE_MODS=1)
+    target_link_libraries(test-mod-randomizer-exits PRIVATE psyz)
+    add_test(NAME mod-randomizer-exits COMMAND test-mod-randomizer-exits
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-exits.txt")
+    # Only the summary line counts as a pass: a run cut short with exit code 0 must fail.
+    set_tests_properties(mod-randomizer-exits PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
+        ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer exits:")
 endif()

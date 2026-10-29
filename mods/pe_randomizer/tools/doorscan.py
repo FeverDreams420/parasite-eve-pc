@@ -1,5 +1,6 @@
 """Doors and what guards them, from the mod-randomizer-rooms ctest's step listing.
-Usage: python -I doorscan.py <randomizer-rooms.txt> [--bits | --kills] [M107 ...]   (default: every room)
+Usage: python -I doorscan.py <randomizer-rooms.txt> [--bits | --kills | --exits <randomizer-exits.txt>] [M107 ...]
+(default: every room)
 --bits lists story variable writes instead (V|mask bit sets, V=value), with the ways to reach them.
 --kills lists op 24 kills (object locks: a key check stops the routine that blocks the way), the ways to
 reach the kill and what the killed routine does.
@@ -15,6 +16,10 @@ Op 25 stores the running routine's id in a field; op 24 kills the routine of the
 A tested value is shown as the step that computed it: item(...) = op 168 count, V0x18&bit5 = op 41 on a
 script variable, scene&mask = op 81, area = op 119 point-in-quad (where the player stands), others by op number.
 Door targets M0000 / M5000 / M8888 are the effect scene, the title and the boot display.
+--exits resolves the doors to M0000, the New York map, with the mod-randomizer-exits ctest's listing: per
+V0x4a the door can run at, the map bits of V0x3 the room sets (each write whose V0x4a tests hold there, in
+step order: rooms set the whole cumulative list before the map, and night = 0x2000), the first and forced
+destination, and the room each enabled destination loads.
 At most 8 ways are kept per step, shortest first."""
 import os, re, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -27,6 +32,7 @@ BINARY = {0: "+", 1: "-", 2: "|", 3: "&", 4: "^", 5: "||", 6: "&&", 9: ">", 10: 
 NEGATE = {"==": "!=", "!=": "==", ">": "<=", "<": ">=", ">=": "<", "<=": ">"}
 DST = {9: 1, 10: 0, 41: 2, 81: 1, 168: 1, 167: 1, 74: 1, 44: 0, 119: 10, 31: 0, 25: 0}
 WAYS = 8
+AREA_END = 0x1000   # V0x4a values the mod-randomizer-exits ctest probes
 
 
 def load(path):
@@ -260,9 +266,28 @@ def doors(rooms, only=None):
     return out
 
 
+def bit_op(r, at, loc, var):
+    """`|mask` or `&mask` when loc, assigned to var at at, was made by op 9 `var | constant` or `var & constant`
+    on the single path into at, else None. Read from that step itself: expr() also expands var through
+    its earlier writes, so a run of bit sets (V0x3 before the map) would read ((V0x3 | 0x4000) | 0x8000)."""
+    cur = at
+    for _ in range(64):
+        p = r.preds.get(cur, [])
+        if len(p) != 1: return None
+        cur = p[0][0]
+        _, op, a, _ = r.steps[cur]
+        dst = DST.get(op)
+        if dst is None or dst >= len(a) or a[dst] != loc: continue
+        if op == 9 and len(a) == 4 and a[0] in ((0, 2), (0, 3)) and a[2] == var and a[3][0] == 0:
+            return f"{BINARY[a[0][1]]}{a[3][1]:#x}"
+        return None
+    return None
+
+
 def bits(rooms, only=None):
     """Story variables written: (room, offset, entity, var, how, ways), how = "|0x20" for a bit set
-    (EvalExpr(|, T, V, mask) then Assign(V, T), or op 42 SetBit on V) or "=0x90" for a constant
+    (EvalExpr(|, T, V, mask) then Assign(V, T), or op 42 SetBit on V), "&0xffffdfff" for a clear the
+    same way, or "=0x90" for a constant
     (V0x1, the room just left, is written this way)."""
     out = []
     for room in sorted(rooms):
@@ -272,9 +297,11 @@ def bits(rooms, only=None):
             t, op, a, _ = r.steps[at]
             var = how = None
             if op == 10 and len(a) == 2 and a[0][0] == 2:
-                e = expr(r.steps, r.preds, at, a[1], r.writers); p = f"(V{a[0][1]:#x} | "
-                if e.startswith(p) and e.endswith(")") and e[len(p):-1].startswith("0x"): var, how = a[0][1], "|" + e[len(p):-1]
-                elif e.startswith("0x"): var, how = a[0][1], "=" + e
+                how = bit_op(r, at, a[1], a[0])
+                if how is not None: var = a[0][1]
+                else:
+                    e = expr(r.steps, r.preds, at, a[1], r.writers)
+                    if e.startswith("0x"): var, how = a[0][1], "=" + e
             elif op == 42 and len(a) == 2 and a[0][0] == 2 and a[1][0] == 0: var, how = a[0][1], f"|{1 << (a[1][1] & 31):#x}"
             if var is None: continue
             out.append((room, at, t, var, how, r.ways(at)))
@@ -292,12 +319,90 @@ def kills(rooms, only=None):
     return out
 
 
+def read_exits(path):
+    """The ctest's map listing: {"bit": {d: bit}, "start": {V0x1: d}, "mode": [(lo, hi, {kind: d})],
+    "exit": {(d, night): [(lo, hi, room)]}}."""
+    m = {"bit": {}, "start": {}, "mode": [], "exit": {}}
+    def rng(x): lo, hi = x.split("-"); return int(lo, 16), int(hi, 16)
+    for line in open(path):
+        f = line.rstrip("\n").split("\t")
+        if f[0] == "dest": m["bit"][int(f[1])] = int(f[2][4:], 16)
+        elif f[0] == "start": m["start"][int(f[1][1:])] = int(f[2][5:])
+        elif f[0] == "mode": m["mode"].append((*rng(f[1]), {k: int(v) for k, v in (x.split("=") for x in f[2:])}))
+        elif f[0] == "exit":
+            d, night = int(f[1][5:]), int(f[2][6:])
+            m["exit"].setdefault((d, night), []).append((*rng(f[3][6:]), int(f[4][4:])))
+    return m
+
+
+def holds_at(way, area):
+    """Whether a way can hold with V0x4a == area: its V0x4a tests are evaluated, other tests assumed."""
+    return all(fits(c.replace("V0x4a", "event"), area) is not False for c in way if "V0x4a" in c)
+
+
+def exits(rooms, path, only=None):
+    """(room, offset, entity, (lo, hi), night, enabled dests, start, modes, {d: exit rooms}, {d: other tests its
+    bit write needs}) per door to M0000 and V0x4a band: each value the door tests for, or when it tests none, each band between the V0x4a
+    thresholds of the room's map writes (map bits and night read at the band's first value)."""
+    m, out = read_exits(path), []
+    def at_area(table, area): return next((x for lo, hi, x in table if lo <= area <= hi), None)
+    for room in sorted(rooms):
+        if only and room not in only: continue
+        r = Room(*rooms[room])
+        writes = []
+        for at in sorted(r.steps):
+            t, op, a, _ = r.steps[at]
+            if op == 10 and len(a) == 2 and a[0] == (2, 3):
+                how = bit_op(r, at, a[1], a[0])
+                if how: writes.append((at, t, how[0], int(how[1:], 16), r.ways(at)))
+        for at in sorted(r.steps):
+            t, op, a, target = r.steps[at]
+            if op != 49 or target != 0: continue
+            mine = [w for w in writes if w[1] == t and w[0] < at]
+            pinned = sorted({int(c.split(" == ")[1][:-1], 16) for w in r.ways(at) for c in w
+                             if re.fullmatch(r"\(V0x4a == 0x[0-9a-f]+\)", c)})
+            if pinned: bands = [(n, n) for n in pinned]
+            else:
+                # No single value: one band per V0x4a threshold the room's map writes test (their ladder).
+                cuts = sorted({0} | {int(x, 16) + (1 if o in (">", "<=") else 0) for *_, wways in mine
+                                     for w in wways for c in w for o, x in re.findall(r"V0x4a (\S+) (0x[0-9a-f]+)", c)})
+                bands = [(lo, hi - 1) for lo, hi in zip(cuts, cuts[1:] + [AREA_END])]
+            own = {c for w in r.ways(at) for c in w}
+            def extra(c): return "V0x4a" not in c and "area" not in c and c not in own and re.search(r"[A-Zi]", c)
+            for lo, hi in bands:
+                v3, needs = 0, {}
+                for wat, wt, kind, mask, wways in mine:
+                    held = [w for w in wways if holds_at(w, lo)]
+                    if not held: continue
+                    v3 = v3 | mask if kind == "|" else v3 & mask
+                    if kind == "|":   # tests the write needs beyond the door's own (none on some way: always)
+                        needs[mask] = min((frozenset(filter(extra, w)) for w in held), key=len)
+                dests = [d for d, bit in sorted(m["bit"].items()) if v3 & bit]
+                night = 1 if v3 & 0x2000 else 0
+                modes = at_area(m["mode"], lo) if lo == hi else None
+                to = {d: sorted({x for elo, ehi, x in m["exit"].get((d, night), []) if elo <= hi and lo <= ehi})
+                      for d in dests}
+                cond = {d: sorted(needs.get(m["bit"][d], ())) for d in dests}
+                out.append((room, at, t, (lo, hi), night, dests, m["start"].get(room, 7), modes or {}, to, cond))
+    return out
+
+
 if __name__ == "__main__":
     if len(sys.argv) < 2: sys.exit(__doc__)
-    mode = next((x for x in sys.argv[2:] if x in ("--bits", "--kills")), None)
-    only = {int(x.lstrip("Mm")) for x in sys.argv[2:] if x != mode} or None
+    mode = next((x for x in sys.argv[2:] if x in ("--bits", "--kills", "--exits")), None)
+    args = [x for x in sys.argv[2:] if x != mode]
+    exits_path = args.pop(0) if mode == "--exits" and args else None
+    if mode == "--exits" and not exits_path: sys.exit(__doc__)
+    only = {int(x.lstrip("Mm")) for x in args} or None
     rooms = load(sys.argv[1])
-    if mode == "--bits":
+    if mode == "--exits":
+        for room, at, t, area, night, dests, start, modes, to, cond in exits(rooms, exits_path, only):
+            where = f"V0x4a={area[0]:#x}" if area[0] == area[1] else f"V0x4a={area[0]:#x}-{area[1]:#x}"
+            forced = "".join(f" {k}=d{v}" for k, v in sorted(modes.items()))
+            picks = ", ".join(f"d{d}" + (f" if {' ; '.join(cond[d])}" if cond[d] else "") + "->" +
+                              "/".join(f"M{x:03d}" for x in to[d]) for d in dests) or "no map bits set here"
+            print(f"M{room:03d} +{at:06X} e{t} -> M000 map\t{where} night={night} start=d{start}{forced}\t{picks}")
+    elif mode == "--bits":
         for room, at, t, var, how, ways in bits(rooms, only):
             print(f"M{room:03d} +{at:06X} e{t} sets V{var:#x}{how}\t" + show(ways))
     elif mode == "--kills":

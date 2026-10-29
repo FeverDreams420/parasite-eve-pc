@@ -169,6 +169,11 @@ void Render_CommitWidescreenPicture(int slot, int buffer_y) {
     if (buffer_y >= 0 && Psyz_VideoGetWidescreen()) {
         int left, right;
         Render_GetWidescreenPicture(slot, &left, &right);
+        int hd_left,hd_right;
+        if (s_WidescreenCover[slot].tiles && Render_GetHdWidescreenPicture(&hd_left,&hd_right)) {
+            if(hd_left<left)left=hd_left;
+            if(hd_right>right)right=hd_right;
+        }
         if (s_FieldShift[slot].active)
             Psyz_VideoSetWidescreenPictureShifted(buffer_y, left, right, s_FieldShift[slot].dx,
                                                   s_FieldShift[slot].dy, s_FieldShift[slot].camera_x);
@@ -239,7 +244,9 @@ void Render_LinkFieldSubpixel(int slot, RenderNativeTag *ordering) {
     int i;
 
     s_FieldShift[slot].active = 0;
-    if (!Psyz_VideoGetWidescreen() || !Render_GetCameraSubpixel(&dx, &dy, &camera_x)) return;
+    if (!Psyz_VideoGetWidescreen()) return;
+    if (s_WidescreenCover[slot].tiles) Render_LinkHdWidescreenBackdrop(slot,ordering);
+    if (!Render_GetCameraSubpixel(&dx, &dy, &camera_x)) return;
     if (!registered) {
         Psyz_GpuRegisterCommandHandler(FIELD_SUBPIXEL_OPCODE, Render_FieldSubpixelCommand, NULL);
         registered = 1;
@@ -538,6 +545,7 @@ int Render_DrawMeshList(void *buffer, void **end)
     int x;
 
     Render_LoadGeomState(*group);
+    Render_PrepareHdBackgrounds();
     address.state = state;
     address.word += state->entry_offset_1C;
     view = &address.viewport[*group];

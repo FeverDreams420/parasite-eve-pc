@@ -24,7 +24,6 @@ _Static_assert(_Generic(&MemCard_DrawProgress,
 
 SaveRuntimeState g_SaveRuntimeState;
 InventoryItemWorkspace g_InventoryItemWorkspace;
-MenuWidgetNode *g_MenuWidgetActiveListHead;
 int g_InvActiveListCount;
 static ItemDataRecord bases[255], *drawn;
 static unsigned draws;

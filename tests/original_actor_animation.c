@@ -1,3 +1,4 @@
+#include "../src/overlays/room_m273_liberty/room_m273_boss.h"
 #include "../src/overlays/room_m273_liberty/room_m273_effects.h"
 #include "pe1/room_homing_flash.h"
 #include "../src/overlays/scene_e08_chrysler/scene_e08_modules.h"
@@ -143,6 +144,64 @@ static int original_callback_allocation_failure(void)
     }
     g_FieldFxTaskContext=NULL;g_FieldFxActiveTaskSlot=NULL;
     puts("Eight two-pool emitters: first/second allocation failure rolls back, complete allocation succeeds");
+    return 1;
+}
+
+extern int RoomM273_SweepDropCallback(int, void *, intptr_t);
+extern int RoomM273_SweepSplashEmitter(int, void *, intptr_t);
+static int original_m273_landing_cycle(void)
+{
+    struct { _Alignas(void *) char bytes[2048];unsigned char guard[16]; } drops, splashes;
+    memset(&drops,0xa5,sizeof(drops));memset(&splashes,0xa5,sizeof(splashes));
+    FieldFxTaskContext context={0};g_FieldFxTaskContext=&context;
+    g_FieldFxCurrentAge=73;g_RoomFloorY->y=100;
+    memset(&g_RoomM273SweepState,0,sizeof(g_RoomM273SweepState));
+    const unsigned count=sizeof(g_RoomM273SweepState.x)/sizeof(g_RoomM273SweepState.x[0]);
+    int drop_bytes=FieldFx_InitCallbackList(drops.bytes,sizeof(RoomM273Drop),count,RoomM273_SweepDropCallback);
+    if(drop_bytes<=0 || drop_bytes>sizeof(drops.bytes))return 0;
+    RoomM273Drop *particles[sizeof(g_RoomM273SweepState.x)/sizeof(g_RoomM273SweepState.x[0])];
+    for(unsigned i=0;i<count;++i){
+        particles[i]=FieldFx_AcquireCallbackSlot(drops.bytes);
+        if(!particles[i])return 0;
+        *particles[i]=(RoomM273Drop){.position={100+(int)i*11,99,-100-(int)i*3,0},.vx=1,.vy=2,.vz=3,.touched=1};
+    }
+    if(FieldFx_AcquireCallbackSlot(drops.bytes) || FieldFx_UpdateCallbackList(drops.bytes)!=(int)count ||
+       g_FieldFxCurrentAge!=73 || g_RoomM273SweepState.count!=(int)count)return 0;
+    for(unsigned i=0;i<count;++i){
+        if(g_RoomM273SweepState.x[i]!=101+(int)i*11 || g_RoomM273SweepState.y[i]!=100 ||
+           g_RoomM273SweepState.z[i]!=-97-(int)i*3 || particles[i]->position.pad!=1)return 0;
+    }
+    FieldFxTaskSlot slot={.start=splashes.bytes,.end=splashes.bytes};g_FieldFxActiveTaskSlot=&slot;
+    int splash_bytes=RoomM273_SweepSplashEmitter(0,NULL,0);
+    if(splash_bytes<=0 || splash_bytes>sizeof(splashes.bytes) || RoomM273_SweepSplashEmitter(1,NULL,0) ||
+       g_RoomM273SweepState.count)return 0;
+    FieldFxCallbackList *list=(void *)splashes.bytes;
+    for(unsigned i=0;i<(unsigned)list->count;++i){
+        FieldFxCallbackListEntry *entry=(void *)(list->entries+i*list->stride);
+        if(entry->active!=(i<count))return 0;
+        if(i<count){
+            GteShortVector *point=(void *)entry->state;
+            if(point->x!=101+(int)i*11 || point->y!=-28 || point->z!=-97-(int)i*3 || point->pad)return 0;
+        }
+    }
+    if(RoomM273_SweepSplashEmitter(1,NULL,0))return 0;
+    for(unsigned frame=0;frame<17;++frame){
+        if(FieldFx_UpdateCallbackList(splashes.bytes)!=(int)count || g_FieldFxCurrentAge!=73)return 0;
+        if(frame<8 && FieldFx_UpdateCallbackList(drops.bytes)!=(int)count)return 0;
+        if(g_RoomM273SweepState.count)return 0; /* Each landing is enqueued once. */
+    }
+    if(FieldFx_UpdateCallbackList(drops.bytes) || FieldFx_UpdateCallbackList(splashes.bytes))return 0;
+    for(unsigned i=0;i<count;++i){
+        FieldFxCallbackListEntry *entry=(void *)(list->entries+i*list->stride);
+        GteShortVector *point=(void *)entry->state;
+        if(entry->active || entry->age!=16 || point->y!=-124)return 0;
+    }
+    if(FieldFx_AcquireCallbackSlot(drops.bytes)!=particles[0])return 0;
+    for(unsigned i=drop_bytes;i<sizeof(drops.bytes);++i)if((unsigned char)drops.bytes[i]!=0xa5)return 0;
+    for(unsigned i=splash_bytes;i<sizeof(splashes.bytes);++i)if((unsigned char)splashes.bytes[i]!=0xa5)return 0;
+    for(unsigned i=0;i<sizeof(drops.guard);++i)if(drops.guard[i]!=0xa5 || splashes.guard[i]!=0xa5)return 0;
+    g_FieldFxTaskContext=NULL;g_FieldFxActiveTaskSlot=NULL;
+    puts("M273 sweep: full landing queue, splash transfer, no duplicate impacts, terminal frames and slot reuse passed");
     return 1;
 }
 

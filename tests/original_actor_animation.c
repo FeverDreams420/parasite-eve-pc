@@ -1,3 +1,4 @@
+#include "../src/overlays/room_m273_liberty/room_m273_effects.h"
 #include "pe1/room_homing_flash.h"
 #include "../src/overlays/scene_e08_chrysler/scene_e08_modules.h"
 #include "pe1/scene_e20_hover_orb.h"
@@ -84,6 +85,13 @@
 #include "actor_animation/test_combat_media_and_spu.inc"
 #include "actor_animation/test_native_replays.inc"
 #include "actor_animation/test_hospital_and_chrysler.inc"
+
+extern int RoomM273_GrabPlacementFanEmitter(int, void *, intptr_t);
+extern int RoomM273_HandGlowEmitter(int, void *, intptr_t);
+extern void *g_RoomM273HandRingBandPool;
+static int m273_keep_pointer(int mode, void *state, intptr_t argument) {
+    (void)mode; (void)state; (void)argument; return 0;
+}
 
 int main(int argc, char **argv)
 {

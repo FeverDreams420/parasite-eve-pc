@@ -55,6 +55,12 @@ int main(void) {
     ItemDataRecord *rebuilt=pe_cat_bag_record(2);
     assert(rebuilt && rebuilt->itemId==0x45 && rebuilt->kind==1 && rebuilt->bonusStats[0]==23 && rebuilt->tailCount==3);
     for(int i=0;i<10;++i)assert(rebuilt->tailData[i]==0);
+    /* A damaged/imported catalog must not manufacture an invalid game record. */
+    cat->rebuild_count=1;cat->rebuild[0]=(PeRebuildEntry){.id=0x45,.slots=255};
+    balance=junk;ItemDataRecord saved=*rebuilt;
+    assert(!pe_rebuild_index(0,msg,sizeof msg));
+    assert(junk==balance && cat->rebuild_count==1 && !g_AyaSaveState.inventory_items[3]);
+    assert(!memcmp(&saved,rebuilt,sizeof saved));
     puts("Catalog: dry run, groups, premium Tools, Bag protection, disabled parity and rebuild passed");
     return 0;
 }

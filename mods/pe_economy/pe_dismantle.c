@@ -248,6 +248,10 @@ static int pe_create_item(uint8_t id, uint8_t slots, const int16_t bonus[3], con
     const ItemDataRecord *base = pe_base_item(id);
     ItemDataRecord *rec;
     int slot = -1, record = -1, i;
+    if (slots > PE_CAT_MAX_MODS || nmods < 0 || nmods > slots) {
+        pe_cat_say("Invalid saved equipment slots");
+        return 0;
+    }
     for (i = 0; i < pe_cat_bag_limit() && slot < 0; ++i) if (!g_AyaSaveState.inventory_items[i]) slot = i;
     if (slot < 0) { pe_cat_say("Bag full"); return 0; }
     for (i = 0; i < PE_EQUIPMENT_COUNT && record < 0; ++i) if (!g_InventoryRuntime.equipment[i].iconId) record = i;
@@ -275,6 +279,7 @@ int pe_rebuild_index(int i, char *msg, size_t msg_size) {
     if (!pe_loot_enabled()) { snprintf(msg, msg_size, "Junk economy is off"); return 0; }
     if (i < 0 || i >= cat->rebuild_count) { snprintf(msg, msg_size, "Nothing to rebuild"); return 0; }
     r = cat->rebuild[i];
+    if (r.slots > PE_CAT_MAX_MODS) { snprintf(msg, msg_size, "Saved equipment data is invalid"); return 0; }
     price = pe_rebuild_price(&r);
     if (pe_loot_junk() < price) { snprintf(msg, msg_size, "Need %u Junk (have %u)", (unsigned)price, (unsigned)pe_loot_junk()); return 0; }
     if (!pe_create_item(r.id, r.slots, r.bonus, NULL, 0)) { snprintf(msg, msg_size, "Bag full"); return 0; }

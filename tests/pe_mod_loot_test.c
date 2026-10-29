@@ -8,6 +8,7 @@ GameStateBlock g_GameStateBlock;
 Pe1GameState g_GameState;
 InventoryItemWorkspace g_InventoryItemWorkspace;
 ItemDataRecord *pe_equipped(int armor) { (void)armor;return NULL; }
+int pe_rec_has_effect(const ItemDataRecord *rec,int effect) { (void)rec;(void)effect;return 0; }
 const void *pe_service_get(const char *name,int version) { (void)name;(void)version;return NULL; }
 void pe_log(const char *tag,const char *fmt,...) { (void)tag;(void)fmt; }
 int main(void) {

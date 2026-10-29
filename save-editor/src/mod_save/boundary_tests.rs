@@ -34,3 +34,20 @@ fn legacy_bad_checksum_and_unsupported_schema_are_retained() {
     assert!(set_keys(&mut raw, &[0x39]).is_err());
     assert_eq!(raw, before);
 }
+
+#[test]
+fn opaque_legacy_slots_are_not_overwritten() {
+    for keys in [true, false] {
+        let mut raw = vec![0u8; 0x2000];
+        let at = OFFSET + if keys { WIN } else { 0x260 };
+        raw[at + 17] = 0x55;
+        let before = raw.clone();
+        let result = if keys {
+            set_keys(&mut raw, &[0x38])
+        } else {
+            set_sort(&mut raw, &SortSettings::default())
+        };
+        assert!(result.is_err(), "Unknown legacy slot must remain opaque");
+        assert_eq!(raw, before);
+    }
+}

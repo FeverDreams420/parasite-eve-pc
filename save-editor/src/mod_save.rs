@@ -341,6 +341,12 @@ fn update(
         parsed.sort()?;
     }
     let legacy = legacy_block(data, magic, seed);
+    if !parsed.container && !parsed.records.iter().any(|r| r.id == id(name)) {
+        ensure!(
+            raw[OFFSET + at..OFFSET + at + legacy.len()].iter().all(|b| *b == 0),
+            "Unrecognized data occupies the legacy block; preserved unchanged"
+        );
+    }
     replace_record(raw, name, 1, data, Some((at, &legacy)))
 }
 

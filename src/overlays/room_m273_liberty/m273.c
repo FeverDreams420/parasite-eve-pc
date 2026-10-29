@@ -761,7 +761,10 @@ int RoomM273_GrabModelEmitter(int mode, void *task_data, intptr_t argument) {
         FieldFx_ModelScrollUv(g_RoomM273GrabModel.asset,0,0);
         size=FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM273PoolContext)->pool,16,6,
                            RoomM273_GrabModelCallback);
-        return size+FieldFx_AllocCallbackList(&g_RoomM273GrabModel.pool,size,sizeof(void *),2,RoomM273_GrabModelRingCallback);
+        if (size < 0) return size;
+        int extra = FieldFx_AllocCallbackList(&g_RoomM273GrabModel.pool,size,sizeof(void *),2,RoomM273_GrabModelRingCallback);
+        if (extra < 0) return extra;
+        return size + extra;
     }
     case 1: {
         RoomM273ThresholdEntityState *state;
@@ -995,7 +998,10 @@ int RoomM273_GrabStarBurstEmitter(int mode, void *task_data, intptr_t argument) 
     case 0: {
         int size = FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM273PoolContext)->pool, sizeof(RoomM273PaletteInput), 2,
                                  RoomM273_GrabStarBurstCallback);
-        return size + FieldFx_AllocCallbackList(&g_RoomM273GrabSparkPool, size, sizeof(RoomM273PulseState), 9, RoomM273_GrabSparkTriangleCallback);
+        if (size < 0) return size;
+        int extra = FieldFx_AllocCallbackList(&g_RoomM273GrabSparkPool, size, sizeof(RoomM273PulseState), 9, RoomM273_GrabSparkTriangleCallback);
+        if (extra < 0) return extra;
+        return size + extra;
     }
     case 1: {
         RoomM273EffectModeState *state;
@@ -1456,7 +1462,10 @@ int RoomM273_HandTrailLandingEmitter(int mode, void *task_data, intptr_t argumen
     case 0: {
         int size=FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM273PoolContext)->pool,12,10,
                                RoomM273_HandTrailLandingPulseCallback);
-        return size+FieldFx_AllocCallbackList(&g_RoomM273HandTrailLandingFanPool,size,sizeof(RoomM273PhaseState),10,RoomM273_HandTrailLandingFanCallback);
+        if (size < 0) return size;
+        int extra = FieldFx_AllocCallbackList(&g_RoomM273HandTrailLandingFanPool,size,sizeof(RoomM273PhaseState),10,RoomM273_HandTrailLandingFanCallback);
+        if (extra < 0) return extra;
+        return size + extra;
     }
     case 1: {
         int i;
@@ -1563,7 +1572,10 @@ int RoomM273_HandGlowEmitter(int mode, void *task_data, intptr_t argument) {
     switch(mode) {
     case 0: {
         int size=FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM273PoolContext)->pool,sizeof(void *),6,RoomM273_PulseSpriteCallback);
-        return size+FieldFx_AllocCallbackList(&g_RoomM273HandRingBandPool,size,sizeof(RoomM273PointerPoolEffect),6,RoomM273_HandRingBandCallback);
+        if (size < 0) return size;
+        int extra = FieldFx_AllocCallbackList(&g_RoomM273HandRingBandPool,size,sizeof(RoomM273PointerPoolEffect),6,RoomM273_HandRingBandCallback);
+        if (extra < 0) return extra;
+        return size + extra;
     }
     case 1: {
         unsigned char *stopped=&g_RoomM273HandTrailState.done;
@@ -2325,7 +2337,12 @@ int RoomM273_SwayShardEmitter(int mode, void *task_data, intptr_t argument) {
     case 0:
         count = FieldFx_InitCallbackList(ANIM_POOL_AS(RoomM273PoolContext)->pool, 0x14, 4,
                               RoomM273_SwayShardCallback);
-        count += FieldFx_AllocCallbackList(&g_RoomM273SwayShardTrailPool, count, 8, 0x14, RoomM273_SwayShardTrailCallback);
+        if (count < 0) return count;
+        {
+            int extra = FieldFx_AllocCallbackList(&g_RoomM273SwayShardTrailPool, count, 8, 0x14, RoomM273_SwayShardTrailCallback);
+            if (extra < 0) return extra;
+            count += extra;
+        }
         return count;
     case 1:
         if (g_RoomM273SwayState.done) return 2;

@@ -93,6 +93,59 @@ static int m273_keep_pointer(int mode, void *state, intptr_t argument) {
     (void)mode; (void)state; (void)argument; return 0;
 }
 
+extern int FieldFx_FanSweep(int, void *, intptr_t);
+extern int FieldFx_OrbitingSpriteEmitter(int, void *, intptr_t);
+extern int RoomM273_GrabStarBurstEmitter(int, void *, intptr_t);
+extern int RoomM273_HandTrailLandingEmitter(int, void *, intptr_t);
+extern int RoomM273_SwayShardEmitter(int, void *, intptr_t);
+static int original_callback_allocation_failure(void)
+{
+    const struct {
+        FieldFxTaskCallback callback;
+        unsigned payload, stride, count;
+    } cases[]={
+        {FieldFx_FanSweep,sizeof(FieldFanSweep),16,24},
+        {FieldFx_OrbitingSpriteEmitter,sizeof(RenderOrbitingEmitter),16,12},
+        {FieldFx_OrbitingSpriteBurst,sizeof(RenderOrbitingEmitter),16,3},
+        {FieldFx_HelicalSpriteEmitter,sizeof(RenderOrbitingEmitter),16,4},
+        {RoomM273_HandGlowEmitter,0,sizeof(void *),6},
+        {RoomM273_GrabStarBurstEmitter,0,sizeof(RoomM273PaletteInput),2},
+        {RoomM273_HandTrailLandingEmitter,0,12,10},
+        {RoomM273_SwayShardEmitter,0,20,4},
+    };
+    const size_t alignment=_Alignof(void *);
+    for(unsigned c=0;c<sizeof(cases)/sizeof(cases[0]);++c){
+        size_t payload=(cases[c].payload+alignment-1)/alignment*alignment;
+        size_t stride=(cases[c].stride+sizeof(FieldFxCallbackListEntry)+alignment-1)/alignment*alignment;
+        size_t first=sizeof(FieldFxCallbackList)+cases[c].count*stride;
+        for(unsigned capacity=0;capacity<3;++capacity){
+            struct {FieldFxTaskContext context;unsigned char guard[32];} storage;
+            memset(&storage,0,sizeof(storage));memset(storage.guard,0xa5,sizeof(storage.guard));
+            FieldFxTaskContext *ctx=&storage.context;
+            FieldFxTaskTable table={0};table.callbacks[0]=cases[c].callback;table.sizes[0]=cases[c].payload;
+            ctx->table=&table;
+            for(unsigned i=0;i<8;++i)ctx->slots[i].id=0xffff;
+            ctx->used=capacity==2?0:sizeof(ctx->arena)-payload-(capacity?first:0);
+            ctx->cursor=ctx->arena+ctx->used;
+            unsigned previous_used=ctx->used;char *previous_cursor=ctx->cursor;
+            g_FieldFxTaskContext=ctx;g_FieldFxActiveTaskSlot=NULL;
+            int result=FieldFx_SpawnTask(0);
+            if(capacity<2){
+                if(result!=-1 || ctx->count || ctx->used!=previous_used || ctx->cursor!=previous_cursor ||
+                   ctx->slots[0].id!=0xffff || ctx->slots[0].start || ctx->slots[0].end || g_FieldFxActiveTaskSlot){
+                    fprintf(stderr,"Effect %u capacity case %u accepted incomplete pools: result=%d count=%u\n",c,capacity,result,ctx->count);
+                    return 0;
+                }
+            }else if(result<=0 || ctx->count!=1 || ctx->slots[0].id!=0 || ctx->used!=(unsigned)result ||
+                     ctx->cursor!=ctx->arena+ctx->used)return 0;
+            for(unsigned i=0;i<sizeof(storage.guard);++i)if(storage.guard[i]!=0xa5)return 0;
+        }
+    }
+    g_FieldFxTaskContext=NULL;g_FieldFxActiveTaskSlot=NULL;
+    puts("Eight two-pool emitters: first/second allocation failure rolls back, complete allocation succeeds");
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
 #include "actor_animation/test_cli_modes.inc"

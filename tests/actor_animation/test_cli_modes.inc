@@ -1,3 +1,4 @@
+    if(argc==2 && !strcmp(argv[1],"--callback-allocation-failure"))return original_callback_allocation_failure()?0:1;
     if(argc==2 && !strcmp(argv[1],"--m273-effect-pointers")){
         _Alignas(max_align_t) char arena[2048]={0}, rings[2048]={0};
         RoomM273PoolContext pool={0};pool.pool=arena;

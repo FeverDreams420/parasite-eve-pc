@@ -643,6 +643,7 @@ if(BUILD_TESTING)
     add_test(NAME original-m430-cruiser-load COMMAND test-original-actor-animation --m430-load)
     set_tests_properties(original-m430-cruiser-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60
         LABELS "game-assets;room" ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy")
+    add_test(NAME original-callback-allocation-failure COMMAND test-original-actor-animation --callback-allocation-failure)
     add_test(NAME original-m273-effect-pointers COMMAND test-original-actor-animation --m273-effect-pointers)
     add_test(NAME original-m273-liberty-load COMMAND test-original-actor-animation --m273-load)
     set_tests_properties(original-m273-liberty-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60

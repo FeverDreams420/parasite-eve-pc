@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Handle effect allocation failures without leaving incomplete effects active.
+
 - Improved inventory menu safety and corrected 64-bit game/SDK call signatures, including Windows crashes in Liberty Island effects.
 
 - Fixed a Windows x64 crash while drawing the beacon effect in the NYPD boss fight.

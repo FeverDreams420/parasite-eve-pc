@@ -646,8 +646,8 @@ if(BUILD_TESTING)
     add_test(NAME original-callback-allocation-failure COMMAND test-original-actor-animation --callback-allocation-failure)
     add_test(NAME original-m273-landing-cycle COMMAND test-original-actor-animation --m273-landing-cycle)
     add_test(NAME original-m273-effect-pointers COMMAND test-original-actor-animation --m273-effect-pointers)
-    add_test(NAME original-m273-sweep-timing COMMAND test-original-actor-animation --m273-sweep-timing)
-    set_tests_properties(original-m273-sweep-timing PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60
+    add_test(NAME original-m273-attack-timing COMMAND test-original-actor-animation --m273-attack-timing)
+    set_tests_properties(original-m273-attack-timing PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" LABELS "game-assets;fieldfx")
     add_test(NAME original-m273-liberty-load COMMAND test-original-actor-animation --m273-load)
     set_tests_properties(original-m273-liberty-load PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 60

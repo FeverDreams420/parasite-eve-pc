@@ -380,7 +380,7 @@
         g_PlayerEntity=NULL;g_FieldFxOwner=NULL;g_FieldFxTaskContext=NULL;g_FieldFxActiveTaskSlot=NULL;
         puts("Original Museum spark modules: all ten rooms, complete hashes/scripts/palette, descriptors, reloads and native controllers passed");return 0;
     }
-    if(argc==2 && (!strcmp(argv[1],"--m273-load") || !strcmp(argv[1],"--m273-sweep-timing"))){
+    if(argc==2 && (!strcmp(argv[1],"--m273-load") || !strcmp(argv[1],"--m273-attack-timing"))){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};PeDiscFile exe,archive;SceneRoomSectorRange range;u8 module[0xc000];
         if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return fprintf(stderr,"M273 load audit failed at %d\n",__LINE__),1;
@@ -468,7 +468,7 @@
         g_FieldFxOwner=saved_owner;
         g_PlayerEntity=saved_player;
         puts("Original M273 complete descriptor set, authored task scripts, sine table and full work-area reload passed");
-        return strcmp(argv[1],"--m273-sweep-timing")?0:original_m273_sweep_timing()?0:1;
+        return strcmp(argv[1],"--m273-attack-timing")?0:(original_m273_sweep_timing() && original_m273_hand_timing())?0:1;
     }
     if(argc==2 && !strcmp(argv[1],"--m245-load")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;

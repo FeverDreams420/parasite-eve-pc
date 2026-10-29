@@ -112,3 +112,28 @@ Offline regression: `python tests/hd_pack_webp.py` (Pillow and cwebp required).
 The GPU regression exercises lossy WebP with exact native references, changed
 palette fallback, native VRAM equality, and missing-reference rejection. Real
 headless HD and widescreen regressions also pass with the WebP-only pack.
+
+
+## Download service
+
+`https://pe.polanka.ovh/api/mods/upscale/latest` advertises the immutable ZIP,
+mod version, byte size, format and SHA-256. Escape → Mods downloads on a worker
+thread, displays progress, supports cancellation and verifies the archive, ZIP
+CRC and every material/reference file. Extraction accepts only flat known asset
+names, rejects duplicates, symlinks and oversized files, and uses UTF-8 SDL I/O.
+The active pointer changes atomically only after complete verification. Previous
+version directories are retained. A bad current copy can be verified and repaired;
+an unchanged healthy version does not download again. Restart applies new artwork.
+
+On/off is saved under `[mods] hd_backgrounds` in the user's TOML. The active
+version/directory is in `mods/upscale/active.json` beside those preferences.
+`PE_HD_BACKGROUNDS` remains a development override with integrity checks bypassed.
+`--download-backgrounds` and `--verify-backgrounds` use the same installer without
+a window. `PE_CONFIG_HOME` selects an isolated profile for headless checks;
+`PE_HD_SERVER=http://127.0.0.1:PORT` is a localhost-only test override.
+
+Downloads report `User-Agent: ParasiteEve/VERSION`, `X-PE-Version`, `X-PE-Build`,
+`X-PE-Platform` and an ephemeral per-download ID. The server counts started and
+completed transfers; update checks and HEAD requests do not count. It stores
+coarse client metadata and keyed daily visitor hashes, not raw IP addresses.
+Server source/deployment lives separately in `~/Projects/pe-mod-server`.

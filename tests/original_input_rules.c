@@ -623,6 +623,37 @@ static int SDLCALL DriveFocus(void *window) {
     return 0;
 }
 
+/* The production boot-module downloader must reject a broken pack before
+ * activation. These fixtures use the real ZIP parser, SHA and file verifier. */
+static void TestHdInstaller(void) {
+    HdSha sha;char hash[65];HdShaInit(&sha);HdShaEnd(&sha,hash);
+    assert(!strcmp(hash,"e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"));
+    HdShaInit(&sha);HdShaAdd(&sha,"a",1);HdShaAdd(&sha,"bc",2);HdShaEnd(&sha,hash);
+    assert(!strcmp(hash,"ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"));
+    char too_short[4]="old";assert(!HdPath(too_short,sizeof(too_short),"long","path"));assert(!*too_short);
+    assert(!HdName("../escape.webp")&&!HdName("CON.png")&&!HdName("folder/file.png")&&!HdName(".webp")&&!HdName("0123456789abcdef.webp:stream"));
+    assert(HdName("0123456789abcdef.webp")&&HdName("0123456789abcdef.ref.png")&&HdName("0123456789abcdef-wide.bin"));
+    HdShaInit(&sha);HdShaAdd(&sha,"payload",7);HdShaEnd(&sha,hash);
+    for(int bad=0;bad<3;++bad) {
+        char manifest[1400],zip_path[4096],dest[4096],name[80];
+        const char *material=bad==1?"../escape.webp":"0123456789abcdef.webp";
+        snprintf(manifest,sizeof(manifest),"{\"version\":\"0.1\",\"atlases\":[{\"file\":\"%s\",\"atlas_sha256\":\"%s\",\"reference_file\":\"0123456789abcdef.ref.png\",\"reference_sha256\":\"%s\"}]}",material,hash,hash);
+        mz_zip_archive zip={0};assert(mz_zip_writer_init_heap(&zip,0,0));
+        assert(mz_zip_writer_add_mem(&zip,"manifest.json",manifest,strlen(manifest),0));
+        assert(mz_zip_writer_add_mem(&zip,material,"payload",7,0));
+        assert(mz_zip_writer_add_mem(&zip,"0123456789abcdef.ref.png","payload",7,0));
+        void *data=NULL;size_t bytes=0;assert(mz_zip_writer_finalize_heap_archive(&zip,&data,&bytes));assert(mz_zip_writer_end(&zip));
+        if(bad==2){for(size_t i=0;i+7<=bytes;++i)if(!memcmp((char *)data+i,"payload",7)){((char *)data)[i]^=1;break;}}
+        snprintf(name,sizeof(name),"hd-fixture-%d.zip",bad);assert(HdPath(zip_path,sizeof(zip_path),test_directory,name));assert(SDL_SaveFile(zip_path,data,bytes));mz_free(data);
+        snprintf(name,sizeof(name),"hd-fixture-%d",bad);assert(HdPath(dest,sizeof(dest),test_directory,name));assert(SDL_CreateDirectory(dest));
+        SDL_SetAtomicInt(&host_hd.cancel,0);assert(HdUnpack(zip_path,dest,"0.1")==!bad);
+        if(!bad){assert(HdVerify(dest));SDL_strlcpy(host_hd.active,dest,sizeof(host_hd.active));host_hd.verify_only=1;SDL_SetAtomicInt(&host_hd.cancel,1);HdWorker(NULL);assert(!host_hd.success);assert(strstr(host_hd.result_message,"Cancelled"));SDL_SetAtomicInt(&host_hd.cancel,0);}
+        HdClean(dest);SDL_RemovePath(zip_path);
+    }
+    memset(&host_hd,0,sizeof(host_hd));
+    puts("HD installer: SHA vectors, paths, valid extraction, ZIP CRC failure and cancellation passed");
+}
+
 int main(int argc, char **argv) {
 #ifdef _WIN32
     /* CI must report assertions instead of waiting for a CRT dialog. */
@@ -636,6 +667,7 @@ int main(int argc, char **argv) {
     assert(SDL_SetHint(SDL_HINT_RENDER_DRIVER, "software"));
     assert(SDL_Init(SDL_INIT_VIDEO));
     Host_InitOptions(0);
+    TestHdInstaller();
     TestKeyboardLayoutLabels();
     Psyz_VideoSetVsyncMode(PSYZ_VSYNC_OFF);
     unsigned frozen = (unsigned)Psyz_VideoVSync(-1);
@@ -971,6 +1003,21 @@ int main(int argc, char **argv) {
     assert(SDL_SaveBMP(analog_image,analog_image_path));
     SDL_DestroySurface(analog_image);OverlaySurfaceRelease(&analog_surface);
 
+
+    assert(Host_SettingsPureRowCount(HOST_PAGE_MODS)==3);
+    char invalid_hd_value[]="-1";assert(!Host_ParseOptionValue("mods","hd_backgrounds",invalid_hd_value));
+    assert(Host_ParseOptionValue("mods","hd_backgrounds","false"));assert(!host_options.hd_backgrounds);
+    assert(Host_ParseOptionValue("mods","hd_backgrounds","true"));assert(host_options.hd_backgrounds);
+    SDL_SetAtomicInt(&host_hd.busy,1);SDL_SetAtomicInt(&host_hd.progress,42);
+    HostOverlayState mod_state={.open=1,.page=OVERLAY_PAGE_MODS,.row=1};OverlaySurface mod_surface={0};
+    OverlayLayout mod_layout;OverlayComputeLayout(OVERLAY_PAGE_MODS,1280,720,&mod_layout);
+    assert(OverlaySurfaceResize(&mod_surface,mod_layout.w,mod_layout.h));OverlayPaint(&mod_surface,&mod_state,&mod_layout);
+    SDL_Surface *mod_image=SDL_CreateSurfaceFrom(mod_surface.w,mod_surface.h,SDL_PIXELFORMAT_RGBA32,mod_surface.pixels,mod_surface.w*4);
+    s_overlayLayout=mod_layout;SDL_SetAtomicInt(&host_hd.cancel,0);
+    Host_ProcessSettingsPointer(&mod_state,mod_layout.x+mod_layout.scale*300,
+        mod_layout.y+mod_layout.scale*(OVERLAY_HEADER_H+OVERLAY_ROW_H+20),1,NULL,NULL);
+    assert(SDL_GetAtomicInt(&host_hd.cancel)==1);SDL_SetAtomicInt(&host_hd.cancel,0);
+    assert(mod_image);char mod_image_path[4096];snprintf(mod_image_path,sizeof(mod_image_path),"%s/mod-download.bmp",test_directory);assert(SDL_SaveBMP(mod_image,mod_image_path));SDL_DestroySurface(mod_image);OverlaySurfaceRelease(&mod_surface);SDL_SetAtomicInt(&host_hd.busy,0);
 
     /* Issue #2: All settings tabs share a fixed panel height and top Y anchor. */
     OverlayLayout base_layout = {0};

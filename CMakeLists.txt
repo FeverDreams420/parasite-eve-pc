@@ -74,11 +74,60 @@ add_library(parasite-eve-original-disc OBJECT src/main/cdrom/scene_assets.c)
 pe_configure_object_library(parasite-eve-original-disc)
 target_link_libraries(parasite-eve-original-disc PRIVATE psyz)
 
+# Desktop mod downloads use native TLS through libcurl and a bounded ZIP reader.
+include(FetchContent)
+FetchContent_Declare(pe_json URL https://github.com/DaveGamble/cJSON/archive/refs/tags/v1.7.19.tar.gz
+    URL_HASH SHA256=7fa616e3046edfa7a28a32d5f9eacfd23f92900fe1f8ccd988c1662f30454562 SOURCE_SUBDIR pe-unused)
+FetchContent_Declare(pe_zip URL https://github.com/richgel999/miniz/archive/refs/tags/3.1.1.tar.gz
+    URL_HASH SHA256=8bb29c7bd6f22356e5583e794bed4a0b3e6dfcbcadb49974fc9270ccca1e5557 SOURCE_SUBDIR pe-unused)
+FetchContent_MakeAvailable(pe_json pe_zip)
+add_library(pe_download_json STATIC ${pe_json_SOURCE_DIR}/cJSON.c)
+target_include_directories(pe_download_json PUBLIC ${pe_json_SOURCE_DIR})
+file(WRITE ${pe_zip_BINARY_DIR}/miniz_export.h "#define MINIZ_EXPORT\n")
+add_library(pe_download_zip STATIC ${pe_zip_SOURCE_DIR}/miniz.c ${pe_zip_SOURCE_DIR}/miniz_zip.c
+    ${pe_zip_SOURCE_DIR}/miniz_tinfl.c ${pe_zip_SOURCE_DIR}/miniz_tdef.c)
+target_include_directories(pe_download_zip PUBLIC ${pe_zip_SOURCE_DIR} ${pe_zip_BINARY_DIR})
+target_compile_definitions(pe_download_zip PUBLIC MINIZ_NO_ZLIB_COMPATIBLE_NAMES)
+add_library(pe_download_deps INTERFACE)
+target_link_libraries(pe_download_deps INTERFACE pe_download_json pe_download_zip)
+if(APPLE)
+    target_link_libraries(pe_download_deps INTERFACE "-lcurl")
+elseif(WIN32)
+    set(BUILD_CURL_EXE OFF CACHE BOOL "" FORCE)
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+    set(CURL_USE_SCHANNEL ON CACHE BOOL "" FORCE)
+    set(CURL_USE_OPENSSL OFF CACHE BOOL "" FORCE)
+    set(CURL_USE_LIBPSL OFF CACHE BOOL "" FORCE)
+    set(CURL_USE_LIBSSH2 OFF CACHE BOOL "" FORCE)
+    set(CURL_USE_NGHTTP2 OFF CACHE BOOL "" FORCE)
+    set(CURL_USE_LIBIDN2 OFF CACHE BOOL "" FORCE)
+    set(CURL_USE_GSSAPI OFF CACHE BOOL "" FORCE)
+    set(CURL_ZLIB OFF CACHE BOOL "" FORCE)
+    set(CURL_BROTLI OFF CACHE BOOL "" FORCE)
+    set(CURL_ZSTD OFF CACHE BOOL "" FORCE)
+    set(CURL_DISABLE_LDAP ON CACHE BOOL "" FORCE)
+    set(HTTP_ONLY ON CACHE BOOL "" FORCE)
+    FetchContent_Declare(pe_curl URL https://github.com/curl/curl/releases/download/curl-8_17_0/curl-8.17.0.tar.gz
+        URL_HASH SHA256=e8e74cdeefe5fb78b3ae6e90cd542babf788fa9480029cfcee6fd9ced42b7910 EXCLUDE_FROM_ALL)
+    FetchContent_MakeAvailable(pe_curl)
+    target_link_libraries(pe_download_deps INTERFACE CURL::libcurl)
+else()
+    find_package(CURL REQUIRED)
+    target_link_libraries(pe_download_deps INTERFACE CURL::libcurl)
+endif()
+
 # The executable starts the original game and compiles its modules in place.
 add_executable(parasite-eve-pc src/main/boot/main.c src/main/boot/crash_report.c src/main/boot/crash_report_posix.c)
 target_include_directories(parasite-eve-pc PRIVATE include)
-target_link_libraries(parasite-eve-pc PRIVATE psyz ${CMAKE_DL_LIBS})
-target_compile_definitions(parasite-eve-pc PRIVATE __psyz PE_VERSION="${PROJECT_VERSION}")
+target_link_libraries(parasite-eve-pc PRIVATE psyz pe_download_deps ${CMAKE_DL_LIBS})
+execute_process(COMMAND git rev-parse --short HEAD WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE PE_BUILD_ID OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+execute_process(COMMAND git diff --quiet HEAD WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    RESULT_VARIABLE PE_BUILD_DIRTY ERROR_QUIET)
+if(PE_BUILD_DIRTY)
+    string(APPEND PE_BUILD_ID "-dirty")
+endif()
+target_compile_definitions(parasite-eve-pc PRIVATE __psyz PE_VERSION="${PROJECT_VERSION}" PE_BUILD_ID="${PE_BUILD_ID}")
 if(APPLE AND PE_MACOS_BUNDLE)
     set_target_properties(parasite-eve-pc PROPERTIES
         MACOSX_BUNDLE TRUE
@@ -440,7 +489,7 @@ if(BUILD_TESTING)
     add_executable(test-host-settings tests/original_input_rules.c ${PE_COMMON_GAME_OBJECTS})
     target_compile_definitions(test-host-settings PRIVATE PE_HOST_SETTINGS_TEST=1 __psyz)
     target_include_directories(test-host-settings PRIVATE include)
-    target_link_libraries(test-host-settings PRIVATE psyz)
+    target_link_libraries(test-host-settings PRIVATE psyz pe_download_deps)
     add_test(NAME host-settings COMMAND test-host-settings "${CMAKE_CURRENT_BINARY_DIR}/host-settings-evidence")
     set_tests_properties(host-settings PROPERTIES TIMEOUT 30)
 
@@ -506,6 +555,9 @@ if(BUILD_TESTING)
     set_tests_properties(original-game-hd-backgrounds PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 180 LABELS "game-assets;gpu;hd-assets")
     find_package(Python3 QUIET COMPONENTS Interpreter)
     if(Python3_Interpreter_FOUND)
+        add_test(NAME hd-mod-download-safety COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_SOURCE_DIR}/tests/hd_mod_download.py $<TARGET_FILE:parasite-eve-pc>)
+        set_tests_properties(hd-mod-download-safety PROPERTIES TIMEOUT 90 LABELS "downloads")
         add_test(NAME original-game-hd-widescreen COMMAND ${Python3_EXECUTABLE}
             ${CMAKE_SOURCE_DIR}/tests/hd_widescreen.py $<TARGET_FILE:parasite-eve-pc>)
         set_tests_properties(original-game-hd-widescreen PROPERTIES SKIP_RETURN_CODE 77

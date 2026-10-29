@@ -109,7 +109,7 @@ static void Render_LoadHdWidescreen(void) {
 }
 
 int Render_GetHdWidescreenPicture(int *left,int *right) {
-    if(!hd_geometry_key || !g_GeomState || !Psyz_VideoGetWidescreen())return 0;
+    if(!hd_geometry_key || !g_GeomState || !Psyz_VideoGetWidescreen() || !Psyz_GpuGetSpriteAtlasesEnabled())return 0;
     unsigned group=g_GeomScroll.state.position.groupSelect;
     if(!hd_wide[group].count)return 0;
     *left=hd_wide[group].left+(short)g_GeomState->out_disp_x;
@@ -150,7 +150,7 @@ void Render_PrepareHdBackgrounds(void) {
     Render_ResetHdWidescreen();
     hd_background_path=getenv("PE_HD_BACKGROUNDS");
     hd_geometry_key=0;
-    if (!hd_background_path || !*hd_background_path) {
+    if (!hd_background_path || !*hd_background_path || !Psyz_GpuGetSpriteAtlasesEnabled()) {
         if (previous_key) Psyz_GpuResetSpriteAtlases();
         return;
     }

@@ -145,3 +145,24 @@ if(BUILD_TESTING AND "pe_rebalance" IN_LIST PE_MOD_LIST)
     add_test(NAME mod-pe-cost COMMAND test-mod-pe --cost)
     add_test(NAME mod-pe-actor COMMAND test-mod-pe --actor)
 endif()
+
+if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
+    # Every room through the real loader; the step listing feeds mods/pe_randomizer/tools.
+    add_executable(test-mod-randomizer-rooms ${PROJECT_SOURCE_DIR}/tests/pe_mod_randomizer_rooms_test.c
+        $<TARGET_OBJECTS:parasite-eve-test-disc>
+        $<TARGET_OBJECTS:parasite-eve-original-akao>
+        $<TARGET_OBJECTS:parasite-eve-original-camera>
+        ${PE_COMMON_GAME_OBJECTS}
+        $<TARGET_OBJECTS:pe-mods>
+        $<TARGET_OBJECTS:parasite-eve-original-actor-animation>
+        $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
+        $<TARGET_OBJECTS:parasite-eve-original-pad>
+        $<TARGET_OBJECTS:parasite-eve-original-shadow>)
+    target_include_directories(test-mod-randomizer-rooms PRIVATE ${PROJECT_SOURCE_DIR}/include
+        "$<TARGET_PROPERTY:SDL3::SDL3,INTERFACE_INCLUDE_DIRECTORIES>")
+    target_compile_definitions(test-mod-randomizer-rooms PRIVATE __psyz PE_MODS=1)
+    target_link_libraries(test-mod-randomizer-rooms PRIVATE psyz)
+    add_test(NAME mod-randomizer-rooms COMMAND test-mod-randomizer-rooms
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-rooms.txt")
+    set_tests_properties(mod-randomizer-rooms PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets")
+endif()

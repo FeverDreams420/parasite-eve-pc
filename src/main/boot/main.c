@@ -127,6 +127,8 @@ typedef unsigned long long u_int64;
 #undef byte
 #undef u_long
 #undef DrawText
+/* WinSock's IPv4 member alias also collides with the PS1 kernel's TCB. */
+#undef s_addr
 #endif
 #include <cJSON.h>
 #include <miniz.h>

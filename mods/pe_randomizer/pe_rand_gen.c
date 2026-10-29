@@ -10,7 +10,8 @@
  * Key logic (pe_randomizer.h): a needs bit is met when its key is held and its key's own spot has
  * been reached. Keys move only within their own story day, and only on days where every key spot
  * has needs data; a key spot without data counts as needing every key of the days before it, which
- * is all the game asks while that day's keys stay where they are. */
+ * is all the game asks while that day's keys stay where they are. With PE_RAND_MOVE_KEYS at 0 no key
+ * moves on any difficulty. */
 #include <string.h>
 
 #include "pe_randomizer.h"
@@ -240,7 +241,7 @@ void pe_rand_generate(const PeRandSpot *spots, unsigned count, uint32_t seed, in
     }
     logic_init(&l, spots, count);
     result->keys_locked = 1;
-    for (unsigned d = 1; d < PE_RAND_DAYS; ++d)
+    for (unsigned d = 1; PE_RAND_MOVE_KEYS && d < PE_RAND_DAYS; ++d)
         for (unsigned k = 0; k < l.nkeys; ++k)
             if (l.day_complete[d] && spots[l.keys[k]].day == d) result->keys_locked = 0;
     /* phase 0 moves keys where the difficulty and logic data allow; phase 1 keeps them vanilla */

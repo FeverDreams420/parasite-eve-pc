@@ -10,10 +10,17 @@
 /* Raise PE_RAND_LOGIC_VERSION whenever the same seed would give a different layout (the generator,
  * its rules or PE_RAND_TABLE_VERSION). A save keeps the versions it was made with; a build that
  * doesn't know them leaves that game's items vanilla rather than moving them under the player. */
-#define PE_RAND_LOGIC_VERSION 2
+#define PE_RAND_LOGIC_VERSION 3
 #define PE_RAND_TABLE_VERSION 2
 
 enum { PE_RAND_EASY, PE_RAND_MEDIUM, PE_RAND_HARD, PE_RAND_DIFFICULTIES };
+
+/* 1: Medium and Hard move keys where the key logic allows. 0: key items stay in their places on
+ * every difficulty (key moves aren't play-tested yet). Changing it changes layouts: raise
+ * PE_RAND_LOGIC_VERSION with it. The tests also build with it at 1 to keep the key logic covered. */
+#ifndef PE_RAND_MOVE_KEYS
+#define PE_RAND_MOVE_KEYS 0
+#endif
 
 /* How a spot hands its item out. Only chests take a key from elsewhere or any item: on a full
  * bag Aya can swap and the chest keeps the item. Pickups and gifts take items that can't be lost
@@ -58,7 +65,8 @@ typedef struct PeRandResult {
     unsigned attempts;    /* tries used, 1 or more */
     unsigned keys_moved;
     int fallback;         /* 1: keys stayed vanilla after the tries ran out; 2: everything vanilla */
-    int keys_locked;      /* keys can't move: no story day has logic data for all its key spots */
+    int keys_locked;      /* keys can't move: PE_RAND_MOVE_KEYS is 0, or no story day has logic data
+                           * for all its key spots */
 } PeRandResult;
 
 /* Fills out[0..count) with the item for each spot. Same inputs, same layout on every machine.

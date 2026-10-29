@@ -457,8 +457,8 @@ Economy > Warner helps out.
 
 ## Randomizer (pe_randomizer)
 
-F1 > Randomizer, before New Game: on/off, difficulty (Easy: items stay on their story day, keys stay;
-Medium: items anywhere, keys within their day and area; Hard: keys anywhere the logic allows) and a
+F1 > Randomizer, before New Game: on/off, difficulty (Easy: items stay on their story day; Medium and
+Hard: items anywhere; key items stay in their places on every difficulty for now) and a
 six-digit seed (Random seed, or one digit at a time). New Game takes them; the game keeps them in the
 `pe_randomizer.run` record (seed, difficulty, logic and table version), so loading gives the same
 layout and F1 changes only reach the next New Game. A save from another logic or table version keeps
@@ -500,8 +500,11 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   game, and rooms with a key check of their own are left out. Medium and Hard move the same 8 keys
   (Weapons Storage Key, the three Fuses, both Magnetic Cardkeys, St. Francis Hospital Key, Chinatown's
   Good Luck Charm); the others stay. Hard's wider moves need logged data.
+- Key moves are off for now (`PE_RAND_MOVE_KEYS` 0 in pe_randomizer.h): they aren't play-tested, so
+  every difficulty keeps key items in their places. Setting it to 1 turns the moves above back on
+  (raise PE_RAND_LOGIC_VERSION with it).
 
-Checks: tests/run_pe_randomizer_test.ps1 (table sanity, 2000 seeds per difficulty pass the checks and
+Checks: tests/run_pe_randomizer_test.ps1, built with PE_RAND_MOVE_KEYS 0 and 1 (table sanity, 2000 seeds per difficulty pass the checks and
 repeat, logic tables where keys move, a key spot reached counting with the key, partial data,
 bad layouts caught, golden layouts).
 

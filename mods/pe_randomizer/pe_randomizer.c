@@ -214,7 +214,7 @@ static void pe_rand_spoiler(void) {
     if (!(f = fopen(temp, "w"))) { pe_toast("Randomizer: couldn't write the spoiler file"); return; }
     fprintf(f, "Parasite Eve randomizer, seed %06u, %s (logic %u, table %u)\n", (unsigned)s_run.seed,
             s_difficulty_names[s_run.difficulty], (unsigned)s_run.logic, (unsigned)s_run.table);
-    if (s_result.keys_locked) fprintf(f, "Key items stay in their places (logic data not filled in yet).\n");
+    if (s_result.keys_locked) fprintf(f, "Key items stay in their places.\n");
     else if (s_result.fallback) fprintf(f, "No layout passed its checks: %s.\n", s_result.fallback == 1 ? "key items stay in their places" : "nothing moved");
     fprintf(f, "\n");
     for (unsigned n = 0; n < PE_RAND_SPOTS; ++n) {
@@ -311,7 +311,7 @@ static int pe_rand_init(void) {
                             "starts; while on, no other mod runs. A game keeps the seed it began with.", &s_enabled, NULL);
     /* the saved value is in s_enabled now: a randomized session is this mod and the original game only */
     s_alone = s_enabled && pe_mod_run_alone() == 0;
-    pe_menu_register_choice(0, "Difficulty", "Easy: same story day. Medium: anywhere, keys in their area. Hard: keys anywhere logic allows.",
+    pe_menu_register_choice(0, "Difficulty", "Easy: items stay on their story day. Medium and Hard: anywhere (Hard writes no spoiler). Keys stay.",
                             &s_difficulty, s_difficulty_names, PE_RAND_DIFFICULTIES);
     pe_menu_register_info(0, "Seed", "Six digits: the same seed and difficulty give the same items.", pe_rand_seed_text);
     pe_menu_register_action(0, "Random seed", "Pick a new seed.", pe_rand_random_seed);

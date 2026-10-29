@@ -1,6 +1,7 @@
 /* Randomizer: the spot table is sane, and every seed on every difficulty gives a layout that passes
  * the checks, the same one each time. Golden hashes catch a change that moves items for the same
- * seed: if it's meant, raise PE_RAND_LOGIC_VERSION and update them. */
+ * seed: if it's meant, raise PE_RAND_LOGIC_VERSION and update them. Built with PE_RAND_MOVE_KEYS at 0
+ * (as shipped: golden layouts, no key moves) and at 1 (the key logic). */
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -67,8 +68,9 @@ static void every_seed_passes(void) {
             assert(!memcmp(a, b, sizeof a) && !memcmp(&ra, &rb, sizeof ra));
             assert(!ra.fallback && ra.attempts >= 1);
             /* hand logic (tools/keys-by-hand.txt): Easy keeps keys, the others move them only into a
-             * chest of the key's own room */
-            assert(!ra.keys_locked && (d != PE_RAND_EASY || !ra.keys_moved));
+             * chest of the key's own room; with PE_RAND_MOVE_KEYS at 0 no difficulty moves them */
+            assert(PE_RAND_MOVE_KEYS ? !ra.keys_locked && (d != PE_RAND_EASY || !ra.keys_moved)
+                                     : ra.keys_locked && !ra.keys_moved);
             moved += ra.keys_moved;
             for (unsigned i = 0; i < PE_RAND_SPOTS; ++i) {
                 changed += a[i] != g_pe_rand_spots[i].vanilla;
@@ -78,15 +80,15 @@ static void every_seed_passes(void) {
             }
         }
         assert(changed > 2000 * 20);   /* it does shuffle */
-        assert(d == PE_RAND_EASY || moved > 2000);
+        assert(d == PE_RAND_EASY || (PE_RAND_MOVE_KEYS ? moved > 2000 : !moved));
     }
 }
 
 static void golden_layouts(void) {
     static const uint32_t golden[PE_RAND_DIFFICULTIES][4] = {
-        {0x27A4876E, 0x119C1986, 0xD5157356, 0x37A30A16},
-        {0x5050CF46, 0x62B0F67E, 0xEF97A39E, 0xE05A3526},
-        {0x41EC8A2E, 0xE2230DF6, 0x78CBED6E, 0x7518903E},
+        {0x65009DB6, 0x6B0BF03E, 0x1FFC63C6, 0x274873AE},
+        {0xC4B55B8E, 0x442018FE, 0x3CDAA1CE, 0x3B762A76},
+        {0x8C6DBA5E, 0x428FBE26, 0xC0E0F616, 0xD2D4FCAE},
     };
     static uint16_t out[PE_RAND_SPOTS];
     int print = !golden[0][0];
@@ -204,10 +206,13 @@ static void partial_logic_data(void) {
 int main(void) {
     table_is_sane();
     every_seed_passes();
-    keys_move_with_logic_data();
-    needs_mean_the_key_spot_too();
-    partial_logic_data();
-    golden_layouts();
+    if (PE_RAND_MOVE_KEYS) {
+        keys_move_with_logic_data();
+        needs_mean_the_key_spot_too();
+        partial_logic_data();
+    } else {
+        golden_layouts();
+    }
     puts("pe_randomizer: ok");
     return 0;
 }

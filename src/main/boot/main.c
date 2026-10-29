@@ -257,17 +257,26 @@ static int HdWorker(void *unused){
     if(!SDL_CompareAndSwapAtomicInt(&host_hd.cancel,0,2)||!SDL_RenamePath(staging,final))goto end;
     staging[0]=0;if(!HdSavePointer(final,version,sha)){HdClean(final);goto end;}
     SDL_strlcpy(host_hd.result_path,final,sizeof(host_hd.result_path));SDL_strlcpy(host_hd.result_version,version,sizeof(host_hd.result_version));SDL_strlcpy(host_hd.result_sha,sha,sizeof(host_hd.result_sha));host_hd.success=1;host_hd.result_activate=1;
-    SDL_strlcpy(host_hd.result_message,host_hd.development?"Installed. Local preview overrides this pack.":"Installed. Restart; choose 2x or higher in Graphics.",sizeof(host_hd.result_message));
+    SDL_strlcpy(host_hd.result_message,host_hd.development?"Installed. Local preview overrides this pack.":"Installed. Choose 2x or higher in Graphics.",sizeof(host_hd.result_message));
 end:cJSON_Delete(catalog);if(*archive)SDL_RemovePath(archive);HdClean(staging);if(SDL_GetAtomicInt(&host_hd.cancel)==1){host_hd.success=0;SDL_strlcpy(host_hd.result_message,"Cancelled. Your previous pack is unchanged.",sizeof(host_hd.result_message));}if(host_hd.success)SDL_SetAtomicInt(&host_hd.progress,100);SDL_SetAtomicInt(&host_hd.done,1);return 0;
 }
 static const char *Host_HdStatus(void){return *host_hd.message?host_hd.message:"Download optional HD backgrounds from pe.polanka.ovh.";}
 static int Host_HdBusy(void){return SDL_GetAtomicInt(&host_hd.busy);}
 static int Host_HdPercent(void){return SDL_GetAtomicInt(&host_hd.progress);}
 static const char *Host_HdValue(int row){if(row==0)return host_hd.development?(host_hd.enabled?"Local preview":"Off"):(host_hd.enabled?"On":"Off");if(row==1)return Host_HdBusy()?"Cancel download":"Download / update";return *host_hd.active?"Verify files":"Not installed";}
-static void Host_HdPoll(void){if(!host_hd.thread||!SDL_GetAtomicInt(&host_hd.done))return;SDL_WaitThread(host_hd.thread,NULL);host_hd.thread=NULL;SDL_SetAtomicInt(&host_hd.busy,0);SDL_strlcpy(host_hd.message,host_hd.result_message,sizeof(host_hd.message));if(host_hd.success&&host_hd.result_activate){SDL_strlcpy(host_hd.active,host_hd.result_path,sizeof(host_hd.active));SDL_strlcpy(host_hd.version,host_hd.result_version,sizeof(host_hd.version));SDL_strlcpy(host_hd.archive_sha,host_hd.result_sha,sizeof(host_hd.archive_sha));host_hd.enabled=1;host_options.hd_backgrounds=1;if(host_options.enabled)Host_SaveOptions();}}
+void Render_RefreshHdBackgrounds(void);
+void MenuCard_RefreshHdBackground(void);
+static void Host_HdApply(void) {
+    if (!host_hd.development && *host_hd.active)
+        SDL_setenv_unsafe("PE_HD_BACKGROUNDS",host_hd.active,1);
+    Psyz_GpuSetSpriteAtlasesEnabled(host_hd.enabled);
+    Render_RefreshHdBackgrounds();
+    MenuCard_RefreshHdBackground();
+}
+static void Host_HdPoll(void){if(!host_hd.thread||!SDL_GetAtomicInt(&host_hd.done))return;SDL_WaitThread(host_hd.thread,NULL);host_hd.thread=NULL;SDL_SetAtomicInt(&host_hd.busy,0);SDL_strlcpy(host_hd.message,host_hd.result_message,sizeof(host_hd.message));if(host_hd.success&&host_hd.result_activate){SDL_strlcpy(host_hd.active,host_hd.result_path,sizeof(host_hd.active));SDL_strlcpy(host_hd.version,host_hd.result_version,sizeof(host_hd.version));SDL_strlcpy(host_hd.archive_sha,host_hd.result_sha,sizeof(host_hd.archive_sha));host_hd.enabled=1;host_options.hd_backgrounds=1;Host_HdApply();if(host_options.enabled)Host_SaveOptions();}}
 static void Host_HdAction(int row){
     Host_HdPoll();if(Host_HdBusy()){if(row==1)SDL_CompareAndSwapAtomicInt(&host_hd.cancel,0,1);return;}
-    if(row==0){if(!*host_hd.active){SDL_strlcpy(host_hd.message,"Download the background pack first.",sizeof(host_hd.message));return;}host_hd.enabled=!host_hd.enabled;host_options.hd_backgrounds=host_hd.enabled;Psyz_GpuSetSpriteAtlasesEnabled(host_hd.enabled);SDL_strlcpy(host_hd.message,host_options.scale<2?"Choose 2x or higher in Graphics; restart for HD.":"Changed. Restart to apply in every scene.",sizeof(host_hd.message));return;}
+    if(row==0){if(!*host_hd.active){SDL_strlcpy(host_hd.message,"Download the background pack first.",sizeof(host_hd.message));return;}host_hd.enabled=!host_hd.enabled;host_options.hd_backgrounds=host_hd.enabled;Host_HdApply();SDL_strlcpy(host_hd.message,host_options.scale<2?"Choose 2x or higher in Graphics for HD.":"Background setting applied.",sizeof(host_hd.message));return;}
     if(row==2&&host_hd.development){SDL_strlcpy(host_hd.message,"Local preview: integrity checks are disabled.",sizeof(host_hd.message));return;}
     if(row==2&&!*host_hd.active){SDL_strlcpy(host_hd.message,"No installed background pack to verify.",sizeof(host_hd.message));return;}
     host_hd.verify_only=row==2;host_hd.success=0;SDL_SetAtomicInt(&host_hd.cancel,0);SDL_SetAtomicInt(&host_hd.done,0);SDL_SetAtomicInt(&host_hd.progress,0);SDL_SetAtomicInt(&host_hd.busy,1);SDL_strlcpy(host_hd.message,row==2?"Verifying installed files...":"Checking latest background pack...",sizeof(host_hd.message));host_hd.thread=SDL_CreateThread(HdWorker,"HD backgrounds",NULL);if(!host_hd.thread){SDL_SetAtomicInt(&host_hd.busy,0);SDL_strlcpy(host_hd.message,"Could not start download.",sizeof(host_hd.message));}
@@ -1204,6 +1213,13 @@ static void Host_ClearSpeedBinding(HostOverlayState *state) {
 }
 
 /* The headless control console uses the same actions as the actual menu. */
+static void Host_ControlHd(int enabled,const char *directory) {
+    host_hd.development=0;
+    SDL_strlcpy(host_hd.active,directory,sizeof(host_hd.active));
+    host_hd.enabled=enabled;
+    Host_HdApply();
+}
+
 static void Host_ControlGraphics(int geometry, int antialiasing, int filtering) {
     const int values[3] = {geometry, antialiasing, filtering};
     HostOverlayState state = {.open=1, .page=HOST_PAGE_GRAPHICS};
@@ -2397,6 +2413,7 @@ image_error:
 images_ready:;
     host_options.scale = internal_resolution;
     g_BootHostGraphicsOptions = Host_ControlGraphics;
+    g_BootHostHdOptions = Host_ControlHd;
     {
         /* Keep CLI/headless disc names accurate in reports too. Copy both
          * before replacing picker storage: selection can be reversed. */

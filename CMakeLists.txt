@@ -558,6 +558,10 @@ if(BUILD_TESTING)
         add_test(NAME hd-mod-download-safety COMMAND ${Python3_EXECUTABLE}
             ${CMAKE_SOURCE_DIR}/tests/hd_mod_download.py $<TARGET_FILE:parasite-eve-pc>)
         set_tests_properties(hd-mod-download-safety PROPERTIES TIMEOUT 90 LABELS "downloads")
+        add_test(NAME original-game-hd-hot-apply COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_SOURCE_DIR}/tests/hd_hot_apply.py $<TARGET_FILE:parasite-eve-pc>)
+        set_tests_properties(original-game-hd-hot-apply PROPERTIES SKIP_RETURN_CODE 77
+            TIMEOUT 240 LABELS "game-assets;gpu;hd-assets")
         add_test(NAME original-game-hd-widescreen COMMAND ${Python3_EXECUTABLE}
             ${CMAKE_SOURCE_DIR}/tests/hd_widescreen.py $<TARGET_FILE:parasite-eve-pc>)
         set_tests_properties(original-game-hd-widescreen PROPERTIES SKIP_RETURN_CODE 77
@@ -784,7 +788,7 @@ target_link_libraries(parasite-eve-original-shadow PRIVATE psyz)
 if(BUILD_TESTING)
     # Resident script commands can open the original menu and render transition.
     # Link whole existing modules for every fixture that uses the real table.
-    foreach(script_target test-original-queue test-original-movement test-original-actor-animation test-original-camera)
+    foreach(script_target test-original-queue test-original-movement test-original-actor-animation test-original-camera test-host-settings)
         target_sources(${script_target} PRIVATE $<TARGET_OBJECTS:parasite-eve-original-shadow>)
     endforeach()
     foreach(script_target test-original-queue test-original-movement)

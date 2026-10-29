@@ -123,7 +123,8 @@ CRC and every material/reference file. Extraction accepts only flat known asset
 names, rejects duplicates, symlinks and oversized files, and uses UTF-8 SDL I/O.
 The active pointer changes atomically only after complete verification. Previous
 version directories are retained. A bad current copy can be verified and repaired;
-an unchanged healthy version does not download again. Restart applies new artwork.
+an unchanged healthy version does not download again. Installation and on/off immediately refresh presentation metadata for the current
+room and title, preserving native packets, animated descriptors and game state.
 
 On/off is saved under `[mods] hd_backgrounds` in the user's TOML. The active
 version/directory is in `mods/upscale/active.json` beside those preferences.
@@ -137,3 +138,8 @@ Downloads report `User-Agent: ParasiteEve/VERSION`, `X-PE-Version`, `X-PE-Build`
 completed transfers; update checks and HEAD requests do not count. It stores
 coarse client metadata and keyed daily visitor hashes, not raw IP addresses.
 Server source/deployment lives separately in `~/Projects/pe-mod-server`.
+
+Headless GPU control: `backgrounds 0|1 /absolute/pack/path` applies the same refresh
+and advances eight blanks. `tests/hd_hot_apply.py` compares late activation and
+off/on against a startup-loaded pack on the title and a live field scene, including
+exact native state, VRAM and PCM checks.

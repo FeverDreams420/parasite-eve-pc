@@ -154,6 +154,17 @@ jobs:
           cmake --build build --target test-crash-report --parallel 2
           ctest --test-dir build --output-on-failure --no-tests=error -R '^host-crash-report$'
           cmake --build build --parallel 2
+      - name: Require a self-contained Windows executable
+        run: |
+          objdump -p build/parasite-eve-pc.exe > build/windows-imports.txt
+          python3 - <<'PYIMPORTS'
+          from pathlib import Path
+          names = {line.split('DLL Name:', 1)[1].strip().lower() for line in Path('build/windows-imports.txt').read_text().splitlines() if 'DLL Name:' in line}
+          system = set('advapi32.dll bcrypt.dll cfgmgr32.dll comdlg32.dll crypt32.dll d3d12.dll d3dcompiler_47.dll dinput8.dll dxgi.dll gdi32.dll imm32.dll iphlpapi.dll kernel32.dll msvcrt.dll normaliz.dll ntdll.dll ole32.dll oleaut32.dll powrprof.dll secur32.dll setupapi.dll shell32.dll shlwapi.dll ucrtbase.dll user32.dll version.dll windowscodecs.dll winmm.dll winspool.drv wintrust.dll ws2_32.dll'.split())
+          unexpected = sorted(n for n in names if n not in system and not n.startswith(('api-ms-win-', 'ext-ms-win-')))
+          assert names and not unexpected, f'Unbundled Windows runtime dependencies: {unexpected}'
+          print('Windows imports contain only operating-system libraries.')
+          PYIMPORTS
       - name: Run source-only Windows runtime checks (no retail images)
         run: |
           ./build/parasite-eve-pc.exe --help

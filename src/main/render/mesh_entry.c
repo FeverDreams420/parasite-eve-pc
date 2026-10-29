@@ -94,8 +94,12 @@ static void Render_LoadHdWidescreen(void) {
             if(x<l || x>=r || y<y0 || y>=y1)valid=0;
         }
         if(!valid)break;
-        size=snprintf(filename,sizeof(filename),"%s/%016" PRIx64 ".png",hd_background_path,key);
-        if(size<0 || (size_t)size>=sizeof(filename) || Psyz_GpuLoadSpriteAtlas(key,filename)!=1){valid=0;break;}
+        int loaded=0;const char *formats[]={"webp","png","bmp"};
+        for(unsigned format=0;format<3 && !loaded;++format) {
+            size=snprintf(filename,sizeof(filename),"%s/%016" PRIx64 ".%s",hd_background_path,key,formats[format]);
+            if(size>=0 && (size_t)size<sizeof(filename))loaded=Psyz_GpuLoadSpriteAtlas(key,filename)==1;
+        }
+        if(!loaded){valid=0;break;}
         hd_wide[group].count=(unsigned)count;hd_wide[group].key=key;
         hd_wide[group].left=l;hd_wide[group].right=r;
     }
@@ -204,9 +208,9 @@ int Render_LoadMeshEntry(GeomEntry *entry, RenderTilePacket *buffer, void **end)
         u32 index=(u32)(entry-entries);
         atlas_key=Render_HdHash(hd_geometry_key,&index,4);
         char filename[4096];
-        const char *formats[]={"png","bmp"};
+        const char *formats[]={"webp","png","bmp"};
         int loaded=0;
-        for (unsigned format=0;format<2 && !loaded;++format) {
+        for (unsigned format=0;format<3 && !loaded;++format) {
             int size=snprintf(filename,sizeof(filename),"%s/%016" PRIx64 ".%s",hd_background_path,atlas_key,formats[format]);
             if (size>=0 && (size_t)size<sizeof(filename))
                 loaded=Psyz_GpuLoadSpriteAtlas(atlas_key,filename)==1;

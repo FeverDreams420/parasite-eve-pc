@@ -22,9 +22,12 @@ void MenuCard_FlipScreenPages(void) {
 
     const char *pack=getenv("PE_HD_BACKGROUNDS");
     if (pack && *pack) {
-        char filename[4096];int length=snprintf(filename,sizeof(filename),"%s/title.png",pack);
-        if (length>=0 && (size_t)length<sizeof(filename))
-            Psyz_VideoSetRgb24Backdrop(filename,g_MemcardImageBundle+g_MemcardImageOffsets[0]+sizeof(MemcardImage),320,204,20,16);
+        char filename[4096];const char *formats[]={"webp","png"};
+        for(unsigned format=0;format<2;++format) {
+            int length=snprintf(filename,sizeof(filename),"%s/title.%s",pack,formats[format]);
+            if(length>=0 && (size_t)length<sizeof(filename) &&
+               Psyz_VideoSetRgb24Backdrop(filename,g_MemcardImageBundle+g_MemcardImageOffsets[0]+sizeof(MemcardImage),320,204,20,16)==1)break;
+        }
     }
     for (i = 0; i < 2; i++) {
         page = g_MemcardScreenPage == 0;

@@ -91,3 +91,24 @@ GPU materials, and `original-game-hd-widescreen`: a real fresh-game replay check
 exact 4:3 output, state/VRAM/PCM parity and persistent side artwork during a
 stationary-camera dialogue. The latter requires `PE_TEST_DISC` and
 `PE_TEST_HD_BACKGROUNDS` pointing to the reviewed M002 pack, otherwise it skips.
+
+
+## High-quality WebP distribution
+
+`compress_webp.py SOURCE DESTINATION --quality 95` creates a separate pack.
+Each `<key>.webp` stores only the 4x HD material. Its `<key>.ref.png` retains the
+native reference plane losslessly, so palette fallback, coverage, STP and native
+VRAM are unchanged. The title uses lossless WebP. Original PNG packs remain
+intact. The runtime prefers WebP, then PNG/BMP; a missing or invalid reference
+plane rejects that WebP and allows the existing fallback path.
+
+PsyZ links the pinned libwebp 1.6.0 decoder statically through CMake. No external
+codec installation is needed to play. GPU memory usage is unchanged after decode.
+The current 4071-atlas-plus-title distribution is 325,619,280 bytes including its
+compact manifest, compared with 1,434,337,656 bytes for the PNG pack. Full authoring
+metadata stays in the source pack; distribution records keep hashes and asset IDs.
+
+Offline regression: `python tests/hd_pack_webp.py` (Pillow and cwebp required).
+The GPU regression exercises lossy WebP with exact native references, changed
+palette fallback, native VRAM equality, and missing-reference rejection. Real
+headless HD and widescreen regressions also pass with the WebP-only pack.

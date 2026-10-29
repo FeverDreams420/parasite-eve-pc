@@ -159,12 +159,14 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
         $<TARGET_OBJECTS:parasite-eve-original-pad>
         $<TARGET_OBJECTS:parasite-eve-original-shadow>)
     target_include_directories(test-mod-randomizer-rooms PRIVATE ${PROJECT_SOURCE_DIR}/include
-        "$<TARGET_PROPERTY:SDL3::SDL3,INTERFACE_INCLUDE_DIRECTORIES>")
+        ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer "$<TARGET_PROPERTY:SDL3::SDL3,INTERFACE_INCLUDE_DIRECTORIES>")
     target_compile_definitions(test-mod-randomizer-rooms PRIVATE __psyz PE_MODS=1)
     target_link_libraries(test-mod-randomizer-rooms PRIVATE psyz)
+    # Second file: the randomizer's spot table against the walk (sites, and the GiveItems it leaves alone).
     add_test(NAME mod-randomizer-rooms COMMAND test-mod-randomizer-rooms
-        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-rooms.txt")
-    set_tests_properties(mod-randomizer-rooms PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets")
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-rooms.txt" "${CMAKE_CURRENT_BINARY_DIR}/randomizer-spots.txt")
+    set_tests_properties(mod-randomizer-rooms PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
+        ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer spots:")
 
     # The New York map (door target M0000): destinations, their enable bits and the room each pick loads.
     add_executable(test-mod-randomizer-exits ${PROJECT_SOURCE_DIR}/tests/pe_mod_randomizer_exits_test.c

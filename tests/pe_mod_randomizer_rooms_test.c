@@ -9,7 +9,12 @@
  * running them. Code targets: op 0 goto, 5 jump if zero (not on a constant nonzero), 29 branch, 18 child
  * routine, 20 event routine (selector 1-3). Data targets: ops 172, 226, 227. A routine ends at op 0,
  * 1 or 32, at the FFFFFFFF word between routines, or at a door followed by that word. Door lines end
- * with the target: M0000, M5000 and M8888 are the scenes named at door_room. */
+ * with the target: M0000, M5000 and M8888 are the scenes named at door_room.
+ *
+ * The randomizer's table (pe_rand_spots.h) against the loaded rooms: every site must hold the 16 bytes
+ * it expects and start a walked step, every listed GiveItem must be a walked op 167. A second path
+ * argument gets one line per site and one per walked GiveItem (op 167), naming the spot that lists it
+ * or "-": the gives the randomizer doesn't touch. */
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,6 +30,7 @@
 #include "pe1/scene_room.h"
 #include "pe1/scene_room_load.h"
 #include "pe1/script_queue.h"
+#include "pe_rand_spots.h"
 
 /* Fixture I/O: the test-disc object renames the real image reads to these. */
 int CdRom_ImageReadSectorsFromLba(u32 lba, void *buffer, u32 count);
@@ -64,7 +70,56 @@ static int door_room(u32 token) {
     return room >= 1 && room <= SCENE_ROOM_COUNT && g_RoomSectorTable[room - 1].roomSectors ? room : DOOR_NONE;
 }
 
-static void walk_room(unsigned room, FILE *out, unsigned *steps_total, unsigned *doors_total) {
+static const char *const spot_kinds[] = { "chest", "pickup", "gift" };
+static unsigned sites_total, gives_listed, gives_walked, gives_unlisted;
+
+/* Spot of the listed GiveItem at this room offset, or -1. */
+static int listed_give(unsigned room, size_t at) {
+    for (unsigned i = 0; i < PE_RAND_GIVES; ++i)
+        if (g_pe_rand_gives[i].map == room && g_pe_rand_gives[i].at == at) return g_pe_rand_gives[i].spot;
+    return -1;
+}
+
+/* A table offset (from the room data's start) that starts a walked step of the task block at offset. */
+static int walked(const u8 *kind, size_t offset, size_t base, size_t at) {
+    return at >= offset && at - offset < base && (at - offset) % 4 == 0 && kind[(at - offset) / 4] == WORD_STEP;
+}
+
+static void audit_spots(unsigned room, const u8 *assets, size_t room_bytes, size_t offset, size_t base, const u8 *kind,
+                        const u32 *gives, const u32 *give_entity, unsigned give_count, FILE *spots) {
+    for (unsigned i = 0; i < PE_RAND_SITES; ++i) {
+        const PeRandSite *s = &g_pe_rand_sites[i];
+        if (s->map != room) continue;
+        ++sites_total;
+        int same = s->at + 16 <= room_bytes;
+        for (unsigned w = 0; same && w < 4; ++w) same = word_at(assets, s->at + 4 * w) == s->expect[w];
+        int on_step = walked(kind, offset, base, s->at);
+        if (!same) FAIL("M%03u site +%06X (spot %u) differs from the table's bytes", room, s->at, s->spot);
+        if (!on_step) FAIL("M%03u site +%06X (spot %u) is no walked step", room, s->at, s->spot);
+        if (spots) fprintf(spots, "site\tM%03u\t+%06X\tspot=%u\t%s\top=%u\t%s\n", room, s->at, s->spot,
+                           spot_kinds[g_pe_rand_spots[s->spot].kind], s->expect[0] & 0x1FFF, on_step ? "walked" : "unwalked");
+    }
+    for (unsigned i = 0; i < PE_RAND_GIVES; ++i) {
+        const PeRandGive *g = &g_pe_rand_gives[i];
+        if (g->map != room) continue;
+        ++gives_listed;
+        if (!walked(kind, offset, base, g->at) || (word_at(assets, g->at) & 0x1FFF) != 167)
+            FAIL("M%03u give +%06X (spot %u) is no walked GiveItem", room, g->at, g->spot);
+    }
+    for (unsigned i = 0; i < give_count; ++i) {
+        size_t at = offset + gives[i];
+        int spot = listed_give(room, at);
+        Step s; decode(assets, at, &s);
+        ++gives_walked; if (spot < 0) ++gives_unlisted;
+        if (!spots) continue;
+        fprintf(spots, "give\tM%03u\t+%06zX\t%u\t%#x", room, at, give_entity[i], gives[i]);
+        for (u32 k = 0; k < s.count; ++k) fprintf(spots, "%s%u:%#x", k ? "," : "\t", s.modes[k], s.values[k]);
+        if (spot >= 0) fprintf(spots, "\tspot=%d\t%s\n", spot, spot_kinds[g_pe_rand_spots[spot].kind]);
+        else fputs("\t-\n", spots);
+    }
+}
+
+static void walk_room(unsigned room, FILE *out, FILE *spots, unsigned *steps_total, unsigned *doors_total) {
     const u8 *assets = (const u8 *)g_GameState.loaded_scene_assets;
     size_t room_bytes = (size_t)g_RoomSectorTable[room - 1].roomSectors * 2048;
     const SceneRoomDirectory *directory = (const void *)(assets + word_at(assets, 4));
@@ -78,7 +133,8 @@ static void walk_room(unsigned room, FILE *out, unsigned *steps_total, unsigned 
     u32 *entries = malloc(count * sizeof(u32));
     u8 *kind = calloc(size / 4 + 1, 1);
     size_t *work = malloc((size / 4 + count + 1) * sizeof(size_t));
-    unsigned doors = 0, steps = 0;
+    u32 *gives = malloc((size / 8 + 1) * sizeof(u32)), *give_entity = malloc((size / 8 + 1) * sizeof(u32));
+    unsigned doors = 0, steps = 0, give_count = 0;
     for (u32 t = 0; t < count; ++t) {
         entries[t] = word_at(block, 8 + 4 * (size_t)t);
         if (tasks->offsets[t] != block + entries[t]) FAIL("M%03u entry %u differs from the relocated one", room, t);
@@ -103,6 +159,7 @@ static void walk_room(unsigned room, FILE *out, unsigned *steps_total, unsigned 
                 if (at + s.bytes > base) { FAIL("M%03u entity %u: step at %#zx runs past the code", room, t, at); break; }
                 if (!g_ScriptQueueOpcodeHandlers[s.op]) { FAIL("M%03u entity %u: op %u at %#zx has no handler", room, t, s.op, at); break; }
                 kind[at / 4] = WORD_STEP; ++steps;
+                if (s.op == 167) { gives[give_count] = (u32)at; give_entity[give_count++] = t; }
                 int target = -1, data = -1;
                 if (s.op == 0 || s.op == 18) target = 0;
                 else if (s.op == 5 && !(s.modes[0] == 0 && s.values[0])) target = 1;
@@ -136,7 +193,8 @@ static void walk_room(unsigned room, FILE *out, unsigned *steps_total, unsigned 
         }
     }
     *steps_total += steps; *doors_total += doors;
-    free(entries); free(kind); free(work);
+    audit_spots(room, assets, room_bytes, offset, base, kind, gives, give_entity, give_count, spots);
+    free(entries); free(kind); free(work); free(gives); free(give_entity);
 }
 
 /* Disc 2 must carry the same room table and room bytes as disc 1. */
@@ -166,26 +224,34 @@ int main(int argc, char **argv) {
     const char *path = getenv("PE_TEST_DISC"), *path2 = getenv("PE_TEST_DISC2");
     if (!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS") ? 1 : 77;
     PeDisc disc = {0};
+    /* Nothing here draws, but ResetGraph opens psyz: keep it windowless whichever way the test runs. */
+    if (!SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "PSYZ_HEADLESS", "1", true) ||
+        !SDL_SetEnvironmentVariable(SDL_GetEnvironment(), "SDL_AUDIODRIVER", "dummy", true)) return 1;
     if (!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc, path)) return 1;
     ResetGraph(0); CdRom_BindImage(&disc, NULL);
     if (Asset_OpenPeImage() != 0) return 1;
     Boot_InitGameState(); D_8009CDC8 = 'm';
-    FILE *out = argc > 1 ? fopen(argv[1], "w") : NULL;
-    if (argc > 1 && !out) return 1;
+    FILE *out = argc > 1 ? fopen(argv[1], "w") : NULL, *spots = argc > 2 ? fopen(argv[2], "w") : NULL;
+    if ((argc > 1 && !out) || (argc > 2 && !spots)) return 1;
     unsigned rooms = 0, steps = 0, doors = 0;
     for (unsigned room = 1; room <= SCENE_ROOM_COUNT; ++room) {
         if (!g_RoomSectorTable[room - 1].roomSectors) continue;
         char name[16]; snprintf(name, sizeof(name), "m%04ui", room);
         int status = Scene_LoadRoom((u32)Text_ParseBase32Id((signed char *)name));
         if (status) { FAIL("M%03u: Scene_LoadRoom %d", room, status); continue; }
-        ++rooms; walk_room(room, out, &steps, &doors);
+        ++rooms; walk_room(room, out, spots, &steps, &doors);
     }
     if (out) fclose(out);
+    if (spots) fclose(spots);
+    if (sites_total != PE_RAND_SITES) FAIL("%u of %u table sites are in a loaded room", sites_total, PE_RAND_SITES);
+    if (gives_listed != PE_RAND_GIVES) FAIL("%u of %u table gives are in a loaded room", gives_listed, PE_RAND_GIVES);
     int discs = 1;
     if (path2 && *path2) { if (!same_rooms(&disc, path2)) FAIL("disc 2 rooms differ from disc 1"); else discs = 2; }
     CdRom_BindImage(NULL, NULL); pe_disc_close(&disc);
     if (failures) { fprintf(stderr, "%u failures\n", failures); return 1; }
     printf("Randomizer rooms: %u rooms loaded through Scene_LoadRoom, %u steps walked, %u doors to rooms or main-loop scenes, %u disc(s) checked\n",
            rooms, steps, doors, discs);
+    printf("Randomizer spots: %u sites and %u gives of the table on walked steps; %u GiveItem steps walked, %u not in the table\n",
+           sites_total, gives_listed, gives_walked, gives_unlisted);
     return 0;
 }

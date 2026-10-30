@@ -8,11 +8,11 @@
  * same layout on every machine and build of the same logic version.
  *
  * Key logic (pe_randomizer.h): a needs bit is met when its key is held and its key's own spot has
- * been reached. A key moves within its own story day, or back to an earlier day's chest that stays
- * open for as long as the key's lock can ask for it (late), and only off days where every key spot
- * has needs data; a key spot without data counts as needing every key of the days before it, which
- * is all the game asks while that day's keys stay where they are. With PE_RAND_MOVE_KEYS at 0 no key
- * moves on any difficulty. */
+ * been reached. A key moves within its own story day, or to a chest of an earlier day (on Hard, also
+ * its own day) that stays open for as long as the key's lock can ask for it (late), and only off days
+ * where every key spot has needs data; a key spot without data counts as needing every key of the
+ * days before it, which is all the game asks while that day's keys stay where they are. With
+ * PE_RAND_MOVE_KEYS at 0 no key moves on any difficulty. */
 #include <string.h>
 
 #include "pe_randomizer.h"
@@ -107,15 +107,15 @@ static uint32_t sweep(const PeLogic *l, const int *at, uint32_t assumed) {
 /* Shuffle group of a spot's item: 0 = stays vanilla. Easy keeps items on their story day. */
 static unsigned bucket(const PeRandSpot *s, int difficulty) { return difficulty == PE_RAND_EASY ? s->day : 1; }
 
-/* A spot key k may move to (besides its own), on Medium and Hard alike, from a day whose key spots
- * all have data: a chest with logic data, either on the key's own story day and reached before the
- * key's lock was first used, or on an earlier day and open whenever the lock needs the key (any other
- * earlier-day chest can be walked past for good). Any area. */
+/* A spot key k may move to (besides its own), on Medium and Hard, from a day whose key spots all
+ * have data: a chest with logic data, on the key's own story day and reached before the key's lock was
+ * first used (Hard: or open whenever the lock needs the key), or on an earlier day and open whenever
+ * the lock needs the key (any other earlier-day chest can be walked past for good). Any area. */
 static int key_fits(const PeLogic *l, unsigned to_spot, unsigned k, int difficulty) {
     const PeRandSpot *to = &l->spots[to_spot], *from = &l->spots[l->keys[k]];
     if (difficulty == PE_RAND_EASY || to->kind != PE_RAND_CHEST || (to->flags & PE_RAND_KEY) ||
         to->needs == PE_RAND_NEEDS_UNKNOWN || from->day >= PE_RAND_DAYS || !l->day_complete[from->day]) return 0;
-    if (to->day == from->day) return (to->before >> k) & 1;
+    if (to->day == from->day) return ((to->before | (difficulty == PE_RAND_HARD ? to->late : 0)) >> k) & 1;
     return to->day && to->day < from->day && ((to->late >> k) & 1);
 }
 

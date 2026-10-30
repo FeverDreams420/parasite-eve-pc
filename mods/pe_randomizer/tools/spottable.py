@@ -6,11 +6,13 @@ names (the safe side), and takes the keys of the last file that lists it. The ta
 keys-by-hand.txt keys-walk.txt: the walk's before= (solved with the story gates' rule, a key opens its
 lock once held and its own spot reached) replaces the hand table's, and the hand table's needs stay
 (the walk reads the St. Francis door as open: M329 sets its flag).
---windows windows.txt (windowruns.py table) adds each spot's late= keys: keys of a later story day the
-chest can take, because the walk opened it at every story value where the key's lock needed the key
+--windows windows.txt (windowruns.py table) adds each spot's late= keys: keys of the same or a later
+story day the chest can take, because the walk opened it at every story value where the key's lock needed the key
 (counted from the key's first give on: before that, the vanilla game can't ask for it either; a key with
 no lock row: every value its own spot gives it at). The spot index is windows.txt's spot=. A needs file's
-late= (empty) keeps a spot from them (chest 84: the walk opens it, play needs a touch first).
+late= (empty) keeps a spot from them (chest 84: the walk opens it, play needs a touch first). Hospital
+chests take no key of their own day this way: a window is when a chest opens, not whether the player can
+still walk back to it, and the power-off rooms are one way (hospital-map.txt keeps that by hand).
 
 A spot is one place that hands out an item; a site is one script word the mod rewrites for it
 (a spot in several room versions, or with a roll of up to three items, has several sites). Every site
@@ -230,7 +232,7 @@ def read_windows(path):
     return fires, locks
 
 def late_keys(spot_list, needs, windows):
-    """{spot: key items}: keys of a later day a chest with key logic data is open for (see the docstring)."""
+    """{spot: key items}: keys of the same or a later day a chest with key logic data is open for (see the docstring)."""
     fires, locks = windows
     out = {}
     for k, ms in enumerate(spot_list):
@@ -240,7 +242,9 @@ def late_keys(spot_list, needs, windows):
         want = {x for x in locks.get(c["vanilla"], fires[k]) if x >= first}
         for n, members in enumerate(spot_list):
             x = members[0]
-            if (want and x["kind"] == "CHEST" and x["vanilla"] not in KEYS and day(x["map"]) < day(c["map"])
+            same_day = day(x["map"]) == day(c["map"])
+            if (want and x["kind"] == "CHEST" and x["vanilla"] not in KEYS and day(x["map"]) <= day(c["map"])
+                    and not (same_day and AREA_NAMES[area(x["map"])] == "Hospital")
                     and any((y["map"], y["give"]) in needs for y in members) and want <= fires.get(n, set())
                     and not any((y["map"], y["give"]) in NO_LATE for y in members)):
                 out.setdefault(n, set()).add(c["vanilla"])

@@ -65,15 +65,18 @@ static int in_rooms(unsigned i, unsigned lo, unsigned hi) {
 
 /* Where key item `key` may sit at spot i (not its own spot k): a chest of the key's own story day and
  * save area (tools/keys-walk.txt), never chest 84 (M126: it appears only after a touch in the room),
- * or an earlier day's chest open whenever the key's lock asks (tools/windows.txt): the Klamp Key and
- * the Chinatown charm on Days 2-4, the Elevator Key on Day 2, the NYPD Special charm in chest 19.
- * Hospital (tools/hospital-map.txt): fuses and the St. Francis / Blue keys in the power-off rooms
- * (M320-M339, the only way to the fuse box); the Green Cardkey, the Elevator Key and the charm in a
- * chest that stays reachable to the end (a site in M125-M154; the story gate keeps the Green door shut
- * until the box is done, so the Green Cardkey may come early). */
-static int key_may_sit(unsigned key, unsigned i, unsigned k) {
+ * or a chest open whenever the key's lock asks (tools/windows.txt): on earlier days the Klamp Key and
+ * the Chinatown charm on Days 2-4, the Elevator Key on Day 2, the NYPD Special charm in chest 19; on
+ * Hard also on its own day the Klamp Key in the Warehouse, the Chinatown charm anywhere on Day 4, the
+ * Elevator Key outside the hospital, the Helpful charm in M097. Hospital (tools/hospital-map.txt): fuses and the
+ * St. Francis / Blue keys in the power-off rooms (M320-M339, the only way to the fuse box); the Green
+ * Cardkey, the Elevator Key and the charm in a chest that stays reachable to the end (a site in
+ * M125-M154; the story gate keeps the Green door shut until the box is done, so the Green Cardkey may
+ * come early). */
+static int key_may_sit(unsigned key, unsigned i, unsigned k, int difficulty) {
     const PeRandSpot *to = &g_pe_rand_spots[i], *from = &g_pe_rand_spots[k];
-    if (to->day < from->day && i != 84) {
+    if (i == 84 || to->day > from->day) return 0;
+    if (to->day < from->day) {
         switch (key) {
         case 0xD5: case 0xCB: return to->day >= 2;
         case 0xDA: return to->day == 2;
@@ -81,7 +84,12 @@ static int key_may_sit(unsigned key, unsigned i, unsigned k) {
         default: return 0;
         }
     }
-    if (to->day != from->day || to->area != from->area || i == 84) return 0;
+    if (difficulty == PE_RAND_HARD) switch (key) {
+    case 0xD5: case 0xCB: return 1;
+    case 0xDA: if (to->area != from->area) return 1; break;
+    case 0xCC: if (in_rooms(i, 97, 97)) return 1; break;
+    }
+    if (to->area != from->area) return 0;
     switch (key) {
     case 0xCE: case 0xCF: case 0xD0: case 0xD1: case 0xD2: return in_rooms(i, 320, 339);
     case 0xCC: case 0xD3: case 0xDA: return in_rooms(i, 125, 154);
@@ -110,7 +118,7 @@ static void every_seed_passes(void) {
                 changed += a[i] != g_pe_rand_spots[i].vanilla;
                 for (unsigned k = 0; k < PE_RAND_SPOTS; ++k)
                     if ((g_pe_rand_spots[k].flags & PE_RAND_KEY) && a[i] == g_pe_rand_spots[k].vanilla && i != k) {
-                        assert(g_pe_rand_spots[i].kind == PE_RAND_CHEST && key_may_sit(a[i], i, k));
+                        assert(g_pe_rand_spots[i].kind == PE_RAND_CHEST && key_may_sit(a[i], i, k, d));
                         other_room += !share_room(i, k);
                         other_day += g_pe_rand_spots[i].day != g_pe_rand_spots[k].day;
                     }
@@ -123,9 +131,9 @@ static void every_seed_passes(void) {
 
 static void golden_layouts(void) {
     static const uint32_t golden[PE_RAND_DIFFICULTIES][4] = {
-        {0x2735878A, 0x10E34952, 0x13BDFAA2, 0x7EFB888A},
-        {0x11D8CBDA, 0xB1F79A92, 0x7DEF210A, 0x8E9BEA42},
-        {0x240D97CA, 0x410CB9F2, 0x7E6C5F12, 0x07BD35A2},
+        {0xB0E64142, 0xFED695C2, 0xC194C9CA, 0x603C6F32},
+        {0xFADC98EA, 0x77AA8F3A, 0x2DDEE70A, 0xE9E1E4DA},
+        {0xD1E39E32, 0xCC6EE75A, 0x5A19F07A, 0xD39E1EFA},
     };
     static uint16_t out[PE_RAND_SPOTS];
     int print = !golden[0][0];
@@ -158,10 +166,11 @@ static void keys_move_with_logic_data(void) {
         {0x0A, PE_RAND_CHEST, 2, 4, 0, 0, ALL, 0},       /* an earlier day, no late bits: no key */
         {0x0B, PE_RAND_CHEST, 2, 4, 0, 0, 0, 4},      /* an earlier day open while C's lock asks: C only */
         {0x0C, PE_RAND_CHEST, 4, 7, 0, 0, ALL, ALL},  /* a later day: no key */
+        {0x0D, PE_RAND_CHEST, 3, 7, 0, 0, 0, 2},      /* its own day, past every lock but open while B's asks: B, Hard only */
     };
     enum { N = sizeof t / sizeof t[0] };
     uint16_t out[N];
-    unsigned moved = 0, other_area = 0, earlier_day = 0;
+    unsigned moved = 0, other_area = 0, earlier_day = 0, same_day_late = 0;
     for (int d = PE_RAND_MEDIUM; d <= PE_RAND_HARD; ++d)
         for (uint32_t seed = 0; seed < 3000; ++seed) {
             PeRandResult r;
@@ -174,10 +183,12 @@ static void keys_move_with_logic_data(void) {
             }
             assert(out[11] < 0xC8 && out[12] < 0xC8 && out[13] < 0xC8 && out[15] < 0xC8);
             assert(out[14] < 0xC8 || out[14] == 0xCA);
+            assert(out[16] < 0xC8 || (d == PE_RAND_HARD && out[16] == 0xC9));
             other_area += out[9] >= 0xC8;   /* Medium and Hard alike */
             earlier_day += out[14] == 0xCA;
+            same_day_late += out[16] == 0xC9;
         }
-    assert(moved > 1000 && other_area > 0 && earlier_day > 0);
+    assert(moved > 1000 && other_area > 0 && earlier_day > 0 && same_day_late > 0);
     /* the checks catch a key that can't be reached: A behind A */
     uint16_t bad[N];
     for (unsigned i = 0; i < N; ++i) bad[i] = t[i].vanilla;

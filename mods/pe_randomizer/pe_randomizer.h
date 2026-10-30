@@ -10,8 +10,8 @@
 /* Raise PE_RAND_LOGIC_VERSION whenever the same seed would give a different layout (the generator,
  * its rules or PE_RAND_TABLE_VERSION). A save keeps the versions it was made with; a build that
  * doesn't know them leaves that game's items vanilla rather than moving them under the player. */
-#define PE_RAND_LOGIC_VERSION 10
-#define PE_RAND_TABLE_VERSION 7
+#define PE_RAND_LOGIC_VERSION 11
+#define PE_RAND_TABLE_VERSION 8
 
 enum { PE_RAND_EASY, PE_RAND_MEDIUM, PE_RAND_HARD, PE_RAND_DIFFICULTIES };
 
@@ -37,8 +37,9 @@ enum { PE_RAND_KEY = 1 };   /* spot flag: its vanilla item is a key item that un
  *           the days before it, and keeps its own key (and every key of its day stays put).
  *   before  keys whose lock was first used after a run had reached this spot: only those may be put
  *           here, so a key never sits in a spot the player could already have walked past for good.
- *   late    keys of a later story day this chest may take: the story-windows walk opened it at every
- *           story value where the key's lock needed the key (tools/windowruns.py, spottable.py). */
+ *   late    keys of a later story day (on Hard, also its own day) this chest may take: the
+ *           story-windows walk opened it at every story value where the key's lock needed the key
+ *           (tools/windowruns.py, spottable.py). */
 #define PE_RAND_NEEDS_UNKNOWN 0xFFFFFFFFu
 #define PE_RAND_MAX_KEYS 32
 

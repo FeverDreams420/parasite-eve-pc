@@ -1,23 +1,28 @@
-"""Spot table for the pe_randomizer mod, read from a USA disc:
-python -I spottable.py <disc.bin> [needs.txt] > pe_rand_spots.h
+"""Spot table for the pe_randomizer mod, read from a USA disc and the mod-randomizer-rooms ctest's walk:
+python -I spottable.py <disc.bin> <randomizer-rooms.txt> [needs.txt] > pe_rand_spots.h
 needs.txt (from keylogic.py) gives the keys each spot needs and the keys it may take; spots it
 doesn't list stay unknown.
 
 A spot is one place that hands out an item; a site is one script word the mod rewrites for it
-(a spot in several room versions, or with a roll of two items, has several sites). Every site
+(a spot in several room versions, or with a roll of up to three items, has several sites). Every site
 carries the 16 bytes it expects (step header, mode word, two operands), so the mod only patches
-a room whose script is exactly what was scanned here.
+a room whose script is exactly what was scanned here. Sites come from walked steps only (the ctest's
+listing): a raw scan of the room bytes also finds words inside data that look like steps.
 
   chest   item set at room start, given through an actor slot, with a left-behind-item variable
-          (full bag: Aya can swap, the chest keeps her item). Rolls of two count as one spot.
-  pickup  item set just before the give (no left-behind variable): keys on the floor.
+          (full bag: Aya can swap, the chest keeps her item).
+  pickup  item set just before the give (no left-behind variable): keys on the floor, rolls of two.
   gift    GiveItem with the item as an immediate, plus its "You got X" popup when it has one and
           a full-bag swap menu (op 169) that names the item itself.
 
-Left out (they stay vanilla): Wayne (M048, M052), the debug room (M360), the Chrysler Building,
-the shared museum and cruiser routines, ?? lines of chests.py, the Theater keys (their doors
-check a story flag), and chests shared by rooms of different days (one chest or a reused
-variable: until that's known, moving either could lose an item)."""
+Chests and pickups are one spot when they share a left-behind variable or an opened / taken flag
+(a V|bit set next to the give): one chest in several room versions or on several days. A spot over
+several days takes the earliest; versions that share only a variable across days stay vanilla (a
+reused variable, not one chest).
+
+Left out (they stay vanilla): Wayne (M048, M052, and M108 whose chests share his flags), the debug
+room (M360), the Chrysler Building, the shared museum and cruiser routines, the Theater keys (their
+doors check a story flag), and spots whose versions hold different items."""
 import os, struct, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import dis as D
@@ -35,7 +40,7 @@ AREA_NAMES = ["?", "Theater", "Sewer", "NYPD", "Central Park", "Soho", "Hospital
               "Subway", "Museum", "Warehouse", "Carrier", "Liberty", "Cruiser"]
 # Story day by area for maps 288 and up (319-381 repeat earlier places); NYPD is visited on two days.
 AREA_DAY = {1: 1, 2: 1, 4: 2, 5: 3, 6: 3, 7: 4, 8: 4, 9: 4, 10: 5, 11: 5, 12: 6, 13: 6, 14: 6}
-SKIP_MAPS = {48, 52, 360} | set(range(288, 319)) | set(range(382, 425)) | set(range(434, 438))
+SKIP_MAPS = {48, 52, 108, 360} | set(range(288, 319)) | set(range(382, 425)) | set(range(434, 438))
 GIFT_MAPS = {1, 99, 100, 102, 111, 116, 117, 118, 154}   # character gifts checked by hand (dis.py)
 FIXED_KEYS = {0xC8, 0xC9}                                  # Theater: the doors check a story flag
 CUT_KEYS = {0xD4, 0xD8, 0xD9, 0xDC}
@@ -54,74 +59,107 @@ def word(b, i): return struct.unpack_from("<I", b, i)[0]
 def is_step(b, i, op, argc): h = word(b, i); return (h & 0x1FFF) == op and ((h >> 13) & 15) == argc
 def site(b, i, operand): return (i, b[i:i + 16], operand)   # patch the operand word (0 or 1) at i + 8 + 4 * operand
 
-def chest_feeds(b, g):
-    """(item sites, left-behind variables) feeding the slot given at g: chests.py's walk, keeping offsets."""
-    src = word(b, g + 8)
-    lo = max(0, g - 0x1400)
-    lo = next((i + 4 for i in range(g - 4, lo - 1, -4) if is_step(b, i, 167, 2)), lo)
-    feeds = {(1, src): "A"}; items = {}
+def task_block(b):
+    """Offset of the room's task block in the room data: the listing's offsets count from it."""
+    table = word(b, word(b, 4) + 0x14) & 0x3FFFFF
+    return word(b, table + 4) & 0xFFFFFF
+
+def read_walk(path):
+    """{map: {entity: [(offset, op, [(mode, value)])]}} from the rooms ctest listing, sorted by offset."""
+    rooms = {}
+    for line in open(path):
+        f = line.rstrip("\n").split("\t")
+        if f[0] != "step": continue
+        args = [(int(m), int(v, 16)) for m, v in (x.split(":") for x in f[5].split(","))] if len(f) > 5 and f[5] else []
+        rooms.setdefault(int(f[1][1:]), {}).setdefault(int(f[2]), []).append((int(f[3], 16), int(f[4]), args))
+    for entities in rooms.values():
+        for steps in entities.values(): steps.sort()
+    return rooms
+
+def slot_feeds(steps, g, slot):
+    """(item sites, left-behind variables) feeding the slot given at g: the entity's op 10 AssignValue
+    steps since its previous give that pass an immediate on to the slot (chests.py's trace, walked steps only)."""
+    lo = max([a for a, op, _ in steps if op == 167 and a < g] + [-1])
+    assigns = [(a, args) for a, op, args in steps if op == 10 and lo < a < g and len(args) == 2]
+    feeds = {(1, slot): "A"}; items = {}
     for _ in range(3):
-        for i in range(lo, g, 4):
-            hh, tail = struct.unpack_from("<II", b, i)
-            if (hh & 0x1FFF) != 10 or ((hh >> 13) & 15) != 2 or tail != 0 or (hh >> 23): continue
-            m0, m1 = (hh >> 17) & 7, (hh >> 20) & 7
-            d0, d1 = struct.unpack_from("<II", b, i + 8)
+        for a, ((m0, d0), (m1, d1)) in assigns:
             via = feeds.get((m0, d0))
             if via is None: continue
             if m1 in (1, 2, 4): feeds.setdefault((m1, d1), "V" if m1 == 2 else via)
-            elif m1 == 0 and d1 < 0x200 and via == "A": items[i] = d1
+            elif m1 == 0 and d1 < 0x200 and via == "A": items[a] = d1
     return items, sorted(d for (m, d) in feeds if m == 2)
 
-def scan(path):
+def slot_flags(steps):
+    """{give offset: {(variable, bit)}}: the flags an entity sets (op 9 ORs a bit into a temp, op 10 stores
+    it back) within 0x100 bytes of one of its slot gives, owned by the nearest. Chests set their opened
+    flag just before the give, pickups their taken flag just after. mod-randomizer-rooms uses the same rule."""
+    gives = [a for a, op, args in steps if op == 167 and len(args) == 2 and args[0][0] == 1]
+    out = {}
+    for (a, op, args), (_, op2, args2) in zip(steps, steps[1:]):
+        if op != 9 or len(args) != 4 or args[0] != (0, 2) or args[1][0] != 3 or args[2][0] != 2 or args[3][0] != 0: continue
+        if op2 != 10 or args2 != [args[2], args[1]]: continue
+        near = [g for g in gives if abs(g - a) <= 0x100]
+        if near: out.setdefault(min(near, key=lambda g: abs(g - a)), set()).add((args[2][1], args[3][1]))
+    return out
+
+def scan(path, walk):
     chests, gifts = [], []
     for m in range(1, D.ROOMS + 1):
-        if m in SKIP_MAPS: continue
-        b = D.room(path, m)
-        for g in range(0, len(b) - 24, 4):
-            if not is_step(b, g, 167, 2): continue
-            mode = (word(b, g) >> 17) & 7
-            if mode == 1:
-                items, vars_ = chest_feeds(b, g)
-                vals = sorted(set(items.values()))
-                if not 1 <= len(vals) <= 2 or 0 in vals: continue
-                if vars_: kind = "CHEST"
-                elif len(items) == 1 and g - next(iter(items)) <= 0x40: kind = "PICKUP"
-                else: continue
-                last = max(items)   # a roll: the value set last in script order
-                chests.append(dict(map=m, give=g, kind=kind, vars=vars_, vanilla=items[last],
-                                   sites=[site(b, i, 1) for i in sorted(items)]))
-            elif mode == 0:
-                v = word(b, g + 8)
-                if v in FIXED_KEYS or v in CUT_KEYS: continue
-                if not (v in KEYS or m in GIFT_MAPS): continue
-                sites = [site(b, g, 0)]
-                # its popup (before the give in M344) and a full-bag swap (op 169) naming the item
-                for p in range(max(0, g - 0x40), min(len(b) - 16, g + 0x100), 4):
-                    if p != g and word(b, p + 8) == v and (word(b, p) == (232 | 1 << 13) or
-                            (p > g and is_step(b, p, 169, 2) and not (word(b, p) >> 17) & 7)):
-                        sites.append(site(b, p, 0))
-                gifts.append(dict(map=m, give=g, kind="GIFT", vars=[], vanilla=v, sites=sites))
+        if m in SKIP_MAPS or m not in walk: continue
+        b = D.room(path, m); base = task_block(b)
+        walked = {base + a for steps in walk[m].values() for a, _, _ in steps}
+        for steps in walk[m].values():
+            flags = slot_flags(steps)
+            for g, op, args in steps:
+                if op != 167 or len(args) != 2: continue
+                mode, v = args[0]
+                if mode == 1:
+                    items, vars_ = slot_feeds(steps, g, v)
+                    vals = sorted(set(items.values()))
+                    if not 1 <= len(vals) <= 3 or 0 in vals: continue
+                    if vars_: kind = "CHEST"
+                    elif len(vals) <= 2 and g - min(items) <= 0x40: kind = "PICKUP"
+                    else: continue
+                    last = max(items)   # a roll: the value set last in script order
+                    chests.append(dict(map=m, give=base + g, kind=kind, vars=vars_, flags=flags.get(g, set()),
+                                       vanilla=items[last], sites=[site(b, base + i, 1) for i in sorted(items)]))
+                elif mode == 0:
+                    if v in FIXED_KEYS or v in CUT_KEYS: continue
+                    if not (v in KEYS or m in GIFT_MAPS): continue
+                    g += base
+                    sites = [site(b, g, 0)]
+                    # its popup (before the give in M344) and a full-bag swap (op 169) naming the item
+                    for p in range(max(0, g - 0x40), min(len(b) - 16, g + 0x100), 4):
+                        if p != g and p in walked and word(b, p + 8) == v and (word(b, p) == (232 | 1 << 13) or
+                                (p > g and is_step(b, p, 169, 2) and not (word(b, p) >> 17) & 7)):
+                            sites.append(site(b, p, 0))
+                    gifts.append(dict(map=m, give=g, kind="GIFT", vars=[], vanilla=v, sites=sites))
     return chests, gifts
 
 def spots(chests, gifts):
     out = []
-    # chests sharing a left-behind variable are one chest in several room versions
+    # chests and pickups sharing a left-behind variable or an opened / taken flag are one spot
     parent = list(range(len(chests)))
     def find(x):
         while parent[x] != x: parent[x] = parent[parent[x]]; x = parent[x]
         return x
-    by_var = {}
+    first = {}
     for i, c in enumerate(chests):
-        for v in c["vars"]:
-            if v in by_var: parent[find(i)] = find(by_var[v])
-            else: by_var[v] = i
+        for key in [("V", v) for v in c["vars"]] + [("F",) + f for f in c["flags"]]:
+            if key in first: parent[find(i)] = find(first[key])
+            else: first[key] = i
     groups = {}
     for i, c in enumerate(chests): groups.setdefault(find(i), []).append(c)
     for members in groups.values():
+        members.sort(key=lambda c: (day(c["map"]), c["map"], c["give"]))   # the spot's day: the earliest
         days = {day(c["map"]) for c in members}
-        if len(members) > 1 and (len(days) != 1 or 0 in days or len({c["vanilla"] for c in members}) != 1):
-            continue   # different days, unknown day or different items: leave them vanilla
-        out.append(members)
+        rooms = " ".join(f"M{c['map']:03d}+{c['give']:06X}" for c in members)
+        if 0 in days or len({c["vanilla"] for c in members}) != 1:
+            print(f"left vanilla (unknown day or different items): {rooms}", file=sys.stderr)
+        elif len(days) > 1 and not set.intersection(*(c["flags"] for c in members)):
+            print(f"left vanilla (a variable over several days, no shared flag): {rooms}", file=sys.stderr)
+        else: out.append(members)
     # gifts: one spot per key (it may be given in several rooms or branches), else per room and item
     by_gift = {}
     for c in gifts:
@@ -184,7 +222,7 @@ def emit(spot_list, disc, needs=None):
     print("};")
 
 if __name__ == "__main__":
-    if len(sys.argv) not in (2, 3): sys.exit(__doc__)
+    if len(sys.argv) not in (3, 4): sys.exit(__doc__)
     sys.stdout.reconfigure(newline="\n")
-    c, g = scan(sys.argv[1])
-    emit(spots(c, g), sys.argv[1], read_needs(sys.argv[2]) if len(sys.argv) == 3 else None)
+    c, g = scan(sys.argv[1], read_walk(sys.argv[2]))
+    emit(spots(c, g), sys.argv[1], read_needs(sys.argv[3]) if len(sys.argv) == 4 else None)

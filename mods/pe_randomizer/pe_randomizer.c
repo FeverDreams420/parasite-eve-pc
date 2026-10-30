@@ -218,11 +218,16 @@ static void pe_rand_spoiler(void) {
     else if (s_result.fallback) fprintf(f, "No layout passed its checks: %s.\n", s_result.fallback == 1 ? "key items stay in their places" : "nothing moved");
     fprintf(f, "\n");
     for (unsigned n = 0; n < PE_RAND_SPOTS; ++n) {
-        unsigned i = 0;
+        unsigned last = 0;
         if (s_layout[n] == g_pe_rand_spots[n].vanilla) continue;
-        while (i < PE_RAND_SITES && g_pe_rand_sites[i].spot != n) ++i;
-        fprintf(f, "M%03u day %u: %s (was %s)\n", i < PE_RAND_SITES ? (unsigned)g_pe_rand_sites[i].map : 0,
-                (unsigned)g_pe_rand_spots[n].day, pe_item_name(s_layout[n]), pe_item_name(g_pe_rand_spots[n].vanilla));
+        /* every room the spot is in (sites are sorted by map): one chest can show in several */
+        for (unsigned i = 0; i < PE_RAND_SITES; ++i) {
+            if (g_pe_rand_sites[i].spot != n || g_pe_rand_sites[i].map == last) continue;
+            fprintf(f, "%sM%03u", last ? "/" : "", (unsigned)g_pe_rand_sites[i].map);
+            last = g_pe_rand_sites[i].map;
+        }
+        fprintf(f, " day %u: %s (was %s)\n", (unsigned)g_pe_rand_spots[n].day, pe_item_name(s_layout[n]),
+                pe_item_name(g_pe_rand_spots[n].vanilla));
     }
     if (fclose(f) != 0) { remove(temp); pe_toast("Randomizer: couldn't write the spoiler file"); return; }
     remove(path);

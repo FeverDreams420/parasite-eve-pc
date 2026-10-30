@@ -23,6 +23,7 @@
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
 #include "pe_save.h"
+#include "pe1/asset_table.h"
 #include "pe1/game_state.h"
 #include "pe1/inventory.h"
 #include "pe1/scene_room.h"
@@ -130,6 +131,73 @@ static int pe_rand_scene(void *ctx, void *user) {
         patched += s_layout[s->spot] != g_pe_rand_spots[s->spot].vanilla;
     }
     pe_log("rand_room", "map=%d sites=%u changed=%u", map, end - first, patched);
+    return 0;
+}
+
+/* Ways back on Hard, from Day 2 on: Carnegie Hall and its sewer, and the hospital's power cut, are
+ * places the story leaves only one way, so their chests would be gone for a key that comes later.
+ * The mod can't add a door, so an existing one leads somewhere else: a door is op 49 with its target
+ * room's scene token as the one immediate operand, rewritten here when the room starts (same check as
+ * the item sites). Aya's spot in a room comes from V0x1, which the old room set for the door's old
+ * target; the new room gets a value one of its own ways in sets, when the room Aya left had a moved door. */
+typedef struct PeRandDoor {
+    uint16_t from;
+    uint32_t at;           /* the door step, from the room's task block (the step listing's offset) */
+    uint16_t old, to;      /* the room it led to, the room it leads to now */
+    uint32_t came;         /* V0x1 in the new room */
+} PeRandDoor;
+static const PeRandDoor s_doors[] = {
+    {24, 0x1F5C, 0, 378, 0x17A},   /* Carnegie Hall front, later days: a map door -> the lobby */
+    {378, 0x770, 1, 24, 0x18},     /* the lobby's street door -> Carnegie Hall front, later days */
+    {27, 0xB80, 26, 12, 0xC},      /* the sewer, back to M026 -> backstage */
+    {320, 0xC10, 329, 127, 0x7E},  /* hospital power cut: the shortcut to M329 -> first-floor hall */
+};
+#define PE_RAND_DOOR_COUNT (sizeof s_doors / sizeof *s_doors)
+#define PE_RAND_DAY2 0x88u             /* V0x4a: Day 1 is over */
+static int s_door_moved = -1;          /* the moved door of the room that started last, or -1 */
+
+static uint32_t pe_room_token(unsigned map) {
+    char name[8];
+    snprintf(name, sizeof name, "m%04ui", map);
+    return (uint32_t)Text_ParseBase32Id((signed char *)name);
+}
+
+static int pe_rand_doors(void *ctx, void *user) {
+    uint8_t *room = (uint8_t *)g_GameState.loaded_scene_assets;
+    int map = pe_room_number(), moved = s_door_moved;
+    (void)ctx;
+    (void)user;
+    s_door_moved = -1;
+    if (!room || map < 1 || map > SCENE_ROOM_COUNT || !s_run.on || !pe_rand_supported() ||
+        s_run.difficulty != PE_RAND_HARD || g_ScriptVariableBank[SCRIPT_VAR_AREA] < PE_RAND_DAY2) return 0;
+    if (moved >= 0 && s_doors[moved].to == map) {
+        g_ScriptVariableBank[SCRIPT_VAR_ROOM] = s_doors[moved].came;
+        pe_log("rand_door", "map=%d from=%d came=%#x", map, s_doors[moved].from, (unsigned)s_doors[moved].came);
+    }
+    for (unsigned i = 0; i < PE_RAND_DOOR_COUNT; ++i) {
+        const PeRandDoor *d = &s_doors[i];
+        size_t bytes = (size_t)g_RoomSectorTable[map - 1].roomSectors * 2048, dir, table, at;
+        uint32_t head, token;
+        if (d->from != map) continue;
+        dir = pe_get32(room + 4);
+        if (dir > bytes || bytes - dir < sizeof(SceneRoomDirectory)) return 0;
+        table = ((const SceneRoomDirectory *)(room + dir))->taskBlock & 0x3FFFFF;
+        if (table > bytes - 8) return 0;
+        at = (pe_get32(room + table + 4) & 0xFFFFFF) + d->at;
+        if (at > bytes - 12) return 0;
+        head = pe_get32(room + at);
+        token = pe_get32(room + at + 8);
+        /* op 49, one operand, immediate */
+        if (head != (49u | 1u << 13) || (token != pe_room_token(d->old) && token != pe_room_token(d->to))) {
+            if (!s_room_warned[map]) {
+                s_room_warned[map] = 1;
+                pe_mod_log(MOD_ID, "M%03d: door +%06X differs from the table; it stays vanilla", map, (unsigned)d->at);
+            }
+            continue;
+        }
+        pe_put32(room + at + 8, pe_room_token(d->to));
+        s_door_moved = (int)i;
+    }
     return 0;
 }
 
@@ -285,6 +353,7 @@ static int pe_rand_new_game(void *ctx, void *user) {
     (void)user;
     memset(s_lock_logged, 0, sizeof s_lock_logged);   /* a new run: its locks are logged again */
     memset(s_gate_state, 0, sizeof s_gate_state);
+    s_door_moved = -1;
     if (s_enabled && !s_alone) pe_toast("Randomizer: restart the game first; this New Game isn't randomized");
     s_run.on = s_alone && s_enabled && game && game->kind != PE_NEW_GAME_TUTORIAL;
     s_run.difficulty = (uint8_t)(s_difficulty >= 0 && s_difficulty < PE_RAND_DIFFICULTIES ? s_difficulty : PE_RAND_MEDIUM);
@@ -307,6 +376,7 @@ static int pe_rand_save_read(void *ctx, void *user) {
     (void)ctx;
     (void)user;
     s_layout_ready = 0;
+    s_door_moved = -1;   /* the loaded room is the save's, not one past a moved door */
     if (s_run.on && !pe_rand_supported()) {
         pe_toast("Randomizer: this save's layout is from another version; items stay vanilla");
         pe_mod_log(MOD_ID, "save from logic %u / table %u, this build %u / %u: items stay vanilla",
@@ -370,6 +440,7 @@ static int pe_rand_init(void) {
                           pe_rand_run_text);
     pe_menu_begin(0);
     pe_hook_add(PE_HOOK_SCENE_START, pe_rand_scene, NULL, PE_PRIORITY_NORMAL, MOD_ID);
+    pe_hook_add(PE_HOOK_SCENE_START, pe_rand_doors, NULL, PE_PRIORITY_NORMAL, MOD_ID);
     pe_hook_add(PE_HOOK_NEW_GAME, pe_rand_new_game, NULL, PE_PRIORITY_NORMAL, MOD_ID);
     pe_hook_add(PE_HOOK_SAVE_READ, pe_rand_save_read, NULL, PE_PRIORITY_NORMAL, MOD_ID);
     /* these read only: rows for keylogic.py */

@@ -539,6 +539,13 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   All 15 keys outside the Theater can move (about 13 per Medium or Hard seed).
 - Key moves are on (`PE_RAND_MOVE_KEYS` 1 in pe_randomizer.h, logic version 9). Setting it to 0 keeps
   key items in their places on every difficulty (raise PE_RAND_LOGIC_VERSION with it).
+- Ways back (Hard, Day 2 on): four existing doors lead somewhere else (`s_doors` in pe_randomizer.c), so
+  Carnegie Hall, its sewer and the hospital's power cut can be entered and left again: the later Carnegie
+  Hall front's right-hand map door goes to the lobby and the lobby's street door back to that front; the
+  sewer's door back to M026 goes to backstage; the power cut's shortcut door to M329 goes to the
+  first-floor hall M127. The door's target is rewritten at scene start (expected bytes checked), and the
+  new room gets the V0x1 one of its own ways in sets, so Aya stands at that entrance. ctest
+  `mod-randomizer-doors` (`tools/door-runs.txt`) checks each with the real mod.
 
 Checks: tests/run_pe_randomizer_test.ps1, built with PE_RAND_MOVE_KEYS 1 and 0 (table sanity, 2000 seeds per difficulty pass the checks and
 repeat, logic tables where keys move, a key spot reached counting with the key, partial data,

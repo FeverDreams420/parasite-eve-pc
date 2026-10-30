@@ -69,7 +69,13 @@
  * the room itself (PE_HOOK_SCENE_START), and CountItems asks the mod first (PE_HOOK_ITEM_COUNT), then
  * keys=all. The line ends in asked=<+OFF:item>answer for each CountItems step>. Checks: shut=+OFF (the
  * key test at that listing offset ran and always answered 0), open=+OFF (it ran and answered nonzero).
- * A shut= step must be a table lock (pe_rand_locks.h) whose key the layout moved. */
+ * A shut= step must be a table lock (pe_rand_locks.h) whose key the layout moved.
+ *
+ * Moved doors (Hard): the line's variables are set before the mod's scene start, as in the game. A gate
+ * line with from=M024 first loads that room and starts it for the mod (Aya leaving it, its door moved),
+ * then loads the line's room. Checks: arrive=0x17a (V0x1 after the mod's scene start: the mod set it),
+ * door=M378 (the run ends at a door to that room), floor (at the end Aya stands on a floor triangle,
+ * start=N). The output's V0x1= is the value after the scene start. */
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -315,13 +321,15 @@ static int stand_point(unsigned i, const Zone *q, int *px, int *pz) {
     return 0;
 }
 
-/* Flood the floor from Aya's triangle over neighbours without 0x80; prints start=, closed=, cut= and reach=. */
-static void print_floor(FILE *out) {
+/* Flood the floor from Aya's triangle over neighbours without 0x80; prints start=, closed=, cut= and reach=.
+ * 1: Aya stands on a floor triangle. */
+static int print_floor(FILE *out) {
     unsigned n = g_CollisionDb ? g_CollisionDb->triangleCount : 0, start = n;
     FieldActor *aya = g_PlayerEntity;
     if (aya && n)
         for (unsigned i = 0; i < n && start == n; ++i)
             if (Geo_PointInTri(tri_at(i), (s16)(aya->pos_x >> 16), (s16)(aya->pos_z >> 16))) start = i;
+    int on_floor = start < n;
     if (aya) fprintf(out, "\taya=%d,%d", aya->pos_x >> 16, aya->pos_z >> 16); else fputs("\taya=none", out);
     if (aya && n && start == n) {   /* off the floor (no spawn for this V0x1): the triangle nearest her, start=~N */
         long long best = -1;
@@ -338,7 +346,7 @@ static void print_floor(FILE *out) {
     int first = 1;
     for (unsigned i = 0; i < n; ++i) if (*tri_at(i) & 0x80) { fprintf(out, "%s%u", first ? "" : ",", i); first = 0; }
     fputs("\tcut=", out);
-    if (start == n) return;
+    if (start == n) return 0;
     u8 *reached = calloc(n, 1); unsigned *queue = malloc(n * sizeof(*queue)), head = 0, tail = 0;
     reached[start] = 1; queue[tail++] = start;
     while (head < tail) {
@@ -362,6 +370,7 @@ static void print_floor(FILE *out) {
     for (unsigned z = 0; z < zone_count; ++z)
         if (has[z]) { fprintf(out, "%s+%X@%d,%d", first ? "" : ",", zones[z].at, px[z], pz[z]); first = 0; }
     free(reached); free(queue);
+    return on_floor;
 }
 
 /* Room number a scene token names, or -1 (M0000, M5000 and M8888 are scenes of the main loop). */
@@ -381,6 +390,7 @@ typedef struct Run {
     unsigned nwant, nnever, nflag; u32 want[8], never[8], flag_bit[8]; u16 flag_var[8];
     int gate; unsigned nshut, nopen; u32 shut[8], open[8];    /* gate: the real mod answers key tests */
     int held; unsigned nheld; u32 held_item[8];               /* keys=none / keys=D6,..: only those held */
+    unsigned from, door; int has_door, has_arrive, floor; u32 arrive;   /* from=, door=, arrive=, floor */
     char id[48];                                              /* id=: echoed on the output line */
 } Run;
 
@@ -471,6 +481,10 @@ static int parse_run(char *line, Run *r) {
         if (!strcmp(tok, "press")) { r->press = 1; continue; }
         if (!strcmp(tok, "win")) { r->win = 1; continue; }
         if (!strcmp(tok, "gate")) { r->gate = 1; continue; }
+        if (!strcmp(tok, "floor")) { r->floor = 1; continue; }
+        if (!strncmp(tok, "from=M", 6)) { r->from = (unsigned)atoi(tok + 6); if (!r->from || r->from > SCENE_ROOM_COUNT) return 0; continue; }
+        if (!strncmp(tok, "door=M", 6)) { r->door = (unsigned)atoi(tok + 6); r->has_door = 1; continue; }
+        if (!strncmp(tok, "arrive=", 7)) { r->arrive = (u32)strtoul(tok + 7, NULL, 0); r->has_arrive = 1; continue; }
         if (!strncmp(tok, "shut=", 5)) { if (r->nshut == 8 || !hex_offset(tok + 5, &r->shut[r->nshut++])) return 0; continue; }
         if (!strncmp(tok, "open=", 5)) { if (r->nopen == 8 || !hex_offset(tok + 5, &r->open[r->nopen++])) return 0; continue; }
         if (!strncmp(tok, "at=@", 4)) {
@@ -505,6 +519,11 @@ static int parse_run(char *line, Run *r) {
 
 static unsigned runs_done, runs_door, runs_spin, gives_checked, checks_done;
 
+static void set_vars(const Run *r) {
+    g_ScriptVariableBank[SCRIPT_VAR_AREA] = r->area; g_ScriptVariableBank[SCRIPT_VAR_ROOM] = r->left;
+    for (unsigned i = 0; i < r->nvars; ++i) if (r->var[i] < VARS) g_ScriptVariableBank[r->var[i]] = r->val[i];
+}
+
 static void do_run(const Run *r, FILE *out) {
     char name[16]; snprintf(name, sizeof(name), "m%04ui", r->room);
     u32 token = (u32)Text_ParseBase32Id((signed char *)name);
@@ -512,6 +531,15 @@ static void do_run(const Run *r, FILE *out) {
     if (r->gate && (!r->seeded || !start_gate(r))) { FAIL("M%03u: a gate line needs the gate lines' one seed= (mod host in %s)", r->room, gate_dir); return; }
     if (r->gate) PE_HOOK(PE_HOOK_NEW_GAME, (&(PeHookNewGame){PE_NEW_GAME_TITLE}));
     Entity_ResetAllPools();   /* zeroes the variables, node flags and actors, as a new game does */
+    if (r->from) {   /* the room Aya leaves: the mod sees it start and moves its door */
+        char from_name[16]; snprintf(from_name, sizeof(from_name), "m%04ui", r->from);
+        u32 from_token = (u32)Text_ParseBase32Id((signed char *)from_name);
+        if (!r->gate) { FAIL("M%03u: from= needs gate (the real mod)", r->room); return; }
+        if (Scene_LoadRoom(from_token)) { FAIL("M%03u: from=M%03u doesn't load", r->room, r->from); return; }
+        set_vars(r);
+        g_SceneDispatchToken = from_token;
+        PE_HOOK(PE_HOOK_SCENE_START, NULL);
+    }
     int status = Scene_LoadRoom(token);
     if (status) {
         if (out) fprintf(out, "run\tM%03u\tV0x4a=%#x\tV0x1=%#x\tend=load %d%s%s\n", r->room, r->area, r->left, status, r->id[0] ? "\tid=" : "", r->id);
@@ -524,6 +552,7 @@ static void do_run(const Run *r, FILE *out) {
     size_t block_in_room = word_at(assets, table + 4) & 0xFFFFFF;
     block = assets + block_in_room;
     free(ran); ran = calloc(block_bytes / 4 + 1, 1);
+    set_vars(r);   /* before the mod's scene start: it reads V0x4a and may set V0x1 */
     if (r->seeded) {
         if (!layout_ready || layout_seed != r->seed || layout_difficulty != r->difficulty) {
             PeRandResult result;
@@ -542,8 +571,9 @@ static void do_run(const Run *r, FILE *out) {
     }
 
     static u32 before[VARS];
-    g_ScriptVariableBank[SCRIPT_VAR_AREA] = r->area; g_ScriptVariableBank[SCRIPT_VAR_ROOM] = r->left;
-    for (unsigned i = 0; i < r->nvars; ++i) if (r->var[i] < VARS) g_ScriptVariableBank[r->var[i]] = r->val[i];
+    u32 left = g_ScriptVariableBank[SCRIPT_VAR_ROOM];
+    if (r->has_arrive && left != r->arrive) FAIL("M%03u V0x4a=%#x: V0x1 is %#x after the scene start, not %#x", r->room, r->area, left, r->arrive);
+    checks_done += r->has_arrive;
     memcpy(before, g_ScriptVariableBank, sizeof(before));
     keys_all = r->keys; held_only = r->held; held_count = r->nheld; memcpy(held_items, r->held_item, sizeof(held_items));
     press = r->press; battle = 0; spin = 0; gave_count = 0; zone_count = 0;
@@ -627,8 +657,11 @@ static void do_run(const Run *r, FILE *out) {
         if (shut && (l == PE_RAND_LOCKS || layout[g_pe_rand_locks[l].spot] == g_pe_rand_spots[g_pe_rand_locks[l].spot].vanilla))
             FAIL("M%03u +%X: shut= needs a table lock whose key seed %06u moved", r->room, at, r->seed);
     }
+    if (r->has_door && (!(g_GameStateFlags & 0x2000) || token_room(g_SceneDispatchToken) != (int)r->door))
+        FAIL("M%03u V0x4a=%#x V0x1=%#x: the run didn't end at a door to M%03u", r->room, r->area, left, r->door);
+    checks_done += r->has_door;
     if (!out) return;
-    fprintf(out, "run\tM%03u\tV0x4a=%#x\tV0x1=%#x\tend=", r->room, r->area, r->left);
+    fprintf(out, "run\tM%03u\tV0x4a=%#x\tV0x1=%#x\tend=", r->room, r->area, left);
     if (g_GameStateFlags & 0x2000) {
         int to = token_room(g_SceneDispatchToken); ++runs_door;
         if (to >= 0) fprintf(out, "door M%03d", to); else fprintf(out, "door %08x", (u32)g_SceneDispatchToken);
@@ -648,7 +681,8 @@ static void do_run(const Run *r, FILE *out) {
     first = 1;
     for (size_t w = 0; w <= block_bytes / 4; ++w)
         if (ran[w]) { fprintf(out, "%s%#zx", first ? "" : ",", w * 4); first = 0; }
-    print_floor(out);
+    if (!print_floor(out) && r->floor) FAIL("M%03u V0x4a=%#x V0x1=%#x: Aya doesn't stand on the floor", r->room, r->area, left);
+    checks_done += r->floor;
     for (int i = 0; i < r->at; ++i)
         if (r->at_actor[i] >= 0) fprintf(out, "%s@%d,%d", i ? ";" : "\tat=", r->at_actor[i], r->at_angle[i]);
         else fprintf(out, "%s%d,%d,%d", i ? ";" : "\tat=", r->at_x[i], r->at_z[i], r->at_angle[i]);

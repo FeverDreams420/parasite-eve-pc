@@ -79,15 +79,20 @@ def gives_by_listing(spots):
     return out
 
 
-def lines(argv):
-    disc, gives_runs, gives_out, states_path, spots = argv[:5]
-    states = {}   # room -> {(V0x4a, V0x1, vars)}
-    for l in open(states_path):
+def read_states(path):
+    """room -> {(V0x4a, V0x1, vars)}: the walk's states (walk-states.txt)."""
+    states = {}
+    for l in open(path):
         f = l.rstrip("\n").split("\t")
         key = (v(f[2].split("=")[1]), v(f[3].split("=")[1]),
                tuple(x.split("/")[0] for x in f[4].split()))
         states.setdefault(f[1], set()).add(key)
-    done = {}     # (room, give) -> {var: bits}: the bits taking the give sets
+    return states
+
+
+def done_bits(gives_runs, gives_out):
+    """(room, give) -> {var: bits}: the bits taking the give sets (its flag=, else what its gives-ctest run set)."""
+    done = {}
     outs = (l.split("\t") for l in open(gives_out) if l.startswith("run\t"))
     for l in open(gives_runs):
         if l.startswith("#") or not l.strip(): continue
@@ -105,6 +110,13 @@ def lines(argv):
         for w in (t[6:] for t in tok if t.startswith("want=")):
             dw = done.setdefault((tok[0], w), {})
             for var, b in bits.items(): dw[var] = dw.get(var, 0) | b
+    return done
+
+
+def lines(argv):
+    disc, gives_runs, gives_out, states_path, spots = argv[:5]
+    states = read_states(states_path)
+    done = done_bits(gives_runs, gives_out)
     out = []
     seen = set()
     for l in open(gives_runs):

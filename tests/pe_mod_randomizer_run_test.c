@@ -11,6 +11,8 @@
  * A skipped step goes straight on, as most do in the game in the same frame; the second time a routine
  * reaches the same skipped step in one frame (a wait loop with nothing to wait for) it yields there
  * until the next frame. GiveItem succeeds and is noted; CountItems reads 0 (no keys held) unless the run says keys=all.
+ * keys=D6,CA (hex items) holds only those keys, keys=none none; either ends the line in asked= (as gate lines do).
+ * id=TEXT is echoed at the end of the output line, so a tool can pair runs with what it generated them for.
  * The item menu (op 169: a chest's "put an item in" on closing, a full bag's swap) is cancelled (-1), so
  * an open chest stays open and gives nothing more.
  * A door ends the run. A frame that runs more than SPIN_STEPS steps ends it too (noted as spin).
@@ -131,6 +133,13 @@ static u8 *ran;                  /* one per word of the block: step started ther
 static u32 gave[64], got[64]; static unsigned gave_count;   /* GiveItems run: offset and item */
 static u32 asked[64], asked_item[64], answer[64]; static unsigned asked_count;   /* CountItems run */
 static int keys_all, press, battle, spin, trace, gate;   /* trace: PE_RUN_TRACE set, each step to stderr */
+static int held_only; static unsigned held_count; static u32 held_items[8];   /* keys=none / keys=D6,.. */
+
+static u32 key_count(u32 item) {
+    if (!held_only) return (u32)keys_all;
+    for (unsigned i = 0; i < held_count; ++i) if (held_items[i] == item) return 1;
+    return 0;
+}
 static unsigned long frame_steps;
 /* win: battles in progress (fighting: frames since op 85, -1 if none), won so far, the value the
  * routine's last op 148 wait tested against, the frame the routine set 6 (-1: not yet). */
@@ -207,7 +216,7 @@ static void run_queue(void) {
                 if (gave_count < 64) { gave[gave_count] = (u32)at; got[gave_count++] = (u32)*args[0]; }
                 *args[1] = 0; result = 1;
             } else if (op == 168) {                                               /* CountItems */
-                if (!gate || !PE_HOOK(PE_HOOK_ITEM_COUNT, args)) *args[1] = keys_all;
+                if (!gate || !PE_HOOK(PE_HOOK_ITEM_COUNT, args)) *args[1] = key_count((u32)*args[0]);
                 if (asked_count < 64) { asked[asked_count] = (u32)at; asked_item[asked_count] = (u32)*args[0]; answer[asked_count++] = (u32)*args[1]; }
                 result = 1;
             }
@@ -371,6 +380,8 @@ typedef struct Run {
     int seeded, difficulty; u32 seed;                         /* seed=: the randomizer's layout */
     unsigned nwant, nnever, nflag; u32 want[8], never[8], flag_bit[8]; u16 flag_var[8];
     int gate; unsigned nshut, nopen; u32 shut[8], open[8];    /* gate: the real mod answers key tests */
+    int held; unsigned nheld; u32 held_item[8];               /* keys=none / keys=D6,..: only those held */
+    char id[48];                                              /* id=: echoed on the output line */
 } Run;
 
 /* Gate lines: the mod host, started once for the first gate line's seed, its files in gate_dir. */
@@ -444,6 +455,19 @@ static int parse_run(char *line, Run *r) {
     r->left = (u32)strtoul(tok, NULL, 0);
     while ((tok = strtok(NULL, " \t\r\n"))) {
         if (!strcmp(tok, "keys=all")) { r->keys = 1; continue; }
+        if (!strcmp(tok, "keys=none")) { r->held = 1; continue; }
+        if (!strncmp(tok, "keys=", 5)) {
+            r->held = 1;
+            for (char *p = tok + 5; *p; ) {
+                char *end; u32 item = (u32)strtoul(p, &end, 16);
+                if (end == p || r->nheld == 8) return 0;
+                r->held_item[r->nheld++] = item;
+                p = *end == ',' ? end + 1 : end;
+                if (*end && *end != ',') return 0;
+            }
+            continue;
+        }
+        if (!strncmp(tok, "id=", 3)) { snprintf(r->id, sizeof(r->id), "%s", tok + 3); continue; }
         if (!strcmp(tok, "press")) { r->press = 1; continue; }
         if (!strcmp(tok, "win")) { r->win = 1; continue; }
         if (!strcmp(tok, "gate")) { r->gate = 1; continue; }
@@ -489,7 +513,10 @@ static void do_run(const Run *r, FILE *out) {
     if (r->gate) PE_HOOK(PE_HOOK_NEW_GAME, (&(PeHookNewGame){PE_NEW_GAME_TITLE}));
     Entity_ResetAllPools();   /* zeroes the variables, node flags and actors, as a new game does */
     int status = Scene_LoadRoom(token);
-    if (status) { if (out) fprintf(out, "run\tM%03u\tV0x4a=%#x\tV0x1=%#x\tend=load %d\n", r->room, r->area, r->left, status); return; }
+    if (status) {
+        if (out) fprintf(out, "run\tM%03u\tV0x4a=%#x\tV0x1=%#x\tend=load %d%s%s\n", r->room, r->area, r->left, status, r->id[0] ? "\tid=" : "", r->id);
+        return;
+    }
     const u8 *assets = (const u8 *)g_GameState.loaded_scene_assets;
     const SceneRoomDirectory *directory = (const void *)(assets + word_at(assets, 4));
     u32 table = directory->taskBlock & 0x3FFFFF;
@@ -518,7 +545,8 @@ static void do_run(const Run *r, FILE *out) {
     g_ScriptVariableBank[SCRIPT_VAR_AREA] = r->area; g_ScriptVariableBank[SCRIPT_VAR_ROOM] = r->left;
     for (unsigned i = 0; i < r->nvars; ++i) if (r->var[i] < VARS) g_ScriptVariableBank[r->var[i]] = r->val[i];
     memcpy(before, g_ScriptVariableBank, sizeof(before));
-    keys_all = r->keys; press = r->press; battle = 0; spin = 0; gave_count = 0; zone_count = 0;
+    keys_all = r->keys; held_only = r->held; held_count = r->nheld; memcpy(held_items, r->held_item, sizeof(held_items));
+    press = r->press; battle = 0; spin = 0; gave_count = 0; zone_count = 0;
     gate = r->gate; asked_count = 0;
     win = r->win; fighting = -1; won = 0; awaited = -1; set6_at = -1; state_read = 0;
     g_BattleModeState = 0; D_8009D2E8 &= ~1;
@@ -629,12 +657,13 @@ static void do_run(const Run *r, FILE *out) {
         fprintf(out, "\tseed=%u,%d\tgot=", r->seed, r->difficulty);
         for (unsigned i = 0; i < gave_count; ++i) fprintf(out, "%s%#x", i ? "," : "", got[i]);
     }
-    if (r->gate) {
+    if (r->gate || r->held) {
         fputs("\tasked=", out);
         for (unsigned i = 0; i < asked_count; ++i) fprintf(out, "%s+%06X:%#x>%u", i ? "," : "", asked[i], asked_item[i], answer[i]);
     }
     if (won) fprintf(out, "\twon=%d", won);
     if (battle && (!win || fighting >= 0)) fputs("\tbattle=1", out);
+    if (r->id[0]) fprintf(out, "\tid=%s", r->id);
     fputc('\n', out);
 }
 

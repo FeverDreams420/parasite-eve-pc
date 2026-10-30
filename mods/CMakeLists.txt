@@ -223,4 +223,11 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
         "${CMAKE_CURRENT_BINARY_DIR}/randomizer-gate.txt" "${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/gate-runs.txt")
     set_tests_properties(mod-randomizer-gate PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer runs:")
+    # Story windows for the fill (tools/windowruns.py wrote the runs from the story walk): every table give
+    # in every walk state of its room, every walked lock with and without its key. Data, no checks;
+    # `windowruns.py table` turns the output into windows.txt.
+    add_test(NAME mod-randomizer-windows COMMAND test-mod-randomizer-run
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-windows.txt" "${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/windows-runs.txt")
+    set_tests_properties(mod-randomizer-windows PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
+        ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer runs:")
 endif()

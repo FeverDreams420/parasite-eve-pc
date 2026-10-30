@@ -458,7 +458,7 @@ Economy > Warner helps out.
 ## Randomizer (pe_randomizer)
 
 F1 > Randomizer, before New Game: on/off, difficulty (Easy: items stay on their story day; Medium and
-Hard: items anywhere, and keys move where the key logic allows) and a
+Hard: items anywhere, and keys move where the key logic allows, the same on both) and a
 six-digit seed (Random seed, or one digit at a time). New Game takes them; the game keeps them in the
 `pe_randomizer.run` record (seed, difficulty, logic and table version), so loading gives the same
 layout and F1 changes only reach the next New Game. A save from another logic or table version keeps
@@ -504,19 +504,25 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   `rand_lock` (the game asking for a key) rows through the play log (pe_tools: so log with the
   toggle off, since a randomized session runs no other mod). Then
   `tools/keylogic.py <pe_play_log.csv...> > needs.txt` and `tools/spottable.py <disc> <randomizer-rooms.txt> needs.txt` (in mods/pe_randomizer).
-  A key moves only within its own story day, into a chest with data, and only on days where every key
-  spot has data; until a log fills a day, that day's keys stay where they are. Filling in data changes
-  layouts: raise PE_RAND_TABLE_VERSION with it.
+  A key moves into a chest with data, within its own story day or back to an earlier day (`late`,
+  below), and only off days where every key spot has data; until a log fills a day, that day's keys
+  stay where they are. Filling in data changes layouts: raise PE_RAND_TABLE_VERSION with it.
 - Until there is logged data, the table is made with `tools/keys-by-hand.txt` and `tools/keys-walk.txt`
-  (`tools/spottable.py <disc> <randomizer-rooms.txt> tools/keys-by-hand.txt tools/keys-walk.txt`): a
+  (`tools/spottable.py <disc> <randomizer-rooms.txt> tools/keys-by-hand.txt tools/keys-walk.txt --windows windows.txt`): a
   spot needs every key either file names, and takes the walk's `before`. keys-walk.txt is
   `tools/keysolve.py`'s output (without --layouts) over the story walk, solved with the gates' rule (a
   key opens its locks once held and its own spot reached): a key may go to a chest of its own story day
   and save area that can be reached without it and can't be walked past for good where its own spot
   can't. With the gates an early key is harmless, so a key may now turn up before its vanilla spot.
   The hand table keeps what the walk gets wrong: the hospital's needs (M329 sets the St. Francis door's
-  flag, so the walk reads that door as open) and chest 84. Medium and Hard move the same keys; Hard's
-  wider moves (other areas, other days) are still to come.
+  flag, so the walk reads that door as open) and chest 84. Medium and Hard move keys the same way.
+- Earlier days (`late`): `spottable.py ... --windows windows.txt` (`tools/windowruns.py table`, from the
+  mod-randomizer-windows ctest) lets a key go back to an earlier day's chest with data that the walk
+  opened at every story value (V0x4a) where the key's lock needed the key, from the key's own first
+  give on (a key with no lock row: every value its own spot gives it at). Today that is the Klamp Key and
+  the Chinatown charm (Days 2-4), the Elevator Key (Day 2 chests) and the NYPD Special charm (one NYPD
+  chest); the other keys' locks ask while the earlier days' chests are shut (the hospital, Day 2's
+  start).
 - The Day 3 hospital is mapped by hand instead (`tools/hospital-map.txt`, every gate a door guard from
   the all-rooms ctest's listing): the power-off rooms (M320-M339, the twins of M129-M145) are entered one
   way and left only through the fuse box. `tools/hospital_logic.py` turns the map into keys-by-hand's

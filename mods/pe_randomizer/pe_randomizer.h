@@ -10,12 +10,12 @@
 /* Raise PE_RAND_LOGIC_VERSION whenever the same seed would give a different layout (the generator,
  * its rules or PE_RAND_TABLE_VERSION). A save keeps the versions it was made with; a build that
  * doesn't know them leaves that game's items vanilla rather than moving them under the player. */
-#define PE_RAND_LOGIC_VERSION 9
-#define PE_RAND_TABLE_VERSION 6
+#define PE_RAND_LOGIC_VERSION 10
+#define PE_RAND_TABLE_VERSION 7
 
 enum { PE_RAND_EASY, PE_RAND_MEDIUM, PE_RAND_HARD, PE_RAND_DIFFICULTIES };
 
-/* 1 (shipped): Medium and Hard move keys where the key logic allows. 0: key items stay in their
+/* 1 (shipped): Medium and Hard move keys where the key logic allows (the same rules on both). 0: key items stay in their
  * places on every difficulty. Changing it changes layouts: raise PE_RAND_LOGIC_VERSION with it. The
  * tests also build with it at 0 to keep the keys-stay path covered. */
 #ifndef PE_RAND_MOVE_KEYS
@@ -36,14 +36,16 @@ enum { PE_RAND_KEY = 1 };   /* spot flag: its vanilla item is a key item that un
  *           Unknown: no key goes there; a key spot with unknown needs counts as needing every key of
  *           the days before it, and keeps its own key (and every key of its day stays put).
  *   before  keys whose lock was first used after a run had reached this spot: only those may be put
- *           here, so a key never sits in a spot the player could already have walked past for good. */
+ *           here, so a key never sits in a spot the player could already have walked past for good.
+ *   late    keys of a later story day this chest may take: the story-windows walk opened it at every
+ *           story value where the key's lock needed the key (tools/windowruns.py, spottable.py). */
 #define PE_RAND_NEEDS_UNKNOWN 0xFFFFFFFFu
 #define PE_RAND_MAX_KEYS 32
 
 typedef struct PeRandSpot {
     uint16_t vanilla;
     uint8_t kind, day, area, flags;   /* day: story day 1-6, 0 unknown; area: save label id */
-    uint32_t needs, before;
+    uint32_t needs, before, late;
 } PeRandSpot;
 
 /* One script word to rewrite: room map, offset of the step in the room data, which operand holds

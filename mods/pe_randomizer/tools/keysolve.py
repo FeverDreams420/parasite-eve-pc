@@ -12,6 +12,12 @@ holds isn't reached, a place appears that vanilla keys don't reach, or a moved k
 where its own spot can't (below) or sits in a chest the walk never reaches (M126's spot 84 spawns only
 after a touch in the room, V0x42|0x1, a bit the walk doesn't keep). Exit 1 on any failure.
 
+--hard <pe_randomizer.c>: Hard layouts only (others skipped), walked with Hard's moved doors (s_doors, from
+Day 2), and a moved key's own rule is Hard's (hardreach.py's): it can't be met at its lock without the
+chest still ahead. With the key never found, every place still reached where a step needs the key (its
+lock asks) and that has a way on to a place where the key's own spot gives has one to a place where the
+chest gives. Relative to the key's own spot as above; the chest may be passed by anywhere else.
+
 Without --layouts it writes key logic in keylogic.py's format for spottable.py (per spot needs= and
 before=), from the walk alone. The walk's places with the keys found on the way (storywalk's solve,
 vanilla items). The walk settles
@@ -115,14 +121,21 @@ def can_return(succ, reached, targets, without):
     return seen
 
 
+def moved_doors(path):
+    """{(room, offset): (room, V0x1)}: Hard's moved doors, from pe_randomizer.c's s_doors."""
+    return {(int(m.group(1)), int(m.group(2), 16)): (int(m.group(3)), int(m.group(4), 16))
+            for m in re.finditer(r"\{(\d+), 0x(\w+), \d+, (\d+), 0x(\w+)\}", open(path).read())}
+
+
 def main():
     a = sys.argv[1:]
     if len(a) < 3: sys.exit(__doc__)
-    opt = {k: a[a.index(k) + 1] for k in ("--runs", "--zones", "--layouts") if k in a}
+    opt = {k: a[a.index(k) + 1] for k in ("--runs", "--zones", "--layouts", "--hard") if k in a}
     g, exits, spots = Graph(a[0]), read_exits(a[1]), read_spots(a[2])
     runs = read_runs(opt["--runs"]) if "--runs" in opt else None
     zones = read_zones(opt["--zones"], opt["--runs"]) if "--zones" in opt else None
-    table, order, succ = walk(g, exits, 431, runs, zones)
+    moved = moved_doors(opt["--hard"]) if "--hard" in opt else None
+    table, order, succ = walk(g, exits, 431, runs, zones, moved)
     gives = gives_at(g, table, order, {n: s[0] for n, s in spots.items()}, runs)
     vanilla = {n: s[0] for n, s in spots.items()}
     base, base_first = solve(order[0], succ, gives, layout_item(vanilla))
@@ -146,12 +159,17 @@ def main():
             lost, _ = solve(order[0], succ, gives, layout_item(layout), withheld={key})
             own = {p for p, _ in where.get(k_spot, ())} & set(lost)
             targets = {p for p, _ in where.get(c, ())} & set(lost)
-            missable[(c, key)] = "can be walked past" if can_return(succ, lost, own, {key}) - can_return(succ, lost, targets, {key}) else ""
+            past = can_return(succ, lost, own, {key}) - can_return(succ, lost, targets, {key})
+            if moved is not None:   # Hard: only where its lock asks
+                past = {p for p in past if any(all(key in k for k, _ in es) for es in succ.get(p, {}).values())}
+                missable[(c, key)] = ("out of reach when its lock asks, e.g. " + " ".join(f"M{p[0]:03d}@{p[1]:#x}" for p in sorted(past)[:3])) if past else ""
+            else: missable[(c, key)] = "can be walked past" if past else ""
         return missable[(c, key)]
 
     if "--layouts" in opt:
         bad = 0
         lines = [l.split() for l in open(opt["--layouts"]) if l.strip() and not l.startswith("#")]
+        if moved is not None: lines = [f for f in lines if f[1] == "2"]   # PE_RAND_HARD
         for f in lines:
             layout, moved = dict(vanilla), []
             for x in f[2:]:

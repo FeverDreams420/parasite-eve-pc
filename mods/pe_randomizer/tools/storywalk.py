@@ -40,6 +40,7 @@ KEY_IDS = {v: k for k, v in KEYS.items()}
 AREA, ROOM_LEFT, FLAGS = 0x4A, 0x1, 0x3
 KEY_BIT_RANGE = 0x200   # a key give's own bit is written this close after it (M344: +0x120)
 MAP_ROOM_LEFT = 999
+DAY2 = 0x88   # pe_randomizer.c PE_RAND_DAY2: Hard's moved doors only from here on
 
 TOKEN = re.compile(r"\s*(item\([^)]*\)|gave\([^)]*\)|op9\.\d+|[VATN]0x[0-9a-f]+|0x[0-9a-f]+|\d+|self\.\w+|"
                    r"[a-z]+|&&|\|\||==|!=|<=|>=|<<|>>|[-+*/%<>&|^!()\[\]])")
@@ -437,12 +438,13 @@ def move(g, exits, t, to, what):
     return out
 
 
-def successors(g, exits, s, runs=None, zones=None):
+def successors(g, exits, s, runs=None, zones=None, moved=None):
     """(next state, keys the step needs, what: "door M123" / "write V0x41|0x40") per step that can run.
     With runs (the run test's results): the room's own start comes first. Its writes apply, and when the
     room leaves by itself (a cutscene), that door is the only way on; else steps of entity types the
     room didn't place are left out. A run that fought, or whose end comes back to the same place, only
-    adds its end (door or writes) to the room's steps."""
+    adds its end (door or writes) to the room's steps. With moved ({(room, offset): (room, V0x1)}, Hard's
+    s_doors), those doors lead there from Day 2 on."""
     rel, out = g.rel, []
     r = g.rooms.get(s.room)
     if not r: return out
@@ -473,6 +475,11 @@ def successors(g, exits, s, runs=None, zones=None):
         if to in opens and opens[to] <= cut: continue   # every zone that opens it is cut off here
         k = needs(ways, s, g.taint)
         if k is None: continue
+        if moved and (s.room, at) in moved and s.area >= DAY2:
+            to, came = moved[(s.room, at)]
+            t = run(r, s, pre, rel)
+            out.append((t.copy(room=to, left=came if to in g.reads_left else 0), k, f"+{at:06X} moved door"))
+            continue
         for x, what in move(g, exits, run(r, s, pre, rel), to, f"+{at:06X} door"): out.append((x, k, what))
     return out
 
@@ -489,7 +496,7 @@ def stays(g, runs, s, at):
     return alive is None or g.rooms[s.room]["ent"].get(at) in alive
 
 
-def walk(g, exits, start, runs=None, zones=None):
+def walk(g, exits, start, runs=None, zones=None, moved=None):
     """{place: State} for every place reached, the order places were first reached, and per place its
     edges {next place: [(keys needed, what)]}."""
     first = State(start, 0, 0)
@@ -498,7 +505,7 @@ def walk(g, exits, start, runs=None, zones=None):
     while head < len(todo):
         p = todo[head]; head += 1; queued.discard(p)
         edges = {}
-        for t, k, what in successors(g, exits, table[p], runs, zones):
+        for t, k, what in successors(g, exits, table[p], runs, zones, moved):
             q = t.place()
             edges.setdefault(q, []).append((k, what))
             if q not in table: table[q] = t; order.append(q); changed = True

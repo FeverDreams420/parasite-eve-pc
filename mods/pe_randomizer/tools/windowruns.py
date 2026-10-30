@@ -7,7 +7,8 @@ fires, and each table lock's key test changes how the run ends, in the room's ow
       give, so the give's own done bits are cleared first: its flag= and, without one, the bits its run
       in the gives ctest set (randomizer-gives.txt, one output line per input line). The variables the
       gives-runs line sets (a second gift's first-gift bit, a sewer cell) go on top, ORed in and, where
-      that differs, set as they are; the table names them (forced=).
+      that differs, set as they are; the table names them (forced=). ENTRY adds a way in the walk has
+      that its states lose (a variable set as it is, the room Aya came from).
       Lock lines: for each keytest (pe_rand_locks.h), with keys=none and keys=<its key>,
       - a walk zone run (zr input / zo output pairs) that ran it, once per V0x4a it ran at;
       - once per V0x4a the walk has its room at (that area's first state): Aya stands in the door
@@ -25,6 +26,12 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import dis as D
 
 FACINGS = (0, 1024, 2048, 3072)
+# Gives the walk's states can't fire: a state holds every bit the walk ever set, in any story order. Each
+# entry is a way in the walk has: (room, give) -> (variables set as they are, room entered from).
+# M207: M210 (walked into M207) clears the museum bit V0x2a|0x1; set, the room frees its fight, no chest.
+# M147: the Green Cardkey's actor is placed only when Aya comes from M125 (V0x1 0x7d), which the walk
+# has at every story value it has M147.
+ENTRY = {("M207", "1A9C"): ({"V0x2a": 0}, None), ("M147", "808"): ({}, 0x7d)}
 
 
 def v(s):
@@ -110,6 +117,9 @@ def lines(argv):
         new = [w for w in wants if (room, w) not in seen]
         if not new: continue
         seen.update((room, w) for w in new)
+        entry = [ENTRY[room, w] for w in new if (room, w) in ENTRY]
+        for vars_, _ in entry: forced.update(vars_)
+        came = {x for _, x in entry if x is not None}
         gid = "g" + room + "+" + ".".join(new) + "".join(f"~{k}={x:#x}" for k, x in forced.items())
         clear = {}
         for w in new:
@@ -122,8 +132,9 @@ def lines(argv):
             for how in (lambda old, x: old | x, lambda old, x: x):
                 e = dict(d)
                 for var, x in forced.items(): e[var] = how(e.get(var, 0), x)
-                line = f"{room} {area:#x} {left:#x} {var_text(e)} keys=all {' '.join(acts)} id={gid}".replace("  ", " ")
-                if line not in made: made.add(line); out.append(line)
+                for frm in sorted({left} | came):
+                    line = f"{room} {area:#x} {frm:#x} {var_text(e)} keys=all {' '.join(acts)} id={gid}".replace("  ", " ")
+                    if line not in made: made.add(line); out.append(line)
     locks = {}
     for l in open(spots):
         if l.startswith("keytest\t"):

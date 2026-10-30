@@ -518,6 +518,15 @@ Checks: tests/run_pe_randomizer_test.ps1, built with PE_RAND_MOVE_KEYS 0 and 1 (
 repeat, logic tables where keys move, a key spot reached counting with the key, partial data,
 bad layouts caught, golden layouts).
 
+With the disc (PE_TEST_DISC), ctest `mod-randomizer-gives` runs the real room scripts headless
+(tests/pe_mod_randomizer_run_test.c) with a seed's layout patched in as the mod does it, for an Easy,
+a Medium and a Hard seed: Aya stands on each chest or character (their contact task, as touching
+starts it) or in each pickup's zone and presses the button. Every table give that runs must hand out
+the layout's item; taking a spot sets its opened / taken flag; and with that flag set, the spot's
+copies in other rooms (one chest seen in several rooms or on several days) give nothing.
+`tools/giveruns.py` writes its runs file (`tools/gives-runs.txt`) from the story walk's runs; 198 of the
+238 table gives are reached (the rest need an event, a battle or a room the walk doesn't place).
+
 ## Tools (pe_tools)
 
 Development and testing aids under F1 > PE Enhancements > Debug; each tool is its own file.

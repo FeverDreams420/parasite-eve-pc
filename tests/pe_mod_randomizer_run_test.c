@@ -11,6 +11,8 @@
  * A skipped step goes straight on, as most do in the game in the same frame; the second time a routine
  * reaches the same skipped step in one frame (a wait loop with nothing to wait for) it yields there
  * until the next frame. GiveItem succeeds and is noted; CountItems reads 0 (no keys held) unless the run says keys=all.
+ * The item menu (op 169: a chest's "put an item in" on closing, a full bag's swap) is cancelled (-1), so
+ * an open chest stays open and gives nothing more.
  * A door ends the run. A frame that runs more than SPIN_STEPS steps ends it too (noted as spin).
  *
  * Usage: test-mod-randomizer-run <out.txt> [runs.txt]. Each runs.txt line: M114 0x88 0x0 [V0x41=0x20 ...]
@@ -38,7 +40,17 @@
  *
  * Op 85 (Boot_MemCardStepInit, misnamed: the battle transition, CD reads and fade) is skipped, so the
  * battle never runs or ends; an encounter routine has often told the room's door controller to die
- * just before it. A run that reaches op 85 ends its line in battle=1: its alive= is not the room's. */
+ * just before it. A run that reaches op 85 ends its line in battle=1: its alive= is not the room's.
+ *
+ * A stop may be at=@E,angle: Aya stands on actor type E (a chest, a character) and the two touch, as
+ * Scene_UpdateEntityPositions links their contact tasks when the hit spheres meet (actors here have no
+ * models, so the game's pass never does). Chests and talks run in that task.
+ *
+ * The randomizer's layout: seed=S,D (D 0-2: Easy, Medium, Hard) patches the loaded room as the mod does at
+ * scene start (every site of the room or none), and the line ends in got=<item given at each gave=>.
+ * Every table give that runs must hand out the layout's item. Checks a line may ask for: want=+OFF (the
+ * give at that listing offset runs), never=+OFF (it doesn't), flag=V0x2c|0x80 (that bit is set at the
+ * end). A failed check fails the test. */
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -64,6 +76,7 @@
 #include "pe1/script_node.h"
 #include "pe1/script_queue.h"
 #include "pe1/script_state.h"
+#include "pe_rand_spots.h"
 
 /* Fixture I/O: the test-disc object renames the real image reads to these. */
 int CdRom_ImageReadSectorsFromLba(u32 lba, void *buffer, u32 count);
@@ -95,7 +108,7 @@ static u8 is_real[8192];
 static const u8 *block;          /* task block start: listing offsets count from here */
 static size_t block_bytes;
 static u8 *ran;                  /* one per word of the block: step started there */
-static u32 gave[64]; static unsigned gave_count;
+static u32 gave[64], got[64]; static unsigned gave_count;   /* GiveItems run: offset and item */
 static int keys_all, press, battle, spin, trace;   /* trace: PE_RUN_TRACE set, each step to stderr */
 static unsigned long frame_steps;
 /* Zones PointInPoly tested: listing offset and the polygon's whole-unit corners (x, z). */
@@ -154,9 +167,10 @@ static void run_queue(void) {
             else if (op == 49) result = g_ScriptQueueOpcodeHandlers[op](args);   /* door: ends the run */
             else if (op == 17 && press && (u32)*args[0] <= 3) result = g_ScriptQueueOpcodeHandlers[op](args);   /* pad */
             else if (op == 167) {                                                 /* GiveItem: given */
-                if (gave_count < 64) gave[gave_count++] = (u32)at;
+                if (gave_count < 64) { gave[gave_count] = (u32)at; got[gave_count++] = (u32)*args[0]; }
                 *args[1] = 0; result = 1;
             } else if (op == 168) { *args[1] = keys_all; result = 1; }            /* CountItems */
+            else if (op == 169 && count == 2) { *args[1] = -1; result = 1; }      /* item menu: cancelled */
             else if (op == 8) {                                                   /* spawn at a point */
                 char scene[2] = { (char)*args[0], (char)*args[1] };
                 if (trace) { fprintf(stderr, "spawn type %d sub %d\n", scene[0], scene[1]); fflush(stderr); }
@@ -312,7 +326,51 @@ static int token_room(u32 token) {
 typedef struct Run {
     unsigned room; u32 area, left; unsigned nvars; u16 var[32]; u32 val[32]; int keys, press;
     int at, at_x[AT_MAX], at_z[AT_MAX], at_angle[AT_MAX];   /* Aya's stops from AT_FRAME on, at of them */
+    int at_actor[AT_MAX];                                     /* -1, or the actor type she stands on */
+    int seeded, difficulty; u32 seed;                         /* seed=: the randomizer's layout */
+    unsigned nwant, nnever, nflag; u32 want[8], never[8], flag_bit[8]; u16 flag_var[8];
 } Run;
+
+/* The layout for a seed, as the mod makes it (pe_gift_safe's rule: bag items and ammo, no keys). */
+static uint16_t layout[PE_RAND_SPOTS];
+static int layout_ready, layout_difficulty; static u32 layout_seed;
+static int gift_safe(unsigned id) {
+    ItemDataRecord *item;
+    if (!id || id > 0xFF || (id >= 0x38 && id <= 0x3E) || (id >= 0xC8 && id <= 0xDC) || !(item = Item_LookupBaseData(id - 1))) return 0;
+    return item->kind == 10 || (item->kind >= 12 && item->kind <= 18);
+}
+
+/* pe_randomizer.c's scene-start patch: every site of the room holds its expected bytes, then each gets
+ * its spot's item; else the room stays vanilla (a failure here: the table and the disc disagree). */
+static void patch_room(unsigned room, u8 *assets) {
+    size_t bytes = (size_t)g_RoomSectorTable[room - 1].roomSectors * 2048;
+    for (unsigned i = 0; i < PE_RAND_SITES; ++i) {
+        const PeRandSite *s = &g_pe_rand_sites[i];
+        if (s->map != room) continue;
+        for (unsigned w = 0; w < 4; ++w)
+            if (s->at + 16 > bytes || word_at(assets, s->at + 4 * w) != s->expect[w]) { FAIL("M%03u site +%06X differs", room, s->at); return; }
+    }
+    for (unsigned i = 0; i < PE_RAND_SITES; ++i) {
+        const PeRandSite *s = &g_pe_rand_sites[i];
+        u32 item = layout[s->spot];
+        if (s->map == room) memcpy(assets + s->at + 8 + 4 * s->operand, &item, 4);
+    }
+}
+
+/* Scene_LinkContactTask (entity/allocation.c): start SELF's contact task for OTHER unless one runs. */
+static void link_contact(FieldActor *self, FieldActor *other) {
+    if (!self->script_cursor_1a0) return;
+    for (ScriptNode *n = self->script_node_lists[1]; n; n = n->next)
+        if ((n->flags & 1) && !(n->flags & 0x10) && n->trigger_value == other->field_sfx_id) return;
+    ScriptNode *node = Script_AllocNode(self->script_cursor_1a0, 0);
+    if (!node) return;
+    node->flags |= 1; node->trigger_value = other->field_sfx_id;
+    node->target18.coordinate = other->type_id; node->target1c = other->sub_id;
+    if (self->script_node_lists[1]) { node->next = self->script_node_lists[1]; self->script_node_lists[1]->prev = node; }
+    self->script_node_lists[1] = node;
+}
+
+static int hex_offset(const char *s, u32 *out) { return *s == '+' && sscanf(s + 1, "%x", out) == 1; }
 
 static int parse_run(char *line, Run *r) {
     memset(r, 0, sizeof(*r));
@@ -326,9 +384,27 @@ static int parse_run(char *line, Run *r) {
     while ((tok = strtok(NULL, " \t\r\n"))) {
         if (!strcmp(tok, "keys=all")) { r->keys = 1; continue; }
         if (!strcmp(tok, "press")) { r->press = 1; continue; }
+        if (!strncmp(tok, "at=@", 4)) {
+            if (r->at == AT_MAX || sscanf(tok + 4, "%d,%d", &r->at_actor[r->at], &r->at_angle[r->at]) < 1) return 0;
+            ++r->at;
+            continue;
+        }
         if (!strncmp(tok, "at=", 3)) {
             if (r->at == AT_MAX || sscanf(tok + 3, "%d,%d,%d", &r->at_x[r->at], &r->at_z[r->at], &r->at_angle[r->at]) < 2) return 0;
-            ++r->at;
+            r->at_actor[r->at++] = -1;
+            continue;
+        }
+        if (!strncmp(tok, "seed=", 5)) {
+            if (sscanf(tok + 5, "%u,%d", &r->seed, &r->difficulty) != 2 || r->difficulty < 0 || r->difficulty >= PE_RAND_DIFFICULTIES) return 0;
+            r->seeded = 1;
+            continue;
+        }
+        if (!strncmp(tok, "want=", 5)) { if (r->nwant == 8 || !hex_offset(tok + 5, &r->want[r->nwant++])) return 0; continue; }
+        if (!strncmp(tok, "never=", 6)) { if (r->nnever == 8 || !hex_offset(tok + 6, &r->never[r->nnever++])) return 0; continue; }
+        if (!strncmp(tok, "flag=V", 6)) {
+            char *bar = strchr(tok, '|');
+            if (r->nflag == 8 || !bar) return 0;
+            r->flag_var[r->nflag] = (u16)strtoul(tok + 6, NULL, 0); r->flag_bit[r->nflag++] = (u32)strtoul(bar + 1, NULL, 0);
             continue;
         }
         char *eq = strchr(tok, '=');
@@ -338,7 +414,7 @@ static int parse_run(char *line, Run *r) {
     return r->room >= 1 && r->room <= SCENE_ROOM_COUNT ? 1 : 2;   /* 2: M5000, M8888 (main-loop scenes) */
 }
 
-static unsigned runs_done, runs_door, runs_spin;
+static unsigned runs_done, runs_door, runs_spin, gives_checked, checks_done;
 
 static void do_run(const Run *r, FILE *out) {
     char name[16]; snprintf(name, sizeof(name), "m%04ui", r->room);
@@ -351,8 +427,17 @@ static void do_run(const Run *r, FILE *out) {
     const SceneRoomDirectory *directory = (const void *)(assets + word_at(assets, 4));
     u32 table = directory->taskBlock & 0x3FFFFF;
     block_bytes = word_at(assets, table) & 0xFFFFFF;
-    block = assets + (word_at(assets, table + 4) & 0xFFFFFF);
+    size_t block_in_room = word_at(assets, table + 4) & 0xFFFFFF;
+    block = assets + block_in_room;
     free(ran); ran = calloc(block_bytes / 4 + 1, 1);
+    if (r->seeded) {
+        if (!layout_ready || layout_seed != r->seed || layout_difficulty != r->difficulty) {
+            PeRandResult result;
+            pe_rand_generate(g_pe_rand_spots, PE_RAND_SPOTS, r->seed, r->difficulty, gift_safe, layout, &result);
+            layout_ready = 1; layout_seed = r->seed; layout_difficulty = r->difficulty;
+        }
+        patch_room(r->room, (u8 *)g_GameState.loaded_scene_assets);
+    }
 
     static u32 before[VARS];
     g_ScriptVariableBank[SCRIPT_VAR_AREA] = r->area; g_ScriptVariableBank[SCRIPT_VAR_ROOM] = r->left;
@@ -372,10 +457,14 @@ static void do_run(const Run *r, FILE *out) {
     for (frame = 0; frame < (r->at ? AT_FRAME + r->at * AT_FRAMES : FRAMES) && !spin && !(g_GameStateFlags & 0x2000); ++frame) {
         frame_steps = 0;
         if (r->at && frame >= AT_FRAME && g_PlayerEntity) {
-            FieldActor *aya = g_PlayerEntity;
+            FieldActor *aya = g_PlayerEntity, *on = 0;
             int stop = (int)(frame - AT_FRAME) / AT_FRAMES;
-            aya->pos_x = aya->base_x = r->at_x[stop] << 16; aya->pos_z = aya->base_z = r->at_z[stop] << 16;
+            if (r->at_actor[stop] >= 0)
+                for (on = g_FieldActorListHead; on && (on == aya || on->type_id != r->at_actor[stop] || (on->flags & 0x10)); on = on->next) {}
+            if (on) { aya->pos_x = aya->base_x = on->pos_x; aya->pos_z = aya->base_z = on->pos_z; }
+            else if (r->at_actor[stop] < 0) { aya->pos_x = aya->base_x = r->at_x[stop] << 16; aya->pos_z = aya->base_z = r->at_z[stop] << 16; }
             aya->rot_y = (short)r->at_angle[stop];
+            if (on) { link_contact(aya, on); link_contact(on, aya); }
         }
         if (press) {   /* the button, as Field_HandleStateTransition leaves it for this frame */
             unsigned k = frame >= AT_FRAME ? (frame - AT_FRAME) % AT_FRAMES : 0;
@@ -392,6 +481,25 @@ static void do_run(const Run *r, FILE *out) {
         for (FieldActor *a = g_FieldActorListHead; a; a = a->next) a->flags &= ~0x10000000;
     }
     ++runs_done;
+    for (unsigned i = 0; r->seeded && i < gave_count; ++i)
+        for (unsigned g = 0; g < PE_RAND_GIVES; ++g)
+            if (g_pe_rand_gives[g].map == r->room && g_pe_rand_gives[g].at == block_in_room + gave[i]) {
+                unsigned spot = g_pe_rand_gives[g].spot;
+                ++gives_checked;
+                if (got[i] != layout[spot])
+                    FAIL("M%03u +%06X (spot %u): gave %#x, seed %06u's layout has %#x", r->room, g_pe_rand_gives[g].at, spot,
+                         got[i], r->seed, layout[spot]);
+            }
+    for (unsigned k = 0; k < r->nwant + r->nnever; ++k) {
+        int want = k < r->nwant; u32 at = want ? r->want[k] : r->never[k - r->nwant];
+        unsigned i = 0;
+        while (i < gave_count && gave[i] != at) ++i;
+        if ((i < gave_count) != want) FAIL("M%03u V0x4a=%#x: the give at +%X %s", r->room, r->area, at, want ? "didn't run" : "ran");
+        ++checks_done;
+    }
+    for (unsigned k = 0; k < r->nflag; ++k, ++checks_done)
+        if (!(g_ScriptVariableBank[r->flag_var[k]] & r->flag_bit[k]))
+            FAIL("M%03u V0x4a=%#x: V%#x|%#x not set", r->room, r->area, r->flag_var[k], r->flag_bit[k]);
     if (!out) return;
     fprintf(out, "run\tM%03u\tV0x4a=%#x\tV0x1=%#x\tend=", r->room, r->area, r->left);
     if (g_GameStateFlags & 0x2000) {
@@ -414,8 +522,14 @@ static void do_run(const Run *r, FILE *out) {
     for (size_t w = 0; w <= block_bytes / 4; ++w)
         if (ran[w]) { fprintf(out, "%s%#zx", first ? "" : ",", w * 4); first = 0; }
     print_floor(out);
-    for (int i = 0; i < r->at; ++i) fprintf(out, "%s%d,%d,%d", i ? ";" : "\tat=", r->at_x[i], r->at_z[i], r->at_angle[i]);
+    for (int i = 0; i < r->at; ++i)
+        if (r->at_actor[i] >= 0) fprintf(out, "%s@%d,%d", i ? ";" : "\tat=", r->at_actor[i], r->at_angle[i]);
+        else fprintf(out, "%s%d,%d,%d", i ? ";" : "\tat=", r->at_x[i], r->at_z[i], r->at_angle[i]);
     if (press) fputs("\tpress=1", out);
+    if (r->seeded) {
+        fprintf(out, "\tseed=%u,%d\tgot=", r->seed, r->difficulty);
+        for (unsigned i = 0; i < gave_count; ++i) fprintf(out, "%s%#x", i ? "," : "", got[i]);
+    }
     if (battle) fputs("\tbattle=1", out);
     fputc('\n', out);
 }
@@ -469,6 +583,7 @@ int main(int argc, char **argv) {
     free(ran);
     CdRom_BindImage(NULL, NULL); pe_disc_close(&disc);
     if (failures) { fprintf(stderr, "%u failures\n", failures); return 1; }
-    printf("Randomizer runs: %u room runs, %u ended at a door, %u spun\n", runs_done, runs_door, runs_spin);
+    printf("Randomizer runs: %u room runs, %u ended at a door, %u spun; %u table gives handed out the layout's item, %u checks held\n",
+           runs_done, runs_door, runs_spin, gives_checked, checks_done);
     return 0;
 }

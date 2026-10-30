@@ -201,7 +201,7 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
         $<TARGET_OBJECTS:parasite-eve-original-pad>
         $<TARGET_OBJECTS:parasite-eve-original-shadow>)
     target_include_directories(test-mod-randomizer-run PRIVATE ${PROJECT_SOURCE_DIR}/include
-        "$<TARGET_PROPERTY:SDL3::SDL3,INTERFACE_INCLUDE_DIRECTORIES>")
+        ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer "$<TARGET_PROPERTY:SDL3::SDL3,INTERFACE_INCLUDE_DIRECTORIES>")
     target_compile_definitions(test-mod-randomizer-run PRIVATE __psyz PE_MODS=1)
     target_link_libraries(test-mod-randomizer-run PRIVATE psyz)
     # Without a runs file: every room once at V0x4a = 0. mods/pe_randomizer/tools/runlist.py writes a
@@ -210,5 +210,11 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
     add_test(NAME mod-randomizer-run COMMAND test-mod-randomizer-run
         "${CMAKE_CURRENT_BINARY_DIR}/randomizer-run-rooms.txt")
     set_tests_properties(mod-randomizer-run PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
+        ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer runs:")
+    # The spots with a seed's layout patched in (tools/giveruns.py wrote the runs): each give hands out the
+    # layout's item, and a spot's copy in another room gives nothing once its flag is set.
+    add_test(NAME mod-randomizer-gives COMMAND test-mod-randomizer-run
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-gives.txt" "${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/gives-runs.txt")
+    set_tests_properties(mod-randomizer-gives PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer runs:")
 endif()

@@ -510,6 +510,8 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   lines: the Fuses, St. Francis Hospital Key and Blue Magnetic Cardkey go to power-off chests, the Green
   Magnetic Cardkey only to M146/M147 (its door has no story check, and opening it early closes the way to
   the power-off rooms), the Elevator Key and the Helpful Good Luck Charm to a chest that stays reachable.
+  Chest 84 (M126) takes no keys: it only appears after an optional touch in that room, so
+  `tools/keysolve.py --layouts` found keys there missable. Keep it out when copying hospital_logic.py's lines.
   With the Weapons Storage Key and Chinatown's Good Luck Charm, 10 keys can move.
 - Key moves are off for now (`PE_RAND_MOVE_KEYS` 0 in pe_randomizer.h): they aren't play-tested, so
   every difficulty keeps key items in their places. Setting it to 1 turns the moves above back on
@@ -527,8 +529,16 @@ the layout's item; taking a spot sets its opened / taken flag; and with that fla
 copies in other rooms (one chest seen in several rooms or on several days) give nothing.
 `tools/giveruns.py` writes its runs file (`tools/gives-runs.txt`) from the story walk's runs and the
 variables that place each give's actor (a sewer cell, a story bit), with every battle played to a won end
-(the run test's win: the chests M207 and M232 place after their fight); 215 of the 228 table gives are
-reached (the rest, NYPD gifts and key gifts, need a story event).
+(the run test's win: the chests M207 and M232 place after their fight), and the actor each gift's talk
+tests Aya touched (most gifts run in her own script): all 228 table gives are reached.
+
+The story walk (`tools/storywalk.py`: every place a new game reaches, and the keys each step needs)
+learns from the run test's runs: `tools/storyruns.sh` runs every place of `runs.txt` (base runs, then
+zone runs and their chains, with and without the button, every battle won) and walks, and
+`tools/fixpoint.sh` runs the places that walk reaches without a run until none is left (both in
+build-mods/mods, about half an hour). `tools/keysolve.py --layouts` checks generated key layouts over
+that walk (`test-pe-mod-randomizer-keys1 --layouts N` prints them): every key is reached with the
+layout's keys, and no moved key can be walked past where its own spot can't.
 
 ## Tools (pe_tools)
 

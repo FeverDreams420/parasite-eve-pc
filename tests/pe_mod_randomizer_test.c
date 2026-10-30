@@ -4,6 +4,7 @@
  * (as shipped: golden layouts, no key moves) and at 1 (the key logic). */
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "pe_randomizer.h"
@@ -108,9 +109,9 @@ static void every_seed_passes(void) {
 
 static void golden_layouts(void) {
     static const uint32_t golden[PE_RAND_DIFFICULTIES][4] = {
-        {0xEDACFE5A, 0x4FD1AFDA, 0xFB2BF79A, 0x89C4EA3A},
-        {0x3478399A, 0xD41CB6CA, 0xE64EDC4A, 0xEE7C9CFA},
-        {0x78963902, 0x387F0A12, 0xC112DD02, 0xBC4D4582},
+        {0x595BD512, 0xDA729C82, 0x0BE9812A, 0x95D2655A},
+        {0x6DB7DB3A, 0xA517C83A, 0x09DF233A, 0x3D198FFA},
+        {0x84417D62, 0xA4E94C82, 0xFFF05E1A, 0x1ABE50C2},
     };
     static uint16_t out[PE_RAND_SPOTS];
     int print = !golden[0][0];
@@ -225,7 +226,25 @@ static void partial_logic_data(void) {
     assert(moved > 500);
 }
 
-int main(void) {
+/* --layouts N: the key moves of seeds 1..N on Medium and Hard, one line each (seed, difficulty, then
+ * spot=item for every spot that gives a key not its own), for tools/keysolve.py --layouts. */
+static void print_key_layouts(unsigned n) {
+    static uint16_t out[PE_RAND_SPOTS];
+    for (uint32_t seed = 1; seed <= n; ++seed)
+        for (int d = PE_RAND_MEDIUM; d <= PE_RAND_HARD; ++d) {
+            PeRandResult r;
+            pe_rand_generate(g_pe_rand_spots, PE_RAND_SPOTS, seed, d, test_gift_safe, out, &r);
+            printf("%u %d", (unsigned)seed, d);
+            for (unsigned i = 0; i < PE_RAND_SPOTS; ++i)
+                for (unsigned j = 0; j < PE_RAND_SPOTS; ++j)
+                    if ((g_pe_rand_spots[j].flags & PE_RAND_KEY) && out[i] == g_pe_rand_spots[j].vanilla && i != j)
+                        printf(" %u=%02X", i, out[i]);
+            putchar('\n');
+        }
+}
+
+int main(int argc, char **argv) {
+    if (argc == 3 && !strcmp(argv[1], "--layouts")) { print_key_layouts((unsigned)atoi(argv[2])); return 0; }
     table_is_sane();
     every_seed_passes();
     if (PE_RAND_MOVE_KEYS) {

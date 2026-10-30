@@ -18,7 +18,14 @@ that ran each give there (minutes over the full zone runs). Last come the variab
 (doorscan's ways to it and to each step that spawns its actor, op 8 or op 17 2500: (V == n) sets V, (V & bit)
 sets the bit; e.g. a sewer chest placed only at one V0x37/V0x38 cell, a chest spawned once a story bit is set),
 at V0x4a = 0 and two idle places of the room. An actor with no spawn step is a starting actor (the room's
-scene table) or never placed. pick: per give, the first candidate that ran it,
+scene table) or never placed. Then the touches a give's way names: most gifts run in Aya's own script
+(type 0), in her contact task, which reads the type of the actor she touched into a field (op 36) and tests
+it (A0x1 == 2: the NYPD gifts); she stands on that actor at places where it is placed, or, in Aya's script
+with no such test, on each other actor placed there. Each touch also gets one long talk (TALK stops on the
+same actor: the M344 Klamp Key talk runs ~1,000 frames). Last, the variable sets with those touches (and
+the spawns of the touched actors: M100's second gift spawns its giver on V0x2c&0x4000000), and on the lines
+that ran another give of the same actor in the room (a second gift tests the first one's bit: M121 V0x2e&1,
+M154's Elevator Key V0x43&0x10). pick: per give, the first candidate that ran it,
 with want=; a give whose spot has an opened / taken flag (the flag lines) also gets flag=, and each copy
 of the spot in another room a run with that flag set and never=. Each line is written once per seed in
 SEEDS. Gives no candidate reached are listed on stderr."""
@@ -30,7 +37,10 @@ SEEDS = ((111111, 0), (222222, 1), (333333, 2))   # Easy, Medium, Hard
 FACINGS = (0, 0x400, 0x800, 0xC00)
 EQ = re.compile(r"\(V0x([0-9a-f]+) == 0x([0-9a-f]+)\)")
 BIT = re.compile(r"\(V0x([0-9a-f]+) & 0x([0-9a-f]+)\)")
+TOUCHED = re.compile(r"\(A0x([0-9a-f]+) == 0x([0-9a-f]+)\)")
 SETTINGS = 4   # variable sets tried per give
+AYA = 0        # Aya's own script: actor type 0 in every room
+TALK = 4       # stops in a row on the same actor for a long talk (AT_FRAMES each in the run test)
 
 
 def settings(way):
@@ -47,13 +57,28 @@ def settings(way):
     return [({int(v): n for v, n in o.items()}, bits) for o in out]
 
 
-def need_sets(room, entity, give_at):
-    """Distinct non-empty variable sets the ways to a give and to its actor's spawn steps need, fewest first."""
+def spawn_ways(room, entity):
+    """Ways to the steps that spawn an actor type, op 8 or op 17 2500 ([always] for a starting actor)."""
     spawns = [at for at, (_, op, a, _) in room.steps.items()
               if (op == 8 and a and a[0] == (0, entity)) or (op == 17 and len(a) > 1 and a[0] == (0, 2500) and a[1] == (0, entity))]
-    spawn_ways = [w for at in spawns for w in room.ways(at)] if spawns else [frozenset()]
+    return [w for at in spawns for w in room.ways(at)] if spawns else [frozenset()]
+
+
+def touched(room, entity, give_at):
+    """Actor types a way to the give tests its actor touched: op 36 reads the type of the actor in contact
+    into an entity field, and the way tests that field (A0x1 == 2: Aya's talk with type 2 in M116)."""
+    fields = {a[0][1] for t, op, a, _ in room.steps.values() if t == entity and op == 36 and a and a[0][0] == 1}
+    return sorted({int(n, 16) for w in room.ways(give_at) for c in w if not c.startswith("!")
+                   for k, n in TOUCHED.findall(c) if int(k, 16) in fields})
+
+
+def need_sets(room, entity, give_at, touch=()):
+    """Distinct non-empty variable sets the ways to a give and to the spawn steps of its actor and of the
+    actors it must touch need, fewest first."""
+    ways = [frozenset()]
+    for t in (entity, *touch): ways = [w | s for w in ways for s in spawn_ways(room, t)][:64]
     out = {}
-    for sw in spawn_ways:
+    for sw in ways:
         for gw in room.ways(give_at):
             for values, bits in settings(sw | gw):
                 if values or bits: out.setdefault((tuple(sorted(values.items())), tuple(sorted(bits.items()))), len(sw | gw))
@@ -122,6 +147,27 @@ def cands(spots, rooms_path, runs, outs, *pairs):
         for values, bits in need_sets(scripts[n], int(entity), at):
             for line in dict.fromkeys(with_vars(b, values, bits) for b in bases):
                 for facing in FACINGS: print(f"{line} keys=all press at=@{entity},{facing}")
+        # After those (a give reached before keeps its line): the actors the give's way says its actor
+        # touched, or, for a give in Aya's own script that names none, each other actor placed there;
+        # one long talk per actor; the variable sets again with those touches, and on the lines that ran
+        # another give of the same actor in this room (a second gift that needs the first one's bit).
+        touch, aya = touched(scripts[n], int(entity), at), int(entity) == AYA
+        alive_at = {line: alive for _, line, alive in places.get(room, [])}
+        if touch:   # places where the actors to touch are placed too
+            ps = sorted({(a, line) for a, line, alive in places.get(room, []) if {entity, *map(str, touch)} <= alive})
+            pick = [ps[i * (len(ps) - 1) // 3] for i in range(4)] if len(ps) > 4 else ps
+        for line in dict.fromkeys([line for _, line in pick] + [f"{room} 0x0 0x0"]):
+            types = touch or (sorted({int(t) for t in alive_at.get(line, ()) if t} - {AYA}) if aya else [int(entity)])
+            for t in types:
+                if touch or aya:
+                    for facing in FACINGS: print(f"{line} keys=all press at=@{t},{facing}")
+                print(f"{line} keys=all press" + f" at=@{t},0" * TALK)
+        siblings = [found[k][1] for k, g in sorted(gives.items()) if k in found and k != (room, at) and k[0] == room and g[2] == entity]
+        for values, bits in need_sets(scripts[n], int(entity), at, touch):
+            for line in dict.fromkeys(with_vars(b, values, bits) for b in bases if touch):
+                for t in touch:
+                    for facing in FACINGS: print(f"{line} keys=all press at=@{t},{facing}")
+            for line in dict.fromkeys(with_vars(b, values, bits) for b in siblings): print(line)
 
 
 def pick(spots, cand_path, out_path):

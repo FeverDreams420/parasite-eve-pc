@@ -12,8 +12,8 @@ write whose ways can hold may run, any number of times; a door moves to its targ
 York map, each destination its V0x3 bit enables, the room the exits ctest gives for it, V0x1 = 999).
 The story writes in the straight run before a step run with it (tests first, then writes, then door).
 Key items are not followed: the randomizer moves them. Every item test may pass, and each step notes
-the keys its cheapest way needs (item(K) read as true), so a solver can check a layout against the
-places. Other tests the listing can't decide (entity, scene and temp fields, area, events, a bit that
+the keys its cheapest way needs (item(K) read as true, and a story bit only steps needing a key set,
+Graph.unlocks, read as set), so a solver (keysolve.py) can check a layout against the places. Other tests the listing can't decide (entity, scene and temp fields, area, events, a bit that
 may be either) are assumed to pass: the walk over-approximates what a player can do, never under. So
 a bit that closes a door (the hospital's V0x42|4) is not seen as closing it unless V0x4a changes too.
 A give succeeds (gave(x) == 0).
@@ -38,6 +38,7 @@ from doorscan import read_exits
 
 KEY_IDS = {v: k for k, v in KEYS.items()}
 AREA, ROOM_LEFT, FLAGS = 0x4A, 0x1, 0x3
+KEY_BIT_RANGE = 0x200   # a key give's own bit is written this close after it (M344: +0x120)
 MAP_ROOM_LEFT = 999
 
 TOKEN = re.compile(r"\s*(item\([^)]*\)|gave\([^)]*\)|op9\.\d+|[VATN]0x[0-9a-f]+|0x[0-9a-f]+|\d+|self\.\w+|"
@@ -199,6 +200,7 @@ class Graph:
                 item = int(f[4], 16) if f[4].startswith("0x") else None
                 r["take"].append((at, item, ways(f[5]), pre(f)))
         self.relevance()
+        self.unlocks()
         # Rooms whose steps read V0x1: elsewhere the room left can't matter until the room writes it.
         self.reads_left = set()
         for room, r in self.rooms.items():
@@ -228,6 +230,41 @@ class Graph:
                     if self.matters(rel, var, kind, n): add(ways)
             if rel == before: break
         self.rel = rel
+
+    def unlocks(self):
+        """{(var, bit): keys} for the story bits only steps needing those keys set (M051's Weapons Storage
+        door sets V0x2d|0x40000 with the key, and its other door, for later, tests only that bit). The
+        walk follows every step whatever the keys, so a place may hold such a bit before its key could be
+        there: a step testing it needs the keys too. A step's keys: those every way of it needs (bits of
+        this kind count, to a fixpoint). A key give's own bit, the first write after it in its routine
+        (St. Francis Key M325 V0x41|0x1, which the St. Francis door tests), needs the key too: the key
+        logic's key bit is the key held and its spot reached."""
+        writers = {}
+        for room, r in self.rooms.items():
+            key_gives = sorted((at, item) for at, item, _, _, _ in r["give"] if item in KEYS)
+            write_ats = sorted(at for at, *_ in r["write"])
+            for at, var, kind, n, ways, _ in r["write"]:
+                if kind not in "|=": continue
+                given = [item for g, item in key_gives if g < at <= g + KEY_BIT_RANGE and r["ent"][g] == r["ent"][at]
+                         and not any(g < w < at and r["ent"][w] == r["ent"][at] for w in write_ats)]
+                if given: ways = [w + [("item", given[-1])] for w in ways or [[]]]
+                for b in range(32):
+                    if n >> b & 1: writers.setdefault((var, 1 << b), []).append(ways)
+        self.taint = {}
+        while True:
+            taint = {}
+            for bit, ws in writers.items():
+                keys = None
+                for ways in ws:
+                    for w in ways or [[]]:
+                        k = set()
+                        for c in w: wants(c, k, taint=self.taint)
+                        keys = k if keys is None else keys & k
+                        if not keys: break
+                    if not keys: break
+                if keys: taint[bit] = frozenset(keys)
+            if taint == self.taint: break
+            self.taint = taint
 
     @staticmethod
     def matters(rel, var, kind, n):
@@ -287,26 +324,31 @@ class State:
         return changed
 
 
-def wants(e, out, positive=True):
-    """Keys a tree needs held: item(K) read as true (not under ! or == 0)."""
+def wants(e, out, positive=True, taint=None):
+    """Keys a tree needs held: item(K) read as true (not under ! or == 0), and the keys of a story bit
+    only key steps set (Graph.unlocks) read as set: every bit tested set needs them."""
     k = e[0]
     if k == "item":
         if positive and e[1] in KEYS: out.add(e[1])
         return
-    if k == "!": wants(e[1], out, not positive); return
-    if k == "==" and e[2] == ("num", 0): wants(e[1], out, not positive); return
+    if k == "&" and e[1][0] == "var" and e[1][1] == "V" and e[2][0] == "num":
+        bits = [taint.get((e[1][2], 1 << b)) for b in range(32) if e[2][1] >> b & 1] if positive and taint else []
+        if bits and all(bits): out.update(frozenset.intersection(*bits))
+        return
+    if k == "!": wants(e[1], out, not positive, taint); return
+    if k == "==" and e[2] == ("num", 0): wants(e[1], out, not positive, taint); return
     if k == "||": return   # either side: no single key needed
     for x in e[1:]:
-        if isinstance(x, tuple): wants(x, out, positive)
+        if isinstance(x, tuple): wants(x, out, positive, taint)
 
 
-def needs(ways, s):
+def needs(ways, s, taint=None):
     """The fewest keys a way that holds in s needs (frozenset), or None when no way holds."""
     best = None
     for w in ways:
         if any(value(c, s) == 0 for c in w): continue
         k = set()
-        for c in w: wants(c, k)
+        for c in w: wants(c, k, taint=taint)
         if best is None or len(k) < len(best): best = frozenset(k)
         if not best: break
     return best
@@ -422,14 +464,14 @@ def successors(g, exits, s, runs=None, zones=None):
     def placed(at): return alive is None or r["ent"].get(at) in alive
     for at, var, kind, n, ways, pre in r["write"]:
         if not Graph.matters(rel, var, kind, n) or not placed(at): continue
-        k = needs(ways, s)
+        k = needs(ways, s, g.taint)
         if k is not None: out.append((run(r, s, pre, rel).write(var, kind, n, rel), k, f"+{at:06X} V{var:#x}{kind}{n:#x}"))
     cut = zones[0].get(s.place(), set()) if zones else set()
     opens = zones[1].get(s.room, {}) if cut else {}
     for at, to, ways, pre in r["door"]:
         if not placed(at): continue
         if to in opens and opens[to] <= cut: continue   # every zone that opens it is cut off here
-        k = needs(ways, s)
+        k = needs(ways, s, g.taint)
         if k is None: continue
         for x, what in move(g, exits, run(r, s, pre, rel), to, f"+{at:06X} door"): out.append((x, k, what))
     return out
@@ -486,7 +528,7 @@ def gives_at(g, table, order, vanilla=None, runs=None):
             if item not in KEYS and spot == "-": continue
             if not stays(g, runs, s, at): continue
             if spot != "-" and vanilla: item = vanilla.get(int(spot.split()[0][5:]), item)
-            k = needs(ways, s)
+            k = needs(ways, s, g.taint)
             if k is not None: out.setdefault(p, []).append((item, k, s.room, at, spot))
     return out
 
@@ -585,7 +627,7 @@ def main():
         s = table[p]; r = g.rooms.get(s.room)
         if not r: continue
         for at, item, spot, ways, _ in r["give"]:
-            k = needs(ways, s) if stays(g, runs, s, at) else None
+            k = needs(ways, s, g.taint) if stays(g, runs, s, at) else None
             if k is not None:
                 vals, ks = at_area.setdefault((s.room, at), (set(), set()))
                 vals.add(s.area); ks.add(k)

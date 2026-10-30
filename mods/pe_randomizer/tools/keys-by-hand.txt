@@ -20,7 +20,7 @@ M114+016CA4 needs=CA before=D6      # Weapons Storage Key's room
 
 # Day 3 hospital (hospital_logic.py output)
 M125+016D64 needs=CA before=   # 83 gift M125 M331 Helpful Good Luck Charm
-M126+015238 needs=CA before=CC,DA   # 84 chest M126
+M126+015238 needs=CA before=   # 84 chest M126: spawns only after a touch in M126 (V0x42|0x1), so it takes no keys
 M126+0159BC needs=CA before=CC,DA   # 85 chest M126
 M137+0236B0 needs=CA before=CC,CE,CF,D0,D1,D2,DA   # 86 chest M137 M324
 M138+008C50 needs=CA before=CC,CE,CF,D0,D1,D2,DA   # 87 chest M138 M325

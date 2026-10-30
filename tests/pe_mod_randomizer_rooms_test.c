@@ -20,7 +20,13 @@
  * slot), a pickup just after; the flag is an op 9 OR of one bit into a temp, stored back by the op 10
  * that follows. Each such write belongs to the nearest slot give of its entity within 0x100 bytes
  * (tools/spottable.py merges spots by the same rule). Gives sharing a flag are one chest or pickup:
- * they must all be one spot, or all be left out. Flag lines go to the second output too. */
+ * they must all be one spot, or all be left out. Flag lines go to the second output too.
+ *
+ * Placed actors: a room places its starting actors (Script_DrawSyncAndFlush: at the task block's first
+ * word, a count byte, then type and sub id pairs) and the types its walked spawn steps name (op 8, op 17
+ * 2500). Every listed give must be in a placed actor: another actor's script never runs, and the item the
+ * randomizer puts there is lost (tools/spottable.py leaves those gives out by the same rule). Their flag
+ * writes never run either and are left out of the flag check. */
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,7 +83,7 @@ static int door_room(u32 token) {
 }
 
 static const char *const spot_kinds[] = { "chest", "pickup", "gift" };
-static unsigned sites_total, gives_listed, gives_walked, gives_unlisted;
+static unsigned sites_total, gives_listed, gives_walked, gives_unlisted, gives_unplaced;
 
 /* Spot of the listed GiveItem at this room offset, or -1. */
 static int listed_give(unsigned room, size_t at) {
@@ -97,9 +103,9 @@ static FlagOwner flag_owners[4096];
 static unsigned flag_count;
 
 static void find_flags(unsigned room, const u8 *assets, size_t offset, size_t base, const u8 *kind, const u16 *entity_of,
-                       const u32 *gives, const u32 *give_entity, unsigned give_count, FILE *spots) {
+                       const u8 *placed, const u32 *gives, const u32 *give_entity, unsigned give_count, FILE *spots) {
     for (size_t at = 0; at + 8 <= base; at += 4) {
-        if (kind[at / 4] != WORD_STEP) continue;
+        if (kind[at / 4] != WORD_STEP || !placed[entity_of[at / 4]]) continue;   /* an actor never placed never sets it */
         Step s, t; decode(assets + offset, at, &s);
         if (s.op != 9 || s.count != 4 || s.modes[0] || s.values[0] != 2 || s.modes[1] != 3 || s.modes[2] != 2 || s.modes[3]) continue;
         size_t next = at + s.bytes;
@@ -134,7 +140,8 @@ static void check_flags(void) {
 }
 
 static void audit_spots(unsigned room, const u8 *assets, size_t room_bytes, size_t offset, size_t base, const u8 *kind,
-                        const u32 *gives, const u32 *give_entity, unsigned give_count, FILE *spots) {
+                        const u16 *entity_of, const u8 *placed, const u32 *gives, const u32 *give_entity,
+                        unsigned give_count, FILE *spots) {
     for (unsigned i = 0; i < PE_RAND_SITES; ++i) {
         const PeRandSite *s = &g_pe_rand_sites[i];
         if (s->map != room) continue;
@@ -153,12 +160,14 @@ static void audit_spots(unsigned room, const u8 *assets, size_t room_bytes, size
         ++gives_listed;
         if (!walked(kind, offset, base, g->at) || (word_at(assets, g->at) & 0x1FFF) != 167)
             FAIL("M%03u give +%06X (spot %u) is no walked GiveItem", room, g->at, g->spot);
+        else if (!placed[entity_of[(g->at - offset) / 4]])
+            FAIL("M%03u give +%06X (spot %u): actor %u is never placed", room, g->at, g->spot, entity_of[(g->at - offset) / 4]);
     }
     for (unsigned i = 0; i < give_count; ++i) {
         size_t at = offset + gives[i];
         int spot = listed_give(room, at);
         Step s; decode(assets, at, &s);
-        ++gives_walked; if (spot < 0) ++gives_unlisted;
+        ++gives_walked; if (spot < 0) ++gives_unlisted; if (!placed[give_entity[i]]) ++gives_unplaced;
         if (!spots) continue;
         fprintf(spots, "give\tM%03u\t+%06zX\t%u\t%#x", room, at, give_entity[i], gives[i]);
         for (u32 k = 0; k < s.count; ++k) fprintf(spots, "%s%u:%#x", k ? "," : "\t", s.modes[k], s.values[k]);
@@ -184,6 +193,9 @@ static void walk_room(unsigned room, FILE *out, FILE *spots, unsigned *steps_tot
     size_t *work = malloc((size / 4 + count + 1) * sizeof(size_t));
     u32 *gives = malloc((size / 8 + 1) * sizeof(u32)), *give_entity = malloc((size / 8 + 1) * sizeof(u32));
     unsigned doors = 0, steps = 0, give_count = 0;
+    u8 placed[256] = {0};   /* actor types the room places */
+    if (base + 1 + 2 * (size_t)block[base] > size) FAIL("M%03u starting actors past the block", room);
+    else for (u32 i = 0; i < block[base]; ++i) placed[block[base + 1 + 2 * i]] = 1;
     for (u32 t = 0; t < count; ++t) {
         entries[t] = word_at(block, 8 + 4 * (size_t)t);
         if (tasks->offsets[t] != block + entries[t]) FAIL("M%03u entry %u differs from the relocated one", room, t);
@@ -209,6 +221,8 @@ static void walk_room(unsigned room, FILE *out, FILE *spots, unsigned *steps_tot
                 if (!g_ScriptQueueOpcodeHandlers[s.op]) { FAIL("M%03u entity %u: op %u at %#zx has no handler", room, t, s.op, at); break; }
                 kind[at / 4] = WORD_STEP; entity_of[at / 4] = (u16)t; ++steps;
                 if (s.op == 167) { gives[give_count] = (u32)at; give_entity[give_count++] = t; }
+                if (s.op == 8 && s.count > 0 && s.modes[0] == 0) placed[s.values[0] & 0xFF] = 1;
+                if (s.op == 17 && s.count > 1 && s.modes[0] == 0 && s.values[0] == 2500 && s.modes[1] == 0) placed[s.values[1] & 0xFF] = 1;
                 int target = -1, data = -1;
                 if (s.op == 0 || s.op == 18) target = 0;
                 else if (s.op == 5 && !(s.modes[0] == 0 && s.values[0])) target = 1;
@@ -242,8 +256,8 @@ static void walk_room(unsigned room, FILE *out, FILE *spots, unsigned *steps_tot
         }
     }
     *steps_total += steps; *doors_total += doors;
-    audit_spots(room, assets, room_bytes, offset, base, kind, gives, give_entity, give_count, spots);
-    find_flags(room, assets, offset, base, kind, entity_of, gives, give_entity, give_count, spots);
+    audit_spots(room, assets, room_bytes, offset, base, kind, entity_of, placed, gives, give_entity, give_count, spots);
+    find_flags(room, assets, offset, base, kind, entity_of, placed, gives, give_entity, give_count, spots);
     free(entries); free(kind); free(entity_of); free(work); free(gives); free(give_entity);
 }
 
@@ -302,7 +316,8 @@ int main(int argc, char **argv) {
     if (failures) { fprintf(stderr, "%u failures\n", failures); return 1; }
     printf("Randomizer rooms: %u rooms loaded through Scene_LoadRoom, %u steps walked, %u doors to rooms or main-loop scenes, %u disc(s) checked\n",
            rooms, steps, doors, discs);
-    printf("Randomizer spots: %u sites and %u gives of the table on walked steps; %u GiveItem steps walked, %u not in the table; "
-           "%u opened/taken flag writes, none shared across spots\n", sites_total, gives_listed, gives_walked, gives_unlisted, flag_count);
+    printf("Randomizer spots: %u sites and %u gives of the table on walked steps in placed actors; %u GiveItem steps walked, "
+           "%u not in the table (%u in actors never placed); %u opened/taken flag writes, none shared across spots\n",
+           sites_total, gives_listed, gives_walked, gives_unlisted, gives_unplaced, flag_count);
     return 0;
 }

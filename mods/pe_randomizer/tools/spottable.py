@@ -20,6 +20,9 @@ Chests and pickups are one spot when they share a left-behind variable or an ope
 several days takes the earliest; versions that share only a variable across days stay vanilla (a
 reused variable, not one chest).
 
+Gives in an actor the room never places (not a starting actor, no spawn step for its type) are left out:
+their scripts never run (dead copies of a chest in later room versions, two NYPD pickups in M120).
+
 Left out (they stay vanilla): Wayne (M048, M052, and M108 whose chests share his flags), the debug
 room (M360), the Chrysler Building, the shared museum and cruiser routines, the Theater keys (their
 doors check a story flag), and spots whose versions hold different items."""
@@ -103,13 +106,29 @@ def slot_flags(steps):
         if near: out.setdefault(min(near, key=lambda g: abs(g - a)), set()).add((args[2][1], args[3][1]))
     return out
 
+def placed(b, base, entities):
+    """Actor types the room ever places: its starting actors (Script_DrawSyncAndFlush: at the task block's
+    first word, a count byte, then type and sub id pairs) and the types of its walked spawn steps (op 8,
+    op 17 2500). The rooms ctest checks the table by the same rule."""
+    start = base + word(b, base)
+    out = {b[start + 1 + 2 * i] for i in range(b[start])}
+    for steps in entities.values():
+        for _, op, args in steps:
+            if op == 8 and args and args[0][0] == 0: out.add(args[0][1] & 0xFF)
+            if op == 17 and len(args) > 1 and args[0] == (0, 2500) and args[1][0] == 0: out.add(args[1][1] & 0xFF)
+    return out
+
 def scan(path, walk):
     chests, gifts = [], []
     for m in range(1, D.ROOMS + 1):
         if m in SKIP_MAPS or m not in walk: continue
         b = D.room(path, m); base = task_block(b)
         walked = {base + a for steps in walk[m].values() for a, _, _ in steps}
-        for steps in walk[m].values():
+        types = placed(b, base, walk[m])
+        for entity, steps in walk[m].items():
+            if entity not in types:   # its script never runs: a give there hands out nothing
+                if any(op == 167 for _, op, _ in steps): print(f"left out (actor never placed): M{m:03d} e{entity}", file=sys.stderr)
+                continue
             flags = slot_flags(steps)
             for g, op, args in steps:
                 if op != 167 or len(args) != 2: continue

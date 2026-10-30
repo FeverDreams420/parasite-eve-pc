@@ -62,22 +62,32 @@ def spot_of(spot):
 
 
 def solve(start, succ, gives, item_at, withheld=()):
-    """storywalk's solve: {place: order reached}, {key: place first held}. Keys in withheld are never
-    picked up."""
+    """storywalk's solve with the story gates' rule: {place: order reached}, {key: place first held}. A
+    key opens its locks once picked up and its own spot's give has run (the mod's gate; for a key in its
+    own spot that's the same give, and every key test the walk meets is a gated lock). A give whose
+    keys come later runs when they do. Keys in withheld are never picked up."""
     reached, held, first = {start: 0}, set(), {}
-    frontier, waiting = collections.deque([start]), []
-    while frontier or waiting:
+    picked, own = set(), set()
+    frontier, waiting, later = collections.deque([start]), [], []
+    def give(p, item, k, spot):
+        if not k <= held: later.append((p, item, k, spot)); return
+        got = item_at(spot, item)
+        if got in KEYS and got not in withheld: picked.add(got)
+        if item in KEYS: own.add(item)
+        for key in sorted((picked & own) - held): held.add(key); first[key] = p
+    while frontier or waiting or later:
         if not frontier:
+            n = len(held)
+            todo, later = later, []
+            for g in todo: give(*g)
             again = [(p, q) for p, q, k in waiting if k <= held and q not in reached]
             waiting = [(p, q, k) for p, q, k in waiting if not k <= held]
-            if not again: break
+            if not again and len(held) == n: break
             for p, q in again:
                 if q not in reached: reached[q] = len(reached); frontier.append(q)
             continue
         p = frontier.popleft()
-        for item, k, room, off, spot in gives.get(p, ()):
-            got = item_at(spot, item)
-            if got in KEYS and got not in withheld and k <= held and got not in held: held.add(got); first[got] = p
+        for item, k, room, off, spot in gives.get(p, ()): give(p, item, k, spot)
         for q, es in succ.get(p, {}).items():
             if q in reached: continue
             k = min((k for k, _ in es), key=len)

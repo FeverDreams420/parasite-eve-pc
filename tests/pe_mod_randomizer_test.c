@@ -63,16 +63,19 @@ static int in_rooms(unsigned i, unsigned lo, unsigned hi) {
     return 0;
 }
 
-/* Where key item `key` may sit at spot i (not its own), from tools/hospital-map.txt and the same-room
- * rule elsewhere. Hospital: fuses and the St. Francis / Blue keys in the power-off rooms (M320-M339, the
- * only way to the fuse box); the Green Cardkey only where the box must come first (M146/M147); the
- * Elevator Key and the charm in a chest that stays reachable to the end (a site in M125-M154). */
+/* Where key item `key` may sit at spot i (not its own spot k): a chest of the key's own story day and
+ * save area (tools/keys-walk.txt), never chest 84 (M126: it appears only after a touch in the room).
+ * Hospital (tools/hospital-map.txt): fuses and the St. Francis / Blue keys in the power-off rooms
+ * (M320-M339, the only way to the fuse box); the Green Cardkey, the Elevator Key and the charm in a
+ * chest that stays reachable to the end (a site in M125-M154; the story gate keeps the Green door shut
+ * until the box is done, so the Green Cardkey may come early). */
 static int key_may_sit(unsigned key, unsigned i, unsigned k) {
+    const PeRandSpot *to = &g_pe_rand_spots[i], *from = &g_pe_rand_spots[k];
+    if (to->day != from->day || to->area != from->area || i == 84) return 0;
     switch (key) {
     case 0xCE: case 0xCF: case 0xD0: case 0xD1: case 0xD2: return in_rooms(i, 320, 339);
-    case 0xD3: return in_rooms(i, 146, 147);
-    case 0xCC: case 0xDA: return in_rooms(i, 125, 154);
-    default: return share_room(i, k);
+    case 0xCC: case 0xD3: case 0xDA: return in_rooms(i, 125, 154);
+    default: return 1;
     }
 }
 
@@ -88,7 +91,7 @@ static void every_seed_passes(void) {
             if (why) { fprintf(stderr, "difficulty %d seed %u: %s\n", d, (unsigned)seed, why); assert(0); }
             assert(!memcmp(a, b, sizeof a) && !memcmp(&ra, &rb, sizeof ra));
             assert(!ra.fallback && ra.attempts >= 1);
-            /* hand logic (tools/keys-by-hand.txt): Easy keeps keys, the others move them only where
+            /* key logic (keys-by-hand.txt + keys-walk.txt): Easy keeps keys, the others move them only where
              * key_may_sit allows; with PE_RAND_MOVE_KEYS at 0 no difficulty moves them */
             assert(PE_RAND_MOVE_KEYS ? !ra.keys_locked && (d != PE_RAND_EASY || !ra.keys_moved)
                                      : ra.keys_locked && !ra.keys_moved);
@@ -109,9 +112,9 @@ static void every_seed_passes(void) {
 
 static void golden_layouts(void) {
     static const uint32_t golden[PE_RAND_DIFFICULTIES][4] = {
-        {0xDFF980DA, 0x9E3B318A, 0x01FECFF2, 0x1936F3E2},
-        {0x3C8E69B2, 0xA4B30B32, 0x33B19462, 0x3C7B183A},
-        {0xD8DEA0D2, 0x6517BDEA, 0x4A5961B2, 0xF2F86BEA},
+        {0xF21DCE1A, 0x75E92822, 0x8EBD23A2, 0x547F44DA},
+        {0x26F73602, 0x1117CC62, 0xF40266DA, 0x60B712B2},
+        {0x5DF63582, 0x479CE9C2, 0xF4BEA832, 0x54234E02},
     };
     static uint16_t out[PE_RAND_SPOTS];
     int print = !golden[0][0];

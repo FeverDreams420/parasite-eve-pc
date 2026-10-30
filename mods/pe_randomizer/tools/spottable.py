@@ -1,7 +1,11 @@
 """Spot table for the pe_randomizer mod, read from a USA disc and the mod-randomizer-rooms ctest's walk:
-python -I spottable.py <disc.bin> <randomizer-rooms.txt> [needs.txt] > pe_rand_spots.h
-needs.txt (from keylogic.py) gives the keys each spot needs and the keys it may take; spots it
-doesn't list stay unknown.
+python -I spottable.py <disc.bin> <randomizer-rooms.txt> [needs.txt ...] > pe_rand_spots.h
+needs.txt (keylogic.py, keysolve.py or keys-by-hand.txt) gives the keys each spot needs and the keys it
+may take; spots no file lists stay unknown. With several files a spot needs every key any of them
+names (the safe side), and takes the keys of the last file that lists it. The table is made with
+keys-by-hand.txt keys-walk.txt: the walk's before= (solved with the story gates' rule, a key opens its
+lock once held and its own spot reached) replaces the hand table's, and the hand table's needs stay
+(the walk reads the St. Francis door as open: M329 sets its flag).
 
 A spot is one place that hands out an item; a site is one script word the mod rewrites for it
 (a spot in several room versions, or with a roll of up to three items, has several sites). Every site
@@ -241,7 +245,11 @@ def emit(spot_list, disc, needs=None):
     print("};")
 
 if __name__ == "__main__":
-    if len(sys.argv) not in (3, 4): sys.exit(__doc__)
+    if len(sys.argv) < 3: sys.exit(__doc__)
     sys.stdout.reconfigure(newline="\n")
     c, g = scan(sys.argv[1], read_walk(sys.argv[2]))
-    emit(spots(c, g), sys.argv[1], read_needs(sys.argv[3]) if len(sys.argv) == 4 else None)
+    needs = {}
+    for path in sys.argv[3:]:
+        for place, (need, bef) in read_needs(path).items():
+            needs[place] = (needs.get(place, (set(), set()))[0] | need, bef)
+    emit(spots(c, g), sys.argv[1], needs or None)

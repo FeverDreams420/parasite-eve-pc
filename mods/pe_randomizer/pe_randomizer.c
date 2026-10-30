@@ -26,8 +26,10 @@
 #include "pe1/game_state.h"
 #include "pe1/inventory.h"
 #include "pe1/scene_room.h"
+#include "pe1/script_queue.h"
 #include "pe1/script_state.h"
 #include "pe_randomizer.h"
+#include "pe_rand_locks.h"
 #include "pe_rand_spots.h"
 
 #define MOD_ID "pe_randomizer"
@@ -190,18 +192,58 @@ static void pe_rand_lock_seen(unsigned item) {
     }
 }
 
+/* Story gates (pe_rand_locks.h): a moved key opens its lock only once the story has reached the lock's
+ * vanilla point, the bit its vanilla spot sets; until then the lock's own key test hears "not held".
+ * An early key is then harmless. Only the table's steps are gated (a script asking about a key for
+ * another reason gets the true answer), only for keys that moved, only in a randomized run. The
+ * script step just run is `size` bytes back from the cursor (8 + 4 per operand). A rand_gate row
+ * whenever a lock's state changes. */
+static unsigned char s_gate_state[PE_RAND_LOCKS];   /* 0 not seen, 1 shut, 2 open */
+
+static int pe_rand_gate_shut(unsigned item, unsigned opcode, size_t size) {
+    const uint8_t *room = (const uint8_t *)g_GameState.loaded_scene_assets;
+    const PeRandLock *lock;
+    int map = pe_room_number(), shut;
+    uintptr_t base = (uintptr_t)room, cursor = (uintptr_t)g_ScriptCursor;
+    size_t bytes, at;
+    unsigned l = 0;
+    if (!room || map < 1 || map > SCENE_ROOM_COUNT || cursor < base + size || !pe_rand_ready()) return 0;
+    bytes = (size_t)g_RoomSectorTable[map - 1].roomSectors * 2048;
+    if (cursor - base > bytes) return 0;
+    at = cursor - base - size;
+    if ((pe_get32(room + at) & 0x1FFFu) != opcode) return 0;
+    while (l < PE_RAND_LOCKS && !(g_pe_rand_locks[l].map == map && g_pe_rand_locks[l].at == at)) ++l;
+    if (l == PE_RAND_LOCKS) return 0;
+    lock = &g_pe_rand_locks[l];
+    if (lock->item != item || s_layout[lock->spot] == g_pe_rand_spots[lock->spot].vanilla) return 0;
+    shut = !(g_ScriptVariableBank[lock->var] & lock->bit);
+    if (s_gate_state[l] != 2 - shut) {
+        s_gate_state[l] = (unsigned char)(2 - shut);
+        pe_log("rand_gate", "map=%d at=%06X item=0x%02X %s", map, (unsigned)at, item, shut ? "shut" : "open");
+    }
+    return shut;
+}
+
 static int pe_rand_item_count(void *ctx, void *user) {
     int **args = ctx;
     (void)user;
-    if (args && args[0]) pe_rand_lock_seen((unsigned)*args[0]);
-    return 0;
+    if (!args || !args[0]) return 0;
+    pe_rand_lock_seen((unsigned)*args[0]);
+    if (!pe_rand_gate_shut((unsigned)*args[0], 168, 16)) return 0;
+    *args[1] = 0;
+    return 1;
 }
 
+/* No room script sends 1102 (the rooms ctest walks them all), so the table has no such step and this
+ * gate never shuts today; it's here so a 1102 lock can't slip past. 1112 (remove) is never gated. */
 static int pe_rand_inv_command(void *ctx, void *user) {
-    const PeHookInvCommand *c = ctx;
+    PeHookInvCommand *c = ctx;
     (void)user;
-    if (c && (c->command == 1102 || c->command == 1112)) pe_rand_lock_seen((unsigned)c->value);
-    return 0;
+    if (!c || (c->command != 1102 && c->command != 1112)) return 0;
+    pe_rand_lock_seen((unsigned)c->value);
+    if (c->command != 1102 || !pe_rand_gate_shut((unsigned)c->value, 233, 28)) return 0;
+    c->result = 0;
+    return 1;
 }
 
 /* randomizer-<seed>.txt beside the preferences: every spot that changed. Easy and Medium only. */
@@ -242,6 +284,7 @@ static int pe_rand_new_game(void *ctx, void *user) {
     char line[96];
     (void)user;
     memset(s_lock_logged, 0, sizeof s_lock_logged);   /* a new run: its locks are logged again */
+    memset(s_gate_state, 0, sizeof s_gate_state);
     if (s_enabled && !s_alone) pe_toast("Randomizer: restart the game first; this New Game isn't randomized");
     s_run.on = s_alone && s_enabled && game && game->kind != PE_NEW_GAME_TUTORIAL;
     s_run.difficulty = (uint8_t)(s_difficulty >= 0 && s_difficulty < PE_RAND_DIFFICULTIES ? s_difficulty : PE_RAND_MEDIUM);

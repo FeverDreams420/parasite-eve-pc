@@ -61,6 +61,16 @@ typedef struct PeRandGive {
     uint32_t at;
 } PeRandGive;
 
+/* A story gate (pe_rand_locks.h, generated): a key's item-count step (map, offset in the room data)
+ * and the story bit its vanilla spot sets (V var | bit). */
+typedef struct PeRandLock {
+    uint16_t map;
+    uint32_t at;
+    uint16_t item, spot;
+    uint8_t var;
+    uint32_t bit;
+} PeRandLock;
+
 typedef struct PeRandResult {
     unsigned attempts;    /* tries used, 1 or more */
     unsigned keys_moved;

@@ -26,7 +26,10 @@
  * word, a count byte, then type and sub id pairs) and the types its walked spawn steps name (op 8, op 17
  * 2500). Every listed give must be in a placed actor: another actor's script never runs, and the item the
  * randomizer puts there is lost (tools/spottable.py leaves those gives out by the same rule). Their flag
- * writes never run either and are left out of the flag check. */
+ * writes never run either and are left out of the flag check.
+ *
+ * Locks (pe_rand_locks.h): every walked item-count step (op 168) on a key must be a table lock with that
+ * key, and every table lock such a step. The second output gets one keytest line each (tools/locktable.py). */
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -43,6 +46,7 @@
 #include "pe1/scene_room_load.h"
 #include "pe1/script_queue.h"
 #include "pe_rand_spots.h"
+#include "pe_rand_locks.h"
 
 /* Fixture I/O: the test-disc object renames the real image reads to these. */
 int CdRom_ImageReadSectorsFromLba(u32 lba, void *buffer, u32 count);
@@ -83,7 +87,7 @@ static int door_room(u32 token) {
 }
 
 static const char *const spot_kinds[] = { "chest", "pickup", "gift" };
-static unsigned sites_total, gives_listed, gives_walked, gives_unlisted, gives_unplaced;
+static unsigned sites_total, gives_listed, gives_walked, gives_unlisted, gives_unplaced, locks_walked;
 
 /* Spot of the listed GiveItem at this room offset, or -1. */
 static int listed_give(unsigned room, size_t at) {
@@ -221,6 +225,15 @@ static void walk_room(unsigned room, FILE *out, FILE *spots, unsigned *steps_tot
                 if (!g_ScriptQueueOpcodeHandlers[s.op]) { FAIL("M%03u entity %u: op %u at %#zx has no handler", room, t, s.op, at); break; }
                 kind[at / 4] = WORD_STEP; entity_of[at / 4] = (u16)t; ++steps;
                 if (s.op == 167) { gives[give_count] = (u32)at; give_entity[give_count++] = t; }
+                /* A key's item-count test (a lock): room offset, entity, block offset, item; locktable.py's input. */
+                if (s.op == 168 && s.count && s.modes[0] == 0 && s.values[0] >= 0xC8 && s.values[0] <= 0xDC) {
+                    unsigned l = 0;
+                    while (l < PE_RAND_LOCKS && !(g_pe_rand_locks[l].map == room && g_pe_rand_locks[l].at == offset + at)) ++l;
+                    if (l == PE_RAND_LOCKS || g_pe_rand_locks[l].item != s.values[0])
+                        FAIL("M%03u key test +%06zX (item %#x) is no table lock", room, offset + at, s.values[0]);
+                    else ++locks_walked;
+                    if (spots) fprintf(spots, "keytest\tM%03u\t+%06zX\t%u\t%#zx\t%#x\n", room, offset + at, t, at, s.values[0]);
+                }
                 if (s.op == 8 && s.count > 0 && s.modes[0] == 0) placed[s.values[0] & 0xFF] = 1;
                 if (s.op == 17 && s.count > 1 && s.modes[0] == 0 && s.values[0] == 2500 && s.modes[1] == 0) placed[s.values[1] & 0xFF] = 1;
                 int target = -1, data = -1;
@@ -309,6 +322,7 @@ int main(int argc, char **argv) {
     if (spots) fclose(spots);
     if (sites_total != PE_RAND_SITES) FAIL("%u of %u table sites are in a loaded room", sites_total, PE_RAND_SITES);
     if (gives_listed != PE_RAND_GIVES) FAIL("%u of %u table gives are in a loaded room", gives_listed, PE_RAND_GIVES);
+    if (locks_walked != PE_RAND_LOCKS) FAIL("%u of %u table locks are walked key tests", locks_walked, PE_RAND_LOCKS);
     check_flags();
     int discs = 1;
     if (path2 && *path2) { if (!same_rooms(&disc, path2)) FAIL("disc 2 rooms differ from disc 1"); else discs = 2; }
@@ -317,7 +331,8 @@ int main(int argc, char **argv) {
     printf("Randomizer rooms: %u rooms loaded through Scene_LoadRoom, %u steps walked, %u doors to rooms or main-loop scenes, %u disc(s) checked\n",
            rooms, steps, doors, discs);
     printf("Randomizer spots: %u sites and %u gives of the table on walked steps in placed actors; %u GiveItem steps walked, "
-           "%u not in the table (%u in actors never placed); %u opened/taken flag writes, none shared across spots\n",
-           sites_total, gives_listed, gives_walked, gives_unlisted, gives_unplaced, flag_count);
+           "%u not in the table (%u in actors never placed); %u opened/taken flag writes, none shared across spots; "
+           "%u key tests, each a table lock\n",
+           sites_total, gives_listed, gives_walked, gives_unlisted, gives_unplaced, flag_count, locks_walked);
     return 0;
 }

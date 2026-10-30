@@ -205,9 +205,10 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
     target_compile_definitions(test-mod-randomizer-run PRIVATE __psyz PE_MODS=1)
     target_link_libraries(test-mod-randomizer-run PRIVATE psyz)
     # Without a runs file: every room once at V0x4a = 0. mods/pe_randomizer/tools/runlist.py writes a
-    # fuller runs file from the story walk; run the test binary on it by hand.
+    # fuller runs file from the story walk; run the test binary on it by hand (into randomizer-run.txt,
+    # which this test's own output doesn't overwrite).
     add_test(NAME mod-randomizer-run COMMAND test-mod-randomizer-run
-        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-run.txt")
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-run-rooms.txt")
     set_tests_properties(mod-randomizer-run PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer runs:")
 endif()

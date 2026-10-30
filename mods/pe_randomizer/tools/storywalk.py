@@ -1,7 +1,8 @@
 """Walk the whole game in story order from storygraph.py's listing: every place a new game can reach,
 for a key solver: which steps need which keys, where each give can run.
 Usage: python -I storywalk.py <story-graph.txt> <randomizer-exits.txt> [--spots ../pe_rand_spots.h]
-       [--start M431] [--states out.txt]   (M431: where New Game starts)
+       [--start M431] [--states out.txt] [--runs randomizer-run.txt [--zones zone-run.txt[,zone-run2.txt...]]]
+       (M431: where New Game starts)
 
 A place is the room, V0x4a (story value) and V0x1 (room left: picks the room version; 0 in rooms
 that never read it). Every other story variable that matters (bit by bit: a door tests it, or a write
@@ -20,7 +21,16 @@ A give succeeds (gave(x) == 0).
 Prints, in story order (first reached), each V0x4a value with the rooms that set it and the rooms open
 while it holds; the rooms never reached; each step that needs a key; each give with the V0x4a values it
 can run at and the keys it needs. --states writes every place with its bits (may be 1 / may be 0) and
-its successors, each with [the keys it needs]."""
+its successors, each with [the keys it needs].
+
+--zones (the run test's zone runs, zoneruns.py, with --runs): which zone opens which door, learnt from
+every place of the room (Aya placed in a zone fires the door). At a place whose run tested all the
+zones that open a door and found each cut off (closed floor triangles: cut=), the walk leaves the door
+out. Anything else keeps doorscan's ways: a zone not tested at a place, or a door no zone run fires
+(a button, an item, an event), is no evidence it's shut. Zone runs from other base runs (runlist.py
+--may) go in the same list after their base run file (randomizer-run-may.txt,zone-run-may.txt,...):
+the base file gives only the zones' points, the zone runs only add zone -> door links (cut= stays the
+--runs file's)."""
 import os, re, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from keyscan import KEYS
@@ -314,20 +324,50 @@ def run(r, s, pre, rel):
 
 def read_runs(path):
     """{(room, V0x4a, V0x1): (end door room or None, alive entity types, {var: value after})} from the
-    mod-randomizer-run test's lines: what the room does by itself when it starts at that place."""
+    mod-randomizer-run test's lines: what the room does by itself when it starts at that place. A run
+    that started a battle (battle=1) has alive None: the test runs no battle, so what's left alive then
+    is not what the room places."""
     out = {}
     for line in open(path):
         f = dict(x.split("=", 1) for x in line.rstrip("\n").split("\t")[2:] if "=" in x)
         room = int(line.split("\t")[1][1:])
         key = (room, int(f["V0x4a"], 16), int(f["V0x1"], 16))
-        if key in out or not f["end"] or f["end"].startswith("load"): continue
+        if key in out or not f["end"] or f["end"].startswith("load") or f["end"] == "noroom": continue
         end = int(f["end"][6:]) if f["end"].startswith("door M") else None
-        alive = {int(x) for x in f["alive"].split(",") if x}
+        alive = None if f.get("battle") else {int(x) for x in f["alive"].split(",") if x}
         sets = {}
         for x in f["set"].split(","):
             if x: var, change = x.split(":"); sets[int(var[1:], 16)] = int(change.split(">")[1], 16)
         out[key] = (end, alive, sets)
     return out
+
+
+REACH = re.compile(r"\+([0-9A-F]+)@(-?\d+),(-?\d+)")
+
+
+def read_zones(paths, runs_path):
+    """({place: zones its run found cut off}, {room: {door target room: zones that open it}}). paths:
+    zone-run files, comma-separated (a chain's levels). A zone run's last at= point is a reach= point
+    of the run it extends (the place's own, or the level before), which names the zone."""
+    zone_at, cut = {}, {}
+    def lines(path):
+        for line in open(path):
+            yield int(line.split("\t")[1][1:]), dict(x.split("=", 1) for x in line.rstrip("\n").split("\t")[2:] if "=" in x)
+    for path in [runs_path] + paths.split(","):
+        for room, f in lines(path):
+            for z, x, y in REACH.findall(f.get("reach", "")): zone_at[(room, int(x), int(y))] = int(z, 16)
+    for room, f in lines(runs_path):
+        if f.get("cut"):
+            cut.setdefault((room, int(f["V0x4a"], 16), int(f["V0x1"], 16)), set()).update(
+                int(z, 16) for z in f["cut"].lstrip("+").split(",+"))
+    opens = {}
+    for path in paths.split(","):
+        for room, f in lines(path):
+            if not f["end"].startswith("door M") or not f.get("at"): continue   # a base run: reach points only
+            x, y = (int(v) for v in f["at"].split(";")[-1].split(",")[:2])
+            zone = zone_at.get((room, x, y))
+            if zone is not None: opens.setdefault(room, {}).setdefault(int(f["end"][6:]), set()).add(zone)
+    return cut, opens
 
 
 def move(g, exits, t, to, what):
@@ -347,7 +387,7 @@ def move(g, exits, t, to, what):
     return out
 
 
-def successors(g, exits, s, runs=None):
+def successors(g, exits, s, runs=None, zones=None):
     """(next state, keys the step needs, what: "door M123" / "write V0x41|0x40") per step that can run.
     With runs (the run test's results): the room's own start comes first. Its writes apply, and when the
     room leaves by itself (a cutscene), that door is the only way on; else steps of entity types the
@@ -371,8 +411,11 @@ def successors(g, exits, s, runs=None):
         if not Graph.matters(rel, var, kind, n) or not placed(at): continue
         k = needs(ways, s)
         if k is not None: out.append((run(r, s, pre, rel).write(var, kind, n, rel), k, f"+{at:06X} V{var:#x}{kind}{n:#x}"))
+    cut = zones[0].get(s.place(), set()) if zones else set()
+    opens = zones[1].get(s.room, {}) if cut else {}
     for at, to, ways, pre in r["door"]:
         if not placed(at): continue
+        if to in opens and opens[to] <= cut: continue   # every zone that opens it is cut off here
         k = needs(ways, s)
         if k is None: continue
         for x, what in move(g, exits, run(r, s, pre, rel), to, f"+{at:06X} door"): out.append((x, k, what))
@@ -387,10 +430,10 @@ def stays(g, runs, s, at):
     end, alive, sets = info
     if end is not None: return False
     if any(sets.get(v, s.var(v)) != s.var(v) for v in (AREA, ROOM_LEFT)): return False
-    return g.rooms[s.room]["ent"].get(at) in alive
+    return alive is None or g.rooms[s.room]["ent"].get(at) in alive
 
 
-def walk(g, exits, start, runs=None):
+def walk(g, exits, start, runs=None, zones=None):
     """{place: State} for every place reached, the order places were first reached, and per place its
     edges {next place: [(keys needed, what)]}."""
     first = State(start, 0, 0)
@@ -399,7 +442,7 @@ def walk(g, exits, start, runs=None):
     while head < len(todo):
         p = todo[head]; head += 1; queued.discard(p)
         edges = {}
-        for t, k, what in successors(g, exits, table[p], runs):
+        for t, k, what in successors(g, exits, table[p], runs, zones):
             q = t.place()
             edges.setdefault(q, []).append((k, what))
             if q not in table: table[q] = t; order.append(q); changed = True
@@ -470,11 +513,12 @@ def keyname(k): return KEYS.get(k, f"{k:#x}")
 def main():
     a = sys.argv[1:]
     if len(a) < 2: sys.exit(__doc__)
-    opt = {k: a[a.index(k) + 1] for k in ("--start", "--states", "--spots", "--runs") if k in a}
+    opt = {k: a[a.index(k) + 1] for k in ("--start", "--states", "--spots", "--runs", "--zones") if k in a}
     g = Graph(a[0]); exits = read_exits(a[1])
     runs = read_runs(opt["--runs"]) if "--runs" in opt else None
+    zones = read_zones(opt["--zones"], opt["--runs"]) if "--zones" in opt else None
     start = int(opt.get("--start", "M431").lstrip("Mm"))
-    table, order, succ = walk(g, exits, start, runs)
+    table, order, succ = walk(g, exits, start, runs, zones)
     rel = ", ".join(f"V{v:#x}" + ("" if m == -1 else f"&{m:#x}") for v, m in sorted(g.rel.items()))
     print(f"# places {len(order)}; story bits kept: {rel}")
     if g.unread: print(f"# conditions not read (assumed to pass): {len(g.unread)}")

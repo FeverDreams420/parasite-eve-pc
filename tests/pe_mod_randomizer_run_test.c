@@ -42,6 +42,15 @@
  * battle never runs or ends; an encounter routine has often told the room's door controller to die
  * just before it. A run that reaches op 85 ends its line in battle=1: its alive= is not the room's.
  *
+ * A runs line with win plays each battle to a won end instead, as the battle code drives
+ * g_BattleModeState, which the encounter routine reads with op 148 and writes with ops 137/138/149/150:
+ * op 85 starts it (state 0, the field loses control: D_8009D2E8 bit 1, which op 240 reads); once the
+ * routine has set 6 or 5 (or BATTLE_FRAMES * 3 frames on without it), BATTLE_FRAMES frames later the fight
+ * is over: 7 (Battle_PhaseInitEnemyTurn, the field has control again), or 12 when the routine's wait
+ * loop tests op 148's value against 12 (a boss's scripted end); BATTLE_FRAMES later the post-battle
+ * steps are done: 9 (Battle_StepLevelUp). The battle ops run for real only once a battle has started.
+ * The line ends in won=N (battles won); battle=1 only when one is still going at the end.
+ *
  * A stop may be at=@E,angle: Aya stands on actor type E (a chest, a character) and the two touch, as
  * Scene_UpdateEntityPositions links their contact tasks when the hit spheres meet (actors here have no
  * models, so the game's pass never does). Chests and talks run in that task.
@@ -91,7 +100,8 @@ void Entity_CollectGarbage(void);
 FieldActor *Scene_LoadMap(u8 *scene, FieldActor *after, int allocateFull);
 
 enum { AT_FRAME = 60, AT_FRAMES = 240, AT_MAX = 8, FRAMES = 600, SPIN_STEPS = 200000, VARS = 512, TAKE = 0x458 };
-enum { PRESS_AT = 20, PRESS_EVERY = 30 };
+enum { PRESS_AT = 20, PRESS_EVERY = 30, BATTLE_FRAMES = 30 };
+extern int g_BattleModeState;
 static const u32 press_bits = 0x20000300;   /* Circle: field bits 8, 9 and 29 */
 static unsigned failures;
 #define FAIL(...) do { if (++failures <= 40) { fprintf(stderr, __VA_ARGS__); fputc('\n', stderr); } } while (0)
@@ -111,6 +121,10 @@ static u8 *ran;                  /* one per word of the block: step started ther
 static u32 gave[64], got[64]; static unsigned gave_count;   /* GiveItems run: offset and item */
 static int keys_all, press, battle, spin, trace;   /* trace: PE_RUN_TRACE set, each step to stderr */
 static unsigned long frame_steps;
+/* win: battles in progress (fighting: frames since op 85, -1 if none), won so far, the value the
+ * routine's last op 148 wait tested against, the frame the routine set 6 (-1: not yet). */
+static int win, fighting, won, awaited, set6_at, *state_read;
+static unsigned cur_frame;
 /* Zones PointInPoly tested: listing offset and the polygon's whole-unit corners (x, z). */
 typedef struct Zone { u32 at; s16 x[4], z[4]; } Zone;
 static Zone zones[256]; static unsigned zone_count;
@@ -159,11 +173,23 @@ static void run_queue(void) {
                 if (z < 256)
                     for (int i = 0; i < 4; ++i) { zones[z].x[i] = (s16)(*args[i * 2] >> 16); zones[z].z[i] = (s16)(*args[i * 2 + 1] >> 16); }
             }
+            int battle_op = win && (op == 137 || op == 138 || op == 148 || op == 149 || op == 150) && (fighting >= 0 || won);
+            if (op == 148) state_read = args[0];
+            if (op == 9 && count == 4 && *args[0] == 14 && args[2] == state_read) awaited = *args[3];   /* wait: state != n */
             if (op == 139 && *args[0] != 0) {   /* enemy field: actors here have no battle state, as if absent */
                 FieldActor *a = g_FieldActorListHead;
                 while (a && (a->type_id != *args[0] || a->sub_id != *args[1] || (a->flags & 0x10))) a = a->next;
                 result = a && a->state ? g_ScriptQueueOpcodeHandlers[op](args) : 1;
-            } else if (is_real[op]) result = g_ScriptQueueOpcodeHandlers[op](args);
+            } else if (op == 9 && count == 4 && (*args[0] == 16 || *args[0] == 21 || *args[0] == 22) && *args[3] == 0) {
+                /* x / 0, x % 0: fields skipped ops fill in the game (battle stats, op 89; op 14) read 0 here */
+                *args[1] = 0; result = 1;
+            } else if (is_real[op] || battle_op) {
+                result = g_ScriptQueueOpcodeHandlers[op](args);
+                if ((op == 137 || op == 138) && set6_at < 0) set6_at = (int)cur_frame;
+            } else if (op == 85 && win) {                                         /* battle: starts */
+                if (fighting < 0) { fighting = 0; set6_at = -1; awaited = -1; g_BattleModeState = 0; D_8009D2E8 |= 1; }
+                result = 1;
+            }
             else if (op == 49) result = g_ScriptQueueOpcodeHandlers[op](args);   /* door: ends the run */
             else if (op == 17 && press && (u32)*args[0] <= 3) result = g_ScriptQueueOpcodeHandlers[op](args);   /* pad */
             else if (op == 167) {                                                 /* GiveItem: given */
@@ -324,7 +350,7 @@ static int token_room(u32 token) {
 }
 
 typedef struct Run {
-    unsigned room; u32 area, left; unsigned nvars; u16 var[32]; u32 val[32]; int keys, press;
+    unsigned room; u32 area, left; unsigned nvars; u16 var[32]; u32 val[32]; int keys, press, win;
     int at, at_x[AT_MAX], at_z[AT_MAX], at_angle[AT_MAX];   /* Aya's stops from AT_FRAME on, at of them */
     int at_actor[AT_MAX];                                     /* -1, or the actor type she stands on */
     int seeded, difficulty; u32 seed;                         /* seed=: the randomizer's layout */
@@ -384,6 +410,7 @@ static int parse_run(char *line, Run *r) {
     while ((tok = strtok(NULL, " \t\r\n"))) {
         if (!strcmp(tok, "keys=all")) { r->keys = 1; continue; }
         if (!strcmp(tok, "press")) { r->press = 1; continue; }
+        if (!strcmp(tok, "win")) { r->win = 1; continue; }
         if (!strncmp(tok, "at=@", 4)) {
             if (r->at == AT_MAX || sscanf(tok + 4, "%d,%d", &r->at_actor[r->at], &r->at_angle[r->at]) < 1) return 0;
             ++r->at;
@@ -444,6 +471,8 @@ static void do_run(const Run *r, FILE *out) {
     for (unsigned i = 0; i < r->nvars; ++i) if (r->var[i] < VARS) g_ScriptVariableBank[r->var[i]] = r->val[i];
     memcpy(before, g_ScriptVariableBank, sizeof(before));
     keys_all = r->keys; press = r->press; battle = 0; spin = 0; gave_count = 0; zone_count = 0;
+    win = r->win; fighting = -1; won = 0; awaited = -1; set6_at = -1; state_read = 0;
+    g_BattleModeState = 0; D_8009D2E8 &= ~1;
     g_FieldPadBits = g_FieldPadPressed = g_FieldPadReleased = 0;
     memset(g_FieldPadHeldFrameCounts, 0, 32 * sizeof(*g_FieldPadHeldFrameCounts));
     g_GameStateFlags &= ~0x2100u; g_SceneDispatchToken = token; g_FieldSfxQueueCount = 0;
@@ -455,7 +484,16 @@ static void do_run(const Run *r, FILE *out) {
 
     unsigned frame;
     for (frame = 0; frame < (r->at ? AT_FRAME + r->at * AT_FRAMES : FRAMES) && !spin && !(g_GameStateFlags & 0x2000); ++frame) {
-        frame_steps = 0;
+        frame_steps = 0; cur_frame = frame;
+        if (fighting >= 0) {   /* the battle code's part of a won battle */
+            int since = ++fighting;
+            if (((g_BattleModeState == 6 || g_BattleModeState == 5) && (int)frame >= set6_at + BATTLE_FRAMES) || (g_BattleModeState == 0 && since >= BATTLE_FRAMES * 3)) {
+                g_BattleModeState = awaited == 12 ? 12 : 7; D_8009D2E8 &= ~1; fighting = BATTLE_FRAMES * 3;
+            } else if ((g_BattleModeState == 7 || g_BattleModeState == 12) && since >= BATTLE_FRAMES * 4) {
+                if (g_BattleModeState == 7) g_BattleModeState = 9;
+                fighting = -1; ++won;
+            }
+        }
         if (r->at && frame >= AT_FRAME && g_PlayerEntity) {
             FieldActor *aya = g_PlayerEntity, *on = 0;
             int stop = (int)(frame - AT_FRAME) / AT_FRAMES;
@@ -530,7 +568,8 @@ static void do_run(const Run *r, FILE *out) {
         fprintf(out, "\tseed=%u,%d\tgot=", r->seed, r->difficulty);
         for (unsigned i = 0; i < gave_count; ++i) fprintf(out, "%s%#x", i ? "," : "", got[i]);
     }
-    if (battle) fputs("\tbattle=1", out);
+    if (won) fprintf(out, "\twon=%d", won);
+    if (battle && (!win || fighting >= 0)) fputs("\tbattle=1", out);
     fputc('\n', out);
 }
 

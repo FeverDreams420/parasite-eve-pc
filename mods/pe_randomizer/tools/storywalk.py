@@ -323,10 +323,12 @@ def run(r, s, pre, rel):
 
 
 def read_runs(path):
-    """{(room, V0x4a, V0x1): (end door room or None, alive entity types, {var: value after})} from the
-    mod-randomizer-run test's lines: what the room does by itself when it starts at that place. A run
-    that started a battle (battle=1) has alive None: the test runs no battle, so what's left alive then
-    is not what the room places."""
+    """{(room, V0x4a, V0x1): (end door room or None, alive entity types, {var: value after}, fought)} from
+    the mod-randomizer-run test's lines: what the room does by itself when it starts at that place. A run
+    that started a battle (battle=1, or won=N: the test's win played it to a won end) has alive None and
+    fought set: the test's battle is a model (a boss's later phases and scripted ends are not all in it),
+    so what's left alive then is not surely what the room places, and its end is one way on, not the only
+    one."""
     out = {}
     for line in open(path):
         f = dict(x.split("=", 1) for x in line.rstrip("\n").split("\t")[2:] if "=" in x)
@@ -334,11 +336,12 @@ def read_runs(path):
         key = (room, int(f["V0x4a"], 16), int(f["V0x1"], 16))
         if key in out or not f["end"] or f["end"].startswith("load") or f["end"] == "noroom": continue
         end = int(f["end"][6:]) if f["end"].startswith("door M") else None
-        alive = None if f.get("battle") else {int(x) for x in f["alive"].split(",") if x}
+        fought = bool(f.get("battle") or f.get("won"))
+        alive = None if fought else {int(x) for x in f["alive"].split(",") if x}
         sets = {}
         for x in f["set"].split(","):
             if x: var, change = x.split(":"); sets[int(var[1:], 16)] = int(change.split(">")[1], 16)
-        out[key] = (end, alive, sets)
+        out[key] = (end, alive, sets, fought)
     return out
 
 
@@ -348,18 +351,23 @@ REACH = re.compile(r"\+([0-9A-F]+)@(-?\d+),(-?\d+)")
 def read_zones(paths, runs_path):
     """({place: zones its run found cut off}, {room: {door target room: zones that open it}}). paths:
     zone-run files, comma-separated (a chain's levels). A zone run's last at= point is a reach= point
-    of the run it extends (the place's own, or the level before), which names the zone."""
-    zone_at, cut = {}, {}
+    of the run it extends (the place's own, or the level before), which names the zone. A zone some run
+    of the place reached (in its reach=, any file: stepping into another zone can open floor, M070's
+    +774 has the room open the way to both M072 doors) is not cut there."""
+    zone_at, cut, reached = {}, {}, {}
     def lines(path):
         for line in open(path):
             yield int(line.split("\t")[1][1:]), dict(x.split("=", 1) for x in line.rstrip("\n").split("\t")[2:] if "=" in x)
     for path in [runs_path] + paths.split(","):
         for room, f in lines(path):
-            for z, x, y in REACH.findall(f.get("reach", "")): zone_at[(room, int(x), int(y))] = int(z, 16)
+            got = REACH.findall(f.get("reach", ""))
+            for z, x, y in got: zone_at[(room, int(x), int(y))] = int(z, 16)
+            if got: reached.setdefault((room, int(f["V0x4a"], 16), int(f["V0x1"], 16)), set()).update(int(z, 16) for z, _, _ in got)
     for room, f in lines(runs_path):
         if f.get("cut"):
-            cut.setdefault((room, int(f["V0x4a"], 16), int(f["V0x1"], 16)), set()).update(
-                int(z, 16) for z in f["cut"].lstrip("+").split(",+"))
+            place = (room, int(f["V0x4a"], 16), int(f["V0x1"], 16))
+            cut.setdefault(place, set()).update(int(z, 16) for z in f["cut"].lstrip("+").split(",+"))
+            cut[place] -= reached.get(place, set())
     opens = {}
     for path in paths.split(","):
         for room, f in lines(path):
@@ -391,21 +399,26 @@ def successors(g, exits, s, runs=None, zones=None):
     """(next state, keys the step needs, what: "door M123" / "write V0x41|0x40") per step that can run.
     With runs (the run test's results): the room's own start comes first. Its writes apply, and when the
     room leaves by itself (a cutscene), that door is the only way on; else steps of entity types the
-    room didn't place are left out."""
+    room didn't place are left out. A run that fought, or whose end comes back to the same place, only
+    adds its end (door or writes) to the room's steps."""
     rel, out = g.rel, []
     r = g.rooms.get(s.room)
     if not r: return out
     info = runs.get(s.place()) if runs else None
     alive = None
     if info:
-        end, alive, sets = info
+        end, alive, sets, fought = info
         t = s
         for var, v in sorted(sets.items()):
             if var in rel or var in (AREA, ROOM_LEFT): t = t.write(var, "=", v, rel)
         if end is not None:
-            return [(x, frozenset(), "start: leaves") for x, _ in move(g, exits, t, end, "start")]
-        if t.place() != s.place():
-            return [(t, frozenset(), "start: writes")]
+            out = [(x, frozenset(), "start: leaves") for x, _ in move(g, exits, t, end, "start")]
+        elif t.place() != s.place():
+            out = [(t, frozenset(), "start: writes")]
+        # A run that comes back to its own place (a door into the room itself, M249: it only changed
+        # bits) is not the only way on: the run was made with the place's sure bits, the bits it set are
+        # joined in now, and the room's steps read them.
+        if out and not fought and all(x.place() != s.place() for x, _, _ in out): return out
     def placed(at): return alive is None or r["ent"].get(at) in alive
     for at, var, kind, n, ways, pre in r["write"]:
         if not Graph.matters(rel, var, kind, n) or not placed(at): continue
@@ -427,7 +440,8 @@ def stays(g, runs, s, at):
     room neither leaves nor changes place by itself, and it placed that entity type."""
     info = runs.get(s.place()) if runs else None
     if not info: return True
-    end, alive, sets = info
+    end, alive, sets, fought = info
+    if fought: return True
     if end is not None: return False
     if any(sets.get(v, s.var(v)) != s.var(v) for v in (AREA, ROOM_LEFT)): return False
     return alive is None or g.rooms[s.room]["ent"].get(at) in alive

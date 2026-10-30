@@ -526,8 +526,9 @@ starts it) or in each pickup's zone and presses the button. Every table give tha
 the layout's item; taking a spot sets its opened / taken flag; and with that flag set, the spot's
 copies in other rooms (one chest seen in several rooms or on several days) give nothing.
 `tools/giveruns.py` writes its runs file (`tools/gives-runs.txt`) from the story walk's runs and the
-variables that place each give's actor (a sewer cell, a story bit); 211 of the 228 table gives are reached
-(the rest need an event or a battle).
+variables that place each give's actor (a sewer cell, a story bit), with every battle played to a won end
+(the run test's win: the chests M207 and M232 place after their fight); 215 of the 228 table gives are
+reached (the rest, NYPD gifts and key gifts, need a story event).
 
 ## Tools (pe_tools)
 

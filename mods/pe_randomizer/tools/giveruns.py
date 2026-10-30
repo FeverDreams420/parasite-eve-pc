@@ -8,7 +8,9 @@ nothing. Run in build-mods/mods:
   python -I giveruns.py pick randomizer-spots.txt give-cands.txt give-cands-out.txt > gives-runs.txt
 
 randomizer-spots.txt and randomizer-rooms.txt come from mod-randomizer-rooms, runs.txt from runlist.py and
-randomizer-run.txt is runall.sh's output for it. cands: per table give, Aya stands on the give's actor (at=@E:
+randomizer-run.txt is runall.sh's output for it. With win on every runs.txt line (and the zone runs made
+from those), each battle is won and the candidates carry win: chests a room places only after its fight
+(M207, M232) are reached. cands: per table give, Aya stands on the give's actor (at=@E:
 the touch that opens a chest or starts a talk) and presses, at 4 facings, at up to 4 idle places of the room
 where that actor is placed (spread over V0x4a) and at V0x4a = 0. Runs and outputs given as pairs (the zone
 runs of zoneruns.py, which reach floor pickups by walking into their zones) add the line with the fewest stops

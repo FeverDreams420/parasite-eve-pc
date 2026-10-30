@@ -458,7 +458,7 @@ Economy > Warner helps out.
 ## Randomizer (pe_randomizer)
 
 F1 > Randomizer, before New Game: on/off, difficulty (Easy: items stay on their story day; Medium and
-Hard: items anywhere, and keys move where the key logic allows, the same on both) and a
+Hard: items anywhere, and keys move where the key logic allows, each by its own rule) and a
 six-digit seed (Random seed, or one digit at a time). New Game takes them; the game keeps them in the
 `pe_randomizer.run` record (seed, difficulty, logic and table version), so loading gives the same
 layout and F1 changes only reach the next New Game. A save from another logic or table version keeps
@@ -504,8 +504,8 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   `rand_lock` (the game asking for a key) rows through the play log (pe_tools: so log with the
   toggle off, since a randomized session runs no other mod). Then
   `tools/keylogic.py <pe_play_log.csv...> > needs.txt` and `tools/spottable.py <disc> <randomizer-rooms.txt> needs.txt` (in mods/pe_randomizer).
-  A key moves into a chest with data, within its own story day or back to an earlier day (`late`,
-  below; on Hard also its own day), and only off days where every key spot has data; until a log fills a day, that day's keys
+  A key moves into a chest with data, within its own story day or back to an earlier day (Medium:
+  `before` and `late`; Hard: `hard`, below), and only off days where every key spot has data; until a log fills a day, that day's keys
   stay where they are. Filling in data changes layouts: raise PE_RAND_TABLE_VERSION with it.
 - Until there is logged data, the table is made with `tools/keys-by-hand.txt` and `tools/keys-walk.txt`
   (`tools/spottable.py <disc> <randomizer-rooms.txt> tools/keys-by-hand.txt tools/keys-walk.txt --windows windows.txt`): a
@@ -515,17 +515,25 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   and save area that can be reached without it and can't be walked past for good where its own spot
   can't. With the gates an early key is harmless, so a key may now turn up before its vanilla spot.
   The hand table keeps what the walk gets wrong: the hospital's needs (M329 sets the St. Francis door's
-  flag, so the walk reads that door as open) and chest 84. Medium and Hard move keys the same way, except Hard's own-day `late` (below).
-- Story windows (`late`): `spottable.py ... --windows windows.txt` (`tools/windowruns.py table`, from the
-  mod-randomizer-windows ctest) lets a key go to a chest with data of its own or an earlier day that the
+  flag, so the walk reads that door as open) and chest 84. Medium uses these and `late` (below); Hard
+  uses `hard` instead.
+- Story windows (`late`, Medium): `spottable.py ... --windows windows.txt` (`tools/windowruns.py table`, from the
+  mod-randomizer-windows ctest) lets a key go to a chest with data of an earlier day that the
   walk opened at every story value (V0x4a) where the key's lock needed the key, from the key's own first
   give on (a key with no lock row: every value its own spot gives it at). On earlier days that is the
   Klamp Key and the Chinatown charm (Days 2-4), the Elevator Key (Day 2 chests) and the NYPD Special
   charm (one NYPD chest); the other keys' locks ask while the earlier days' chests are shut (the
-  hospital, Day 2's start). On Hard it also adds chests of the key's own day past `before` (Medium
-  keeps `before` there): the Elevator Key gets Day 3
-  Soho/NYPD chests, the Chinatown charm Day 4's, the Klamp Key the Warehouse, the hospital keys a few
-  more hospital chests.
+  hospital, Day 2's start).
+- Hard (`hard`): `spottable.py ... --hard hard-reach.txt` (`tools/hardreach.py`, from doors.txt and
+  map-exits.txt of storygraph.py's listing, the exits ctest, windows.txt and the revisit ctest's
+  `revisitruns.py table`): a key may go to any chest of its day or earlier that, at every story value
+  where its lock asks (moments when the map sends Aya to one stop left out), the player can walk to
+  from the lock's rooms through doors and the map, Hard's moved doors included (below), walk back out
+  of, and that the revisit ctest saw still give. Door guards other than V0x4a / V0x1 read as open,
+  except the power cut's shortcut door for the St. Francis Key and the Blue Cardkey (its flag is set
+  past both locks). That opens Carnegie Hall and its sewer to every key but those two, which stay in the
+  power-off rooms; the museum's chests 156/157 shut at the Klamp Key's last value. 771 key x chest
+  pairs (Medium about 380).
 - The Day 3 hospital is mapped by hand instead (`tools/hospital-map.txt`, every gate a door guard from
   the all-rooms ctest's listing): the power-off rooms (M320-M339, the twins of M129-M145) are entered one
   way and left only through the fuse box. `tools/hospital_logic.py` turns the map into keys-by-hand's
@@ -535,9 +543,10 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   story check, and opening it early closes the way to the power-off rooms; the gate keeps it shut until
   the cardkey's own spot).
   Chest 84 (M126) takes no keys: it only appears after an optional touch in that room, so
-  `tools/keysolve.py --layouts` found keys there missable. Keep it out when copying hospital_logic.py's lines.
+  `tools/keysolve.py --layouts` found keys there missable. Keep it out when copying hospital_logic.py's lines
+  (a needs file's `late=` with nothing keeps it out of `late` and `hard`).
   All 15 keys outside the Theater can move (about 13 per Medium or Hard seed).
-- Key moves are on (`PE_RAND_MOVE_KEYS` 1 in pe_randomizer.h, logic version 9). Setting it to 0 keeps
+- Key moves are on (`PE_RAND_MOVE_KEYS` 1 in pe_randomizer.h, logic version 12). Setting it to 0 keeps
   key items in their places on every difficulty (raise PE_RAND_LOGIC_VERSION with it).
 - Ways back (Hard, Day 2 on): four existing doors lead somewhere else (`s_doors` in pe_randomizer.c), so
   Carnegie Hall, its sewer and the hospital's power cut can be entered and left again: the later Carnegie

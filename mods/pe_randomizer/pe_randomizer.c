@@ -429,7 +429,7 @@ static int pe_rand_init(void) {
                             "starts; while on, no other mod runs. A game keeps the seed it began with.", &s_enabled, NULL);
     /* the saved value is in s_enabled now: a randomized session is this mod and the original game only */
     s_alone = s_enabled && pe_mod_run_alone() == 0;
-    pe_menu_register_choice(0, "Difficulty", "Easy: items stay on their story day. Medium and Hard: anywhere; keys to chests open before their lock, earlier days too (Hard writes no spoiler).",
+    pe_menu_register_choice(0, "Difficulty", "Easy: items stay on their story day. Medium: anywhere; keys to chests open before their lock, earlier days too. Hard: keys to any chest still reachable when their lock asks, some doors lead back (no spoiler).",
                             &s_difficulty, s_difficulty_names, PE_RAND_DIFFICULTIES);
     pe_menu_register_info(0, "Seed", "Six digits: the same seed and difficulty give the same items.", pe_rand_seed_text);
     pe_menu_register_action(0, "Random seed", "Pick a new seed.", pe_rand_random_seed);

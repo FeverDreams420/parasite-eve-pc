@@ -26,7 +26,7 @@ from keyscan import KEYS
 from spottable import AREA_NAMES, FIXED_KEYS
 from windowruns import ENTRY, done_bits, read_states, v, var_text
 
-SPOT = re.compile(r"\{ 0x(\w+), PE_RAND_(\w+), (\d+), (\d+), (\w+), 0x(\w+), 0x(\w+), (\w+) \}, /\* (\d+): ")
+SPOT = re.compile(r"\{ 0x(\w+), PE_RAND_(\w+), (\d+), (\d+), (\w+), 0x(\w+), 0x(\w+), (\w+)(?:, \w+)? \}, /\* (\d+): ")
 
 
 def read_spots(path):

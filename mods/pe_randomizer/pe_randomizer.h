@@ -10,12 +10,12 @@
 /* Raise PE_RAND_LOGIC_VERSION whenever the same seed would give a different layout (the generator,
  * its rules or PE_RAND_TABLE_VERSION). A save keeps the versions it was made with; a build that
  * doesn't know them leaves that game's items vanilla rather than moving them under the player. */
-#define PE_RAND_LOGIC_VERSION 11
-#define PE_RAND_TABLE_VERSION 8
+#define PE_RAND_LOGIC_VERSION 12
+#define PE_RAND_TABLE_VERSION 9
 
 enum { PE_RAND_EASY, PE_RAND_MEDIUM, PE_RAND_HARD, PE_RAND_DIFFICULTIES };
 
-/* 1 (shipped): Medium and Hard move keys where the key logic allows (the same rules on both). 0: key items stay in their
+/* 1 (shipped): Medium and Hard move keys where the key logic allows (each its own rule). 0: key items stay in their
  * places on every difficulty. Changing it changes layouts: raise PE_RAND_LOGIC_VERSION with it. The
  * tests also build with it at 0 to keep the keys-stay path covered. */
 #ifndef PE_RAND_MOVE_KEYS
@@ -37,16 +37,19 @@ enum { PE_RAND_KEY = 1 };   /* spot flag: its vanilla item is a key item that un
  *           the days before it, and keeps its own key (and every key of its day stays put).
  *   before  keys whose lock was first used after a run had reached this spot: only those may be put
  *           here, so a key never sits in a spot the player could already have walked past for good.
- *   late    keys of a later story day (on Hard, also its own day) this chest may take: the
- *           story-windows walk opened it at every story value where the key's lock needed the key
- *           (tools/windowruns.py, spottable.py). */
+ *   late    keys of a later story day this chest may take on Medium: the story-windows walk opened
+ *           it at every story value where the key's lock needed the key (tools/windowruns.py,
+ *           spottable.py).
+ *   hard    keys of its own or a later story day this chest may take on Hard (instead of before and
+ *           late): at every story value where the key's lock asks, the player can walk to it through
+ *           doors and the map (Hard's moved doors included) and it still gives (tools/hardreach.py). */
 #define PE_RAND_NEEDS_UNKNOWN 0xFFFFFFFFu
 #define PE_RAND_MAX_KEYS 32
 
 typedef struct PeRandSpot {
     uint16_t vanilla;
     uint8_t kind, day, area, flags;   /* day: story day 1-6, 0 unknown; area: save label id */
-    uint32_t needs, before, late;
+    uint32_t needs, before, late, hard;
 } PeRandSpot;
 
 /* One script word to rewrite: room map, offset of the step in the room data, which operand holds

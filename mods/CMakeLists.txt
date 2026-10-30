@@ -217,4 +217,10 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
         "${CMAKE_CURRENT_BINARY_DIR}/randomizer-gives.txt" "${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/gives-runs.txt")
     set_tests_properties(mod-randomizer-gives PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer runs:")
+    # Story gates with the real mod (its host starts headless, files in randomizer-gate.txt.mods): a moved
+    # key's lock answers "not held" until the story bit of the key's vanilla spot is set.
+    add_test(NAME mod-randomizer-gate COMMAND test-mod-randomizer-run
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-gate.txt" "${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/gate-runs.txt")
+    set_tests_properties(mod-randomizer-gate PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
+        ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer runs:")
 endif()

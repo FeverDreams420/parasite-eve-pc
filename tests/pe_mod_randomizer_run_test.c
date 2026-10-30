@@ -59,7 +59,15 @@
  * scene start (every site of the room or none), and the line ends in got=<item given at each gave=>.
  * Every table give that runs must hand out the layout's item. Checks a line may ask for: want=+OFF (the
  * give at that listing offset runs), never=+OFF (it doesn't), flag=V0x2c|0x80 (that bit is set at the
- * end). A failed check fails the test. */
+ * end). A failed check fails the test.
+ *
+ * Story gates: a line with gate runs with the real mod. The first such line starts the mod host from a
+ * pe_mods.ini written for its seed= (Randomize new games on, so the randomizer runs alone), in <out>.mods/;
+ * every gate line must share that seed. Each gate run is a new game (PE_HOOK_NEW_GAME), the mod patches
+ * the room itself (PE_HOOK_SCENE_START), and CountItems asks the mod first (PE_HOOK_ITEM_COUNT), then
+ * keys=all. The line ends in asked=<+OFF:item>answer for each CountItems step>. Checks: shut=+OFF (the
+ * key test at that listing offset ran and always answered 0), open=+OFF (it ran and answered nonzero).
+ * A shut= step must be a table lock (pe_rand_locks.h) whose key the layout moved. */
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -85,6 +93,8 @@
 #include "pe1/script_node.h"
 #include "pe1/script_queue.h"
 #include "pe1/script_state.h"
+#include "pe_hooks.h"
+#include "pe_rand_locks.h"
 #include "pe_rand_spots.h"
 
 /* Fixture I/O: the test-disc object renames the real image reads to these. */
@@ -119,7 +129,8 @@ static const u8 *block;          /* task block start: listing offsets count from
 static size_t block_bytes;
 static u8 *ran;                  /* one per word of the block: step started there */
 static u32 gave[64], got[64]; static unsigned gave_count;   /* GiveItems run: offset and item */
-static int keys_all, press, battle, spin, trace;   /* trace: PE_RUN_TRACE set, each step to stderr */
+static u32 asked[64], asked_item[64], answer[64]; static unsigned asked_count;   /* CountItems run */
+static int keys_all, press, battle, spin, trace, gate;   /* trace: PE_RUN_TRACE set, each step to stderr */
 static unsigned long frame_steps;
 /* win: battles in progress (fighting: frames since op 85, -1 if none), won so far, the value the
  * routine's last op 148 wait tested against, the frame the routine set 6 (-1: not yet). */
@@ -195,7 +206,11 @@ static void run_queue(void) {
             else if (op == 167) {                                                 /* GiveItem: given */
                 if (gave_count < 64) { gave[gave_count] = (u32)at; got[gave_count++] = (u32)*args[0]; }
                 *args[1] = 0; result = 1;
-            } else if (op == 168) { *args[1] = keys_all; result = 1; }            /* CountItems */
+            } else if (op == 168) {                                               /* CountItems */
+                if (!gate || !PE_HOOK(PE_HOOK_ITEM_COUNT, args)) *args[1] = keys_all;
+                if (asked_count < 64) { asked[asked_count] = (u32)at; asked_item[asked_count] = (u32)*args[0]; answer[asked_count++] = (u32)*args[1]; }
+                result = 1;
+            }
             else if (op == 169 && count == 2) { *args[1] = -1; result = 1; }      /* item menu: cancelled */
             else if (op == 8) {                                                   /* spawn at a point */
                 char scene[2] = { (char)*args[0], (char)*args[1] };
@@ -355,7 +370,27 @@ typedef struct Run {
     int at_actor[AT_MAX];                                     /* -1, or the actor type she stands on */
     int seeded, difficulty; u32 seed;                         /* seed=: the randomizer's layout */
     unsigned nwant, nnever, nflag; u32 want[8], never[8], flag_bit[8]; u16 flag_var[8];
+    int gate; unsigned nshut, nopen; u32 shut[8], open[8];    /* gate: the real mod answers key tests */
 } Run;
+
+/* Gate lines: the mod host, started once for the first gate line's seed, its files in gate_dir. */
+static char gate_dir[1100];
+static int gate_started, gate_difficulty; static u32 gate_seed;
+static int start_gate(const Run *r) {
+    char path[1200];
+    FILE *f;
+    if (gate_started) return gate_seed == r->seed && gate_difficulty == r->difficulty;
+    if (!*gate_dir || !SDL_CreateDirectory(gate_dir)) return 0;
+    snprintf(path, sizeof(path), "%s/pe_mods.ini", gate_dir);
+    if (!(f = fopen(path, "w"))) return 0;
+    fprintf(f, "Manage mods/All mods=1\nManage mods/Randomizer=1\nRandomizer/Randomize new games=1\nRandomizer/Difficulty=%d\n", r->difficulty);
+    for (u32 d = 0, div = 100000; d < 6; ++d, div /= 10) fprintf(f, "Randomizer/Seed digits/Digit %u=%u\n", d + 1, r->seed / div % 10);
+    fclose(f);
+    snprintf(path, sizeof(path), "%s/prefs", gate_dir);   /* only its folder is used */
+    PE_HOOK(PE_HOOK_INIT, (&(PeHookInit){0, path}));
+    gate_started = 1; gate_seed = r->seed; gate_difficulty = r->difficulty;
+    return 1;
+}
 
 /* The layout for a seed, as the mod makes it (pe_gift_safe's rule: bag items and ammo, no keys). */
 static uint16_t layout[PE_RAND_SPOTS];
@@ -411,6 +446,9 @@ static int parse_run(char *line, Run *r) {
         if (!strcmp(tok, "keys=all")) { r->keys = 1; continue; }
         if (!strcmp(tok, "press")) { r->press = 1; continue; }
         if (!strcmp(tok, "win")) { r->win = 1; continue; }
+        if (!strcmp(tok, "gate")) { r->gate = 1; continue; }
+        if (!strncmp(tok, "shut=", 5)) { if (r->nshut == 8 || !hex_offset(tok + 5, &r->shut[r->nshut++])) return 0; continue; }
+        if (!strncmp(tok, "open=", 5)) { if (r->nopen == 8 || !hex_offset(tok + 5, &r->open[r->nopen++])) return 0; continue; }
         if (!strncmp(tok, "at=@", 4)) {
             if (r->at == AT_MAX || sscanf(tok + 4, "%d,%d", &r->at_actor[r->at], &r->at_angle[r->at]) < 1) return 0;
             ++r->at;
@@ -447,6 +485,8 @@ static void do_run(const Run *r, FILE *out) {
     char name[16]; snprintf(name, sizeof(name), "m%04ui", r->room);
     u32 token = (u32)Text_ParseBase32Id((signed char *)name);
     if (!g_RoomSectorTable[r->room - 1].roomSectors) { FAIL("M%03u is no room on the disc", r->room); return; }
+    if (r->gate && (!r->seeded || !start_gate(r))) { FAIL("M%03u: a gate line needs the gate lines' one seed= (mod host in %s)", r->room, gate_dir); return; }
+    if (r->gate) PE_HOOK(PE_HOOK_NEW_GAME, (&(PeHookNewGame){PE_NEW_GAME_TITLE}));
     Entity_ResetAllPools();   /* zeroes the variables, node flags and actors, as a new game does */
     int status = Scene_LoadRoom(token);
     if (status) { if (out) fprintf(out, "run\tM%03u\tV0x4a=%#x\tV0x1=%#x\tend=load %d\n", r->room, r->area, r->left, status); return; }
@@ -463,7 +503,15 @@ static void do_run(const Run *r, FILE *out) {
             pe_rand_generate(g_pe_rand_spots, PE_RAND_SPOTS, r->seed, r->difficulty, gift_safe, layout, &result);
             layout_ready = 1; layout_seed = r->seed; layout_difficulty = r->difficulty;
         }
-        patch_room(r->room, (u8 *)g_GameState.loaded_scene_assets);
+        if (r->gate) {   /* the mod patches the room itself, under the room's own token (pe_room_number) */
+            g_SceneDispatchToken = token;
+            PE_HOOK(PE_HOOK_SCENE_START, NULL);
+            for (unsigned i = 0; i < PE_RAND_SITES; ++i) {
+                const PeRandSite *s = &g_pe_rand_sites[i];
+                if (s->map == r->room && word_at(assets, s->at + 8 + 4 * s->operand) != layout[s->spot])
+                    FAIL("M%03u site +%06X: the mod didn't patch in seed %06u's item", r->room, s->at, r->seed);
+            }
+        } else patch_room(r->room, (u8 *)g_GameState.loaded_scene_assets);
     }
 
     static u32 before[VARS];
@@ -471,6 +519,7 @@ static void do_run(const Run *r, FILE *out) {
     for (unsigned i = 0; i < r->nvars; ++i) if (r->var[i] < VARS) g_ScriptVariableBank[r->var[i]] = r->val[i];
     memcpy(before, g_ScriptVariableBank, sizeof(before));
     keys_all = r->keys; press = r->press; battle = 0; spin = 0; gave_count = 0; zone_count = 0;
+    gate = r->gate; asked_count = 0;
     win = r->win; fighting = -1; won = 0; awaited = -1; set6_at = -1; state_read = 0;
     g_BattleModeState = 0; D_8009D2E8 &= ~1;
     g_FieldPadBits = g_FieldPadPressed = g_FieldPadReleased = 0;
@@ -538,6 +587,18 @@ static void do_run(const Run *r, FILE *out) {
     for (unsigned k = 0; k < r->nflag; ++k, ++checks_done)
         if (!(g_ScriptVariableBank[r->flag_var[k]] & r->flag_bit[k]))
             FAIL("M%03u V0x4a=%#x: V%#x|%#x not set", r->room, r->area, r->flag_var[k], r->flag_bit[k]);
+    for (unsigned k = 0; k < r->nshut + r->nopen; ++k, ++checks_done) {
+        int shut = k < r->nshut; u32 at = shut ? r->shut[k] : r->open[k - r->nshut];
+        unsigned i, ran_at = 0, opened = 0, l = 0;
+        for (i = 0; i < asked_count; ++i)
+            if (asked[i] == at) { ++ran_at; opened += answer[i] != 0; }
+        if (!ran_at) { FAIL("M%03u V0x4a=%#x: the key test at +%X didn't run", r->room, r->area, at); continue; }
+        if (shut ? opened != 0 : opened == 0)
+            FAIL("M%03u V0x4a=%#x: the key test at +%X answered %s", r->room, r->area, at, shut ? "held (gate open)" : "not held (gate shut)");
+        while (l < PE_RAND_LOCKS && !(g_pe_rand_locks[l].map == r->room && g_pe_rand_locks[l].at == block_in_room + at)) ++l;
+        if (shut && (l == PE_RAND_LOCKS || layout[g_pe_rand_locks[l].spot] == g_pe_rand_spots[g_pe_rand_locks[l].spot].vanilla))
+            FAIL("M%03u +%X: shut= needs a table lock whose key seed %06u moved", r->room, at, r->seed);
+    }
     if (!out) return;
     fprintf(out, "run\tM%03u\tV0x4a=%#x\tV0x1=%#x\tend=", r->room, r->area, r->left);
     if (g_GameStateFlags & 0x2000) {
@@ -568,6 +629,10 @@ static void do_run(const Run *r, FILE *out) {
         fprintf(out, "\tseed=%u,%d\tgot=", r->seed, r->difficulty);
         for (unsigned i = 0; i < gave_count; ++i) fprintf(out, "%s%#x", i ? "," : "", got[i]);
     }
+    if (r->gate) {
+        fputs("\tasked=", out);
+        for (unsigned i = 0; i < asked_count; ++i) fprintf(out, "%s+%06X:%#x>%u", i ? "," : "", asked[i], asked_item[i], answer[i]);
+    }
     if (won) fprintf(out, "\twon=%d", won);
     if (battle && (!win || fighting >= 0)) fputs("\tbattle=1", out);
     fputc('\n', out);
@@ -593,6 +658,7 @@ int main(int argc, char **argv) {
     unsigned from = argc > 3 ? (unsigned)atoi(argv[3]) : 1;
     FILE *out = argc > 1 ? fopen(argv[1], from > 1 ? "a" : "w") : NULL;
     if (argc > 1 && !out) return 1;
+    if (argc > 1) snprintf(gate_dir, sizeof(gate_dir), "%s.mods", argv[1]);
     if (argc > 2) {
         FILE *in = fopen(argv[2], "r");
         if (!in) return 1;

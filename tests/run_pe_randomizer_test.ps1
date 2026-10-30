@@ -6,7 +6,7 @@ $cache = [IO.File]::ReadAllText((Join-Path $BuildDirectory 'CMakeCache.txt'))
 $match = [regex]::Match($cache, '(?m)^CMAKE_C_COMPILER:(?:STRING|FILEPATH)=(.+)\r?$')
 if (!$match.Success) { throw 'Configure the native CMake build first.' }
 $compiler = $match.Groups[1].Value.Trim()
-# PE_RAND_MOVE_KEYS 0 is the shipped build (golden layouts); 1 keeps the key logic tested.
+# PE_RAND_MOVE_KEYS 1 is the shipped build (golden layouts); 0 keeps the keys-stay path tested.
 foreach ($moveKeys in 0, 1) {
     $output = Join-Path $BuildDirectory "test-pe-mod-randomizer-keys$moveKeys.exe"
     $compileArgs = @('-std=c11', '-O1', '-Wall', '-Wextra', "-DPE_RAND_MOVE_KEYS=$moveKeys",

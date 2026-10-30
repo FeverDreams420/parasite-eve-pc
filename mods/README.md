@@ -458,7 +458,7 @@ Economy > Warner helps out.
 ## Randomizer (pe_randomizer)
 
 F1 > Randomizer, before New Game: on/off, difficulty (Easy: items stay on their story day; Medium and
-Hard: items anywhere; key items stay in their places on every difficulty for now) and a
+Hard: items anywhere, and keys move where the key logic allows) and a
 six-digit seed (Random seed, or one digit at a time). New Game takes them; the game keeps them in the
 `pe_randomizer.run` record (seed, difficulty, logic and table version), so loading gives the same
 layout and F1 changes only reach the next New Game. A save from another logic or table version keeps
@@ -513,11 +513,10 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   Chest 84 (M126) takes no keys: it only appears after an optional touch in that room, so
   `tools/keysolve.py --layouts` found keys there missable. Keep it out when copying hospital_logic.py's lines.
   With the Weapons Storage Key and Chinatown's Good Luck Charm, 10 keys can move.
-- Key moves are off for now (`PE_RAND_MOVE_KEYS` 0 in pe_randomizer.h): they aren't play-tested, so
-  every difficulty keeps key items in their places. Setting it to 1 turns the moves above back on
-  (raise PE_RAND_LOGIC_VERSION with it).
+- Key moves are on (`PE_RAND_MOVE_KEYS` 1 in pe_randomizer.h, logic version 8). Setting it to 0 keeps
+  key items in their places on every difficulty (raise PE_RAND_LOGIC_VERSION with it).
 
-Checks: tests/run_pe_randomizer_test.ps1, built with PE_RAND_MOVE_KEYS 0 and 1 (table sanity, 2000 seeds per difficulty pass the checks and
+Checks: tests/run_pe_randomizer_test.ps1, built with PE_RAND_MOVE_KEYS 1 and 0 (table sanity, 2000 seeds per difficulty pass the checks and
 repeat, logic tables where keys move, a key spot reached counting with the key, partial data,
 bad layouts caught, golden layouts).
 

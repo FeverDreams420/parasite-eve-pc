@@ -10,16 +10,16 @@
 /* Raise PE_RAND_LOGIC_VERSION whenever the same seed would give a different layout (the generator,
  * its rules or PE_RAND_TABLE_VERSION). A save keeps the versions it was made with; a build that
  * doesn't know them leaves that game's items vanilla rather than moving them under the player. */
-#define PE_RAND_LOGIC_VERSION 7
+#define PE_RAND_LOGIC_VERSION 8
 #define PE_RAND_TABLE_VERSION 6
 
 enum { PE_RAND_EASY, PE_RAND_MEDIUM, PE_RAND_HARD, PE_RAND_DIFFICULTIES };
 
-/* 1: Medium and Hard move keys where the key logic allows. 0: key items stay in their places on
- * every difficulty (key moves aren't play-tested yet). Changing it changes layouts: raise
- * PE_RAND_LOGIC_VERSION with it. The tests also build with it at 1 to keep the key logic covered. */
+/* 1 (shipped): Medium and Hard move keys where the key logic allows. 0: key items stay in their
+ * places on every difficulty. Changing it changes layouts: raise PE_RAND_LOGIC_VERSION with it. The
+ * tests also build with it at 0 to keep the keys-stay path covered. */
 #ifndef PE_RAND_MOVE_KEYS
-#define PE_RAND_MOVE_KEYS 0
+#define PE_RAND_MOVE_KEYS 1
 #endif
 
 /* How a spot hands its item out. Only chests take a key from elsewhere or any item: on a full

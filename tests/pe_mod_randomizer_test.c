@@ -1,7 +1,7 @@
 /* Randomizer: the spot table is sane, and every seed on every difficulty gives a layout that passes
  * the checks, the same one each time. Golden hashes catch a change that moves items for the same
- * seed: if it's meant, raise PE_RAND_LOGIC_VERSION and update them. Built with PE_RAND_MOVE_KEYS at 0
- * (as shipped: golden layouts, no key moves) and at 1 (the key logic). */
+ * seed: if it's meant, raise PE_RAND_LOGIC_VERSION and update them. Built with PE_RAND_MOVE_KEYS at 1
+ * (as shipped: the key logic, golden layouts) and at 0 (no key moves). */
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -109,9 +109,9 @@ static void every_seed_passes(void) {
 
 static void golden_layouts(void) {
     static const uint32_t golden[PE_RAND_DIFFICULTIES][4] = {
-        {0x595BD512, 0xDA729C82, 0x0BE9812A, 0x95D2655A},
-        {0x6DB7DB3A, 0xA517C83A, 0x09DF233A, 0x3D198FFA},
-        {0x84417D62, 0xA4E94C82, 0xFFF05E1A, 0x1ABE50C2},
+        {0xDFF980DA, 0x9E3B318A, 0x01FECFF2, 0x1936F3E2},
+        {0x3C8E69B2, 0xA4B30B32, 0x33B19462, 0x3C7B183A},
+        {0xD8DEA0D2, 0x6517BDEA, 0x4A5961B2, 0xF2F86BEA},
     };
     static uint16_t out[PE_RAND_SPOTS];
     int print = !golden[0][0];
@@ -251,7 +251,6 @@ int main(int argc, char **argv) {
         keys_move_with_logic_data();
         needs_mean_the_key_spot_too();
         partial_logic_data();
-    } else {
         golden_layouts();
     }
     puts("pe_randomizer: ok");

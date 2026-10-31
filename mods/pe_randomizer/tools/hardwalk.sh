@@ -1,6 +1,7 @@
 #!/bin/sh
 # hardwalk.py end to end in build-mods/mods (PE_TEST_DISC set): arrivals, zone runs plain and with press, every
-# chain level, then the table (both states; HARDWALK_EITHER=1 for either) and the proof lines for the ctest.
+# chain level, then the table (both states; HARDWALK_EITHER=1 for either; with --deny: Hard's proof, whose
+# doors are the ctest's lines).
 # Usage: hardwalk.sh <test-mod-randomizer-run.exe> [shards=4]   (~25 min; outputs walk-*.txt, hard-walk.txt)
 exe=$1 n=${2:-4}
 here=$(dirname "$0")
@@ -27,11 +28,11 @@ for p in "" "--press"; do
         up=$cur cur=zone$s$lvl lvl=$((lvl + 1))
     done
 done
-HARDWALK_RUNS=hardwalk-runs.txt python -I "$here/hardwalk.py" table "$@" hard-reach.txt "$here/gives-runs.txt" \
+python -I "$here/hardwalk.py" table "$@" hard-reach.txt "$here/gives-runs.txt" \
     walk-arrive-runs.txt walk-arrive.txt $zones --writes story-writes.txt > hard-walk.txt
 HARDWALK_EITHER=1 python -I "$here/hardwalk.py" table "$@" hard-reach.txt "$here/gives-runs.txt" \
     walk-arrive-runs.txt walk-arrive.txt $zones --writes story-writes.txt > hard-walk-either.txt
-HARDWALK_EITHER=1 python -I "$here/hardwalk.py" table "$@" hard-reach.txt "$here/gives-runs.txt" \
+HARDWALK_EITHER=1 HARDWALK_RUNS=hardwalk-runs.txt python -I "$here/hardwalk.py" table "$@" hard-reach.txt "$here/gives-runs.txt" \
     walk-arrive-runs.txt walk-arrive.txt $zones --writes story-writes.txt --deny "$here/hardwalk-deny.txt" > hard-walk-deny.txt
 grep summary hard-walk.txt hard-walk-either.txt hard-walk-deny.txt
 # spottable.py --hard-drop reads tools/hard-drop.txt: the FAIL pair rows of hard-walk-deny.txt (header kept).

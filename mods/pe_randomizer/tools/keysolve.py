@@ -123,8 +123,10 @@ def can_return(succ, reached, targets, without):
 
 def moved_doors(path):
     """{(room, offset): (room, V0x1)}: Hard's moved doors, from pe_randomizer.c's s_doors."""
-    return {(int(m.group(1)), int(m.group(2), 16)): (int(m.group(3)), int(m.group(4), 16))
-            for m in re.finditer(r"\{(\d+), 0x(\w+), \d+, (\d+), 0x(\w+)\}", open(path).read())}
+    out = {(int(m.group(1)), int(m.group(2), 16)): (int(m.group(3)), int(m.group(4), 16))
+            for m in re.finditer(r'\{(\d+), 0x(\w+), \d+, (\d+), 0x(\w+)(?:, "[^"]*")?\}', open(path).read())}
+    if not out: sys.exit(f"{path}: no s_doors rows (has the PeRandDoor row format changed?)")
+    return out
 
 
 def main():

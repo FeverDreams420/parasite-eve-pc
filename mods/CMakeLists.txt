@@ -217,6 +217,12 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
         "${CMAKE_CURRENT_BINARY_DIR}/randomizer-gives.txt" "${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/gives-runs.txt")
     set_tests_properties(mod-randomizer-gives PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer runs:")
+    # The same on Disc 2's image (PE_TEST_DISC2; skipped without it): after the disc change the rooms load
+    # from disc 2, and every give still hands out the layout's item.
+    add_test(NAME mod-randomizer-gives-disc2 COMMAND test-mod-randomizer-run
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-gives-disc2.txt" "${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/gives-runs.txt")
+    set_tests_properties(mod-randomizer-gives-disc2 PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
+        ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy;PE_RUN_DISC2=1" PASS_REGULAR_EXPRESSION "Randomizer runs:")
     # Story gates with the real mod (its host starts headless, files in randomizer-gate.txt.mods): a moved
     # key's lock answers "not held" until the story bit of the key's vanilla spot is set.
     add_test(NAME mod-randomizer-gate COMMAND test-mod-randomizer-run
@@ -249,4 +255,25 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
         "${CMAKE_CURRENT_BINARY_DIR}/randomizer-hardwalk.txt" "${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/hardwalk-runs.txt")
     set_tests_properties(mod-randomizer-hardwalk PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer runs:")
+    # Moved keys in chests on a full bag: cancelling leaves the key in the chest, the swap menu puts it in the bag.
+    add_test(NAME mod-randomizer-bag COMMAND test-mod-randomizer-run
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-bag.txt" "${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/bag-runs.txt")
+    set_tests_properties(mod-randomizer-bag PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
+        ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer runs:")
+    # The shipped generator (key moves on; tests/run_pe_randomizer_test.ps1 builds the same), for its --layouts.
+    add_executable(test-mod-randomizer-keys ${PROJECT_SOURCE_DIR}/tests/pe_mod_randomizer_test.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/pe_rand_gen.c)
+    target_include_directories(test-mod-randomizer-keys PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer)
+    target_compile_definitions(test-mod-randomizer-keys PRIVATE PE_RAND_MOVE_KEYS=1)
+    # Hard layouts of seeds 1..300 walked by tools/keysolve.py --hard (tools/keysolve_ctest.py). Needs the
+    # story walk's outputs in build-mods/mods (tools/storyruns.sh, fixpoint.sh), else skipped.
+    find_package(Python3 COMPONENTS Interpreter)
+    if(Python3_Interpreter_FOUND)
+        add_test(NAME mod-randomizer-keysolve COMMAND ${Python3_EXECUTABLE} -I
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/keysolve_ctest.py $<TARGET_FILE:test-mod-randomizer-keys> 300
+            story-graph.txt randomizer-exits.txt ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/pe_rand_spots.h
+            --runs rwin/base-fix.txt --zones @rwin/zones.list --hard ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/pe_randomizer.c)
+        set_tests_properties(mod-randomizer-keysolve PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 900 LABELS "story-walk"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    endif()
 endif()

@@ -48,8 +48,9 @@ def read_doors(path):
 def moved_doors(path):
     """(room, offset) -> new target room, from s_doors."""
     out = {}
-    for m in re.finditer(r"\{(\d+), 0x(\w+), \d+, (\d+), 0x\w+\}", open(path).read()):
+    for m in re.finditer(r'\{(\d+), 0x(\w+), \d+, (\d+), 0x\w+(?:, "[^"]*")?\}', open(path).read()):
         out[(f"M{int(m.group(1)):03d}", f"{int(m.group(2), 16):06X}")] = f"M{int(m.group(3)):03d}"
+    if not out: sys.exit(f"{path}: no s_doors rows (has the PeRandDoor row format changed?)")
     return out
 
 

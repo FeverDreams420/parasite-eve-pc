@@ -16,9 +16,17 @@
  * id=TEXT is echoed at the end of the output line, so a tool can pair runs with what it generated them for.
  * The item menu (op 169: a chest's "put an item in" on closing, a full bag's swap) is cancelled (-1), so
  * an open chest stays open and gives nothing more.
+ * A runs line with bag=full fills every free bag slot with Medicine 1 (0x06) first and runs GiveItem for
+ * real (Inv_AddItem: a bag item fails on a full bag, as in the game); swap=N answers the first item menu as
+ * the swap menu does when Aya leaves bag slot N's item in the chest: the given item takes the slot and the
+ * menu answers the old one (the script keeps it in the chest), later menus are cancelled, and gives after
+ * the swap (the chest's kept item) aren't checked against the layout. The bag is put back after the line. Checks: has=D6 (that item is in the bag
+ * at the end), lack=D6 (it isn't). The output line ends in bag=full, swap=N, bagged=<+OFF:result of each
+ * GiveItem>.
  * A door ends the run. A frame that runs more than SPIN_STEPS steps ends it too (noted as spin).
  *
- * Usage: test-mod-randomizer-run <out.txt> [runs.txt]. Each runs.txt line: M114 0x88 0x0 [V0x41=0x20 ...]
+ * Usage: test-mod-randomizer-run <out.txt> [runs.txt] (the disc: PE_TEST_DISC, or PE_TEST_DISC2 when
+ * PE_RUN_DISC2 is set). Each runs.txt line: M114 0x88 0x0 [V0x41=0x20 ...]
  * [keys=all] (room, V0x4a, V0x1, more variables). Without runs.txt every room runs once at V0x4a = 0.
  * One output line per run:
  *   run M114 V0x4a=0x88 V0x1=0x0 end=<idle|door M115|spin|load> frames=N alive=<types> gave=<offsets>
@@ -146,6 +154,9 @@ static u32 gave[64], got[64]; static unsigned gave_count;   /* GiveItems run: of
 static u32 asked[64], asked_item[64], answer[64]; static unsigned asked_count;   /* CountItems run */
 static int keys_all, press, battle, spin, trace, gate;   /* trace: PE_RUN_TRACE set, each step to stderr */
 static int menu = -1;            /* menu=N: op 67's answer, or -1 (skipped) */
+static int bag_full, swap = -1;  /* bag=full: GiveItem runs for real; swap=N: op 169's answer, or -1 */
+static int added_ok[64];         /* bag=full: what each GiveItem returned (0 = in the bag) */
+static unsigned swapped_at = 64; /* gives before the swap: the chest's own item; after it, what Aya left */
 static int held_only; static unsigned held_count; static u32 held_items[8];   /* keys=none / keys=D6,.. */
 
 static u32 key_count(u32 item) {
@@ -227,14 +238,20 @@ static void run_queue(void) {
             else if (op == 17 && press && (u32)*args[0] <= 3) result = g_ScriptQueueOpcodeHandlers[op](args);   /* pad */
             else if (op == 67 && menu >= 0) { *args[0] = menu; result = 1; }   /* menu: answered */
             else if (op == 167) {                                                 /* GiveItem: given */
-                if (gave_count < 64) { gave[gave_count] = (u32)at; got[gave_count++] = (u32)*args[0]; }
-                *args[1] = 0; result = 1;
+                if (bag_full) result = g_ScriptQueueOpcodeHandlers[op](args); else { *args[1] = 0; result = 1; }
+                if (gave_count < 64) { added_ok[gave_count] = *args[1]; gave[gave_count] = (u32)at; got[gave_count++] = (u32)*args[0]; }
             } else if (op == 168) {                                               /* CountItems */
                 if (!gate || !PE_HOOK(PE_HOOK_ITEM_COUNT, args)) *args[1] = key_count((u32)*args[0]);
                 if (asked_count < 64) { asked[asked_count] = (u32)at; asked_item[asked_count] = (u32)*args[0]; answer[asked_count++] = (u32)*args[1]; }
                 result = 1;
             }
-            else if (op == 169 && count == 2) { *args[1] = -1; result = 1; }      /* item menu: cancelled */
+            else if (op == 169 && count == 2) {                                   /* item menu: cancelled, or swap=N */
+                *args[1] = -1; result = 1;
+                if (swap >= 0 && swap < g_InvSlotLimit && g_InvItemPtr) {   /* slot N's item out, the new one in, once */
+                    *args[1] = g_InvItemPtr[swap]; g_InvItemPtr[swap] = (s16)*args[0];
+                    swap = -1; swapped_at = gave_count;
+                }
+            }
             else if (op == 8) {                                                   /* spawn at a point */
                 char scene[2] = { (char)*args[0], (char)*args[1] };
                 if (trace) { fprintf(stderr, "spawn type %d sub %d\n", scene[0], scene[1]); fflush(stderr); }
@@ -400,6 +417,7 @@ typedef struct Run {
     int gate; unsigned nshut, nopen; u32 shut[8], open[8];    /* gate: the real mod answers key tests */
     int held; unsigned nheld; u32 held_item[8];               /* keys=none / keys=D6,..: only those held */
     unsigned from, door; int has_door, has_arrive, floor; u32 arrive;   /* from=, door=, arrive=, floor */
+    int full, swap; unsigned nhas, nlack; u32 has[4], lack[4];   /* bag=full, swap=N, has=, lack= */
     char id[48];                                              /* id=: echoed on the output line */
 } Run;
 
@@ -488,6 +506,10 @@ static int parse_run(char *line, Run *r) {
         }
         if (!strncmp(tok, "id=", 3)) { snprintf(r->id, sizeof(r->id), "%s", tok + 3); continue; }
         if (!strcmp(tok, "press")) { r->press = 1; continue; }
+        if (!strcmp(tok, "bag=full")) { r->full = 1; continue; }
+        if (!strncmp(tok, "swap=", 5)) { r->swap = atoi(tok + 5) + 1; continue; }
+        if (!strncmp(tok, "has=", 4)) { if (r->nhas == 4) return 0; r->has[r->nhas++] = (u32)strtoul(tok + 4, NULL, 16); continue; }
+        if (!strncmp(tok, "lack=", 5)) { if (r->nlack == 4) return 0; r->lack[r->nlack++] = (u32)strtoul(tok + 5, NULL, 16); continue; }
         if (!strncmp(tok, "menu=", 5)) { r->has_menu = 1; r->menu = atoi(tok + 5); continue; }
         if (!strcmp(tok, "win")) { r->win = 1; continue; }
         if (!strcmp(tok, "gate")) { r->gate = 1; continue; }
@@ -598,6 +620,13 @@ static void do_run(const Run *r, FILE *out) {
     memcpy(before, g_ScriptVariableBank, sizeof(before));
     keys_all = r->keys; held_only = r->held; held_count = r->nheld; memcpy(held_items, r->held_item, sizeof(held_items));
     press = r->press; menu = r->has_menu ? r->menu : -1; battle = 0; spin = 0; gave_count = 0; zone_count = 0;
+    bag_full = r->full; swap = r->swap - 1; swapped_at = 64;
+    s16 bag_was[64]; int bag_slots = g_InvItemPtr && g_InvSlotLimit > 0 ? (g_InvSlotLimit < 64 ? g_InvSlotLimit : 64) : 0;
+    if (bag_full) {
+        if (!bag_slots) { FAIL("M%03u: bag=full but the bag isn't set up", r->room); return; }
+        memcpy(bag_was, g_InvItemPtr, (size_t)bag_slots * sizeof(*bag_was));
+        for (int i = 0; i < bag_slots; ++i) if (!g_InvItemPtr[i]) g_InvItemPtr[i] = 0x06;
+    }
     gate = r->gate; asked_count = 0;
     win = r->win; fighting = -1; won = 0; awaited = -1; set6_at = -1; state_read = 0;
     g_BattleModeState = 0; D_8009D2E8 &= ~1;
@@ -647,7 +676,7 @@ static void do_run(const Run *r, FILE *out) {
         for (FieldActor *a = g_FieldActorListHead; a; a = a->next) a->flags &= ~0x10000000;
     }
     ++runs_done;
-    for (unsigned i = 0; r->seeded && i < gave_count; ++i)
+    for (unsigned i = 0; r->seeded && i < gave_count && i < swapped_at; ++i)
         for (unsigned g = 0; g < PE_RAND_GIVES; ++g)
             if (g_pe_rand_gives[g].map == r->room && g_pe_rand_gives[g].at == block_in_room + gave[i]) {
                 unsigned spot = g_pe_rand_gives[g].spot;
@@ -683,6 +712,12 @@ static void do_run(const Run *r, FILE *out) {
     if (r->has_door == 2 && (g_GameStateFlags & 0x2000))
         FAIL("M%03u V0x4a=%#x V0x1=%#x: the run ended at a door to M%03u", r->room, r->area, left, token_room(g_SceneDispatchToken));
     checks_done += r->has_door != 0;
+    for (unsigned k = 0; k < r->nhas + r->nlack; ++k, ++checks_done) {
+        int has = k < r->nhas, in_bag = 0; u32 item = has ? r->has[k] : r->lack[k - r->nhas];
+        for (int i = 0; i < bag_slots; ++i) in_bag |= (u32)g_InvItemPtr[i] == item;
+        if (in_bag != has) FAIL("M%03u V0x4a=%#x: item %#x %s the bag at the end", r->room, r->area, item, has ? "isn't in" : "is in");
+    }
+    if (bag_full) memcpy(g_InvItemPtr, bag_was, (size_t)bag_slots * sizeof(*bag_was));
     if (!out) return;
     fprintf(out, "run\tM%03u\tV0x4a=%#x\tV0x1=%#x\tend=", r->room, r->area, left);
     if (g_GameStateFlags & 0x2000) {
@@ -711,6 +746,12 @@ static void do_run(const Run *r, FILE *out) {
         else fprintf(out, "%s%d,%d,%d", i ? ";" : "\tat=", r->at_x[i], r->at_z[i], r->at_angle[i]);
     if (press) fputs("\tpress=1", out);
     if (r->has_menu) fprintf(out, "\tmenu=%d", r->menu);
+    if (r->full) {
+        fputs("\tbag=full", out);
+        if (r->swap) fprintf(out, "\tswap=%d", r->swap - 1);
+        fputs("\tbagged=", out);
+        for (unsigned i = 0; i < gave_count; ++i) fprintf(out, "%s+%06X:%d", i ? "," : "", gave[i], added_ok[i]);
+    }
     if (r->seeded) {
         fprintf(out, "\tseed=%u,%d\tgot=", r->seed, r->difficulty);
         for (unsigned i = 0; i < gave_count; ++i) fprintf(out, "%s%#x", i ? "," : "", got[i]);
@@ -726,7 +767,8 @@ static void do_run(const Run *r, FILE *out) {
 }
 
 int main(int argc, char **argv) {
-    const char *path = getenv("PE_TEST_DISC");
+    /* PE_RUN_DISC2: the rooms from Disc 2's image (PE_TEST_DISC2), as after the disc change */
+    const char *path = getenv(getenv("PE_RUN_DISC2") ? "PE_TEST_DISC2" : "PE_TEST_DISC");
     if (!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS") ? 1 : 77;
     PeDisc disc = {0};
     /* Nothing is drawn, but ResetGraph opens psyz: keep it windowless whichever way the test runs. */

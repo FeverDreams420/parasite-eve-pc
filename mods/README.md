@@ -590,6 +590,10 @@ copies in other rooms (one chest seen in several rooms or on several days) give 
 variables that place each give's actor (a sewer cell, a story bit), with every battle played to a won end
 (the run test's win: the chests M207 and M232 place after their fight), and the actor each gift's talk
 tests Aya touched (most gifts run in her own script): all 228 table gives are reached.
+`mod-randomizer-gives-disc2` runs the same lines on Disc 2 (PE_TEST_DISC2; PE_RUN_DISC2=1 picks it).
+`mod-randomizer-bag` (`tools/bag-runs.txt`) opens key chests with a full bag (`bag=full`): cancelling
+leaves the key in the chest to take later; swapping (`swap=N`) bags the key and the chest keeps what
+Aya left.
 
 The story walk (`tools/storywalk.py`: every place a new game reaches, and the keys each step needs)
 learns from the run test's runs: `tools/storyruns.sh` runs every place of `runs.txt` (base runs, then
@@ -597,7 +601,9 @@ zone runs and their chains, with and without the button, every battle won) and w
 `tools/fixpoint.sh` runs the places that walk reaches without a run until none is left (both in
 build-mods/mods, about half an hour). `tools/keysolve.py --layouts` checks generated key layouts over
 that walk (`test-pe-mod-randomizer-keys1 --layouts N` prints them): every key is reached with the
-layout's keys, and no moved key can be walked past where its own spot can't.
+layout's keys, and no moved key can be walked past where its own spot can't. ctest
+`mod-randomizer-keysolve` (label story-walk, skipped without the walk's outputs) checks seeds 1-300 on
+Hard that way (`tools/keysolve_ctest.py`, about 6 min).
 
 ## Tools (pe_tools)
 

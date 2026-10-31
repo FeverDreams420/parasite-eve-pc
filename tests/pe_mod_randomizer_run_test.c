@@ -39,6 +39,9 @@
  * each stop: one frame down every PRESS_EVERY frames from PRESS_AT on. The button is the pad's Circle,
  * which the boot pad table maps to field bits 0x100, 0x200 and 0x20000000 (the scripts' tests: op 17
  * modes 0-3, whose real handler runs in these runs). The output line then ends in press=1.
+ * A runs line with menu=N answers every menu (op 67, Script_GetMenuChoice) with item N; without it the
+ * step is skipped like the other menus, and the routine's variable keeps what it held (often item 0).
+ * The output line then has menu=N after press=1.
  *
  * Op 85 (Boot_MemCardStepInit, misnamed: the battle transition, CD reads and fade) is skipped, so the
  * battle never runs or ends; an encounter routine has often told the room's door controller to die
@@ -139,6 +142,7 @@ static u8 *ran;                  /* one per word of the block: step started ther
 static u32 gave[64], got[64]; static unsigned gave_count;   /* GiveItems run: offset and item */
 static u32 asked[64], asked_item[64], answer[64]; static unsigned asked_count;   /* CountItems run */
 static int keys_all, press, battle, spin, trace, gate;   /* trace: PE_RUN_TRACE set, each step to stderr */
+static int menu = -1;            /* menu=N: op 67's answer, or -1 (skipped) */
 static int held_only; static unsigned held_count; static u32 held_items[8];   /* keys=none / keys=D6,.. */
 
 static u32 key_count(u32 item) {
@@ -218,6 +222,7 @@ static void run_queue(void) {
             }
             else if (op == 49) result = g_ScriptQueueOpcodeHandlers[op](args);   /* door: ends the run */
             else if (op == 17 && press && (u32)*args[0] <= 3) result = g_ScriptQueueOpcodeHandlers[op](args);   /* pad */
+            else if (op == 67 && menu >= 0) { *args[0] = menu; result = 1; }   /* menu: answered */
             else if (op == 167) {                                                 /* GiveItem: given */
                 if (gave_count < 64) { gave[gave_count] = (u32)at; got[gave_count++] = (u32)*args[0]; }
                 *args[1] = 0; result = 1;
@@ -384,6 +389,7 @@ static int token_room(u32 token) {
 
 typedef struct Run {
     unsigned room; u32 area, left; unsigned nvars; u16 var[32]; u32 val[32]; int keys, press, win;
+    int has_menu, menu;                                       /* menu=N */
     int at, at_x[AT_MAX], at_z[AT_MAX], at_angle[AT_MAX];   /* Aya's stops from AT_FRAME on, at of them */
     int at_actor[AT_MAX];                                     /* -1, or the actor type she stands on */
     int seeded, difficulty; u32 seed;                         /* seed=: the randomizer's layout */
@@ -479,6 +485,7 @@ static int parse_run(char *line, Run *r) {
         }
         if (!strncmp(tok, "id=", 3)) { snprintf(r->id, sizeof(r->id), "%s", tok + 3); continue; }
         if (!strcmp(tok, "press")) { r->press = 1; continue; }
+        if (!strncmp(tok, "menu=", 5)) { r->has_menu = 1; r->menu = atoi(tok + 5); continue; }
         if (!strcmp(tok, "win")) { r->win = 1; continue; }
         if (!strcmp(tok, "gate")) { r->gate = 1; continue; }
         if (!strcmp(tok, "floor")) { r->floor = 1; continue; }
@@ -576,7 +583,7 @@ static void do_run(const Run *r, FILE *out) {
     checks_done += r->has_arrive;
     memcpy(before, g_ScriptVariableBank, sizeof(before));
     keys_all = r->keys; held_only = r->held; held_count = r->nheld; memcpy(held_items, r->held_item, sizeof(held_items));
-    press = r->press; battle = 0; spin = 0; gave_count = 0; zone_count = 0;
+    press = r->press; menu = r->has_menu ? r->menu : -1; battle = 0; spin = 0; gave_count = 0; zone_count = 0;
     gate = r->gate; asked_count = 0;
     win = r->win; fighting = -1; won = 0; awaited = -1; set6_at = -1; state_read = 0;
     g_BattleModeState = 0; D_8009D2E8 &= ~1;
@@ -687,6 +694,7 @@ static void do_run(const Run *r, FILE *out) {
         if (r->at_actor[i] >= 0) fprintf(out, "%s@%d,%d", i ? ";" : "\tat=", r->at_actor[i], r->at_angle[i]);
         else fprintf(out, "%s%d,%d,%d", i ? ";" : "\tat=", r->at_x[i], r->at_z[i], r->at_angle[i]);
     if (press) fputs("\tpress=1", out);
+    if (r->has_menu) fprintf(out, "\tmenu=%d", r->menu);
     if (r->seeded) {
         fprintf(out, "\tseed=%u,%d\tgot=", r->seed, r->difficulty);
         for (unsigned i = 0; i < gave_count; ++i) fprintf(out, "%s%#x", i ? "," : "", got[i]);

@@ -27,12 +27,16 @@ story state of the key's lock room then, and only doors that fire count.
       way back to the map or a lock room, at every value. Writes the doors of each pair's walk (first found,
       breadth first) as checked lines (door=) for the ctest mod-randomizer-hardwalk.
       --writes <story-writes.txt>: a failing value is excused (pair skip:<why>, not FAIL) by the rules below.
+      --deny <hardwalk-deny.txt>: doors the walk may not use (room, target, the state they fired in: a the
+      walk's, m the sure bits'; below a V0x4a): ones that fired only on a flag the player may not have then.
+      spottable.py --hard-drop takes the FAIL pairs out of Hard.
 
 Excused, not a hole: needs (the chest's needs bit has the key: the generator never puts it there, e.g. a chest
 behind the key's own door); before (a value before the key's vanilla day, DAY_START: the windows ctest also ran
 locks in walk states the player can't be in); charm (no lock: the give room stands in; their real use is the
-cruiser at the end, not walked here); free=<value> (with --writes: a room the walk reaches sets V0x4a on, its
-V0x4a tests hold, it doesn't test the key given, and the pair passes there).
+cruiser at the end, not walked here); free=<value> (with --writes: a room the walk reaches sets V0x4a on in a
+branch that tests nothing but V0x4a / area / event, those hold, it doesn't test the key given, and the pair
+passes there).
 
 A key with no key test (pe_rand_locks.h) but a step that takes it (the fuse box, the elevator) asks there:
 its values are the walk's states of that room where the take's story bits can hold (from its first give on),
@@ -51,6 +55,7 @@ DAY_START = {1: 0, 2: DAY2, 3: 0x190, 4: 0x208}   # V0x4a: M108 jumps to Day 3, 
 CHARMS = {0xCB, 0xCC, 0xCD}   # the Good Luck Charms: M430's take holds in no walk state
 SET_X = re.compile(r"^(M\d+) \S+ e\d sets V0x4a=(0x\w+)\t(.*)")
 TEST_X = re.compile(r"V0x4a (==|!=|<=|>=|<|>) (0x\w+)")
+PLAIN = re.compile(r"\(?\((V0x4a|area|event) (==|!=|<=|>=|<|>) (0x\w+|-?\d+)\)\)?")
 TESTS = {"==": int.__eq__, "!=": int.__ne__, "<=": int.__le__, ">=": int.__ge__, "<": int.__lt__, ">": int.__gt__}
 GATE = "gate seed=123456,2"
 
@@ -237,13 +242,28 @@ def story_steps(path, item, x, rooms):
     for l in open(path):
         m = SET_X.match(l.rstrip("\n"))
         if not m or m.group(1) not in rooms or v(m.group(2)) <= x or f"gave({item:#x}) != 0x0" in m.group(3): continue
-        if all(TESTS[op](x, v(n)) for op, n in TEST_X.findall(m.group(3))): out.add(v(m.group(2)))
+        # one branch with nothing but V0x4a / area / event tests, all holding at x (any other flag: not sure)
+        for alt in m.group(3).split(" | "):
+            conds = [c for c in alt.split(" ; ") if c and c != "always"]
+            if all(PLAIN.fullmatch(c) for c in conds) and all(TESTS[op](x, v(n)) for op, n in TEST_X.findall(alt)):
+                out.add(v(m.group(2)))
+    return out
+
+
+def read_deny(path):
+    """[(room, target, state a/m, below V0x4a)]: doors the walk may not use (hardwalk-deny.txt)."""
+    out = []
+    for l in open(path):
+        w = l.split("#")[0].split()
+        if w: out.append((w[0], w[1], w[2], v(w[3]) if len(w) > 3 else 1 << 16))
     return out
 
 
 def table(argv):
     writes = argv[argv.index("--writes") + 1] if "--writes" in argv else None
     if writes: argv = argv[:argv.index("--writes")] + argv[argv.index("--writes") + 2:]
+    deny = read_deny(argv[argv.index("--deny") + 1]) if "--deny" in argv else []
+    if "--deny" in argv: argv = argv[:argv.index("--deny")] + argv[argv.index("--deny") + 2:]
     spots, gives, times, edges, stops, moved = walk_setup(argv[:9])
     reads_left = {f"M{r:03d}" for r in Graph(argv[8]).reads_left}
     hard_path, gives_runs, arrive_runs, arrive_out = argv[9:13]
@@ -278,6 +298,12 @@ def table(argv):
         if m is None: out_edges[i] = [(t, [l]) for t, l in a.items()]
         elif either: out_edges[i] = [(t, [l]) for t, l in a.items()] + [(t, [l]) for t, l in m.items() if t not in a]
         else: out_edges[i] = [(t, [l, m[t]]) for t, l in a.items() if t in m]
+
+    for i, edges_i in out_edges.items():   # --deny: a door that fired only in a walk state the player can't be in
+        w = arrivals[i][0].split()
+        out_edges[i] = [(t, ls) for t, ls in edges_i
+                        if not any((w[0], t) == d[:2] and v(w[1]) < d[3] and
+                                   d[2] == ("a" if any(tok.startswith("V0x") for tok in ls[0].split()[3:]) else "m") for d in deny)]
 
     def succ(x, vars_, room, i):
         for tgt, line in out_edges.get(i, ()):

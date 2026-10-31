@@ -509,7 +509,7 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   stay where they are. Filling in data changes layouts: raise PE_RAND_TABLE_VERSION with it.
 - Until there is logged data, the table is made with `tools/keys-by-hand.txt` and `tools/keys-walk.txt`
   (`tools/spottable.py <disc> <randomizer-rooms.txt> tools/keys-by-hand.txt tools/keys-walk.txt --windows windows.txt
-  --revisit revisit.txt --hard hard-reach.txt`; `--revisit` keeps a key out of a chest the mod-randomizer-revisit ctest
+  --revisit revisit.txt --hard hard-reach.txt --hard-drop tools/hard-drop.txt`; `--revisit` keeps a key out of a chest the mod-randomizer-revisit ctest
   saw shut when its lock asks: the Klamp Key out of museum chests 156/157): a
   spot needs every key either file names, and takes the walk's `before`. keys-walk.txt is
   `tools/keysolve.py`'s output (without --layouts) over the story walk, solved with the gates' rule (a
@@ -534,8 +534,14 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   of, and that the revisit ctest saw still give. Door guards other than V0x4a / V0x1 read as open,
   except the power cut's shortcut door for the St. Francis Key and the Blue Cardkey (its flag is set
   past both locks). That opens Carnegie Hall and its sewer to every key but those two, which stay in the
-  power-off rooms; the museum's chests 156/157 shut at the Klamp Key's last value. 771 key x chest
-  pairs (Medium about 380).
+  power-off rooms; the museum's chests 156/157 shut at the Klamp Key's last value. `--hard-drop
+  tools/hard-drop.txt` then takes out the pairs `hardwalk.py table --deny tools/hardwalk-deny.txt` fails:
+  doors the walk's merged story state opened on a flag the player may not have yet (the hospital elevator
+  before the fuse box restores power, so Fuses 1-3 stay in hospital chests; NYPD Day 3 events; the museum
+  counter and the warehouse for the Klamp Key). 574 key x chest pairs (Medium about 380).
+- Hard story flags (`s_flags` in pe_randomizer.c): from Day 3 Soho's M094 starts with the flag its own
+  event sets, so its door to M095 (chests 49-52) opens though the event never ran again. ctest
+  `mod-randomizer-doors` checks it.
   `tools/hardwalk.sh` checks the mask by running the game's own scripts in every room each walk
   reaches (only doors that fire count; known non-holes excused); ctest `mod-randomizer-hardwalk`
   (`tools/hardwalk-runs.txt`) reruns each door those walks went through.

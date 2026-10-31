@@ -1,6 +1,6 @@
 """Spot table for the pe_randomizer mod, read from a USA disc and the mod-randomizer-rooms ctest's walk:
 python -I spottable.py <disc.bin> <randomizer-rooms.txt> [needs.txt ...] [--windows windows.txt] [--revisit revisit.txt] [--hard hard-reach.txt]
-       > pe_rand_spots.h
+       [--hard-drop hard-drop.txt] > pe_rand_spots.h
 needs.txt (keylogic.py, keysolve.py or keys-by-hand.txt) gives the keys each spot needs and the keys it
 may take; spots no file lists stay unknown. With several files a spot needs every key any of them
 names (the safe side), and takes the keys of the last file that lists it. The table is made with
@@ -19,6 +19,8 @@ ctest saw the chest shut at one of that key's lock-time values (museum 156/157 f
 --hard hard-reach.txt (hardreach.py) gives each chest's hard= keys: the keys Hard may put there (reached
 through doors and the map, Hard's moved doors included, and giving at every lock-time value of the key);
 a needs file's late= (empty) keeps a spot from them too.
+--hard-drop hard-drop.txt (hardwalk.py table --deny, its FAIL pair rows) takes those keys out of those chests'
+hard= keys: hardreach's doors fired there only on flags the player may not have at the key's lock.
 
 A spot is one place that hands out an item; a site is one script word the mod rewrites for it
 (a spot in several room versions, or with a roll of up to three items, has several sites). Every site
@@ -275,6 +277,15 @@ def read_hard(path):
         if f[0] == "hard": out[int(f[1])] = {int(x, 16) for x in f[3].split("=", 1)[1].split(",") if x}
     return out
 
+def read_drop(path):
+    """{spot: key items} from hardwalk.py table's FAIL pair rows."""
+    name_item = {n: i for i, n in KEYS.items()}
+    out = {}
+    for line in open(path):
+        f = line.rstrip("\n").split("\t")
+        if f[0] == "pair" and len(f) > 3 and f[3] == "FAIL": out.setdefault(int(f[1]), set()).add(name_item[f[2]])
+    return out
+
 def emit(spot_list, disc, needs=None, windows=None, hard=None, shut=None):
     sites, gives = [], []
     key_order = [ms[0]["vanilla"] for ms in spot_list if ms[0]["vanilla"] in KEYS]
@@ -335,6 +346,10 @@ if __name__ == "__main__":
     if "--hard" in args:
         i = args.index("--hard")
         hard = read_hard(args[i + 1])
+        del args[i:i + 2]
+    if "--hard-drop" in args:
+        i = args.index("--hard-drop")
+        for n, keys in read_drop(args[i + 1]).items(): hard[n] = hard.get(n, set()) - keys
         del args[i:i + 2]
     for path in args:
         for place, (need, bef) in read_needs(path).items():

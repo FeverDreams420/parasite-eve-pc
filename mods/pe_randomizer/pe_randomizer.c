@@ -154,6 +154,20 @@ static const PeRandDoor s_doors[] = {
     {320, 0xC10, 329, 127, 0x7E, "Hospital power cut: the shortcut door to M329 leads to the first-floor hall M127"},
 };
 #define PE_RAND_DOOR_COUNT (sizeof s_doors / sizeof *s_doors)
+
+/* Story flags Hard sets when a room starts, from a story value (V0x4a) on: a door that only a one-time
+ * event opens, which the key walks went through (tools/hardwalk.py; no run sets the flag once it's missed). */
+typedef struct PeRandFlag {
+    uint16_t map;
+    uint8_t var;           /* V0x.. */
+    uint32_t bits;
+    uint16_t from;         /* V0x4a */
+} PeRandFlag;
+
+static const PeRandFlag s_flags[] = {
+    {94, 0x19, 0x20, 0x190},   /* Soho M094 from Day 3: the door to M095 (chests 49-52), opened by M094's event */
+};
+#define PE_RAND_FLAG_COUNT (sizeof s_flags / sizeof *s_flags)
 #define PE_RAND_DAY2 0x88u             /* V0x4a: Day 1 is over */
 static int s_door_moved = -1;          /* the moved door of the room that started last, or -1 */
 
@@ -171,6 +185,13 @@ static int pe_rand_doors(void *ctx, void *user) {
     s_door_moved = -1;
     if (!room || map < 1 || map > SCENE_ROOM_COUNT || !s_run.on || !pe_rand_supported() ||
         s_run.difficulty != PE_RAND_HARD || g_ScriptVariableBank[SCRIPT_VAR_AREA] < PE_RAND_DAY2) return 0;
+    for (unsigned i = 0; i < PE_RAND_FLAG_COUNT; ++i) {
+        const PeRandFlag *f = &s_flags[i];
+        if (f->map != map || g_ScriptVariableBank[SCRIPT_VAR_AREA] < f->from ||
+            (g_ScriptVariableBank[f->var] & f->bits) == f->bits) continue;
+        g_ScriptVariableBank[f->var] |= f->bits;
+        pe_log("rand_flag", "map=%d V0x%x|=%#x", map, (unsigned)f->var, (unsigned)f->bits);
+    }
     if (moved >= 0 && s_doors[moved].to == map) {
         g_ScriptVariableBank[SCRIPT_VAR_ROOM] = s_doors[moved].came;
         pe_log("rand_door", "map=%d from=%d came=%#x", map, s_doors[moved].from, (unsigned)s_doors[moved].came);

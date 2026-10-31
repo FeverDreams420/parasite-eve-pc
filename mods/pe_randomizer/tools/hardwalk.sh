@@ -31,5 +31,8 @@ HARDWALK_RUNS=hardwalk-runs.txt python -I "$here/hardwalk.py" table "$@" hard-re
     walk-arrive-runs.txt walk-arrive.txt $zones --writes story-writes.txt > hard-walk.txt
 HARDWALK_EITHER=1 python -I "$here/hardwalk.py" table "$@" hard-reach.txt "$here/gives-runs.txt" \
     walk-arrive-runs.txt walk-arrive.txt $zones --writes story-writes.txt > hard-walk-either.txt
-grep summary hard-walk.txt hard-walk-either.txt
+HARDWALK_EITHER=1 python -I "$here/hardwalk.py" table "$@" hard-reach.txt "$here/gives-runs.txt" \
+    walk-arrive-runs.txt walk-arrive.txt $zones --writes story-writes.txt --deny "$here/hardwalk-deny.txt" > hard-walk-deny.txt
+grep summary hard-walk.txt hard-walk-either.txt hard-walk-deny.txt
+# spottable.py --hard-drop reads tools/hard-drop.txt: the FAIL pair rows of hard-walk-deny.txt (header kept).
 # ctest mod-randomizer-hardwalk reads tools/hardwalk-runs.txt: copy hardwalk-runs.txt there after a rerun.

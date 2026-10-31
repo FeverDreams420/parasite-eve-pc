@@ -17,8 +17,9 @@ story state of the key's lock room then, and only doors that fire count.
       A chain level (zoneruns.py's): repeat with each level and the one before it until no runs are left.
       --press (first level and its chains): Aya also presses examine at each stop; every facing goes on.
       A press run that ran a menu step (op 67, which the run test otherwise skips: the answer stays item 0)
-      runs again at the next level once per answer (menu=0..2, id ...u<N>), whatever its end: M132's elevator
-      asks for a floor from V0x4a 0x1ee on, and only item 1 goes down to the first-floor hall M127.
+      runs again at the next level once per answer (menu=0..3, id ...u<N>), whatever its end: M132's elevator
+      asks for a floor from V0x4a 0x1ee on, and only item 1 goes down to the first-floor hall M127; the museum
+      car M258 needs item 3 for M250.
   hardwalk.py table <the arrive args> <hard-reach.txt> <revisit.txt> <walk-arrive-runs.txt> <arrive output>
                     <zone runs> <zone output> [<zone runs> <zone output> ...] > hard-walk.txt  [proof lines to $HARDWALK_RUNS]
       Per key and value, the rooms reached from the lock rooms by doors that fired (an arrival that ends at
@@ -132,7 +133,7 @@ def arrive(argv):
 
 
 ANGLES = (0, 0x400, 0x800, 0xC00)   # zoneruns.py: the four quarters door tests split facing into
-MENUS = (0, 1, 2)                   # menu=N answers a press run's menu steps (M132's floors: 3 items)
+MENUS = (0, 1, 2, 3)                # menu=N answers a press run's menu steps (M132: 3 floors, M257/M258: 4)
 AT_MAX = 8                          # the run test's stops in one line
 REACH = re.compile(r"\+([0-9A-F]+)@(-?\d+),(-?\d+)")
 

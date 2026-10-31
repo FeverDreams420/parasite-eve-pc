@@ -145,12 +145,13 @@ typedef struct PeRandDoor {
     uint32_t at;           /* the door step, from the room's task block (the step listing's offset) */
     uint16_t old, to;      /* the room it led to, the room it leads to now */
     uint32_t came;         /* V0x1 in the new room */
+    const char *what;      /* for the spoiler */
 } PeRandDoor;
 static const PeRandDoor s_doors[] = {
-    {24, 0x1F5C, 0, 378, 0x17A},   /* Carnegie Hall front, later days: a map door -> the lobby */
-    {378, 0x770, 1, 24, 0x18},     /* the lobby's street door -> Carnegie Hall front, later days */
-    {27, 0xB80, 26, 12, 0xC},      /* the sewer, back to M026 -> backstage */
-    {320, 0xC10, 329, 127, 0x7E},  /* hospital power cut: the shortcut to M329 -> first-floor hall */
+    {24, 0x1F5C, 0, 378, 0x17A, "Carnegie Hall front (later days): the right-hand map door leads to the lobby"},
+    {378, 0x770, 1, 24, 0x18, "Carnegie Hall lobby: the street door leads back to the front (later days)"},
+    {27, 0xB80, 26, 12, 0xC, "Carnegie Hall sewer: the door back to M026 leads to backstage"},
+    {320, 0xC10, 329, 127, 0x7E, "Hospital power cut: the shortcut door to M329 leads to the first-floor hall M127"},
 };
 #define PE_RAND_DOOR_COUNT (sizeof s_doors / sizeof *s_doors)
 #define PE_RAND_DAY2 0x88u             /* V0x4a: Day 1 is over */
@@ -314,7 +315,20 @@ static int pe_rand_inv_command(void *ctx, void *user) {
     return 1;
 }
 
-/* randomizer-<seed>.txt beside the preferences: every spot that changed. Easy and Medium only. */
+/* Every room a spot is in (sites are sorted by map): one chest can show in several. The spot number
+ * tells two chests of one room apart and is the tools' chest number (hard-reach.txt and the rest). */
+static void pe_rand_spot_rooms(FILE *f, unsigned n) {
+    unsigned last = 0;
+    for (unsigned i = 0; i < PE_RAND_SITES; ++i) {
+        if (g_pe_rand_sites[i].spot != n || g_pe_rand_sites[i].map == last) continue;
+        fprintf(f, "%sM%03u", last ? "/" : "", (unsigned)g_pe_rand_sites[i].map);
+        last = g_pe_rand_sites[i].map;
+    }
+    fprintf(f, " day %u (spot %u)", (unsigned)g_pe_rand_spots[n].day, n);
+}
+
+/* randomizer-<seed>.txt beside the preferences: where every key item is, Hard's ways back, then every
+ * spot that changed. */
 static void pe_rand_spoiler(void) {
     char name[64], path[1100], temp[1110];
     FILE *f;
@@ -326,18 +340,27 @@ static void pe_rand_spoiler(void) {
             s_difficulty_names[s_run.difficulty], (unsigned)s_run.logic, (unsigned)s_run.table);
     if (s_result.keys_locked) fprintf(f, "Key items stay in their places.\n");
     else if (s_result.fallback) fprintf(f, "No layout passed its checks: %s.\n", s_result.fallback == 1 ? "key items stay in their places" : "nothing moved");
-    fprintf(f, "\n");
+    fprintf(f, "\nKey items (now in, was in):\n");
     for (unsigned n = 0; n < PE_RAND_SPOTS; ++n) {
-        unsigned last = 0;
+        unsigned from = n;
+        if (!pe_is_key_item(s_layout[n])) continue;
+        for (unsigned i = 0; i < PE_RAND_SPOTS; ++i)
+            if (g_pe_rand_spots[i].vanilla == s_layout[n]) { from = i; break; }
+        fprintf(f, "  %s: ", pe_item_name(s_layout[n]));
+        pe_rand_spot_rooms(f, n);
+        if (from == n) fprintf(f, " (not moved)\n");
+        else { fprintf(f, ", was "); pe_rand_spot_rooms(f, from); fprintf(f, "\n"); }
+    }
+    if (s_run.difficulty == PE_RAND_HARD) {
+        fprintf(f, "\nWays back (from Day 2):\n");
+        for (unsigned i = 0; i < PE_RAND_DOOR_COUNT; ++i) fprintf(f, "  M%03u: %s\n", (unsigned)s_doors[i].from, s_doors[i].what);
+    }
+    fprintf(f, "\nEvery changed spot:\n");
+    for (unsigned n = 0; n < PE_RAND_SPOTS; ++n) {
         if (s_layout[n] == g_pe_rand_spots[n].vanilla) continue;
-        /* every room the spot is in (sites are sorted by map): one chest can show in several */
-        for (unsigned i = 0; i < PE_RAND_SITES; ++i) {
-            if (g_pe_rand_sites[i].spot != n || g_pe_rand_sites[i].map == last) continue;
-            fprintf(f, "%sM%03u", last ? "/" : "", (unsigned)g_pe_rand_sites[i].map);
-            last = g_pe_rand_sites[i].map;
-        }
-        fprintf(f, " day %u: %s (was %s)\n", (unsigned)g_pe_rand_spots[n].day, pe_item_name(s_layout[n]),
-                pe_item_name(g_pe_rand_spots[n].vanilla));
+        fprintf(f, "  ");
+        pe_rand_spot_rooms(f, n);
+        fprintf(f, ": %s (was %s)\n", pe_item_name(s_layout[n]), pe_item_name(g_pe_rand_spots[n].vanilla));
     }
     if (fclose(f) != 0) { remove(temp); pe_toast("Randomizer: couldn't write the spoiler file"); return; }
     remove(path);
@@ -366,7 +389,7 @@ static int pe_rand_new_game(void *ctx, void *user) {
     }
     pe_log("rand_newgame", "on=1 seed=%06u difficulty=%u keys_moved=%u", (unsigned)s_run.seed,
            (unsigned)s_run.difficulty, s_result.keys_moved);
-    if (s_run.difficulty != PE_RAND_HARD) pe_rand_spoiler();
+    pe_rand_spoiler();
     snprintf(line, sizeof line, "Randomizer: seed %06u, %s", (unsigned)s_run.seed, s_difficulty_names[s_run.difficulty]);
     pe_toast(line);
     return 0;
@@ -429,7 +452,7 @@ static int pe_rand_init(void) {
                             "starts; while on, no other mod runs. A game keeps the seed it began with.", &s_enabled, NULL);
     /* the saved value is in s_enabled now: a randomized session is this mod and the original game only */
     s_alone = s_enabled && pe_mod_run_alone() == 0;
-    pe_menu_register_choice(0, "Difficulty", "Easy: items stay on their story day. Medium: anywhere; keys to chests open before their lock, earlier days too. Hard: keys to any chest still reachable when their lock asks, some doors lead back (no spoiler).",
+    pe_menu_register_choice(0, "Difficulty", "Easy: items stay on their story day. Medium: anywhere; keys to chests open before their lock, earlier days too. Hard: keys to any chest still reachable when their lock asks, some doors lead back.",
                             &s_difficulty, s_difficulty_names, PE_RAND_DIFFICULTIES);
     pe_menu_register_info(0, "Seed", "Six digits: the same seed and difficulty give the same items.", pe_rand_seed_text);
     pe_menu_register_action(0, "Random seed", "Pick a new seed.", pe_rand_random_seed);

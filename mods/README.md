@@ -462,8 +462,8 @@ Hard: items anywhere, and keys move where the key logic allows, each by its own 
 six-digit seed (Random seed, or one digit at a time). New Game takes them; the game keeps them in the
 `pe_randomizer.run` record (seed, difficulty, logic and table version), so loading gives the same
 layout and F1 changes only reach the next New Game. A save from another logic or table version keeps
-its record but plays vanilla, with a message. Easy and Medium write `randomizer-<seed>.txt` (the
-spoiler) beside the preferences.
+its record but plays vanilla, with a message. Every difficulty writes `randomizer-<seed>.txt` (the
+spoiler) beside the preferences: where each key item is now, Hard's ways back, then every changed spot.
 
 Randomized play is the original game plus this mod only. The on/off toggle applies at the next start:
 with it on, the randomizer runs alone (`pe_mod_run_alone`) and no other mod starts; with it off,

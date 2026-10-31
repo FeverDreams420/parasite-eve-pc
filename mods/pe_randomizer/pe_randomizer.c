@@ -1,7 +1,7 @@
 /* Item randomizer: New Game shuffles what room chests, pickups and character gifts hand out, from a
  * six-digit seed and a difficulty picked under F1 > Randomizer. The game keeps the seed it started
  * with (a save record), so loading always gives the same layout; F1 changes only reach the next New
- * Game. Battle drops, Wayne, the Chrysler Building and the Theater keys stay vanilla.
+ * Game. Battle drops, Wayne's Junk trades and the Chrysler Building stay vanilla.
  *
  * Randomized play is the original game plus this mod only: with "Randomize new games" on when the
  * game starts, the randomizer runs alone (pe_mod_run_alone) and no other mod starts. Turning it on

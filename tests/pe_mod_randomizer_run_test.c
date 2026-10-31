@@ -51,6 +51,10 @@
  * A runs line with menu=N answers every menu (op 67, Script_GetMenuChoice) with item N; without it the
  * step is skipped like the other menus, and the routine's variable keeps what it held (often item 0).
  * The output line then has menu=N after press=1.
+ * A runs line with animwait makes each wait for an animation's end (op 48) take ANIM_FRAMES frames and each
+ * camera move (op 75) its own frame count, as in the game: Wayne's talks in M052 hand a flag back and forth
+ * around them, and with them skipped his second set lands before the first is cleared. The output line
+ * then has animwait=1.
  *
  * Op 85 (Boot_MemCardStepInit, misnamed: the battle transition, CD reads and fade) is skipped, so the
  * battle never runs or ends; an encounter routine has often told the room's door controller to die
@@ -131,7 +135,7 @@ void Script_GarbageCollectNodes(void);
 void Entity_CollectGarbage(void);
 FieldActor *Scene_LoadMap(u8 *scene, FieldActor *after, int allocateFull);
 
-enum { AT_FRAME = 60, AT_FRAMES = 240, AT_MAX = 8, FRAMES = 600, SPIN_STEPS = 200000, VARS = 512, TAKE = 0x458 };
+enum { AT_FRAME = 60, AT_FRAMES = 240, AT_MAX = 8, FRAMES = 600, ANIM_FRAMES = 30, SPIN_STEPS = 200000, VARS = 512, TAKE = 0x458 };
 enum { PRESS_AT = 20, PRESS_EVERY = 30, BATTLE_FRAMES = 30 };
 extern int g_BattleModeState;
 static const u32 press_bits = 0x20000300;   /* Circle: field bits 8, 9 and 29 */
@@ -150,9 +154,10 @@ static u8 is_real[8192];
 static const u8 *block;          /* task block start: listing offsets count from here */
 static size_t block_bytes;
 static u8 *ran;                  /* one per word of the block: step started there */
+static u8 *anim_left;            /* one per word of the block: frames an animwait op 48 has waited */
 static u32 gave[64], got[64]; static unsigned gave_count;   /* GiveItems run: offset and item */
 static u32 asked[64], asked_item[64], answer[64]; static unsigned asked_count;   /* CountItems run */
-static int keys_all, press, battle, spin, trace, gate;   /* trace: PE_RUN_TRACE set, each step to stderr */
+static int keys_all, press, animwait, battle, spin, trace, gate;   /* trace: PE_RUN_TRACE set, each step to stderr */
 static int menu = -1;            /* menu=N: op 67's answer, or -1 (skipped) */
 static int bag_full, swap = -1;  /* bag=full: GiveItem runs for real; swap=N: op 169's answer, or -1 */
 static int added_ok[64];         /* bag=full: what each GiveItem returned (0 = in the bag) */
@@ -237,6 +242,11 @@ static void run_queue(void) {
             else if (op == 49) result = g_ScriptQueueOpcodeHandlers[op](args);   /* door: ends the run */
             else if (op == 17 && press && (u32)*args[0] <= 3) result = g_ScriptQueueOpcodeHandlers[op](args);   /* pad */
             else if (op == 67 && menu >= 0) { *args[0] = menu; result = 1; }   /* menu: answered */
+            else if ((op == 48 || (op == 75 && count == 3)) && animwait && at < block_bytes) {   /* animation end, camera */
+                int frames = op == 48 ? ANIM_FRAMES : *args[2] < 255 ? *args[2] : 255;
+                if (anim_left[at / 4]++ < frames) { g_ScriptCursor = step; result = 0; g_ScriptNodePool->active = 1; }
+                else { anim_left[at / 4] = 0; result = 1; }
+            }
             else if (op == 167) {                                                 /* GiveItem: given */
                 if (bag_full) result = g_ScriptQueueOpcodeHandlers[op](args); else { *args[1] = 0; result = 1; }
                 if (gave_count < 64) { added_ok[gave_count] = *args[1]; gave[gave_count] = (u32)at; got[gave_count++] = (u32)*args[0]; }
@@ -408,7 +418,7 @@ static int token_room(u32 token) {
 }
 
 typedef struct Run {
-    unsigned room; u32 area, left; unsigned nvars; u16 var[32]; u32 val[32]; int keys, press, win;
+    unsigned room; u32 area, left; unsigned nvars; u16 var[32]; u32 val[32]; int keys, press, animwait, win;
     int has_menu, menu;                                       /* menu=N */
     int at, at_x[AT_MAX], at_z[AT_MAX], at_angle[AT_MAX];   /* Aya's stops from AT_FRAME on, at of them */
     int at_actor[AT_MAX];                                     /* -1, or the actor type she stands on */
@@ -506,6 +516,7 @@ static int parse_run(char *line, Run *r) {
         }
         if (!strncmp(tok, "id=", 3)) { snprintf(r->id, sizeof(r->id), "%s", tok + 3); continue; }
         if (!strcmp(tok, "press")) { r->press = 1; continue; }
+        if (!strcmp(tok, "animwait")) { r->animwait = 1; continue; }
         if (!strcmp(tok, "bag=full")) { r->full = 1; continue; }
         if (!strncmp(tok, "swap=", 5)) { r->swap = atoi(tok + 5) + 1; continue; }
         if (!strncmp(tok, "has=", 4)) { if (r->nhas == 4) return 0; r->has[r->nhas++] = (u32)strtoul(tok + 4, NULL, 16); continue; }
@@ -595,6 +606,7 @@ static void do_run(const Run *r, FILE *out) {
     size_t block_in_room = word_at(assets, table + 4) & 0xFFFFFF;
     block = assets + block_in_room;
     free(ran); ran = calloc(block_bytes / 4 + 1, 1);
+    free(anim_left); anim_left = calloc(block_bytes / 4 + 1, 1);
     set_vars(r);   /* before the mod's scene start: it reads V0x4a and may set V0x1 */
     if (r->seeded) {
         if (!layout_ready || layout_seed != r->seed || layout_difficulty != r->difficulty) {
@@ -619,7 +631,7 @@ static void do_run(const Run *r, FILE *out) {
     checks_done += r->has_arrive;
     memcpy(before, g_ScriptVariableBank, sizeof(before));
     keys_all = r->keys; held_only = r->held; held_count = r->nheld; memcpy(held_items, r->held_item, sizeof(held_items));
-    press = r->press; menu = r->has_menu ? r->menu : -1; battle = 0; spin = 0; gave_count = 0; zone_count = 0;
+    press = r->press; animwait = r->animwait; menu = r->has_menu ? r->menu : -1; battle = 0; spin = 0; gave_count = 0; zone_count = 0;
     bag_full = r->full; swap = r->swap - 1; swapped_at = 64;
     s16 bag_was[64]; int bag_slots = g_InvItemPtr && g_InvSlotLimit > 0 ? (g_InvSlotLimit < 64 ? g_InvSlotLimit : 64) : 0;
     if (bag_full) {
@@ -745,6 +757,7 @@ static void do_run(const Run *r, FILE *out) {
         if (r->at_actor[i] >= 0) fprintf(out, "%s@%d,%d", i ? ";" : "\tat=", r->at_actor[i], r->at_angle[i]);
         else fprintf(out, "%s%d,%d,%d", i ? ";" : "\tat=", r->at_x[i], r->at_z[i], r->at_angle[i]);
     if (press) fputs("\tpress=1", out);
+    if (animwait) fputs("\tanimwait=1", out);
     if (r->has_menu) fprintf(out, "\tmenu=%d", r->menu);
     if (r->full) {
         fputs("\tbag=full", out);

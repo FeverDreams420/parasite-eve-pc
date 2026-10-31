@@ -11,7 +11,7 @@
  * its rules or PE_RAND_TABLE_VERSION). A save keeps the versions it was made with; a build that
  * doesn't know them leaves that game's items vanilla rather than moving them under the player. */
 #define PE_RAND_LOGIC_VERSION 12
-#define PE_RAND_TABLE_VERSION 13
+#define PE_RAND_TABLE_VERSION 14
 
 enum { PE_RAND_EASY, PE_RAND_MEDIUM, PE_RAND_HARD, PE_RAND_DIFFICULTIES };
 

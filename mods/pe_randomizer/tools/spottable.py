@@ -42,8 +42,11 @@ reused variable, not one chest).
 Gives in an actor the room never places (not a starting actor, no spawn step for its type) are left out:
 their scripts never run (dead copies of a chest in later room versions, two NYPD pickups in M120).
 
-Left out (they stay vanilla): Wayne (M048, M052, and M108 whose chests share his flags), the debug
-room (M360), the Chrysler Building, the shared museum and cruiser routines, the Theater keys (their
+Wayne's rooms (M048, M052, M108) give his three chests (one flag each across the rooms) and his gifts
+(M16A1 on Day 2, M92F on Day 3); his Junk trades (M048's immediates) stay vanilla. They come after the
+Theater keys, so every older spot keeps its number.
+
+Left out (they stay vanilla): the debug room (M360), the Chrysler Building, the shared museum and cruiser routines, the Theater keys (their
 doors check a story flag), and spots whose versions hold different items."""
 import os, struct, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -62,8 +65,9 @@ AREA_NAMES = ["?", "Theater", "Sewer", "NYPD", "Central Park", "Soho", "Hospital
               "Subway", "Museum", "Warehouse", "Carrier", "Liberty", "Cruiser"]
 # Story day by area for maps 288 and up (319-381 repeat earlier places); NYPD is visited on two days.
 AREA_DAY = {1: 1, 2: 1, 4: 2, 5: 3, 6: 3, 7: 4, 8: 4, 9: 4, 10: 5, 11: 5, 12: 6, 13: 6, 14: 6}
-SKIP_MAPS = {48, 52, 108, 360} | set(range(288, 319)) | set(range(382, 425)) | set(range(434, 438))
-GIFT_MAPS = {1, 99, 100, 102, 111, 116, 117, 118, 154}   # character gifts checked by hand (dis.py)
+SKIP_MAPS = {360} | set(range(288, 319)) | set(range(382, 425)) | set(range(434, 438))
+GIFT_MAPS = {1, 52, 99, 100, 102, 108, 111, 116, 117, 118, 154}   # character gifts checked by hand (dis.py)
+WAYNE_MAPS = {48, 52, 108}
 FIXED_KEYS = {0xC8, 0xC9}                                  # Theater: the doors check a story flag
 CUT_KEYS = {0xD4, 0xD8, 0xD9, 0xDC}
 # The Theater keys move on Hard only: pe_randomizer.c points M012's doors at V0x19 bits the mod sets when Aya
@@ -189,6 +193,11 @@ def scan(path, walk):
                         if p != g and p in walked and word(b, p + 8) == v and (word(b, p) == (232 | 1 << 13) or
                                 (p > g and is_step(b, p, 169, 2) and not (word(b, p) >> 17) & 7)):
                             sites.append(site(b, p, 0))
+                    if m in WAYNE_MAPS:   # his popup comes after his talk, further on: owned by the give just before it
+                        later = [a for a, op2, args2 in steps if op2 == 167 and args2[:1] == [(0, v)] and base + a > g]
+                        sites += [site(b, base + a, 0) for a, op2, args2 in steps if op2 == 232 and args2 == [(0, v)]
+                                  and base + a > g and not any(x < a for x in later)
+                                  and all(base + a != x for x, _, _ in sites)]
                     gifts.append(dict(map=m, give=g, kind="GIFT", vars=[], vanilla=v, sites=sites))
     return chests, gifts
 
@@ -220,8 +229,8 @@ def spots(chests, gifts):
     for c in gifts:
         by_gift.setdefault(c["vanilla"] if c["vanilla"] in KEYS else (c["map"], c["vanilla"]), []).append(c)
     out += by_gift.values()
-    # the Theater keys' gifts last, so every other spot keeps its number (hard-reach.txt, windows.txt, ...)
-    return sorted(out, key=lambda ms: (ms[0]["vanilla"] in FIXED_KEYS, ms[0]["map"], ms[0]["give"]))
+    # the Theater keys' gifts, then Wayne's spots last, so every other spot keeps its number (hard-reach.txt, windows.txt, ...)
+    return sorted(out, key=lambda ms: (ms[0]["map"] in WAYNE_MAPS, ms[0]["vanilla"] in FIXED_KEYS, ms[0]["map"], ms[0]["give"]))
 
 NO_LATE = set()   # (map, give) a needs file marks late= (empty): it takes no key from a later day
 

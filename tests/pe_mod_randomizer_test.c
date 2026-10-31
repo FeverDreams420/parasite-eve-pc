@@ -135,9 +135,9 @@ static void every_seed_passes(void) {
 
 static void golden_layouts(void) {
     static const uint32_t golden[PE_RAND_DIFFICULTIES][4] = {
-        {0x81871C8B, 0xD8479FF3, 0x7DA2C013, 0xCE2D43F3},
-        {0x4A7D4383, 0x0C3375E3, 0x3E52AB53, 0x233C5F03},
-        {0xF2BF9133, 0x5FA15D13, 0x4BB9FDFB, 0x4BBE2F4B},
+        {0x95933C9B, 0x018A37DB, 0xC047D003, 0xA29F2E9B},
+        {0x399EE353, 0xAB0EE85B, 0xD4785D5B, 0xC7AA8CA3},
+        {0x08B527B3, 0xF7F1C2A3, 0xA80606A3, 0x0F0F7AEB},
     };
     static uint16_t out[PE_RAND_SPOTS];
     int print = !golden[0][0];

@@ -1,3 +1,46 @@
+    if(argc==2 && !strcmp(argv[1],"--m273-landing-cycle"))return original_m273_landing_cycle()?0:1;
+    if(argc==2 && !strcmp(argv[1],"--callback-allocation-failure"))return original_callback_allocation_failure()?0:1;
+    if(argc==2 && !strcmp(argv[1],"--m273-effect-pointers")){
+        _Alignas(max_align_t) char arena[2048]={0}, rings[2048]={0};
+        RoomM273PoolContext pool={0};pool.pool=arena;
+        FieldFxTaskContext task={0};
+        g_FieldFxTaskContext=&task;
+        g_FieldFxActiveTaskSlot=(void *)&pool;
+        RoomPlacementMap transform={0};transform.x=123;transform.y=-456;transform.z=789;
+        FieldActor actor={0};actor.render_object.matrices=(void *)&transform;
+        FieldFxObjectPrefix owner={0};owner.actor=&actor;g_FieldFxOwner=&owner;
+        for(int age=0;age<12;++age){
+            unsigned angle=(age*1024/12)&4095;
+            g_RoomM273Trig[angle].part.sin=-2048+age*100;
+            g_RoomM273Trig[angle].part.cos=4096-age*150;
+            if(FieldFx_InitCallbackList(arena,sizeof(RoomM273SampledLayerEffect),1,m273_keep_pointer)<0)return 1;
+            g_FieldFxCurrentAge=age;
+            if(RoomM273_GrabPlacementFanEmitter(1,NULL,0))return 1;
+            FieldFxCallbackList *list=(void *)arena;
+            FieldFxCallbackListEntry *entry=(void *)list->entries;
+            RoomM273SampledLayerEffect *effect=(void *)entry->state;
+            if(!entry->active || effect->position.x!=123 || effect->position.y!=-456 || effect->position.z!=789 ||
+               effect->parameter[0]!=(u8)(g_RoomM273Trig[angle].part.sin*40/4096) || effect->parameter[1]!=8 ||
+               effect->parameter[2]!=(u8)(g_RoomM273Trig[angle].part.cos*40/4096))return 1;
+        }
+        FieldActor state={0};state.mode=11;
+        RoomM273EffectStateContext context={0};context.state.mode=&state;
+        g_FieldFxOwner=(void *)&context;
+        g_RoomM273HandTrailState.done=0;g_RoomM273HandRingBandPool=rings;
+        if(FieldFx_InitCallbackList(arena,sizeof(void *),2,m273_keep_pointer)<0 ||
+           FieldFx_InitCallbackList(rings,sizeof(void *),2,m273_keep_pointer)<0 ||
+           RoomM273_HandGlowEmitter(1,NULL,0))return 1;
+        char *pools[]={arena,rings};
+        for(unsigned p=0;p<2;++p){
+            FieldFxCallbackList *list=(void *)pools[p];
+            for(unsigned i=0;i<2;++i){
+                FieldFxCallbackListEntry *entry=(void *)(list->entries+i*list->stride);
+                GteShortVector *position=NULL;memcpy(&position,entry->state,sizeof(position));
+                if(!entry->active || position!=&g_RoomM273HandTrailState.hands[i])return 1;
+            }
+        }
+        puts("M273 emitters preserve native hand pointers and all twelve trig samples");return 0;
+    }
     if(argc==2 && !strcmp(argv[1],"--movie-audio-lock-order"))return original_movie_audio_lock_order()?0:1;
     if(argc==2 && !strcmp(argv[1],"--save-safety"))return native_save_safety();
     if(argc==2 && !strcmp(argv[1],"--all-room-loads"))return original_all_room_loads();
@@ -337,7 +380,7 @@
         g_PlayerEntity=NULL;g_FieldFxOwner=NULL;g_FieldFxTaskContext=NULL;g_FieldFxActiveTaskSlot=NULL;
         puts("Original Museum spark modules: all ten rooms, complete hashes/scripts/palette, descriptors, reloads and native controllers passed");return 0;
     }
-    if(argc==2 && !strcmp(argv[1],"--m273-load")){
+    if(argc==2 && (!strcmp(argv[1],"--m273-load") || !strcmp(argv[1],"--m273-attack-timing"))){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
         PeDisc disc={0};PeDiscFile exe,archive;SceneRoomSectorRange range;u8 module[0xc000];
         if(!SDL_Init(SDL_INIT_EVENTS) || !pe_disc_open(&disc,path))return fprintf(stderr,"M273 load audit failed at %d\n",__LINE__),1;
@@ -424,7 +467,8 @@
         }
         g_FieldFxOwner=saved_owner;
         g_PlayerEntity=saved_player;
-        puts("Original M273 complete descriptor set, authored task scripts, sine table and full work-area reload passed");return 0;
+        puts("Original M273 complete descriptor set, authored task scripts, sine table and full work-area reload passed");
+        return strcmp(argv[1],"--m273-attack-timing")?0:(original_m273_sweep_timing() && original_m273_hand_timing())?0:1;
     }
     if(argc==2 && !strcmp(argv[1],"--m245-load")){
         const char *path=getenv("PE_TEST_DISC");if(!path || !*path)return getenv("PE_REQUIRE_GAME_ASSETS")?1:77;
@@ -1233,6 +1277,7 @@
     if(argc==2 && !strcmp(argv[1],"--tool-equipped-donor"))return original_tool_equipped_donor()?0:157;
 
     if(argc==3 && !strcmp(argv[1],"--native-movie-skip"))return original_native_movie_skip(argv[2]);
+    if(argc==3 && !strcmp(argv[1],"--native-hd-backgrounds"))return original_native_hd_backgrounds(argv[2]);
     if(argc==3 && !strcmp(argv[1],"--native-control"))return original_native_control(argv[2]);
     if(argc==3 && !strcmp(argv[1],"--native-diagnostic-hp-arguments"))return native_diagnostic_hp_arguments(argv[2])?0:1;
     if(argc==2 && !strcmp(argv[1],"--texture-pages")){
@@ -1319,6 +1364,7 @@
         PeDisc disc={0};if(!pe_disc_open(&disc,path))return 1;
         int result=original_fx_model_render_assets(&disc) && original_fx_poly_render_assets(&disc);pe_disc_close(&disc);return result?0:146;
     }
+    if(argc==2 && !strcmp(argv[1],"--pulled-sprite"))return native_pulled_sprite_packets()?0:149;
     if(argc==2 && !strcmp(argv[1],"--fx-display")){if(!SDL_Init(SDL_INIT_EVENTS))return 43;ResetGraph(0);return original_gte_register_transfers() && original_fx_fog() && original_fx_display()?0:145;}
     if(argc==2 && !strcmp(argv[1],"--fx-camera"))return original_fx_node_pool() && original_fx_culling() && original_fx_camera_matrices()?0:143;
     if(argc==2 && !strcmp(argv[1],"--script-movie-error")){

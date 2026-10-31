@@ -1,4 +1,7 @@
 #include "pe1/render_shadow.h"
+#define SetLineF2 PeTest_SetLineF2
+#include "pe1/render_prim.h"
+#undef SetLineF2
 #include "pe1/room_fx_model.h"
 #include "pe1/render_matrix_slot.h"
 #include "pe1/render_buffers.h"
@@ -76,8 +79,48 @@ static int widescreen_gpu_capture(void)
     Psyz_VideoSetWidescreen(0);
     return 0;
 }
+/* Force many alternating blend groups without presenting a frame. At x8 this
+ * also exercises the independent native and scaled VRAM paths. */
+static int descriptor_gpu_capture(const char *path)
+{
+    if(!InitPlatform())return 77;
+    ResetGraph(0);
+    DISPENV display;DRAWENV draw;
+    SetDefDispEnv(&display,0,0,320,224);PutDispEnv(&display);
+    SetDefDrawEnv(&draw,0,0,320,224);draw.isbg=1;
+    setRGB0(&draw,0,0,0);PutDrawEnv(&draw);SetDispMask(1);
+    FILE *output=fopen(path,"wb");CHECK(output);
+    const unsigned scales[]={1,2,8};
+    for(unsigned scale=0;scale<3;++scale){
+        CHECK(Psyz_VideoSetInternalResolution(scales[scale])==0);
+        int width=0,height=0;
+        free(Psyz_VideoAllocRenderedFrame(&width,&height));
+        PutDrawEnv(&draw);
+        DR_TPAGE page;setDrawTPage(&page,0,0,GetTPage(0,0,0,0));DrawPrim(&page);
+        for(int y=0;y<14;++y)for(int x=0;x<20;++x){
+            TILE tile;setTile(&tile);setXY0(&tile,x*16,y*16);setWH(&tile,16,16);
+            setRGB0(&tile,192,0,0);DrawPrim(&tile);
+            setSemiTrans(&tile,1);setRGB0(&tile,0,192,0);DrawPrim(&tile);
+        }
+        DrawSync(0);
+        RECT native_rect={0,0,320,224};
+        u_long native_pixels[320*224/2];StoreImage(&native_rect,native_pixels);
+        CHECK(fwrite(native_pixels,1,320u*224u*2u,output)==320u*224u*2u);
+        unsigned char *pixels=Psyz_VideoAllocRenderedFrame(&width,&height);
+        CHECK(pixels && width>=320 && height>=224);
+        size_t size=(size_t)width*height*3;
+        unsigned bright=0;
+        for(size_t j=0;j<size;j+=3)if(pixels[j]>40 && pixels[j+1]>40)++bright;
+        CHECK(bright>(unsigned)(width*height/2));
+        CHECK(fwrite(&width,sizeof width,1,output)==1);
+        CHECK(fwrite(&height,sizeof height,1,output)==1);
+        CHECK(fwrite(pixels,1,size,output)==size);free(pixels);
+    }
+    CHECK(fclose(output)==0);return 0;
+}
 int main(int argc,char **argv)
 {
+    if(argc==3 && !strcmp(argv[1],"--descriptor-gpu"))return descriptor_gpu_capture(argv[2]);
     if(argc==2 && !strcmp(argv[1],"--widescreen-gpu"))return widescreen_gpu_capture();
     FieldActor actors[3] = {0}, reflection = {0};
     RoomFxMirror mirror = {0};
@@ -229,7 +272,7 @@ int main(int argc,char **argv)
         CHECK(Render_ScrollEntries()==0 && !memcmp(saved_entries,scrolling.entries,sizeof(saved_entries)));
     }
     g_GameStateFlags=0;
-    struct { RenderNativeTag tag; u8 r,g,b,code; u16 x,y; u8 u,v; u16 clut; } primitives[3][4];
+    struct { RenderNativeTag tag; u32 hd[4]; u8 r,g,b,code; u16 x,y; u8 u,v; u16 clut; } primitives[3][4];
     for(unsigned i=0;i<3;++i) {
         scrolling.entries[i].render.prim_count=2;
         scrolling.entries[i].render.u30.prim=primitives[i];
@@ -274,7 +317,7 @@ int main(int argc,char **argv)
         CHECK((s16)geometry.disp_src_x==expected_x && (s16)geometry.disp_src_y==expected_y && geometry.field26==50);
     }
     struct { GeomEntry entry; u32 positions[2]; u32 textures[4]; } mesh={0};
-    struct { RenderNativeTag tag; u8 r,g,b,code; u16 x,y; u8 u,v; u16 clut; } sprites[4]={0};
+    struct { RenderNativeTag tag; u32 hd[4]; u8 r,g,b,code; u16 x,y; u8 u,v; u16 clut; } sprites[4]={0};
     struct { RenderNativeTag tag; u32 command; } pages[4]={0};
     RenderNativeTag sprite_ordering[4096];
     mesh.entry.prim_count=2; mesh.entry.u30.prim=sprites;
@@ -296,18 +339,18 @@ int main(int argc,char **argv)
         CHECK(sprites[j].x==20 && sprites[j].y==30 && sprites[j+1].x==40 && sprites[j+1].y==50);
         CHECK(sprites[j].tag.length==3 && pages[j].tag.length==1);
     }
-    _Alignas(max_align_t) u8 mesh_work[4*sizeof(SPRT_16)+4*sizeof(pages[0])];
+    _Alignas(max_align_t) u8 mesh_work[4*sizeof(RenderTilePacket)+4*sizeof(pages[0])];
     mesh.entry.u2C.uv_ptr=(u8 *)mesh.textures-(u8 *)&mesh.entry;
     void *mesh_end=NULL;
     CHECK(Render_LoadMeshEntry(&mesh.entry,(void *)mesh_work,&mesh_end)==0);
     CHECK(mesh_end==mesh_work+sizeof(mesh_work));
     CHECK(mesh.entry.u30.prim==mesh_work);
     for(unsigned i=0;i<4;++i) {
-        SPRT_16 *sprite=(SPRT_16 *)mesh_work+i;
-        RenderNativeTag *page=(RenderNativeTag *)(mesh_work+4*sizeof(SPRT_16)+i*sizeof(pages[0]));
-        CHECK(((RenderNativeTag *)sprite)->length==3 && page->length==1);
-        CHECK(sprite->r0==128 && sprite->g0==128 && sprite->b0==128 && sprite->code==0x7c);
-        CHECK(sprite->x0==(i%2?40:20) && sprite->y0==(i%2?50:30));
+        RenderTilePacket *sprite=(RenderTilePacket *)mesh_work+i;
+        RenderNativeTag *page=(RenderNativeTag *)(mesh_work+4*sizeof(RenderTilePacket)+i*sizeof(pages[0]));
+        CHECK(((RenderNativeTag *)sprite)->length==7 && page->length==1);
+        CHECK(sprite->r==128 && sprite->g==128 && sprite->b==128 && sprite->code==0x7c);
+        CHECK(sprite->x==(i%2?40:20) && sprite->y==(i%2?50:30));
     }
     RenderShadowActor actor={0}; RenderObjectHeader model={0};
     RenderMatrix bone={0}; RenderShadowQuad packets[2]={0};

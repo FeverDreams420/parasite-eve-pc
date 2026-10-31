@@ -167,10 +167,11 @@ Records today:
 | `pe_qol.keys` | key item pocket | pe_qol/pe_key_items.c |
 | `pe_qol.sort` | bag sort | pe_qol/pe_bag_sort.c |
 
-Saves from earlier builds kept these as fixed blocks (`PELT` +0x000, `PECT` +0x040, `PESH` +0x1C0,
-`PKEY` +0x200, `SORT` +0x260 from 0x1C90, the psxrecomp build's layout). They still load: each block
-reaches its owner's `upgrade()` as version 0, and the next save writes records. Saves made now don't
-load mod data in those earlier builds or in the psxrecomp build. Checks: tests/run_pe_save_test.ps1.
+Saves from earlier builds kept these as fixed blocks (`PELT` +0x000, `PECT` +0x040, `PESH` +0x1C0, `PKEY` +0x200, `SORT`
++0x260 from 0x1C90).
+They still load: each block reaches its owner's `upgrade()` as version 0, and the next save writes
+records. pe_qol still writes both blocks in the window too, so builds without records keep reading
+them. Checks: tests/run_pe_save_test.ps1.
 
 ## Optional encounter and ammo controls
 
@@ -352,6 +353,7 @@ engine hooks were added. Deferred custom-content ideas remain unimplemented.
 
 Run tests/run_pe_requisition_test.ps1 for focused purchase, ammo, unlock,
 Tool-price, rescue/storage, confirmation, guard and save-layout checks.
+
 ## Wayne's Workshop
 
 pe_economy/pe_wayne_menu.c rewrites Wayne's own choice box (PE_HOOK_TEXTBOXES, before the
@@ -364,7 +366,6 @@ buying though the field is busy (pe_shop_at_counter). Messages use pe_gametext.h
 host/pe_equip_sync.c (a host feature, so it works whichever mods are loaded) reruns the game's
 equipment rebuild in free field whenever the equipped gun or armor record changes, so Catalog,
 Tool, Rebuild and editor changes reach the next battle.
-
 
 ## Collection (pe_collection)
 

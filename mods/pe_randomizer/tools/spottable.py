@@ -1,5 +1,5 @@
 """Spot table for the pe_randomizer mod, read from a USA disc and the mod-randomizer-rooms ctest's walk:
-python -I spottable.py <disc.bin> <randomizer-rooms.txt> [needs.txt ...] [--windows windows.txt] [--hard hard-reach.txt]
+python -I spottable.py <disc.bin> <randomizer-rooms.txt> [needs.txt ...] [--windows windows.txt] [--revisit revisit.txt] [--hard hard-reach.txt]
        > pe_rand_spots.h
 needs.txt (keylogic.py, keysolve.py or keys-by-hand.txt) gives the keys each spot needs and the keys it
 may take; spots no file lists stay unknown. With several files a spot needs every key any of them
@@ -14,6 +14,8 @@ no lock row: every value its own spot gives it at). The spot index is windows.tx
 late= (empty) keeps a spot from them (chest 84: the walk opens it, play needs a touch first). Hospital
 chests take no key of their own day this way: a window is when a chest opens, not whether the player can
 still walk back to it, and the power-off rooms are one way (hospital-map.txt keeps that by hand).
+--revisit revisit.txt (revisitruns.py table) drops a key from a chest's before= and late= when the revisit
+ctest saw the chest shut at one of that key's lock-time values (museum 156/157 for the Klamp Key).
 --hard hard-reach.txt (hardreach.py) gives each chest's hard= keys: the keys Hard may put there (reached
 through doors and the map, Hard's moved doors included, and giving at every lock-time value of the key);
 a needs file's late= (empty) keeps a spot from them too.
@@ -254,6 +256,17 @@ def late_keys(spot_list, needs, windows):
                 out.setdefault(n, set()).add(c["vanilla"])
     return out
 
+def read_shut(path):
+    """{spot: key items} the revisit ctest saw the chest shut for at some lock-time value."""
+    name_item = {n: i for i, n in KEYS.items()}
+    out = {}
+    for line in open(path):
+        f = line.rstrip("\n").split("\t")
+        if f[0] != "chest": continue
+        d = dict(x.split("=", 1) for x in f[3:])
+        if d["shut"] != "-": out.setdefault(int(f[1]), set()).add(name_item[d["key"]])
+    return out
+
 def read_hard(path):
     """{spot: key items} from hardreach.py's hard rows."""
     out = {}
@@ -262,7 +275,7 @@ def read_hard(path):
         if f[0] == "hard": out[int(f[1])] = {int(x, 16) for x in f[3].split("=", 1)[1].split(",") if x}
     return out
 
-def emit(spot_list, disc, needs=None, windows=None, hard=None):
+def emit(spot_list, disc, needs=None, windows=None, hard=None, shut=None):
     sites, gives = [], []
     key_order = [ms[0]["vanilla"] for ms in spot_list if ms[0]["vanilla"] in KEYS]
     late = late_keys(spot_list, needs or {}, windows) if windows else {}
@@ -280,8 +293,8 @@ def emit(spot_list, disc, needs=None, windows=None, hard=None):
         bits = lambda keys: f"0x{sum(1 << key_order.index(k) for k in keys if k in key_order):08X}"   # Theater keys are fixed
         if known:   # any version a player reached with these keys will do: the one needing fewest
             need, bef = min(known, key=lambda nb: len(nb[0]))
-            mask, before = bits(need), bits(bef)
-        if n in late: lat = bits(late[n])
+            mask, before = bits(need), bits(bef - (shut or {}).get(n, set()))
+        if n in late: lat = bits(late[n] - (shut or {}).get(n, set()))
         if hard and n in hard and known and not any((x["map"], x["give"]) in NO_LATE for x in members):
             hrd = bits(hard[n])
         rooms = " ".join(f"M{x['map']:03d}+{x['give']:06X}" for x in members)
@@ -310,10 +323,14 @@ if __name__ == "__main__":
     if len(sys.argv) < 3: sys.exit(__doc__)
     sys.stdout.reconfigure(newline="\n")
     c, g = scan(sys.argv[1], read_walk(sys.argv[2]))
-    needs, windows, hard, args = {}, None, None, sys.argv[3:]
+    needs, windows, hard, shut, args = {}, None, None, None, sys.argv[3:]
     if "--windows" in args:
         i = args.index("--windows")
         windows = read_windows(args[i + 1])
+        del args[i:i + 2]
+    if "--revisit" in args:
+        i = args.index("--revisit")
+        shut = read_shut(args[i + 1])
         del args[i:i + 2]
     if "--hard" in args:
         i = args.index("--hard")
@@ -322,4 +339,4 @@ if __name__ == "__main__":
     for path in args:
         for place, (need, bef) in read_needs(path).items():
             needs[place] = (needs.get(place, (set(), set()))[0] | need, bef)
-    emit(spots(c, g), sys.argv[1], needs or None, windows, hard)
+    emit(spots(c, g), sys.argv[1], needs or None, windows, hard, shut)

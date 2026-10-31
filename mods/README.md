@@ -508,7 +508,9 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   `before` and `late`; Hard: `hard`, below), and only off days where every key spot has data; until a log fills a day, that day's keys
   stay where they are. Filling in data changes layouts: raise PE_RAND_TABLE_VERSION with it.
 - Until there is logged data, the table is made with `tools/keys-by-hand.txt` and `tools/keys-walk.txt`
-  (`tools/spottable.py <disc> <randomizer-rooms.txt> tools/keys-by-hand.txt tools/keys-walk.txt --windows windows.txt`): a
+  (`tools/spottable.py <disc> <randomizer-rooms.txt> tools/keys-by-hand.txt tools/keys-walk.txt --windows windows.txt
+  --revisit revisit.txt --hard hard-reach.txt`; `--revisit` keeps a key out of a chest the mod-randomizer-revisit ctest
+  saw shut when its lock asks: the Klamp Key out of museum chests 156/157): a
   spot needs every key either file names, and takes the walk's `before`. keys-walk.txt is
   `tools/keysolve.py`'s output (without --layouts) over the story walk, solved with the gates' rule (a
   key opens its locks once held and its own spot reached): a key may go to a chest of its own story day

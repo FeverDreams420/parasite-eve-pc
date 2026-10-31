@@ -485,7 +485,8 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   others never run, such as a chest's dead copies in later room versions. Chests and pickups that share a left-behind variable or an opened / taken flag are
   one spot (room versions of one chest, or one chest seen on several days: the earliest day counts);
   rolls of two or three items get one item on every word. Battle drops, steals, Wayne (M048, M052,
-  M108), the Chrysler Building and the Theater keys stay vanilla. The ctest checks that every table give
+  M108) and the Chrysler Building stay vanilla. The Theater keys' gifts (M018, M020) are the last two spots,
+  so every other spot keeps its number. The ctest checks that every table give
   is in a placed actor, and that no flag is shared by two spots, or by a spot and a give the table leaves out.
 - `pe_rand_gen.c`: the seed generator. PCG32 and table order only, so a seed is the same layout
   everywhere. Keys by assumed fill, then the other items; pickups and gifts only take items a full bag
@@ -556,7 +557,15 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   Chest 84 (M126) takes no keys: it only appears after an optional touch in that room, so
   `tools/keysolve.py --layouts` found keys there missable. Keep it out when copying hospital_logic.py's lines
   (a needs file's `late=` with nothing keeps it out of `late` and `hard`).
-  All 15 keys outside the Theater can move (about 13 per Medium or Hard seed).
+  All 15 keys outside the Theater can move (about 13 per Medium or Hard seed); on Hard the two Theater keys
+  too (about 15 of 17 per seed).
+- Theater keys (Hard): M012's doors to M014/M016/M018/M022 and to M319 test the flags the keys' own pickups
+  set (V0x18 0x20 / 0x80000), which are also those pickups' done-guards. At M012's scene start the mod points
+  those six bit tests at V0x19 0x10000000 / 0x20000000 (no room uses them; expected words checked) and sets
+  each bit when Aya holds that key, both from Day 2 (Day 1 can't end without them). By hand in spottable.py:
+  the Dressing Room Key goes to M005, M009 or M020's chest, the Rehearsal Room Key there or to M014 / M016
+  (they need the Dressing Room Key); every spot past those doors needs the keys. ctest
+  `mod-randomizer-doors` (theater-* lines) checks each door with and without its key.
 - Key moves are on (`PE_RAND_MOVE_KEYS` 1 in pe_randomizer.h, logic version 12). Setting it to 0 keeps
   key items in their places on every difficulty (raise PE_RAND_LOGIC_VERSION with it).
 - Ways back (Hard, Day 2 on): four existing doors lead somewhere else (`s_doors` in pe_randomizer.c), so

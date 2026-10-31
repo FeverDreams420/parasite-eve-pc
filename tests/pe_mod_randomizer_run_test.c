@@ -11,7 +11,8 @@
  * A skipped step goes straight on, as most do in the game in the same frame; the second time a routine
  * reaches the same skipped step in one frame (a wait loop with nothing to wait for) it yields there
  * until the next frame. GiveItem succeeds and is noted; CountItems reads 0 (no keys held) unless the run says keys=all.
- * keys=D6,CA (hex items) holds only those keys, keys=none none; either ends the line in asked= (as gate lines do).
+ * keys=D6,CA (hex items) holds only those keys (and puts them in free bag slots), keys=none none; either ends the
+ * line in asked= (as gate lines do).
  * id=TEXT is echoed at the end of the output line, so a tool can pair runs with what it generated them for.
  * The item menu (op 169: a chest's "put an item in" on closing, a full bag's swap) is cancelled (-1), so
  * an open chest stays open and gives nothing more.
@@ -77,7 +78,7 @@
  * Moved doors (Hard): the line's variables are set before the mod's scene start, as in the game. A gate
  * line with from=M024 first loads that room and starts it for the mod (Aya leaving it, its door moved),
  * then loads the line's room. Checks: arrive=0x17a (V0x1 after the mod's scene start: the mod set it),
- * door=M378 (the run ends at a door to that room), floor (at the end Aya stands on a floor triangle,
+ * door=M378 (the run ends at a door to that room; door=none: at no door), floor (at the end Aya stands on a floor triangle,
  * start=N). The output's V0x1= is the value after the scene start. */
 #include <stdint.h>
 #include <stdio.h>
@@ -96,6 +97,7 @@
 #include "pe1/field_sfx.h"
 #include "pe1/game_state.h"
 #include "pe1/inventory.h"
+#include "pe1/inventory_slots.h"
 #include "pe1/pad_state.h"
 #include "pe1/player_entity.h"
 #include "pe1/reloc_block.h"
@@ -491,6 +493,7 @@ static int parse_run(char *line, Run *r) {
         if (!strcmp(tok, "floor")) { r->floor = 1; continue; }
         if (!strncmp(tok, "from=M", 6)) { r->from = (unsigned)atoi(tok + 6); if (!r->from || r->from > SCENE_ROOM_COUNT) return 0; continue; }
         if (!strncmp(tok, "door=M", 6)) { r->door = (unsigned)atoi(tok + 6); r->has_door = 1; continue; }
+        if (!strcmp(tok, "door=none")) { r->has_door = 2; continue; }
         if (!strncmp(tok, "arrive=", 7)) { r->arrive = (u32)strtoul(tok + 7, NULL, 0); r->has_arrive = 1; continue; }
         if (!strncmp(tok, "shut=", 5)) { if (r->nshut == 8 || !hex_offset(tok + 5, &r->shut[r->nshut++])) return 0; continue; }
         if (!strncmp(tok, "open=", 5)) { if (r->nopen == 8 || !hex_offset(tok + 5, &r->open[r->nopen++])) return 0; continue; }
@@ -529,6 +532,15 @@ static unsigned runs_done, runs_door, runs_spin, gives_checked, checks_done;
 static void set_vars(const Run *r) {
     g_ScriptVariableBank[SCRIPT_VAR_AREA] = r->area; g_ScriptVariableBank[SCRIPT_VAR_ROOM] = r->left;
     for (unsigned i = 0; i < r->nvars; ++i) if (r->var[i] < VARS) g_ScriptVariableBank[r->var[i]] = r->val[i];
+    /* keys=D6,..: those keys go in free bag slots too (the mod reads the bag at scene start), taken out again
+     * before the next line; the rest of the bag stays */
+    static int added[8], nadded;
+    enum { BAG = sizeof(g_AyaInventoryItems) / sizeof(*g_AyaInventoryItems) };
+    while (nadded) g_AyaInventoryItems[added[--nadded]] = 0;
+    for (unsigned i = 0, slot = 0; r->held && i < r->nheld && nadded < 8; ++i) {
+        while (slot < BAG && g_AyaInventoryItems[slot]) ++slot;
+        if (slot < BAG) { g_AyaInventoryItems[slot] = (s16)r->held_item[i]; added[nadded++] = (int)slot++; }
+    }
 }
 
 static void do_run(const Run *r, FILE *out) {
@@ -664,9 +676,11 @@ static void do_run(const Run *r, FILE *out) {
         if (shut && (l == PE_RAND_LOCKS || layout[g_pe_rand_locks[l].spot] == g_pe_rand_spots[g_pe_rand_locks[l].spot].vanilla))
             FAIL("M%03u +%X: shut= needs a table lock whose key seed %06u moved", r->room, at, r->seed);
     }
-    if (r->has_door && (!(g_GameStateFlags & 0x2000) || token_room(g_SceneDispatchToken) != (int)r->door))
+    if (r->has_door == 1 && (!(g_GameStateFlags & 0x2000) || token_room(g_SceneDispatchToken) != (int)r->door))
         FAIL("M%03u V0x4a=%#x V0x1=%#x: the run didn't end at a door to M%03u", r->room, r->area, left, r->door);
-    checks_done += r->has_door;
+    if (r->has_door == 2 && (g_GameStateFlags & 0x2000))
+        FAIL("M%03u V0x4a=%#x V0x1=%#x: the run ended at a door to M%03u", r->room, r->area, left, token_room(g_SceneDispatchToken));
+    checks_done += r->has_door != 0;
     if (!out) return;
     fprintf(out, "run\tM%03u\tV0x4a=%#x\tV0x1=%#x\tend=", r->room, r->area, left);
     if (g_GameStateFlags & 0x2000) {

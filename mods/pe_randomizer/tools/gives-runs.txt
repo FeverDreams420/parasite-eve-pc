@@ -911,3 +911,6 @@ M344 0xc0 0x0 win keys=all press at=@1,0 at=@1,0 at=@1,0 at=@1,0 want=+4144 seed
 M358 0xc0 0x0 win keys=all press at=@3,3072 want=+1478 flag=V0x57|0x40000000 seed=333333,2
 M379 0xc0 0x0 win keys=all press at=@3,3072 want=+20B0 flag=V0x59|0x1 seed=333333,2
 M379 0xc0 0x0 win keys=all press at=@4,3072 want=+2828 flag=V0x59|0x2 seed=333333,2
+# The Theater keys' gifts (Hard only moves them; spottable.py sorts them last, spots 189/190): seed 111111 Hard moves both.
+M018 0x48 0x0 V0xa=0x1d V0x18=0x206 win keys=all press at=-172,242,2048 want=+9AC seed=111111,2 id=theater-rehearsal-gift
+M020 0x48 0x0 V0xa=0x1d V0x18=0x80206 win keys=all press at=@2,0 want=+32C seed=111111,2 id=theater-dressing-gift

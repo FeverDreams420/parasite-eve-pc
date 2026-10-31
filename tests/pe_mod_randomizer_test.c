@@ -28,7 +28,7 @@ static void table_is_sane(void) {
             for (unsigned j = 0; j < i; ++j) assert(g_pe_rand_spots[j].vanilla != s->vanilla);   /* one spot per key */
         }
     }
-    assert(keys == 15 && keys <= PE_RAND_MAX_KEYS);
+    assert(keys == 17 && keys <= PE_RAND_MAX_KEYS);   /* 15 + the Theater keys (Hard) */
     for (unsigned i = 0; i < PE_RAND_SITES; ++i) {
         const PeRandSite *s = &g_pe_rand_sites[i];
         assert(s->spot < PE_RAND_SPOTS && s->operand <= 1 && s->at % 4 == 0);
@@ -135,9 +135,9 @@ static void every_seed_passes(void) {
 
 static void golden_layouts(void) {
     static const uint32_t golden[PE_RAND_DIFFICULTIES][4] = {
-        {0x8489E52A, 0x668825F2, 0x32944812, 0x759B89F2},
-        {0xA05833E2, 0x0FCCD7CA, 0xD6A1CABA, 0x72BE874A},
-        {0xDEE397D2, 0xF722892A, 0x5F255D7A, 0x16693F8A},
+        {0x81871C8B, 0xD8479FF3, 0x7DA2C013, 0xCE2D43F3},
+        {0x4A7D4383, 0x0C3375E3, 0x3E52AB53, 0x233C5F03},
+        {0x9E7601D3, 0x674E679B, 0x72A1339B, 0x32E9BCF3},
     };
     static uint16_t out[PE_RAND_SPOTS];
     int print = !golden[0][0];

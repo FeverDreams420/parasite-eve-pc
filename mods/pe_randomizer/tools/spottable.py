@@ -66,6 +66,23 @@ SKIP_MAPS = {48, 52, 108, 360} | set(range(288, 319)) | set(range(382, 425)) | s
 GIFT_MAPS = {1, 99, 100, 102, 111, 116, 117, 118, 154}   # character gifts checked by hand (dis.py)
 FIXED_KEYS = {0xC8, 0xC9}                                  # Theater: the doors check a story flag
 CUT_KEYS = {0xD4, 0xD8, 0xD9, 0xDC}
+# The Theater keys move on Hard only: pe_randomizer.c points M012's doors at V0x19 bits the mod sets when Aya
+# gets the key. No window or revisit data (their locks test a flag), so their rules are by hand, from doors.txt
+# on Day 1 (M012's values 0x28-0x68): M014, M016, M018 and M022 are behind the Dressing Room Key's doors, M319
+# and everything after it (M023, the sewer) behind the Rehearsal Room Key's, and Day 1 can't end without both
+# (M018 sets 0x54, M023 0x5e). Without either key M005, M009 and M020 stay reachable from M012 at all of them.
+DRESSING, REHEARSAL = 0xC8, 0xC9
+BEHIND_DRESSING = {14, 16, 18, 22}
+THEATER_HARD = {(5, 0x02327C): {DRESSING, REHEARSAL}, (9, 0x004738): {DRESSING, REHEARSAL},
+                (20, 0x0137D0): {DRESSING, REHEARSAL}, (14, 0x0128EC): {REHEARSAL}, (16, 0x016884): {REHEARSAL}}
+
+def theater_needs(members):
+    """The Theater keys a spot needs: both from M023 / the sewer and every later day, the Dressing Room Key
+    behind its doors (any version of the spot will do: the one needing fewest)."""
+    def one(m):
+        if day(m) > 1 or area(m) == 2 or m in (23, 319): return {DRESSING, REHEARSAL}
+        return {DRESSING} if m in BEHIND_DRESSING else set()
+    return min((one(x["map"]) for x in members), key=len)
 
 def area(m): return next((a for lo, hi, a in LABELS if lo <= m <= hi), 0)
 def day(m):
@@ -163,7 +180,7 @@ def scan(path, walk):
                     chests.append(dict(map=m, give=base + g, kind=kind, vars=vars_, flags=flags.get(g, set()),
                                        vanilla=items[last], sites=[site(b, base + i, 1) for i in sorted(items)]))
                 elif mode == 0:
-                    if v in FIXED_KEYS or v in CUT_KEYS: continue
+                    if v in CUT_KEYS: continue
                     if not (v in KEYS or m in GIFT_MAPS): continue
                     g += base
                     sites = [site(b, g, 0)]
@@ -203,7 +220,8 @@ def spots(chests, gifts):
     for c in gifts:
         by_gift.setdefault(c["vanilla"] if c["vanilla"] in KEYS else (c["map"], c["vanilla"]), []).append(c)
     out += by_gift.values()
-    return sorted(out, key=lambda ms: (ms[0]["map"], ms[0]["give"]))
+    # the Theater keys' gifts last, so every other spot keeps its number (hard-reach.txt, windows.txt, ...)
+    return sorted(out, key=lambda ms: (ms[0]["vanilla"] in FIXED_KEYS, ms[0]["map"], ms[0]["give"]))
 
 NO_LATE = set()   # (map, give) a needs file marks late= (empty): it takes no key from a later day
 
@@ -301,13 +319,16 @@ def emit(spot_list, disc, needs=None, windows=None, hard=None, shut=None):
         flags = ["PE_RAND_KEY"] if v in KEYS else []
         known = [needs[(x["map"], x["give"])] for x in members if needs and (x["map"], x["give"]) in needs]
         mask, before, lat, hrd = "PE_RAND_NEEDS_UNKNOWN", "0", "0", "0"
-        bits = lambda keys: f"0x{sum(1 << key_order.index(k) for k in keys if k in key_order):08X}"   # Theater keys are fixed
+        bits = lambda keys: f"0x{sum(1 << key_order.index(k) for k in keys if k in key_order):08X}"
+        if not known and v in FIXED_KEYS: known = [(set(), set())]   # the Theater keys' own gifts
         if known:   # any version a player reached with these keys will do: the one needing fewest
             need, bef = min(known, key=lambda nb: len(nb[0]))
-            mask, before = bits(need), bits(bef - (shut or {}).get(n, set()))
+            mask, before = bits(need | theater_needs(members)), bits(bef - (shut or {}).get(n, set()))
         if n in late: lat = bits(late[n] - (shut or {}).get(n, set()))
         if hard and n in hard and known and not any((x["map"], x["give"]) in NO_LATE for x in members):
             hrd = bits(hard[n])
+        if known and any((x["map"], x["give"]) in THEATER_HARD for x in members):
+            hrd = bits((hard or {}).get(n, set()) | set.union(*(THEATER_HARD.get((x["map"], x["give"]), set()) for x in members)))
         rooms = " ".join(f"M{x['map']:03d}+{x['give']:06X}" for x in members)
         print(f"    {{ 0x{v:02X}, PE_RAND_{c['kind']}, {day(m)}, {area(m)}, {' | '.join(flags) or 0}, {mask}, {before}, {lat}, {hrd} }}, "
               f"/* {n}: {rooms} {AREA_NAMES[area(m)]}{' ' + KEYS[v] if v in KEYS else ''} */")

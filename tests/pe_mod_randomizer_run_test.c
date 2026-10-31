@@ -65,7 +65,8 @@
  * scene start (every site of the room or none), and the line ends in got=<item given at each gave=>.
  * Every table give that runs must hand out the layout's item. Checks a line may ask for: want=+OFF (the
  * give at that listing offset runs), never=+OFF (it doesn't), flag=V0x2c|0x80 (that bit is set at the
- * end). A failed check fails the test.
+ * end). A failed check fails the test. A runs file with a #cover line must hand out every table spot: a spot
+ * none of whose gives ran in a seeded line (say only in a room no way leads to) fails the test.
  *
  * Story gates: a line with gate runs with the real mod. The first such line starts the mod host from a
  * pe_mods.ini written for its seed= (Randomize new games on, so the randomizer runs alone), in <out>.mods/;
@@ -528,6 +529,7 @@ static int parse_run(char *line, Run *r) {
 }
 
 static unsigned runs_done, runs_door, runs_spin, gives_checked, checks_done;
+static unsigned char spot_given[PE_RAND_SPOTS];
 
 static void set_vars(const Run *r) {
     g_ScriptVariableBank[SCRIPT_VAR_AREA] = r->area; g_ScriptVariableBank[SCRIPT_VAR_ROOM] = r->left;
@@ -649,7 +651,7 @@ static void do_run(const Run *r, FILE *out) {
         for (unsigned g = 0; g < PE_RAND_GIVES; ++g)
             if (g_pe_rand_gives[g].map == r->room && g_pe_rand_gives[g].at == block_in_room + gave[i]) {
                 unsigned spot = g_pe_rand_gives[g].spot;
-                ++gives_checked;
+                ++gives_checked; spot_given[spot] = 1;
                 if (got[i] != layout[spot])
                     FAIL("M%03u +%06X (spot %u): gave %#x, seed %06u's layout has %#x", r->room, g_pe_rand_gives[g].at, spot,
                          got[i], r->seed, layout[spot]);
@@ -747,9 +749,10 @@ int main(int argc, char **argv) {
     if (argc > 2) {
         FILE *in = fopen(argv[2], "r");
         if (!in) return 1;
-        char line[1024]; unsigned n = 0;
+        char line[1024]; unsigned n = 0, cover = 0;
         while (fgets(line, sizeof(line), in)) {
             ++n; Run r;
+            if (!strncmp(line, "#cover", 6)) cover = 1;
             if (n < from || line[0] == '#' || line[0] == '\n') continue;
             int read = parse_run(line, &r);
             if (!read) { FAIL("runs line %u can't be read", n); continue; }
@@ -762,6 +765,11 @@ int main(int argc, char **argv) {
             if (out) fflush(out);   /* one line per run on disk: a crash names the next line */
         }
         fclose(in);
+        /* A restart (from > 1) didn't see the earlier lines' gives. */
+        for (unsigned s = 0; cover && from == 1 && s < PE_RAND_SPOTS; ++s)
+            if (!spot_given[s])
+                for (unsigned g = 0; g < PE_RAND_GIVES; ++g)
+                    if (g_pe_rand_gives[g].spot == s) { FAIL("spot %u (M%03u +%06X): no seeded line handed it out", s, g_pe_rand_gives[g].map, g_pe_rand_gives[g].at); break; }
     } else {
         for (unsigned room = 1; room <= SCENE_ROOM_COUNT; ++room) {
             if (!g_RoomSectorTable[room - 1].roomSectors) continue;

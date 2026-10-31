@@ -137,7 +137,7 @@ static void golden_layouts(void) {
     static const uint32_t golden[PE_RAND_DIFFICULTIES][4] = {
         {0x81871C8B, 0xD8479FF3, 0x7DA2C013, 0xCE2D43F3},
         {0x4A7D4383, 0x0C3375E3, 0x3E52AB53, 0x233C5F03},
-        {0x9E7601D3, 0x674E679B, 0x72A1339B, 0x32E9BCF3},
+        {0xF2BF9133, 0x5FA15D13, 0x4BB9FDFB, 0x4BBE2F4B},
     };
     static uint16_t out[PE_RAND_SPOTS];
     int print = !golden[0][0];

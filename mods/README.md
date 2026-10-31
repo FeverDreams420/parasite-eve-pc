@@ -537,9 +537,8 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   past both locks). That opens Carnegie Hall and its sewer to every key but those two, which stay in the
   power-off rooms; the museum's chests 156/157 shut at the Klamp Key's last value. `--hard-drop
   tools/hard-drop.txt` then takes out the pairs `hardwalk.py table --deny tools/hardwalk-deny.txt` fails:
-  doors the walk's merged story state opened on a flag the player may not have yet (the hospital elevator
-  before the fuse box restores power, so Fuses 1-3 stay in hospital chests; NYPD Day 3 events; the museum
-  counter and the warehouse for the Klamp Key). 574 key x chest pairs (Medium about 380).
+  doors the walk's merged story state opened on a flag the player may not have yet (NYPD Day 3 events;
+  the museum counter and the warehouse for the Klamp Key), 39 pairs. 724 key x chest pairs (Medium about 380).
 - Hard story flags (`s_flags` in pe_randomizer.c): from Day 3 Soho's M094 starts with the flag its own
   event sets, so its door to M095 (chests 49-52) opens though the event never ran again. ctest
   `mod-randomizer-doors` checks it.

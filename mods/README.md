@@ -536,6 +536,9 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   past both locks). That opens Carnegie Hall and its sewer to every key but those two, which stay in the
   power-off rooms; the museum's chests 156/157 shut at the Klamp Key's last value. 771 key x chest
   pairs (Medium about 380).
+  `tools/hardwalk.sh` checks the mask by running the game's own scripts in every room each walk
+  reaches (only doors that fire count; known non-holes excused); ctest `mod-randomizer-hardwalk`
+  (`tools/hardwalk-runs.txt`) reruns each door those walks went through.
 - The Day 3 hospital is mapped by hand instead (`tools/hospital-map.txt`, every gate a door guard from
   the all-rooms ctest's listing): the power-off rooms (M320-M339, the twins of M129-M145) are entered one
   way and left only through the fuse box. `tools/hospital_logic.py` turns the map into keys-by-hand's

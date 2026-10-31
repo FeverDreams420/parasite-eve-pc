@@ -32,3 +32,4 @@ HARDWALK_RUNS=hardwalk-runs.txt python -I "$here/hardwalk.py" table "$@" hard-re
 HARDWALK_EITHER=1 python -I "$here/hardwalk.py" table "$@" hard-reach.txt "$here/gives-runs.txt" \
     walk-arrive-runs.txt walk-arrive.txt $zones --writes story-writes.txt > hard-walk-either.txt
 grep summary hard-walk.txt hard-walk-either.txt
+# ctest mod-randomizer-hardwalk reads tools/hardwalk-runs.txt: copy hardwalk-runs.txt there after a rerun.

@@ -243,4 +243,10 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
         "${CMAKE_CURRENT_BINARY_DIR}/randomizer-doors.txt" "${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/door-runs.txt")
     set_tests_properties(mod-randomizer-doors PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer runs:")
+    # Hard's key walks (tools/hardwalk.sh wrote the runs, hardwalk-runs.txt in build-mods/mods): every door the
+    # walks to Hard's key chests went through, at the key's lock-time values, still fires to the same room.
+    add_test(NAME mod-randomizer-hardwalk COMMAND test-mod-randomizer-run
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-hardwalk.txt" "${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/hardwalk-runs.txt")
+    set_tests_properties(mod-randomizer-hardwalk PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
+        ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer runs:")
 endif()

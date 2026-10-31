@@ -52,8 +52,8 @@
  * step is skipped like the other menus, and the routine's variable keeps what it held (often item 0).
  * The output line then has menu=N after press=1.
  * A runs line with animwait makes each wait for an animation's end (op 48) take ANIM_FRAMES frames and each
- * camera move (op 75) its own frame count, as in the game: Wayne's talks in M052 hand a flag back and forth
- * around them, and with them skipped his second set lands before the first is cleared. The output line
+ * camera move (op 75) and actor walk (op 68) its own frame count, as in the game: Wayne's talks in M052 hand a
+ * flag back and forth around them, and with them skipped his second set lands before the first is cleared. The output line
  * then has animwait=1.
  *
  * Op 85 (Boot_MemCardStepInit, misnamed: the battle transition, CD reads and fade) is skipped, so the
@@ -242,7 +242,7 @@ static void run_queue(void) {
             else if (op == 49) result = g_ScriptQueueOpcodeHandlers[op](args);   /* door: ends the run */
             else if (op == 17 && press && (u32)*args[0] <= 3) result = g_ScriptQueueOpcodeHandlers[op](args);   /* pad */
             else if (op == 67 && menu >= 0) { *args[0] = menu; result = 1; }   /* menu: answered */
-            else if ((op == 48 || (op == 75 && count == 3)) && animwait && at < block_bytes) {   /* animation end, camera */
+            else if ((op == 48 || ((op == 75 || op == 68) && count == 3)) && animwait && at < block_bytes) {   /* animation end, camera, walk */
                 int frames = op == 48 ? ANIM_FRAMES : *args[2] < 255 ? *args[2] : 255;
                 if (anim_left[at / 4]++ < frames) { g_ScriptCursor = step; result = 0; g_ScriptNodePool->active = 1; }
                 else { anim_left[at / 4] = 0; result = 1; }

@@ -28,7 +28,7 @@ for p in "" "--press"; do
     done
 done
 HARDWALK_RUNS=hardwalk-runs.txt python -I "$here/hardwalk.py" table "$@" hard-reach.txt "$here/gives-runs.txt" \
-    walk-arrive-runs.txt walk-arrive.txt $zones > hard-walk.txt
+    walk-arrive-runs.txt walk-arrive.txt $zones --writes story-writes.txt > hard-walk.txt
 HARDWALK_EITHER=1 python -I "$here/hardwalk.py" table "$@" hard-reach.txt "$here/gives-runs.txt" \
-    walk-arrive-runs.txt walk-arrive.txt $zones > hard-walk-either.txt
+    walk-arrive-runs.txt walk-arrive.txt $zones --writes story-writes.txt > hard-walk-either.txt
 grep summary hard-walk.txt hard-walk-either.txt

@@ -567,6 +567,11 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   the Dressing Room Key goes to M005, M009 or M020's chest, the Rehearsal Room Key there or to M014 / M016
   (they need the Dressing Room Key); every spot past those doors needs the keys. ctest
   `mod-randomizer-doors` (theater-* lines) checks each door with and without its key.
+- Blue Cardkey door (every difficulty): M339's door to M329 tests V0x41 0x2, which the card's vanilla spot
+  in M328 sets (also its done-guard), not the card, so a moved card met "need the Blue Cardkey". At M339's
+  scene start the mod points its two tests at V0x19 0x40000000 and sets that bit when Aya holds the card or
+  has V0x41 0x2 (cleared otherwise). The St. Francis door (M321, V0x41 0x1) still tests the flag only.
+  `mod-randomizer-doors` (blue-* lines).
 - Key moves are on (`PE_RAND_MOVE_KEYS` 1 in pe_randomizer.h, logic version 12). Setting it to 0 keeps
   key items in their places on every difficulty (raise PE_RAND_LOGIC_VERSION with it).
 - Ways back (Hard, Day 2 on): four existing doors lead somewhere else (`s_doors` in pe_randomizer.c), so

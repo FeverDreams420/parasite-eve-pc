@@ -178,22 +178,33 @@ static uint32_t pe_room_token(unsigned map) {
     return (uint32_t)Text_ParseBase32Id((signed char *)name);
 }
 
-/* The Theater keys on Hard: M012's doors test the story flag each key's own pickup sets (V0x18 0x20, the
- * Dressing Room Key's, for M014/M016/M018/M022; 0x80000, the Rehearsal Room Key's, for M319). That flag is
- * also the pickup's done-guard, so it stays the pickup's, and the doors test a V0x19 bit no room uses instead
- * (spottable.py's rule), set here when Aya holds the key: no Theater key can be in M012 itself. */
-typedef struct PeRandTheaterLock {
-    uint32_t at;           /* the op 9 bit test (T0 = V0x18 & mask), from the room's task block */
+/* Doors that test a story flag a key's own pickup sets, not the key: that flag is also the pickup's
+ * done-guard, so it stays the pickup's, and the doors test a V0x19 bit no room uses instead (spottable.py's
+ * rule), set at the room's start when Aya holds the key (or, for the Blue Cardkey, has the flag).
+ * - The Theater keys on Hard: M012's doors to M014/M016/M018/M022 (V0x18 0x20, the Dressing Room Key's)
+ *   and M319 (0x80000, the Rehearsal Room Key's). No Theater key can be in M012 itself.
+ * - The Blue Cardkey: M339's door to M329 tests V0x41 0x2, set by its vanilla spot in M328 (spot 180)
+ *   whatever item that now gives, so a moved card met "need the Blue Cardkey" at the door. The door
+ *   takes the card and sets V0x42 0x20 (its open-after flag), and no spot is in M339. */
+typedef struct PeRandFlagLock {
+    uint32_t at;           /* the op 9 bit test (T<dest> = V<old_var> & mask), from the room's task block */
+    uint8_t dest, old_var;
     uint32_t old_mask, new_mask;
-} PeRandTheaterLock;
+} PeRandFlagLock;
 
-static const PeRandTheaterLock s_theater_locks[] = {
-    {0xB94, 0x20, 0x10000000}, {0xE44, 0x20, 0x10000000}, {0x10EC, 0x20, 0x10000000},   /* M014, M014, M016 */
-    {0x1684, 0x20, 0x10000000}, {0x192C, 0x20, 0x10000000}, {0x1D7C, 0x80000, 0x20000000},   /* M018, M022, M319 */
+static const PeRandFlagLock s_theater_locks[] = {
+    {0xB94, 0, 0x18, 0x20, 0x10000000}, {0xE44, 0, 0x18, 0x20, 0x10000000},   /* M014, M014 */
+    {0x10EC, 0, 0x18, 0x20, 0x10000000}, {0x1684, 0, 0x18, 0x20, 0x10000000},   /* M016, M018 */
+    {0x192C, 0, 0x18, 0x20, 0x10000000}, {0x1D7C, 0, 0x18, 0x80000, 0x20000000},   /* M022, M319 */
+};
+static const PeRandFlagLock s_blue_locks[] = {
+    {0x1344, 1, 0x41, 0x2, 0x40000000}, {0x1398, 0, 0x41, 0x2, 0x40000000},   /* M329, both tests of the door */
 };
 #define PE_RAND_THEATER_MAP 12
 #define PE_RAND_DRESSING_KEY 0xC8
 #define PE_RAND_REHEARSAL_KEY 0xC9
+#define PE_RAND_BLUE_MAP 339
+#define PE_RAND_BLUE_KEY 0xD2
 
 static int pe_rand_holds(unsigned item) {
     for (unsigned i = 0; i < sizeof g_AyaInventoryItems / sizeof *g_AyaInventoryItems; ++i)
@@ -201,9 +212,42 @@ static int pe_rand_holds(unsigned item) {
     return 0;
 }
 
+/* Points the loaded room's tests at their V0x19 bits: all or none, each the six words the scan saw (or
+ * already rewritten). */
+static void pe_rand_flag_locks(uint8_t *room, int map, const PeRandFlagLock *locks, unsigned count, const char *what) {
+    size_t bytes = (size_t)g_RoomSectorTable[map - 1].roomSectors * 2048, dir, table, base;
+    dir = pe_get32(room + 4);
+    if (dir > bytes || bytes - dir < sizeof(SceneRoomDirectory)) return;
+    table = ((const SceneRoomDirectory *)(room + dir))->taskBlock & 0x3FFFFF;
+    if (table > bytes - 8) return;
+    base = pe_get32(room + table + 4) & 0xFFFFFF;
+    for (int pass = 0; pass < 2; ++pass)
+        for (unsigned i = 0; i < count; ++i) {
+            const PeRandFlagLock *l = &locks[i];
+            size_t at = base + l->at;
+            uint32_t var, mask;
+            if (at > bytes - 24) return;
+            var = pe_get32(room + at + 16);
+            mask = pe_get32(room + at + 20);
+            if (pass == 0) {
+                if (pe_get32(room + at) != 0x01308009u || pe_get32(room + at + 4) || pe_get32(room + at + 8) != 3 ||
+                    pe_get32(room + at + 12) != l->dest ||
+                    !((var == l->old_var && mask == l->old_mask) || (var == 0x19 && mask == l->new_mask))) {
+                    if (!s_room_warned[map]) {
+                        s_room_warned[map] = 1;
+                        pe_mod_log(MOD_ID, "M%03d: key test +%06X differs from the table; %s", map, (unsigned)l->at, what);
+                    }
+                    return;
+                }
+            } else {
+                pe_put32(room + at + 16, 0x19);
+                pe_put32(room + at + 20, l->new_mask);
+            }
+        }
+}
+
 static int pe_rand_theater(void *ctx, void *user) {
     uint8_t *room = (uint8_t *)g_GameState.loaded_scene_assets;
-    size_t bytes, dir, table, base;
     (void)ctx;
     (void)user;
     if (!room || pe_room_number() != PE_RAND_THEATER_MAP || !s_run.on || !pe_rand_supported() ||
@@ -213,36 +257,25 @@ static int pe_rand_theater(void *ctx, void *user) {
         g_ScriptVariableBank[0x19] |= 0x10000000u;
     if (pe_rand_holds(PE_RAND_REHEARSAL_KEY) || g_ScriptVariableBank[SCRIPT_VAR_AREA] >= PE_RAND_DAY2)
         g_ScriptVariableBank[0x19] |= 0x20000000u;
-    bytes = (size_t)g_RoomSectorTable[PE_RAND_THEATER_MAP - 1].roomSectors * 2048;
-    dir = pe_get32(room + 4);
-    if (dir > bytes || bytes - dir < sizeof(SceneRoomDirectory)) return 0;
-    table = ((const SceneRoomDirectory *)(room + dir))->taskBlock & 0x3FFFFF;
-    if (table > bytes - 8) return 0;
-    base = pe_get32(room + table + 4) & 0xFFFFFF;
-    /* all or none, each the six words the scan saw (or already rewritten) */
-    for (int pass = 0; pass < 2; ++pass)
-        for (unsigned i = 0; i < sizeof s_theater_locks / sizeof *s_theater_locks; ++i) {
-            const PeRandTheaterLock *l = &s_theater_locks[i];
-            size_t at = base + l->at;
-            uint32_t var, mask;
-            if (at > bytes - 24) return 0;
-            var = pe_get32(room + at + 16);
-            mask = pe_get32(room + at + 20);
-            if (pass == 0) {
-                if (pe_get32(room + at) != 0x01308009u || pe_get32(room + at + 4) || pe_get32(room + at + 8) != 3 ||
-                    pe_get32(room + at + 12) || !((var == 0x18 && mask == l->old_mask) || (var == 0x19 && mask == l->new_mask))) {
-                    if (!s_room_warned[PE_RAND_THEATER_MAP]) {
-                        s_room_warned[PE_RAND_THEATER_MAP] = 1;
-                        pe_mod_log(MOD_ID, "M012: key test +%06X differs from the table; the Theater doors stay vanilla", (unsigned)l->at);
-                    }
-                    return 0;
-                }
-            } else {
-                pe_put32(room + at + 16, 0x19);
-                pe_put32(room + at + 20, l->new_mask);
-            }
-        }
+    pe_rand_flag_locks(room, PE_RAND_THEATER_MAP, s_theater_locks, sizeof s_theater_locks / sizeof *s_theater_locks,
+                       "the Theater doors stay vanilla");
     pe_log("rand_theater", "V0x19=%#x", (unsigned)g_ScriptVariableBank[0x19]);
+    return 0;
+}
+
+/* Every difficulty: the card moves on Medium too. Set or cleared each time, so the bit follows the card. */
+static int pe_rand_blue_door(void *ctx, void *user) {
+    uint8_t *room = (uint8_t *)g_GameState.loaded_scene_assets;
+    (void)ctx;
+    (void)user;
+    if (!room || pe_room_number() != PE_RAND_BLUE_MAP || !s_run.on || !pe_rand_supported()) return 0;
+    if (pe_rand_holds(PE_RAND_BLUE_KEY) || (g_ScriptVariableBank[0x41] & 0x2u))
+        g_ScriptVariableBank[0x19] |= 0x40000000u;
+    else
+        g_ScriptVariableBank[0x19] &= ~0x40000000u;
+    pe_rand_flag_locks(room, PE_RAND_BLUE_MAP, s_blue_locks, sizeof s_blue_locks / sizeof *s_blue_locks,
+                       "the Blue Cardkey door stays vanilla");
+    pe_log("rand_blue", "V0x19=%#x", (unsigned)g_ScriptVariableBank[0x19]);
     return 0;
 }
 
@@ -571,6 +604,7 @@ static int pe_rand_init(void) {
     pe_hook_add(PE_HOOK_SCENE_START, pe_rand_scene, NULL, PE_PRIORITY_NORMAL, MOD_ID);
     pe_hook_add(PE_HOOK_SCENE_START, pe_rand_doors, NULL, PE_PRIORITY_NORMAL, MOD_ID);
     pe_hook_add(PE_HOOK_SCENE_START, pe_rand_theater, NULL, PE_PRIORITY_NORMAL, MOD_ID);
+    pe_hook_add(PE_HOOK_SCENE_START, pe_rand_blue_door, NULL, PE_PRIORITY_NORMAL, MOD_ID);
     pe_hook_add(PE_HOOK_NEW_GAME, pe_rand_new_game, NULL, PE_PRIORITY_NORMAL, MOD_ID);
     pe_hook_add(PE_HOOK_SAVE_READ, pe_rand_save_read, NULL, PE_PRIORITY_NORMAL, MOD_ID);
     /* these read only: rows for keylogic.py */

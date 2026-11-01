@@ -17,7 +17,8 @@
  * The item menu (op 169: a chest's "put an item in" on closing, a full bag's swap) is cancelled (-1), so
  * an open chest stays open and gives nothing more.
  * A runs line with bag=full fills every free bag slot with Medicine 1 (0x06) first and runs GiveItem for
- * real (Inv_AddItem: a bag item fails on a full bag, as in the game); swap=N answers the first item menu as
+ * real (Inv_AddItem: a bag item fails on a full bag, as in the game; on a gate line the mod gives a table
+ * gift one slot past the bag instead, and has= looks there too); swap=N answers the first item menu as
  * the swap menu does when Aya leaves bag slot N's item in the chest: the given item takes the slot and the
  * menu answers the old one (the script keeps it in the chest), later menus are cancelled, and gives after
  * the swap (the chest's kept item) aren't checked against the layout. The bag is put back after the line. Checks: has=D6 (that item is in the bag
@@ -726,10 +727,14 @@ static void do_run(const Run *r, FILE *out) {
     checks_done += r->has_door != 0;
     for (unsigned k = 0; k < r->nhas + r->nlack; ++k, ++checks_done) {
         int has = k < r->nhas, in_bag = 0; u32 item = has ? r->has[k] : r->lack[k - r->nhas];
-        for (int i = 0; i < bag_slots; ++i) in_bag |= (u32)g_InvItemPtr[i] == item;
+        for (int i = 0; i < g_InvSlotLimit && i < 64; ++i) in_bag |= (u32)g_InvItemPtr[i] == item;   /* overflow slots too */
         if (in_bag != has) FAIL("M%03u V0x4a=%#x: item %#x %s the bag at the end", r->room, r->area, item, has ? "isn't in" : "is in");
     }
-    if (bag_full) memcpy(g_InvItemPtr, bag_was, (size_t)bag_slots * sizeof(*bag_was));
+    if (bag_full) {   /* and no overflow slot left (a gift on a full bag, pe_randomizer.c) */
+        for (int i = bag_slots; i < g_InvSlotLimit && i < 50; ++i) g_InvItemPtr[i] = 0;
+        g_InvOverflowSlotCount = 0; g_InvSlotLimit = Inv_GetAyaSlotLimit();
+        memcpy(g_InvItemPtr, bag_was, (size_t)bag_slots * sizeof(*bag_was));
+    }
     if (!out) return;
     fprintf(out, "run\tM%03u\tV0x4a=%#x\tV0x1=%#x\tend=", r->room, r->area, left);
     if (g_GameStateFlags & 0x2000) {

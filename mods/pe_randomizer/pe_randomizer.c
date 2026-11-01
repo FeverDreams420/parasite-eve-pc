@@ -305,6 +305,20 @@ static int pe_rand_spot_item(const uint8_t *room, size_t bytes, int map, unsigne
     return 0;
 }
 
+/* A gift on a full bag (randomizer on): one slot past the bag (g_InvOverflowSlotCount, 11/10) so the
+ * give can't fail. Many gifts set their done flag either way, and a gift that was ammo never had a
+ * retry: the item was lost for good (Day 3 NYPD, M116). The host moves it into the bag's first empty
+ * slot later and shrinks the bag back (pe_equip_sync.c), so no slot is gained for good. */
+static void pe_rand_gift_room(unsigned spot) {
+    if (!s_run.on || !pe_rand_supported() || g_pe_rand_spots[spot].kind != PE_RAND_GIFT ||
+        g_InvItemPtr != g_AyaSaveState.inventory_items || g_InvSlotLimit >= 50) return;
+    for (int i = 0; i < g_InvSlotLimit; ++i)
+        if (!g_InvItemPtr[i]) return;
+    ++g_InvOverflowSlotCount;
+    g_InvSlotLimit = Inv_GetAyaSlotLimit();
+    pe_log("rand_gift_full", "spot=%u slots=%d", spot, (int)g_InvSlotLimit);
+}
+
 /* A table spot giving its item: a rand_give row (play log), on or off, for tools/keylogic.py,
  * which works out from a run which keys each spot needs. During a script step the cursor is just past
  * it, so a GiveItem (two operands, 16 bytes) starts 16 bytes back. Only rows for the table's own give
@@ -324,9 +338,11 @@ static int pe_rand_item_add(void *ctx, void *user) {
     if ((pe_get32(room + at) & 0x1FFFu) != 167u) return 0;
     for (unsigned i = 0; i < PE_RAND_GIVES && g_pe_rand_gives[i].map <= map; ++i)
         if (g_pe_rand_gives[i].map == map && g_pe_rand_gives[i].at == at) {
-            if (pe_rand_spot_item(room, bytes, map, g_pe_rand_gives[i].spot, (unsigned)*item))
+            if (pe_rand_spot_item(room, bytes, map, g_pe_rand_gives[i].spot, (unsigned)*item)) {
                 pe_log("rand_give", "map=%d at=%06X spot=%u item=0x%02X", map, (unsigned)at,
                        (unsigned)g_pe_rand_gives[i].spot, (unsigned)*item);
+                pe_rand_gift_room(g_pe_rand_gives[i].spot);
+            }
             break;
         }
     return 0;

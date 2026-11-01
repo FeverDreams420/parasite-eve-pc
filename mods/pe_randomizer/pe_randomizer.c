@@ -185,7 +185,11 @@ static uint32_t pe_room_token(unsigned map) {
  *   and M319 (0x80000, the Rehearsal Room Key's). No Theater key can be in M012 itself.
  * - The Blue Cardkey: M339's door to M329 tests V0x41 0x2, set by its vanilla spot in M328 (spot 180)
  *   whatever item that now gives, so a moved card met "need the Blue Cardkey" at the door. The door
- *   takes the card and sets V0x42 0x20 (its open-after flag), and no spot is in M339. */
+ *   takes the card and sets V0x42 0x20 (its open-after flag), and no spot is in M339.
+ * - The St. Francis Key: M321's door to M327 tests V0x41 0x1, set by its vanilla spot in M325 (spot 179, also
+ *   that gift's done-guard). Two tests pick the door's locked or open handler at the room's start, five pick
+ *   whether a way out of M321 sets V0x41 0x400000 (read in M320 / M321 / M323): all seven follow the key.
+ *   The door never takes the key, and no spot is in M321. */
 typedef struct PeRandFlagLock {
     uint32_t at;           /* the op 9 bit test (T<dest> = V<old_var> & mask), from the room's task block */
     uint8_t dest, old_var;
@@ -200,11 +204,18 @@ static const PeRandFlagLock s_theater_locks[] = {
 static const PeRandFlagLock s_blue_locks[] = {
     {0x1344, 1, 0x41, 0x2, 0x40000000}, {0x1398, 0, 0x41, 0x2, 0x40000000},   /* M329, both tests of the door */
 };
+static const PeRandFlagLock s_francis_locks[] = {
+    {0x118C, 0, 0x41, 0x1, 0x2000000}, {0x11F4, 0, 0x41, 0x1, 0x2000000},   /* the door's two handlers */
+    {0x450, 0, 0x41, 0x1, 0x2000000}, {0x608, 0, 0x41, 0x1, 0x2000000}, {0x1DF0, 0, 0x41, 0x1, 0x2000000},
+    {0x1EAC, 0, 0x41, 0x1, 0x2000000}, {0x1F68, 0, 0x41, 0x1, 0x2000000},   /* ways out: V0x41 0x400000 */
+};
 #define PE_RAND_THEATER_MAP 12
 #define PE_RAND_DRESSING_KEY 0xC8
 #define PE_RAND_REHEARSAL_KEY 0xC9
 #define PE_RAND_BLUE_MAP 339
 #define PE_RAND_BLUE_KEY 0xD2
+#define PE_RAND_FRANCIS_MAP 321
+#define PE_RAND_FRANCIS_KEY 0xD1
 
 static int pe_rand_holds(unsigned item) {
     for (unsigned i = 0; i < sizeof g_AyaInventoryItems / sizeof *g_AyaInventoryItems; ++i)
@@ -276,6 +287,22 @@ static int pe_rand_blue_door(void *ctx, void *user) {
     pe_rand_flag_locks(room, PE_RAND_BLUE_MAP, s_blue_locks, sizeof s_blue_locks / sizeof *s_blue_locks,
                        "the Blue Cardkey door stays vanilla");
     pe_log("rand_blue", "V0x19=%#x", (unsigned)g_ScriptVariableBank[0x19]);
+    return 0;
+}
+
+/* Same for the St. Francis Key (every difficulty). */
+static int pe_rand_francis_door(void *ctx, void *user) {
+    uint8_t *room = (uint8_t *)g_GameState.loaded_scene_assets;
+    (void)ctx;
+    (void)user;
+    if (!room || pe_room_number() != PE_RAND_FRANCIS_MAP || !s_run.on || !pe_rand_supported()) return 0;
+    if (pe_rand_holds(PE_RAND_FRANCIS_KEY) || (g_ScriptVariableBank[0x41] & 0x1u))
+        g_ScriptVariableBank[0x19] |= 0x2000000u;
+    else
+        g_ScriptVariableBank[0x19] &= ~0x2000000u;
+    pe_rand_flag_locks(room, PE_RAND_FRANCIS_MAP, s_francis_locks, sizeof s_francis_locks / sizeof *s_francis_locks,
+                       "the St. Francis door stays vanilla");
+    pe_log("rand_francis", "V0x19=%#x", (unsigned)g_ScriptVariableBank[0x19]);
     return 0;
 }
 
@@ -605,6 +632,7 @@ static int pe_rand_init(void) {
     pe_hook_add(PE_HOOK_SCENE_START, pe_rand_doors, NULL, PE_PRIORITY_NORMAL, MOD_ID);
     pe_hook_add(PE_HOOK_SCENE_START, pe_rand_theater, NULL, PE_PRIORITY_NORMAL, MOD_ID);
     pe_hook_add(PE_HOOK_SCENE_START, pe_rand_blue_door, NULL, PE_PRIORITY_NORMAL, MOD_ID);
+    pe_hook_add(PE_HOOK_SCENE_START, pe_rand_francis_door, NULL, PE_PRIORITY_NORMAL, MOD_ID);
     pe_hook_add(PE_HOOK_NEW_GAME, pe_rand_new_game, NULL, PE_PRIORITY_NORMAL, MOD_ID);
     pe_hook_add(PE_HOOK_SAVE_READ, pe_rand_save_read, NULL, PE_PRIORITY_NORMAL, MOD_ID);
     /* these read only: rows for keylogic.py */

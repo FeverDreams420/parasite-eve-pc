@@ -570,8 +570,11 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
 - Blue Cardkey door (every difficulty): M339's door to M329 tests V0x41 0x2, which the card's vanilla spot
   in M328 sets (also its done-guard), not the card, so a moved card met "need the Blue Cardkey". At M339's
   scene start the mod points its two tests at V0x19 0x40000000 and sets that bit when Aya holds the card or
-  has V0x41 0x2 (cleared otherwise). The St. Francis door (M321, V0x41 0x1) still tests the flag only.
-  `mod-randomizer-doors` (blue-* lines).
+  has V0x41 0x2 (cleared otherwise). `mod-randomizer-doors` (blue-* lines).
+- St. Francis door (every difficulty): the same for M321's door to M327, which tests V0x41 0x1 (the key's
+  vanilla spot in M325). All seven of M321's tests of it (the door's locked / open handlers, and the five
+  ways out that set V0x41 0x400000) go to V0x19 0x2000000, set when Aya holds the key or has the flag.
+  `mod-randomizer-doors` (francis-* lines).
 - Key moves are on (`PE_RAND_MOVE_KEYS` 1 in pe_randomizer.h, logic version 12). Setting it to 0 keeps
   key items in their places on every difficulty (raise PE_RAND_LOGIC_VERSION with it).
 - Ways back (Hard, Day 2 on): four existing doors lead somewhere else (`s_doors` in pe_randomizer.c), so

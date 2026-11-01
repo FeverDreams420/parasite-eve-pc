@@ -181,6 +181,16 @@ int pe_mod_run_alone(void) {
     return 0;
 }
 
+/* Mods that only change how Aya looks (the Wardrobe and its skins) keep running beside one that runs
+ * alone: they give or move no items and touch no story flags. */
+static int pe_mod_looks_only(const char *mod_id) {
+    static const char *const ids[] = {"pe_collection", "pe_claire", NULL};
+    const char *const *id;
+    for (id = ids; *id; id++)
+        if (strcmp(*id, mod_id) == 0) return 1;
+    return 0;
+}
+
 int pe_mod_is_running(const char *mod_id) {
     int i;
     if (!mod_id) return 0;
@@ -320,13 +330,15 @@ static void pe_start_mods(void) {
      * register, so nothing of theirs has touched the game yet). */
     if (s_alone_mod && pe_mod_is_running(s_alone_mod)) {
         for (i = 0; i < mod_count; i++)
-            if (state[i] == PE_MOD_RUNNING && strcmp(g_pe_mods[i]->id, s_alone_mod) != 0) {
+            if (state[i] == PE_MOD_RUNNING && strcmp(g_pe_mods[i]->id, s_alone_mod) != 0 && !pe_mod_looks_only(g_pe_mods[i]->id)) {
                 state[i] = PE_MOD_ALONE;
                 pe_mod_log(g_pe_mods[i]->id, "inactive (%s runs alone): pages only", s_alone_mod);
             }
         s_running_count = 0;
-        for (i = 0; i < mod_count; i++)
+        for (i = 0; i < mod_count; i++)                  /* the alone mod first: the notes name s_running[0] */
             if (strcmp(g_pe_mods[i]->id, s_alone_mod) == 0) s_running[s_running_count++] = g_pe_mods[i];
+        for (i = 0; i < mod_count; i++)
+            if (state[i] == PE_MOD_RUNNING && strcmp(g_pe_mods[i]->id, s_alone_mod) != 0) s_running[s_running_count++] = g_pe_mods[i];
     }
     for (i = 0; i < s_running_count; i++)
         pe_mod_log(s_running[i]->id, "started %s %s", s_running[i]->name, s_running[i]->version);

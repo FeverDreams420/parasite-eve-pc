@@ -180,16 +180,20 @@ static uint32_t pe_room_token(unsigned map) {
 
 /* Doors that test a story flag a key's own pickup sets, not the key: that flag is also the pickup's
  * done-guard, so it stays the pickup's, and the doors test a V0x19 bit no room uses instead (spottable.py's
- * rule), set at the room's start when Aya holds the key (or, for the Blue Cardkey, has the flag).
+ * rule), set at the room's start when Aya holds the key. Never the spot's flag: that is set by whatever item the
+ * spot now gives, so it would open the door without the key.
  * - The Theater keys on Hard: M012's doors to M014/M016/M018/M022 (V0x18 0x20, the Dressing Room Key's)
  *   and M319 (0x80000, the Rehearsal Room Key's). No Theater key can be in M012 itself.
  * - The Blue Cardkey: M339's door to M329 tests V0x41 0x2, set by its vanilla spot in M328 (spot 180)
  *   whatever item that now gives, so a moved card met "need the Blue Cardkey" at the door. The door
- *   takes the card and sets V0x42 0x20 (its open-after flag), and no spot is in M339.
+ *   takes the card and sets V0x42 0x20 (its open-after flag, tested before these), and no spot is in M339.
  * - The St. Francis Key: M321's door to M327 tests V0x41 0x1, set by its vanilla spot in M325 (spot 179, also
  *   that gift's done-guard). Two tests pick the door's locked or open handler at the room's start, five pick
  *   whether a way out of M321 sets V0x41 0x400000 (read in M320 / M321 / M323): all seven follow the key.
- *   The door never takes the key, and no spot is in M321. */
+ *   The door's unlock scene takes the key and sets V0x41 0x8, so the bit is also set once that has run.
+ *   M329 sets V0x41 0x1 and 0x8 on entry, and M329 is reached by the Blue Cardkey door without passing
+ *   this one (M323 -> M339): the mod drops those two sets, so neither the door nor spot 179's done-guard
+ *   is set there. No spot is in M321. */
 typedef struct PeRandFlagLock {
     uint32_t at;           /* the op 9 bit test (T<dest> = V<old_var> & mask), from the room's task block */
     uint8_t dest, old_var;
@@ -216,6 +220,9 @@ static const PeRandFlagLock s_francis_locks[] = {
 #define PE_RAND_BLUE_KEY 0xD2
 #define PE_RAND_FRANCIS_MAP 321
 #define PE_RAND_FRANCIS_KEY 0xD1
+#define PE_RAND_FRANCIS_DONE 0x8u   /* V0x41: the door's unlock scene ran (it took the key) */
+#define PE_RAND_M329 329
+static const uint32_t s_m329_sets[][2] = { {0xA6C, 0x1}, {0xA94, 0x8} };   /* T0 = V0x41 | mask, then V0x41 = T0 */
 
 static int pe_rand_holds(unsigned item) {
     for (unsigned i = 0; i < sizeof g_AyaInventoryItems / sizeof *g_AyaInventoryItems; ++i)
@@ -280,7 +287,7 @@ static int pe_rand_blue_door(void *ctx, void *user) {
     (void)ctx;
     (void)user;
     if (!room || pe_room_number() != PE_RAND_BLUE_MAP || !s_run.on || !pe_rand_supported()) return 0;
-    if (pe_rand_holds(PE_RAND_BLUE_KEY) || (g_ScriptVariableBank[0x41] & 0x2u))
+    if (pe_rand_holds(PE_RAND_BLUE_KEY))
         g_ScriptVariableBank[0x19] |= 0x40000000u;
     else
         g_ScriptVariableBank[0x19] &= ~0x40000000u;
@@ -290,13 +297,47 @@ static int pe_rand_blue_door(void *ctx, void *user) {
     return 0;
 }
 
+/* M329's two sets of the St. Francis flags become V0x41 | 0: all or none, the six words checked. */
+static void pe_rand_m329(uint8_t *room) {
+    size_t bytes = (size_t)g_RoomSectorTable[PE_RAND_M329 - 1].roomSectors * 2048, dir, table, base;
+    dir = pe_get32(room + 4);
+    if (dir > bytes || bytes - dir < sizeof(SceneRoomDirectory)) return;
+    table = ((const SceneRoomDirectory *)(room + dir))->taskBlock & 0x3FFFFF;
+    if (table > bytes - 8) return;
+    base = pe_get32(room + table + 4) & 0xFFFFFF;
+    for (int pass = 0; pass < 2; ++pass)
+        for (unsigned i = 0; i < sizeof s_m329_sets / sizeof *s_m329_sets; ++i) {
+            size_t at = base + s_m329_sets[i][0];
+            uint32_t mask;
+            if (at > bytes - 24) return;
+            mask = pe_get32(room + at + 20);
+            if (pass == 0) {
+                if (pe_get32(room + at) != 0x01308009u || pe_get32(room + at + 4) || pe_get32(room + at + 8) != 2 ||
+                    pe_get32(room + at + 12) || pe_get32(room + at + 16) != 0x41 || (mask != s_m329_sets[i][1] && mask)) {
+                    if (!s_room_warned[PE_RAND_M329]) {
+                        s_room_warned[PE_RAND_M329] = 1;
+                        pe_mod_log(MOD_ID, "M329: flag set +%06X differs from the table; it still opens the St. Francis door",
+                                   (unsigned)s_m329_sets[i][0]);
+                    }
+                    return;
+                }
+            } else
+                pe_put32(room + at + 20, 0);
+        }
+}
+
 /* Same for the St. Francis Key (every difficulty). */
 static int pe_rand_francis_door(void *ctx, void *user) {
     uint8_t *room = (uint8_t *)g_GameState.loaded_scene_assets;
     (void)ctx;
     (void)user;
-    if (!room || pe_room_number() != PE_RAND_FRANCIS_MAP || !s_run.on || !pe_rand_supported()) return 0;
-    if (pe_rand_holds(PE_RAND_FRANCIS_KEY) || (g_ScriptVariableBank[0x41] & 0x1u))
+    if (!room || !s_run.on || !pe_rand_supported()) return 0;
+    if (pe_room_number() == PE_RAND_M329) {
+        pe_rand_m329(room);
+        return 0;
+    }
+    if (pe_room_number() != PE_RAND_FRANCIS_MAP) return 0;
+    if (pe_rand_holds(PE_RAND_FRANCIS_KEY) || (g_ScriptVariableBank[0x41] & PE_RAND_FRANCIS_DONE))
         g_ScriptVariableBank[0x19] |= 0x2000000u;
     else
         g_ScriptVariableBank[0x19] &= ~0x2000000u;

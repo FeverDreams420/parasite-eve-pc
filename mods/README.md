@@ -569,12 +569,15 @@ message to restart with the toggle on; one loaded with the randomizer off plays 
   `mod-randomizer-doors` (theater-* lines) checks each door with and without its key.
 - Blue Cardkey door (every difficulty): M339's door to M329 tests V0x41 0x2, which the card's vanilla spot
   in M328 sets (also its done-guard), not the card, so a moved card met "need the Blue Cardkey". At M339's
-  scene start the mod points its two tests at V0x19 0x40000000 and sets that bit when Aya holds the card or
-  has V0x41 0x2 (cleared otherwise). `mod-randomizer-doors` (blue-* lines).
+  scene start the mod points its two tests at V0x19 0x40000000 and sets that bit only when Aya holds the card
+  (cleared otherwise; the spot's flag is set by whatever item the spot now gives). The door takes the card and
+  sets V0x42 0x20, which opens it on later visits. `mod-randomizer-doors` (blue-* lines).
 - St. Francis door (every difficulty): the same for M321's door to M327, which tests V0x41 0x1 (the key's
   vanilla spot in M325). All seven of M321's tests of it (the door's locked / open handlers, and the five
-  ways out that set V0x41 0x400000) go to V0x19 0x2000000, set when Aya holds the key or has the flag.
-  `mod-randomizer-doors` (francis-* lines).
+  ways out that set V0x41 0x400000) go to V0x19 0x2000000, set when Aya holds the key or the door's unlock
+  scene has run (V0x41 0x8; the scene takes the key). M329 sets V0x41 0x1 and 0x8 on entry and is reached by
+  the Blue Cardkey door without passing the St. Francis door (M323 -> M339), so the mod drops those two sets
+  there: no door opens without its key, and spot 179 keeps its item. `mod-randomizer-doors` (francis-*, m329*).
 - Key moves are on (`PE_RAND_MOVE_KEYS` 1 in pe_randomizer.h, logic version 12). Setting it to 0 keeps
   key items in their places on every difficulty (raise PE_RAND_LOGIC_VERSION with it).
 - Ways back (Hard, Day 2 on): four existing doors lead somewhere else (`s_doors` in pe_randomizer.c), so

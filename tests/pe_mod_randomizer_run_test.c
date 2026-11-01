@@ -78,7 +78,8 @@
  * scene start (every site of the room or none), and the line ends in got=<item given at each gave=>.
  * Every table give that runs must hand out the layout's item. Checks a line may ask for: want=+OFF (the
  * give at that listing offset runs), never=+OFF (it doesn't), flag=V0x2c|0x80 (that bit is set at the
- * end). A failed check fails the test. A runs file with a #cover line must hand out every table spot: a spot
+ * end), clear=V0x41|0x9 (none of those bits is set at the end). A failed check fails the test. A runs file
+ * with a #cover line must hand out every table spot: a spot
  * none of whose gives ran in a seeded line (say only in a room no way leads to) fails the test.
  *
  * Story gates: a line with gate runs with the real mod. The first such line starts the mod host from a
@@ -424,7 +425,7 @@ typedef struct Run {
     int at, at_x[AT_MAX], at_z[AT_MAX], at_angle[AT_MAX];   /* Aya's stops from AT_FRAME on, at of them */
     int at_actor[AT_MAX];                                     /* -1, or the actor type she stands on */
     int seeded, difficulty; u32 seed;                         /* seed=: the randomizer's layout */
-    unsigned nwant, nnever, nflag; u32 want[8], never[8], flag_bit[8]; u16 flag_var[8];
+    unsigned nwant, nnever, nflag, nclear; u32 want[8], never[8], flag_bit[8], clear_bit[8]; u16 flag_var[8], clear_var[8];
     int gate; unsigned nshut, nopen; u32 shut[8], open[8];    /* gate: the real mod answers key tests */
     int held; unsigned nheld; u32 held_item[8];               /* keys=none / keys=D6,..: only those held */
     unsigned from, door; int has_door, has_arrive, floor; u32 arrive;   /* from=, door=, arrive=, floor */
@@ -553,6 +554,12 @@ static int parse_run(char *line, Run *r) {
             char *bar = strchr(tok, '|');
             if (r->nflag == 8 || !bar) return 0;
             r->flag_var[r->nflag] = (u16)strtoul(tok + 6, NULL, 0); r->flag_bit[r->nflag++] = (u32)strtoul(bar + 1, NULL, 0);
+            continue;
+        }
+        if (!strncmp(tok, "clear=V", 7)) {
+            char *bar = strchr(tok, '|');
+            if (r->nclear == 8 || !bar) return 0;
+            r->clear_var[r->nclear] = (u16)strtoul(tok + 7, NULL, 0); r->clear_bit[r->nclear++] = (u32)strtoul(bar + 1, NULL, 0);
             continue;
         }
         char *eq = strchr(tok, '=');
@@ -708,6 +715,10 @@ static void do_run(const Run *r, FILE *out) {
     for (unsigned k = 0; k < r->nflag; ++k, ++checks_done)
         if (!(g_ScriptVariableBank[r->flag_var[k]] & r->flag_bit[k]))
             FAIL("M%03u V0x4a=%#x: V%#x|%#x not set", r->room, r->area, r->flag_var[k], r->flag_bit[k]);
+    for (unsigned k = 0; k < r->nclear; ++k, ++checks_done)
+        if (g_ScriptVariableBank[r->clear_var[k]] & r->clear_bit[k])
+            FAIL("M%03u V0x4a=%#x: V%#x has %#x set", r->room, r->area, r->clear_var[k],
+                 (unsigned)(g_ScriptVariableBank[r->clear_var[k]] & r->clear_bit[k]));
     for (unsigned k = 0; k < r->nshut + r->nopen; ++k, ++checks_done) {
         int shut = k < r->nshut; u32 at = shut ? r->shut[k] : r->open[k - r->nshut];
         unsigned i, ran_at = 0, opened = 0, l = 0;

@@ -468,8 +468,10 @@ spoiler) beside the preferences: where each key item is now, Hard's ways back, t
 
 Randomize enemies (F1, before New Game, on top of the items; off = items only): the same seed also
 shuffles enemies. Each of 259 enemy slots (`pe_rand_foes.h`, written by `tools/enemyai.py --table`)
-takes another enemy's model, animations and script, so its moves and stats too, from any day; bosses
-only take bosses. Left out: enemies whose own script sets a story flag, multi-part bosses whose parts
+takes another enemy's model, animations and script, so its moves and stats too, from any day. Boss
+fights stay vanilla for now (`PE_RAND_MOVE_BOSSES` 0; with 1, bosses only take bosses). M013's scripted
+Rat fight takes a normal enemy too: the room spawns it with the sub id that enemy's script needs to start
+its battle (`pe_rand_ai.c`). Left out: enemies whose own script sets a story flag, multi-part bosses whose parts
 call each other, and swaps whose fights fail headless (`tools/foe-deny.txt`). The plan
 (`pe_rand_foes_generate`) goes into the model and AI switches, which swap at each load of a room. The
 game keeps the choice in the `pe_randomizer.foes` record with `PE_RAND_FOES_VERSION`; a save from

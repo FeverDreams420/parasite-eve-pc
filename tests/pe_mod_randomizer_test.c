@@ -284,7 +284,7 @@ static void print_key_layouts(unsigned n) {
 }
 
 /* Battle: the foe table is sane, and every seed's plan passes the checks, the same one each time; most slots
- * that can move do, bosses take bosses, and a slot no foe may take stays. */
+ * that can move do, bosses take bosses (or stay, PE_RAND_MOVE_BOSSES 0), and a slot no foe may take stays. */
 static void foe_plans(void) {
     static uint16_t plan[PE_RAND_FOES], again[PE_RAND_FOES];
     unsigned movable = 0, moved = 0, seeds = 2000, sources[PE_RAND_FOES] = {0}, used = 0;
@@ -296,9 +296,9 @@ static void foe_plans(void) {
         assert(f->entity < 10 && f->block >= 0 && f->blocks >= 1 && f->block + f->blocks <= 8 && f->end <= 8 && f->rows_end <= 8);
         for (unsigned w = 0; w < PE_RAND_FOE_WORDS; ++w) any |= g_pe_rand_foe_ok[i][w];
         assert(!(g_pe_rand_foe_ok[i][i / 32] >> (i % 32) & 1));
-        movable += any != 0;
-        if (f->room == 13 && f->entity == 2) {   /* M013's scripted Rat opens its own fight: it stays, and goes nowhere */
-            assert(!any);
+        movable += any != 0 && (PE_RAND_MOVE_BOSSES || !f->boss);
+        if (f->room == 13 && f->entity == 2) {   /* M013's scripted Rat: its slot takes random foes, it goes nowhere */
+            assert(any);
             for (unsigned j = 0; j < PE_RAND_FOES; ++j) assert(!(g_pe_rand_foe_ok[j][i / 32] >> (i % 32) & 1));
         }
     }
@@ -307,7 +307,10 @@ static void foe_plans(void) {
         assert(!pe_rand_foes_check(g_pe_rand_foes, g_pe_rand_foe_ok[0], PE_RAND_FOES, plan));
         assert(pe_rand_foes_generate(g_pe_rand_foes, g_pe_rand_foe_ok[0], PE_RAND_FOES, seed, again) == n);
         assert(!memcmp(plan, again, sizeof plan));
-        for (unsigned i = 0; i < PE_RAND_FOES; ++i) if (plan[i] != i) ++sources[plan[i]];
+        for (unsigned i = 0; i < PE_RAND_FOES; ++i) {
+            if (plan[i] != i) ++sources[plan[i]];
+            assert(PE_RAND_MOVE_BOSSES || !g_pe_rand_foes[i].boss || plan[i] == i);
+        }
         moved += n;
     }
     for (unsigned i = 0; i < PE_RAND_FOES; ++i) used += sources[i] != 0;

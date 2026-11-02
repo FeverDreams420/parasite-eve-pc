@@ -680,6 +680,7 @@ static int pe_rand_init(void) {
     pe_hook_add(PE_HOOK_ITEM_ADD, pe_rand_item_add, NULL, PE_PRIORITY_EARLY, MOD_ID);
     pe_hook_add(PE_HOOK_ITEM_COUNT, pe_rand_item_count, NULL, PE_PRIORITY_EARLY, MOD_ID);
     pe_hook_add(PE_HOOK_INV_COMMAND, pe_rand_inv_command, NULL, PE_PRIORITY_EARLY, MOD_ID);
+    pe_rand_battle_register();
     return pe_save_register(&s_record) < 0;
 }
 

@@ -282,6 +282,15 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
             ${CMAKE_CURRENT_SOURCE_DIR}/pe_collection/pe_collection_data.h --out enemies.txt --check)
         set_tests_properties(mod-randomizer-enemies PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
             DEPENDS mod-randomizer-rooms WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+        # Battle randomizer stats: fights run headless with the real mod and the enemy ops on; each room's own
+        # setup matches pe_rand_enemies.h, and a forced actor takes another's stat block, the rest unchanged.
+        add_test(NAME mod-randomizer-battlestats COMMAND ${Python3_EXECUTABLE} -I
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/battlestats.py randomizer-battlestats.txt
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/pe_rand_enemies.h
+            --run $<TARGET_FILE:test-mod-randomizer-run> ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/battlestats-runs.txt)
+        set_tests_properties(mod-randomizer-battlestats PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
+            ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Battle stats: .* 0 problems"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     endif()
 endif()
 

@@ -20,6 +20,9 @@ One line per enemy actor and creature id it sets:
   pm (PM commands the actor starts with op 106, Script_GetEntityEffect -> Scene_LoadRoomAssets: 0-7 and
   85-114 are global code, 8-84 and 115+ come from the room's script directory and die with the room).
 An actor with no creature that only creatures spawn shows as their part.
+--blocks pe_rand_enemies.h: each enemy actor's stat block for the battle randomizer (STAT_CODES, the first op 90
+write of each in the actor's own script: a constant, or (N0xa * k) >> 16, the difficulty scale; any other
+operand, such as a rolled drop, is left out and the actor keeps its own).
 --check: every creature key is found as some actor's id in its room, and every enemy actor maps to a
 creature (or has a reason in UNMAPPED). Exit 1 on a failure, 77 when an input is missing."""
 import os, re, struct, sys
@@ -27,6 +30,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import doorscan as DS
 
 INIT, SET, SET_BY_TYPE, FIGHT, SPAWN, RANDOM = 111, 90, 206, 85, 8, 26
+# Steps that end a frame for the routine (a wait, a kill, the node freed, another slot): the setup ends there.
+YIELD = {1, 2, 4, 22, 32, 34, 48, 111}
 FIELD = {0x28: "atbLimit", 0x29: "id.lo", 0x2a: "id.hi", 0x2b: "atb", 0x2c: "hp", 0x2d: "prevHp",
          0x2e: "e06.hi", 0x2f: "e06.lo", 0x3c: "maxHp", 0x3d: "defense", 0x3e: "chargeStep", 0x3f: "effChance",
          0x40: "deathFrame", 0x41: "contactDmg", 0x42: "contactKnock", 0x43: "effLevel", 0x44: "effTime",
@@ -38,6 +43,8 @@ FIELD.update({c: f"status{c - 0x64}" for c in range(0x64, 0x6f)})
 # Enemy actors that set no id the bestiary keys on, and why (checked by hand in the listing).
 UNMAPPED = {(159, 1): "Hospital room with the Snake's id 0x0016 (Chinatown's); the bestiary has no M159 key",
             (159, 2): "its partner (same id; nothing spawns it)"}
+# The stat block one creature's actor hands another (pe_rand_battle.c): numbers, not the model, AI or effects.
+STAT_CODES = [0x2c, 0x2d, 0x3c, 0x3d, 0x28, 0x3e, 0x3f, 0x41, 0x42, 0x43, 0x44, 0x45, 0x5a, 0x5b, 0x5c, 0x5d] + list(range(0x64, 0x6e))
 AREA = ["?", "Theater", "Sewer", "NYPD", "Central Park", "Soho", "Hospital", "Chinatown", "Sewer", "Subway",
         "Museum", "Warehouse", "Carrier", "Statue of Liberty", "Cruiser"]
 
@@ -99,6 +106,76 @@ def script_range(entries, end, t):
     start = entries[t]
     later = [e for e in entries if e > start]
     return start, min(later) if later else end
+
+
+def stat_block(steps, succ, t):
+    """{code: (scaled, value)}: the setup's value of each STAT_CODES code in entity t's script. The setup is the
+    routine from its first op 111 up to the steps that wait (YIELD) or end it: one frame, which may set a code
+    twice (M013's scripted Rat: a scaled HP, then a flat 17) or on some branches only (M207: 0x6d by rank).
+    A code is in the block when every path through the setup leaves it the same value: a constant (0, v) or
+    a temp the two steps before made (N0xa * k) >> 16 (1, k)."""
+    mine = [(at, op, a) for at, (e, op, a, _) in sorted(steps.items()) if e == t]
+    start = next((at for at, op, _ in mine if op == INIT), None)
+    if start is None: return {}
+    order = {at: i for i, (at, _, _) in enumerate(mine)}
+    written = {}
+    for i, (at, op, a) in enumerate(mine):
+        if op != SET or len(a) != 2 or a[0][0] != 0 or a[0][1] not in STAT_CODES: continue
+        mode, v = a[1]
+        val = "?"
+        if mode == 0: val = (0, v & 0xFFFFFFFF)
+        elif mode == 3 and i >= 2:
+            (_, op1, a1), (_, op2, a2) = mine[i - 2], mine[i - 1]
+            if (op1 == 9 and op2 == 9 and len(a1) == 4 and len(a2) == 4 and a2[0] == (0, 0x12) and a2[1] == (3, v)
+                    and a2[3] == (0, 0x10) and a1[0] == (0, 0xf) and a1[1] == a2[2] and a1[2] == (4, 0xa) and a1[3][0] == 0):
+                val = (1, a1[3][1])
+        written[at] = (a[0][1], val)
+    # each step's possible values of every code on the way in (None: not set yet), to a fixpoint
+    into, todo = {start: {c: {None} for c in STAT_CODES}}, [start]
+    final = {c: set() for c in STAT_CODES}
+    while todo:
+        at = todo.pop()
+        out = {c: set(s) for c, s in into[at].items()}
+        if at in written: out[written[at][0]] = {written[at][1]}
+        nxt = [y for y in succ.get(at, ()) if y in order]
+        if (at != start and steps[at][1] in YIELD) or not nxt:
+            for c in STAT_CODES: final[c] |= into[at][c] if at != start and steps[at][1] in YIELD else out[c]
+            continue
+        for y in nxt:
+            cur = into.setdefault(y, {c: set() for c in STAT_CODES})
+            if any(not out[c] <= cur[c] for c in STAT_CODES):
+                for c in STAT_CODES: cur[c] |= out[c]
+                todo.append(y)
+    return {c: next(iter(s)) for c, s in final.items() if len(s) == 1 and None not in s and "?" not in s}
+
+
+def write_blocks(rows, rooms, path):
+    """pe_rand_enemies.h: one row per enemy actor that maps to a creature, by room and entity."""
+    NL = chr(10)
+    head = ["/* Generated by tools/enemyscan.py --blocks from the rooms listing: each enemy actor's stat block",
+            " * (pe_rand_battle.c). have: bit i = PE_RAND_STAT_CODES[i] is set; scaled: bit i's value is k in",
+            " * (N0xa * k) >> 16 (the room's difficulty scale), else the value itself. Do not edit. */",
+            "#ifndef PE_RAND_ENEMIES_H", "#define PE_RAND_ENEMIES_H", "", '#include "pe_randomizer.h"', "",
+            f"static const uint8_t PE_RAND_STAT_CODES[PE_RAND_STATS] = {{ {', '.join(f'{c:#04x}' for c in STAT_CODES)} }};", ""]
+    out, succs = [], {}
+    def succ_of(m):
+        if m not in succs:
+            succs[m] = {}
+            for x, y, _ in DS.graph(*rooms[m])[0]: succs[m].setdefault(x, []).append(y)
+        return succs[m]
+    for r in rows:
+        if not r["creatures"] or not r["alloc"]: continue
+        block = stat_block(rooms[r["room"]][1], succ_of(r["room"]), r["entity"])
+        have = sum(1 << i for i, c in enumerate(STAT_CODES) if c in block)
+        scaled = sum(1 << i for i, c in enumerate(STAT_CODES) if c in block and block[c][0])
+        vals = ", ".join(str(block[c][1] if block[c][1] < 0x80000000 else block[c][1] - (1 << 32)) if c in block else "0"
+                         for c in STAT_CODES)
+        out.append(f"    {{ {r['room']}, {r['entity']}, {r['creatures'][0]}, {have:#09x}, {scaled:#09x}, {{ {vals} }} }},"
+                   f" /* {r['who']} */")
+    lines = head + [f"#define PE_RAND_ENEMIES {len(out)}", "static const PeRandEnemy g_pe_rand_enemies[PE_RAND_ENEMIES] = {"] + \
+        out + ["};", "", "#endif"]
+    with open(path, "w", newline=NL) as f: f.write(NL.join(lines) + NL)
+    return len(out)
 
 
 def ids_of(steps, t):
@@ -264,7 +341,7 @@ if __name__ == "__main__":
     def opt(name, default=None):
         if name in args: i = args.index(name); v = args[i + 1]; del args[i:i + 2]; return v
         return default
-    disc, out_path = opt("--disc", os.environ.get("PE_TEST_DISC")), opt("--out")
+    disc, out_path, blocks_path = opt("--disc", os.environ.get("PE_TEST_DISC")), opt("--out"), opt("--blocks")
     do_check = "--check" in args
     args = [a for a in args if a != "--check"]
     if len(args) != 2: sys.exit(__doc__)
@@ -274,7 +351,10 @@ if __name__ == "__main__":
     disc = bin_path(disc) if disc else None
     if disc and not os.path.exists(disc): disc = None
     data = collection(args[1])
-    rows = census(DS.load(args[0]), rooms_meta(args[0]), data, disc)
+    rooms_steps = DS.load(args[0])
+    rows = census(rooms_steps, rooms_meta(args[0]), data, disc)
+    if blocks_path:
+        print(f"enemyscan: {write_blocks(rows, rooms_steps, blocks_path)} stat blocks", file=sys.stderr)
     with (open(out_path, "w") if out_path else sys.stdout) as f: write(rows, f)
     rooms = {r["room"] for r in rows}
     kinds = {k: sum(1 for r in rows if r["kind"] == k) for k in ("boss", "random", "scripted", "none")}

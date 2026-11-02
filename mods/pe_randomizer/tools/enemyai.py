@@ -31,7 +31,8 @@ model placed in the enemy VRAM blocks (randomizer-models.txt, the rooms ctest) a
 (story-writes.txt: replacing its script would drop the write; such actors stay), boss or not (the boss pool:
 a creature marked * in enemies.txt), with its room's VRAM use; and per slot the foes that may take it: same
 pool, another creature, no ent or events conflict, the same spawner events (a fight's spawner counts on them),
-both with one spawner or both not (pe_rand_ai.c patches one), scripted with scripted only, and not in --deny (lines `MNNN<MBBB:E`: room
+both with one spawner or both not (pe_rand_ai.c patches one), a scripted slot only a foe with a lead sub id
+(a scripted foe nowhere), and not in --deny (lines `MNNN<MBBB:E`: room
 NNN's slots don't take room BBB's actor E; swaps whose fights fail headless, mod-randomizer-foefights).
 --check: every actor has steps in its block, every room slot an actor starts is installed in its own room
 with a handler the source binds, and each slot number has one handler in every room (what makes "pm" 0: B's
@@ -113,6 +114,7 @@ def touched(steps, t):
 def scan(steps, t):
     mine = [(at, op, a) for at, (e, op, a, _) in sorted(steps.items()) if e == t]
     r = dict(ops=sorted({op for _, op, _ in mine}), pm=set(), ent=set(), events=set(), akao=set(), text=set(), assets=set())
+    subs = set()
     for _, op, a in mine:
         k = lambda i: a[i] if len(a) > i else None
         if op == 106 and k(0): r["pm"].add(a[0][1] if a[0][0] == 0 else DS.operand(*a[0]))
@@ -125,9 +127,17 @@ def scan(steps, t):
             m, v = a[idx]
             r["ent"].add(v if m == 0 else DS.operand(m, v))
         if op == 28 and len(a) > 2: r["events"].add((a[0][1] if a[0][0] == 0 else DS.operand(*a[0]), DS.operand(*a[2])))
+        if op == 38 and k(0) and k(0)[0] == 1: subs.add(a[0][1])
         if op in (34, 35) and k(0): r["text"].add(DS.operand(*a[0]))
         if op == 90 and len(a) == 2 and a[0][0] == 0 and a[0][1] in ASSET_CODES:
             r["assets"].add(f"{a[0][1]:#x}={DS.operand(*a[1])}")
+    # lead: the sub id (op 38) the actor must have to send its spawner 0x70, the event that brings the battle in:
+    # op 9 `T0 = A == K`, op 5 jump if zero T0, op 28 (spawner, 0, 0x70); None if no such gate.
+    r["lead"] = None
+    for (_, o1, a1), (_, o2, a2), (_, o3, a3) in zip(mine, mine[1:], mine[2:]):
+        if (o1 == 9 and len(a1) == 4 and a1[0] == (0, 0xb) and a1[2][0] == 1 and a1[2][1] in subs and a1[3][0] == 0
+                and o2 == 5 and a2 and a2[0] == a1[1] and o3 == 28 and len(a3) > 2 and a3[2] == (0, 0x70)):
+            r["lead"] = a1[3][1]
     return r
 
 
@@ -208,9 +218,10 @@ def write_table(pool, model, writers, path, deny=frozenset()):
         foes.append(dict(r=r, boss="*" in r["who"], block=block, count=count, shared=shared, end=end, rows_end=rows_end))
     def ok(a, b):
         if a is b or a["r"]["ids"] == b["r"]["ids"] or a["boss"] != b["boss"]: return False
-        # A scripted fight (M013's Rat) opens itself: its script runs the camera that brings the battle in, and a
-        # random fight's script doesn't (black screen at the start). Scripted takes scripted only.
-        if (a["r"]["kind"] == "scripted") != (b["r"]["kind"] == "scripted"): return False
+        # A scripted fight (M013's Rat) is spawned by op 8 with sub id 0 and its actor sends 0x70 at once; a random
+        # foe sends it only with its lead sub id (else the battle never comes in: black screen). So a scripted slot
+        # takes a random foe with a lead (pe_rand_ai.c gives the slot's op 8 that sub id); a scripted foe goes nowhere.
+        if b["r"]["kind"] == "scripted" or (a["r"]["kind"] == "scripted" and b["r"]["lead"] is None): return False
         if (a["r"]["room"], b["r"]["room"], b["r"]["entity"]) in deny: return False
         c = pair(a["r"], b["r"], {})
         return (not c["ent"] and not c["events"] and to_spawner(a["r"]) == to_spawner(b["r"])

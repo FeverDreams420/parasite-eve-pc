@@ -78,7 +78,8 @@
  * scene start (every site of the room or none), and the line ends in got=<item given at each gave=>.
  * Every table give that runs must hand out the layout's item. Checks a line may ask for: want=+OFF (the
  * give at that listing offset runs), never=+OFF (it doesn't), flag=V0x2c|0x80 (that bit is set at the
- * end), clear=V0x41|0x9 (none of those bits is set at the end). A failed check fails the test. A runs file
+ * end), clear=V0x41|0x9 (none of those bits is set at the end), ran=+OFF (the room's step at that task block
+ * offset ran: its battle start, say). A failed check fails the test. A runs file
  * with a #cover line must hand out every table spot: a spot
  * none of whose gives ran in a seeded line (say only in a room no way leads to) fails the test.
  *
@@ -529,7 +530,7 @@ struct Run {
     int at_actor[AT_MAX];                                     /* -1, or the actor type she stands on */
     int seeded, difficulty; u32 seed;                         /* seed=: the randomizer's layout */
     int foes;                                                 /* foes: the mod's own enemy plan */
-    unsigned nwant, nnever, nflag, nclear; u32 want[8], never[8], flag_bit[8], clear_bit[8]; u16 flag_var[8], clear_var[8];
+    unsigned nwant, nnever, nflag, nclear, nran; u32 want[8], never[8], ran_at[4], flag_bit[8], clear_bit[8]; u16 flag_var[8], clear_var[8];
     int gate; unsigned nshut, nopen; u32 shut[8], open[8];    /* gate: the real mod answers key tests */
     int held; unsigned nheld; u32 held_item[8];               /* keys=none / keys=D6,..: only those held */
     unsigned from, door; int has_door, has_arrive, floor; u32 arrive;   /* from=, door=, arrive=, floor */
@@ -671,6 +672,7 @@ static int parse_run(char *line, Run *r) {
             continue;
         }
         if (!strncmp(tok, "want=", 5)) { if (r->nwant == 8 || !hex_offset(tok + 5, &r->want[r->nwant++])) return 0; continue; }
+        if (!strncmp(tok, "ran=", 4)) { if (r->nran == 4 || !hex_offset(tok + 4, &r->ran_at[r->nran++])) return 0; continue; }
         if (!strncmp(tok, "never=", 6)) { if (r->nnever == 8 || !hex_offset(tok + 6, &r->never[r->nnever++])) return 0; continue; }
         if (!strncmp(tok, "flag=V", 6)) {
             char *bar = strchr(tok, '|');
@@ -909,6 +911,9 @@ static void do_run(const Run *r, FILE *out) {
         if ((i < gave_count) != want) FAIL("M%03u V0x4a=%#x: the give at +%X %s", r->room, r->area, at, want ? "didn't run" : "ran");
         ++checks_done;
     }
+    for (unsigned k = 0; k < r->nran; ++k, ++checks_done)
+        if (r->ran_at[k] / 4 > block_bytes / 4 || !ran[r->ran_at[k] / 4])
+            FAIL("M%03u V0x4a=%#x: the room's step at +%X didn't run", r->room, r->area, r->ran_at[k]);
     for (unsigned k = 0; k < r->nflag; ++k, ++checks_done)
         if (!(g_ScriptVariableBank[r->flag_var[k]] & r->flag_bit[k]))
             FAIL("M%03u V0x4a=%#x: V%#x|%#x not set", r->room, r->area, r->flag_var[k], r->flag_bit[k]);

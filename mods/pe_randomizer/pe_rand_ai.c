@@ -182,6 +182,43 @@ static void pe_patch_step(uint32_t *step, uint32_t at, void *user) {
     else if (p->spawner >= 0 && *v == (uint32_t)p->spawner && p->spawner != p->to_spawner) { *v = (uint32_t)p->to_spawner; ++p->done; }
 }
 
+/* The lead sub id: a source actor sends its spawner event 0x70 (which brings the battle in) only when its sub id
+ * (op 38) is K: op 9 `T = A == K`, op 5 jump if zero T, op 28 (spawner, 0, 0x70), three steps in a row. */
+typedef struct PeLead { uint64_t subs; int lead; uint32_t at[2]; const uint32_t *step[2]; } PeLead;
+static void pe_sub_step(uint32_t *step, uint32_t at, void *user) {
+    PeLead *l = user;
+    (void)at;
+    if ((step[0] & 0x1FFF) == 38 && (step[0] >> 13 & 15) && pe_mode(step, 0) == 1 && step[2] < 64) l->subs |= 1ull << step[2];
+}
+static void pe_lead_step(uint32_t *step, uint32_t at, void *user) {
+    PeLead *l = user;
+    const uint32_t op = step[0] & 0x1FFF, count = (step[0] >> 13) & 15;
+    const uint32_t *a = l->step[0], *b = l->step[1];
+    if (op == 28 && count > 2 && pe_mode(step, 2) == 0 && step[4] == 0x70 && a && b &&
+        l->at[1] + 8 + 4 * ((b[0] >> 13) & 15) == at && l->at[0] + 8 + 4 * ((a[0] >> 13) & 15) == l->at[1] &&
+        (a[0] & 0x1FFF) == 9 && ((a[0] >> 13) & 15) == 4 && pe_mode(a, 0) == 0 && a[2] == 0xb && pe_mode(a, 2) == 1 &&
+        a[4] < 64 && (l->subs >> a[4] & 1) && pe_mode(a, 3) == 0 &&
+        (b[0] & 0x1FFF) == 5 && ((b[0] >> 13) & 15) && pe_mode(b, 0) == pe_mode(a, 1) && b[2] == a[3])
+        l->lead = (int)a[5];
+    l->at[0] = l->at[1]; l->step[0] = l->step[1];
+    l->at[1] = at; l->step[1] = step;
+}
+
+/* An actor's spawns of type t: op 8 (SpawnEntityAt: type, sub id, x, y, z) and op 17 2500; `set` >= 0 sets the
+ * op 8 ones' sub id. */
+typedef struct PeSpawn { unsigned type, by8, by17, sub; int set; } PeSpawn;
+static void pe_op8_step(uint32_t *step, uint32_t at, void *user) {
+    PeSpawn *s = user;
+    const uint32_t op = step[0] & 0x1FFF;
+    (void)at;
+    if (op == 8 && ((step[0] >> 13) & 15) > 1 && pe_mode(step, 0) == 0 && pe_mode(step, 1) == 0 && step[2] == s->type) {
+        ++s->by8;
+        s->sub = step[3];
+        if (s->set >= 0) step[3] = (uint32_t)s->set;
+    } else if ((op == 8 && pe_entity_arg(step) == 0 && step[2] == s->type) ||
+               (op == 17 && pe_entity_arg(step) == 1 && step[2] == 2500 && step[3] == s->type)) ++s->by17;
+}
+
 /* The slots a room blob's directory installs. */
 static int pe_room_has_slot(const uint8_t *blob, unsigned slot) {
     const SceneRoomDirectory *dir = (const void *)(blob + pe_word(blob, 4));
@@ -274,6 +311,32 @@ int pe_rand_ai_apply(int room) {
             s_slot[s_slot_count].slot = r[7]; s_slot[s_slot_count].was = was; s_slot[s_slot_count++].now = now;
             ++slots;
         }
+        /* A slot whose own actor sends 0x70 at any sub id and that its spawner places with one op 8 (M013's
+         * scripted Rat) gets the sub id the copy needs to bring its battle in (the room's live task block is
+         * rebuilt at each load). A slot with a lead of its own is left: in a group only the lead sends it. */
+        PeLead lead = {0, -1, {0, 0}, {0, 0}}, own = {0, -1, {0, 0}, {0, 0}};
+        uint32_t spawner_at, own_at;
+        int lead_set = -1;
+        pe_walk(copy, 0, pe_word(theirs, 0) - start, pe_sub_step, &lead);
+        pe_walk(copy, 0, pe_word(theirs, 0) - start, pe_lead_step, &lead);
+        if (pe_entry(mine, bytes, map->entity, &own_at)) {
+            pe_walk(mine, own_at, pe_word(mine, 0), pe_sub_step, &own);
+            pe_walk(mine, own_at, pe_word(mine, 0), pe_lead_step, &own);
+        }
+        if (lead.lead >= 0 && own.lead < 0 && to_spawner >= 0 && !s_copy[to_spawner] && pe_entry(mine, bytes, (unsigned)to_spawner, &spawner_at)) {
+            PeSpawn spawn = {map->entity, 0, 0, 0, -1};
+            uint8_t *live = tasks->offsets[to_spawner] - spawner_at;
+            pe_walk(live, spawner_at, pe_word(mine, 0), pe_op8_step, &spawn);
+            /* one plain op 8 spawn (any other op 8 or op 17 2500 for E: a group, leave it) */
+            if (spawn.by8 == 1 && !spawn.by17 && spawn.sub != (uint32_t)lead.lead) {
+                lead_set = (int)spawn.sub;
+                spawn.set = lead.lead;
+                pe_walk(live, spawner_at, pe_word(mine, 0), pe_op8_step, &spawn);
+            }
+        }
+        if (lead_set >= 0)
+            pe_log("rand_ai", "map=%d e%u spawned by e%d's op 8 with sub id %#x (its lead; was %#x)", room, map->entity,
+                   to_spawner, lead.lead, lead_set);
         tasks->offsets[map->entity] = s_copy[map->entity] = copy;
         ++s_copy_count;
         pe_log("rand_ai", "map=%d e%u script of M%03u e%u, %u numbers patched (spawner e%d > e%d), %u slots installed, "

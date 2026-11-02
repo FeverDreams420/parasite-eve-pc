@@ -303,6 +303,15 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
             ${CMAKE_CURRENT_SOURCE_DIR}/pe_collection/pe_collection_data.h --out enemies.txt --check)
         set_tests_properties(mod-randomizer-enemies PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
             DEPENDS mod-randomizer-rooms WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+        # Enemy AI scan (tools/enemyai.py): what each census actor's script needs from its room (PM slots,
+        # entity numbers, spawner events and vars) and the conflicts per pair, into enemy-ai.txt. Reads the
+        # disc for the rooms' PM slot records; no game window.
+        add_test(NAME mod-randomizer-enemyai COMMAND ${Python3_EXECUTABLE} -I
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/enemyai.py randomizer-rooms.txt enemies.txt
+            --source ${PROJECT_SOURCE_DIR}/src/main/scene/room_load.c --out enemy-ai.txt --check)
+        set_tests_properties(mod-randomizer-enemyai PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
+            DEPENDS mod-randomizer-enemies PASS_REGULAR_EXPRESSION "Enemy AI: 0 problems"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
         # Battle randomizer stats: fights run headless with the real mod and the enemy ops on; each room's own
         # setup matches pe_rand_enemies.h, and a forced actor takes another's stat block, the rest unchanged.
         add_test(NAME mod-randomizer-battlestats COMMAND ${Python3_EXECUTABLE} -I

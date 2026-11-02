@@ -10,8 +10,9 @@
  * In the copy, the entity operands (tools/enemyai.py ENTITY_ARG: the type operand of ops 8, 14, 28, 54, 69,
  * 75, 84, 94, 139, 152, 164, 197, 206, 212; ops 17/237 sub commands 2500/3000; op 234 command 0x160) that name
  * the source actor's own number (its siblings) become E, and those that name its spawner become this room's
- * spawner of E (op 28 is an entity event, how an enemy signals its spawner). The block is read step by step
- * (header, tail word, operands): a block whose last step runs past its end is left alone.
+ * spawner of E (op 28 is an entity event, how an enemy signals its spawner). Only the steps the actor can reach
+ * are read, walked as the rooms ctest does (blocks keep data between their routines): a block whose walk leaves
+ * the room's code is left alone.
  *
  * N vars (g_ScriptNodeActiveFlags, zeroed at each room load) are shared by all of a room's scripts: those the
  * source shares with its spawner and this room's spawner uses too stay (the spawn protocol); the source's
@@ -33,7 +34,7 @@
 #include "pe_randomizer.h"
 
 #define MOD_ID "pe_randomizer"
-enum { PE_RAND_AIS = 8, PE_RAND_TYPES = 10, PE_RAND_AI_SLOTS = 32, PE_RAND_N_VARS = 64 };
+enum { PE_RAND_AIS = 512, PE_RAND_TYPES = 10, PE_RAND_AI_SLOTS = 32, PE_RAND_N_VARS = 64 };
 
 typedef struct PeRandAiMap {
     uint16_t room, from_room;
@@ -59,17 +60,11 @@ static const uint8_t *pe_tasks(const uint8_t *blob, uint32_t *bytes) {
     return blob + (pe_word(blob, record + 4) & 0xFFFFFF);
 }
 
-/* Actor type t's block in a task block: [start, end) by the entries (end: the next entry, or the block's end). */
-static int pe_entry(const uint8_t *tasks, uint32_t bytes, unsigned t, uint32_t *start, uint32_t *end) {
-    const uint32_t count = pe_word(tasks, 4);
-    if (t >= count) return 0;
+/* Actor type t's entry in a task block; 0 if it has none in the code (which ends at the block's first word). */
+static int pe_entry(const uint8_t *tasks, uint32_t bytes, unsigned t, uint32_t *start) {
+    if (t >= pe_word(tasks, 4) || 8 + 4 * t + 4 > bytes) return 0;
     *start = pe_word(tasks, 8 + 4 * t);
-    *end = bytes;
-    for (uint32_t i = 0; i < count; ++i) {
-        const uint32_t at = pe_word(tasks, 8 + 4 * i);
-        if (at > *start && at < *end) *end = at;
-    }
-    return *start < *end;
+    return *start < pe_word(tasks, 0) && *start % 4 == 0;
 }
 
 /* The operand of a step that names an entity type, or -1. */
@@ -88,15 +83,46 @@ static int pe_entity_arg(const uint32_t *step) {
     return idx >= 0 && (uint32_t)idx < count && !(step[0] >> (17 + 3 * idx) & 7) ? idx : -1;
 }
 
-/* Steps in [start, end): calls fn on each; 0 if the last one runs past the end (a pad word may follow it). */
-static int pe_steps(const uint8_t *tasks, uint32_t start, uint32_t end, void (*fn)(uint32_t *, uint32_t, void *), void *user) {
-    uint32_t at = start;
-    while (at + 8 <= end) {
-        uint32_t *step = (uint32_t *)(tasks + at);
-        if (fn) fn(step, at, user);
-        at += 8 + 4 * ((step[0] >> 13) & 15);
+/* Operand k's mode, 3 bits each: operands 0-4 in the header from bit 17, the rest in the tail word. */
+static unsigned pe_mode(const uint32_t *step, unsigned k) {
+    return k < 5 ? step[0] >> (17 + 3 * k) & 7 : step[1] >> (3 * (k - 5)) & 7;
+}
+
+/* The steps reached from `entry` (code before `code_end`, offsets in `block`), each once, as the rooms ctest walks
+ * them: script offsets are halfwords from the entry; code targets of op 0 goto, 5 jump if zero (not on a constant
+ * nonzero), 18 child routine, 20 event routine (selector 1-3), 29 branch; a routine ends at op 0, 1 or 32, at the
+ * FFFFFFFF word between routines, or at a door (op 49) followed by it. 0 if a step lies outside the code. */
+static int pe_walk(const uint8_t *block, uint32_t entry, uint32_t code_end, void (*fn)(uint32_t *, uint32_t, void *), void *user) {
+    uint8_t *seen = calloc(code_end / 4 + 1, 1);
+    uint32_t *work = malloc((code_end / 8 + 2) * sizeof(uint32_t)), top = 0;
+    int ok = seen && work;
+    if (ok) work[top++] = entry;
+    while (ok && top) {
+        uint32_t at = work[--top];
+        for (;;) {
+            if (at % 4 || at + 4 > code_end) { ok = 0; break; }
+            if (seen[at / 4] || pe_word(block, at) == 0xFFFFFFFFu) break;
+            uint32_t *step = (uint32_t *)(block + at);
+            const uint32_t op = step[0] & 0x1FFF, count = (step[0] >> 13) & 15, bytes = 8 + 4 * count;
+            if (at + bytes > code_end) { ok = 0; break; }
+            seen[at / 4] = 1;
+            int target = -1;
+            if (op == 0 || op == 18) target = 0;
+            else if (op == 5 && !(pe_mode(step, 0) == 0 && count && step[2])) target = 1;
+            else if (op == 29) target = 2;
+            else if (op == 20 && count > 1 && pe_mode(step, 0) == 0 && step[2] >= 1 && step[2] <= 3) target = 1;
+            if (target >= 0 && (uint32_t)target < count && pe_mode(step, (unsigned)target) == 0 && step[2 + target] < 0x80000000u &&
+                top < code_end / 8 + 2)
+                work[top++] = entry + step[2 + target] * 2;
+            if (fn) fn(step, at, user);
+            if (op == 0 || op == 1 || op == 32) break;
+            if (op == 49 && at + bytes + 4 <= code_end && pe_word(block, at + bytes) == 0xFFFFFFFFu) break;
+            at += bytes;
+        }
     }
-    return at <= end;
+    free(seen);
+    free(work);
+    return ok;
 }
 
 typedef struct PeSpawner { unsigned type, found; } PeSpawner;
@@ -113,18 +139,13 @@ static int pe_spawner(const uint8_t *tasks, uint32_t bytes, unsigned t) {
     const uint32_t count = pe_word(tasks, 4);
     int who = -1;
     for (unsigned e = 0; e < count; ++e) {
-        uint32_t start, end;
+        uint32_t start;
         PeSpawner s = {t, 0};
-        if (!pe_entry(tasks, bytes, e, &start, &end)) continue;
-        pe_steps(tasks, start, end, pe_spawn_step, &s);
+        if (!pe_entry(tasks, bytes, e, &start)) continue;
+        pe_walk(tasks, start, pe_word(tasks, 0), pe_spawn_step, &s);
         if (s.found) { if (who >= 0) return -1; who = (int)e; }
     }
     return who;
-}
-
-/* Operand k's mode, 3 bits each: operands 0-4 in the header from bit 17, the rest in the tail word. */
-static unsigned pe_mode(const uint32_t *step, unsigned k) {
-    return k < 5 ? step[0] >> (17 + 3 * k) & 7 : step[1] >> (3 * (k - 5)) & 7;
 }
 
 static void pe_n_step(uint32_t *step, uint32_t at, void *user) {
@@ -136,9 +157,9 @@ static void pe_n_step(uint32_t *step, uint32_t at, void *user) {
 
 /* The N vars (mode 4 operands, g_ScriptNodeActiveFlags) actor type t's block uses; 0 if it has none. */
 static uint64_t pe_n_used(const uint8_t *tasks, uint32_t bytes, int t) {
-    uint32_t start, end;
+    uint32_t start;
     uint64_t used = 0;
-    if (t >= 0 && pe_entry(tasks, bytes, (unsigned)t, &start, &end)) pe_steps(tasks, start, end, pe_n_step, &used);
+    if (t >= 0 && pe_entry(tasks, bytes, (unsigned)t, &start)) pe_walk(tasks, start, pe_word(tasks, 0), pe_n_step, &used);
     return used;
 }
 
@@ -200,7 +221,7 @@ int pe_rand_ai_apply(int room) {
     pe_rand_ai_release(assets);
     for (unsigned m = 0; m < s_map_count; ++m) {
         const PeRandAiMap *map = &s_map[m];
-        uint32_t bytes, from_bytes, start, end, task_bytes;
+        uint32_t bytes, from_bytes, start, task_bytes;
         const uint8_t *mine;
         PeRoomBlobs src;
         if (map->room != room || s_copy[map->entity] || map->entity >= tasks->count) continue;
@@ -208,7 +229,7 @@ int pe_rand_ai_apply(int room) {
         if (!pe_disc_room(map->from_room, &src)) continue;
         const uint8_t *theirs = pe_tasks(src.data, &from_bytes);
         const int spawner = pe_spawner(theirs, from_bytes, map->from_entity), to_spawner = pe_spawner(mine, bytes, map->entity);
-        if (!pe_entry(theirs, from_bytes, map->from_entity, &start, &end) || !pe_steps(theirs, start, end, NULL, NULL) ||
+        if (!pe_entry(theirs, from_bytes, map->from_entity, &start) || !pe_walk(theirs, start, pe_word(theirs, 0), NULL, NULL) ||
             (spawner >= 0) != (to_spawner >= 0)) {
             pe_log("rand_ai", "map=%d e%u: M%03u e%u doesn't fit (block, spawner e%d / e%d)", room, map->entity,
                    map->from_room, map->from_entity, spawner, to_spawner);
@@ -237,7 +258,7 @@ int pe_rand_ai_apply(int room) {
             patch.n_to[i] = (uint8_t)to;
             ++moved;
         }
-        pe_steps(copy, 0, end - start, pe_patch_step, &patch);
+        pe_walk(copy, 0, pe_word(theirs, 0) - start, pe_patch_step, &patch);
         for (unsigned i = 0; i < PE_RAND_N_VARS; ++i)
             if (their_n & (1ull << i)) s_n_copies |= 1ull << patch.n_to[i];
         /* the source room's slots this room lacks */

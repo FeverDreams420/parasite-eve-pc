@@ -9,6 +9,7 @@
 
 #include "pe_randomizer.h"
 #include "pe_rand_spots.h"
+#include "pe_rand_foes.h"
 
 static int test_gift_safe(unsigned id) { return id >= 1 && id <= 0x16; }   /* medicine, ammo, Junk */
 
@@ -282,10 +283,40 @@ static void print_key_layouts(unsigned n) {
         }
 }
 
+/* Battle: the foe table is sane, and every seed's plan passes the checks, the same one each time; most slots
+ * that can move do, bosses take bosses, and a slot no foe may take stays. */
+static void foe_plans(void) {
+    static uint16_t plan[PE_RAND_FOES], again[PE_RAND_FOES];
+    unsigned movable = 0, moved = 0, seeds = 2000, sources[PE_RAND_FOES] = {0}, used = 0;
+    for (unsigned i = 0; i < PE_RAND_FOES; ++i) plan[i] = (uint16_t)i;   /* vanilla passes (and the table's order) */
+    assert(!pe_rand_foes_check(g_pe_rand_foes, g_pe_rand_foe_ok[0], PE_RAND_FOES, plan));
+    for (unsigned i = 0; i < PE_RAND_FOES; ++i) {
+        const PeRandFoe *f = &g_pe_rand_foes[i];
+        unsigned any = 0;
+        assert(f->entity < 10 && f->block >= 0 && f->blocks >= 1 && f->block + f->blocks <= 8 && f->end <= 8 && f->rows_end <= 8);
+        for (unsigned w = 0; w < PE_RAND_FOE_WORDS; ++w) any |= g_pe_rand_foe_ok[i][w];
+        assert(!(g_pe_rand_foe_ok[i][i / 32] >> (i % 32) & 1));
+        movable += any != 0;
+    }
+    for (uint32_t seed = 0; seed < seeds; ++seed) {
+        unsigned n = pe_rand_foes_generate(g_pe_rand_foes, g_pe_rand_foe_ok[0], PE_RAND_FOES, seed, plan);
+        assert(!pe_rand_foes_check(g_pe_rand_foes, g_pe_rand_foe_ok[0], PE_RAND_FOES, plan));
+        assert(pe_rand_foes_generate(g_pe_rand_foes, g_pe_rand_foe_ok[0], PE_RAND_FOES, seed, again) == n);
+        assert(!memcmp(plan, again, sizeof plan));
+        for (unsigned i = 0; i < PE_RAND_FOES; ++i) if (plan[i] != i) ++sources[plan[i]];
+        moved += n;
+    }
+    for (unsigned i = 0; i < PE_RAND_FOES; ++i) used += sources[i] != 0;
+    printf("foes: %u in the table, %u can move, %.1f moved a seed on average, %u used as a source\n", PE_RAND_FOES,
+           movable, moved / (double)seeds, used);
+    assert(moved >= seeds * (movable - movable / 10));   /* VRAM keeps a few slots home, not many */
+}
+
 int main(int argc, char **argv) {
     if (argc == 3 && !strcmp(argv[1], "--layouts")) { print_key_layouts((unsigned)atoi(argv[2])); return 0; }
     table_is_sane();
     every_seed_passes();
+    foe_plans();
     if (PE_RAND_MOVE_KEYS) {
         keys_move_with_logic_data();
         needs_mean_the_key_spot_too();

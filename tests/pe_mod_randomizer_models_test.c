@@ -18,6 +18,8 @@
  *   blocks and rows, or both past them, as at home (the Monkey has a face on its thrown prop's block, the
  *   next slot's at home: counted, not failed).
  * And one swap that can't fit is refused (bank slot and VRAM untouched). One line per swap to argv[1].
+ * Then seeds' foe plans (pe_rand_foes_generate, pe_rand_foes.h): each room with a planned swap loaded with all of
+ * its swaps forced, model and AI, and every one done by the real switches (none refused for VRAM or its block).
  */
 #include <stdint.h>
 #include <stdio.h>
@@ -40,6 +42,7 @@
 #include "pe1/script_queue.h"
 #include "pe_randomizer.h"
 #include "pe_rand_enemies.h"
+#include "pe_rand_foes.h"
 
 /* Fixture I/O: the test-disc object renames the real image reads to these. */
 int CdRom_ImageReadSectorsFromLba(u32 lba, void *buffer, u32 count);
@@ -222,6 +225,39 @@ static void swap(const Placed *a, const Placed *b, FILE *out, int expect_fit) {
     free(model);
 }
 
+static unsigned plan_rooms, plan_swaps;
+
+static void seed_plans(unsigned seeds, FILE *out) {
+    static uint16_t plan[PE_RAND_FOES];
+    for (uint32_t seed = 1; seed <= seeds; ++seed) {
+        pe_rand_foes_generate(g_pe_rand_foes, g_pe_rand_foe_ok[0], PE_RAND_FOES, seed, plan);
+        for (unsigned i = 0, j; i < PE_RAND_FOES; i = j) {
+            const unsigned room = g_pe_rand_foes[i].room;
+            int want = 0;
+            pe_rand_model_clear();
+            pe_rand_ai_clear();
+            for (j = i; j < PE_RAND_FOES && g_pe_rand_foes[j].room == room; ++j) {
+                const PeRandFoe *b = &g_pe_rand_foes[plan[j]];
+                if (plan[j] == j) continue;
+                pe_rand_model_force(room, g_pe_rand_foes[j].entity, b->room, b->entity);
+                pe_rand_ai_force(room, g_pe_rand_foes[j].entity, b->room, b->entity);
+                ++want;
+                if (out) fprintf(out, "plan\t%u\tM%03u e%u %s <- M%03u e%u %s\n", (unsigned)seed, room, g_pe_rand_foes[j].entity,
+                                 g_pe_rand_foes[j].name, b->room, b->entity, b->name);
+            }
+            if (!want) continue;
+            if (!load(room)) { FAIL("M%03u doesn't load", room); continue; }
+            const int models = pe_rand_model_apply((int)room), ais = pe_rand_ai_apply((int)room);
+            if (models != want || ais != want)
+                FAIL("seed %u M%03u: %d swaps planned, %d models and %d scripts done", (unsigned)seed, room, want, models, ais);
+            ++plan_rooms;
+            plan_swaps += (unsigned)want;
+        }
+    }
+    pe_rand_model_clear();
+    pe_rand_ai_clear();
+}
+
 int main(int argc, char **argv) {
     const char *path = getenv("PE_TEST_DISC");
     if (!path || !*path) return getenv("PE_REQUIRE_GAME_ASSETS") ? 1 : 77;
@@ -254,11 +290,13 @@ int main(int argc, char **argv) {
         if (k == placed_count) FAIL("M%03u e%u: fits in no other room", placed[j].room, placed[j].entity);
     }
     if (no_a) swap(no_a, no_b, out, 0); else FAIL("no pair that doesn't fit");
+    seed_plans(10, out);
     if (out) fclose(out);
     CdRom_BindImage(NULL, NULL); pe_disc_close(&disc);
     if (failures) { fprintf(stderr, "%u failures\n", failures); return 1; }
     printf("Randomizer models: %u placed enemy actors (%u of %u pairs fit alone); %u creatures swapped in and checked "
-           "(model, rows, VRAM blocks and palettes, %u spawned faces, %u past its blocks as at home), %u misfit refused\n",
-           placed_count, fit, pairs, swaps, spawned_faces, borrowed_faces, refused);
+           "(model, rows, VRAM blocks and palettes, %u spawned faces, %u past its blocks as at home), %u misfit refused; "
+           "10 seeds' foe plans: %u room loads, %u swaps done\n",
+           placed_count, fit, pairs, swaps, spawned_faces, borrowed_faces, refused, plan_rooms, plan_swaps);
     return 0;
 }

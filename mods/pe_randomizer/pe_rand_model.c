@@ -30,7 +30,7 @@
 #include "pe_randomizer.h"
 
 #define MOD_ID "pe_randomizer"
-enum { PE_RAND_MODELS = 8, PE_RAND_BLOCKS = 8, PE_RAND_ROWS = 48, PE_RAND_IDLE_ROW = 2, PE_RAND_PAL_ROW = 450 };
+enum { PE_RAND_MODELS = 512, PE_RAND_TYPES = 10, PE_RAND_BLOCKS = 8, PE_RAND_ROWS = 48, PE_RAND_IDLE_ROW = 2, PE_RAND_PAL_ROW = 450 };
 
 typedef struct PeRandModelMap {
     uint16_t room, from_room;
@@ -39,9 +39,9 @@ typedef struct PeRandModelMap {
 static PeRandModelMap s_map[PE_RAND_MODELS];
 static unsigned s_map_count;
 /* The source rooms of the swaps done at the last room load, and what each bank slot was given. */
-static PeRoomBlobs s_rooms[PE_RAND_MODELS];
+static PeRoomBlobs s_rooms[PE_RAND_TYPES];
 static unsigned s_room_count;
-static void *s_given[10];
+static void *s_given[PE_RAND_TYPES];
 
 static uint32_t pe_word(const uint8_t *p, uint32_t at) { uint32_t v; memcpy(&v, p + at, 4); return v; }
 
@@ -147,7 +147,7 @@ int pe_rand_model_apply(int room) {
         const PeRandModelMap *map = &s_map[m];
         uint8_t *mine = map->room == room ? pe_bank_record(assets, map->entity) : NULL;
         int count, block = mine ? pe_place(pe_word(mine, 8), &count) : -1, from_count;
-        if (block < 0 || s_given[map->entity] || s_room_count == PE_RAND_MODELS) continue;
+        if (block < 0 || s_given[map->entity] || s_room_count == PE_RAND_TYPES) continue;
         PeRoomBlobs *src = &s_rooms[s_room_count];
         if (!pe_disc_room(map->from_room, src)) continue;
         const uint8_t *theirs = pe_bank_record(src->data, map->from_entity);

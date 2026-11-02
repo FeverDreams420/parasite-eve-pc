@@ -321,6 +321,15 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
         set_tests_properties(mod-randomizer-battlestats PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
             ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Battle stats: .* 0 problems"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+        # Battle randomizer AI: a forced actor runs another room's script (with its model and numbers) in a fight
+        # run headless with the real mod; the run test checks the script was given and run and the fight won.
+        add_test(NAME mod-randomizer-battleai COMMAND ${Python3_EXECUTABLE} -I
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/battlestats.py randomizer-battleai.txt
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/pe_rand_enemies.h
+            --run $<TARGET_FILE:test-mod-randomizer-run> ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/battleai-runs.txt)
+        set_tests_properties(mod-randomizer-battleai PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
+            ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Battle stats: .* 0 problems"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     endif()
 endif()
 

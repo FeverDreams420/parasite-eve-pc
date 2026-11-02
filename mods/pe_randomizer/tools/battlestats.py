@@ -8,6 +8,8 @@ Each combat= entry is an enemy slot's stat block after its setup (PE_RAND_STAT_C
 - A line with force=5<M005:2 needs a line of its own room without force=, and one of M005 (the source's own
   fight, so its block is checked by the rule above). Actor 5's slots have the source's table value for each
   code the source has, and the plain line's value for the others; every other slot equals the plain line's.
+- A forced actor that also runs the source's script (ai=5<M005:2, the AI switch) sets the codes the source's
+  table lacks (rolled drops and steals) in that script's own setup: those aren't compared with the plain line.
 - At least one forced slot ends up with numbers different from its plain run (the swap did something).
 Exit 1 on a failure, 77 when an input is missing."""
 import os, re, subprocess, sys
@@ -53,7 +55,8 @@ def runs(path):
             to, src = x.split("<M")
             room, ent = src.split(":")
             force[int(to)] = (int(room), int(ent))
-        out.append(dict(room=int(f[1][1:]), id=kv.get("id", ""), force=force, slots=slots))
+        ai = {int(x.split("<")[0]) for x in filter(None, kv.get("ai", "").split(","))}
+        out.append(dict(room=int(f[1][1:]), id=kv.get("id", ""), force=force, ai=ai, slots=slots))
     return out
 
 
@@ -100,6 +103,7 @@ def main():
             src = rows.get(ln["force"][ent]) if ent in ln["force"] else None
             forced_slots += src is not None
             for i in range(len(codes)):
+                if src is not None and i not in src and ent in ln["ai"]: continue   # the source script's own roll
                 want = src[i] if src is not None and i in src else was[i]
                 checked += 1
                 if vals[i] != want:

@@ -682,6 +682,7 @@ static int pe_rand_init(void) {
     pe_hook_add(PE_HOOK_INV_COMMAND, pe_rand_inv_command, NULL, PE_PRIORITY_EARLY, MOD_ID);
     pe_rand_battle_register();
     pe_rand_model_register();
+    pe_rand_ai_register();
     return pe_save_register(&s_record) < 0;
 }
 

@@ -122,4 +122,14 @@ void pe_rand_model_clear(void);
 int pe_rand_model_apply(int room);
 void pe_rand_model_register(void);
 
+/* Battle randomizer, AI (pe_rand_ai.c), test only too: actor `entity` of room `room` runs the script of actor
+ * `from_entity` of room `from_room` (a copy read from the disc at each load of `room`, its own and its spawner's
+ * numbers changed to this room's), with the script slots that room installs and this one lacks. Up to 8;
+ * pe_rand_ai_clear drops them all. pe_rand_ai_apply does it for the room just loaded (PE_HOOK_PLAYER_ROWS
+ * calls it), once a load; it returns how many it did. */
+int pe_rand_ai_force(unsigned room, unsigned entity, unsigned from_room, unsigned from_entity);
+void pe_rand_ai_clear(void);
+int pe_rand_ai_apply(int room);
+void pe_rand_ai_register(void);
+
 #endif

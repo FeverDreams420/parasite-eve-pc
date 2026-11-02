@@ -13,6 +13,11 @@
  * spawner of E (op 28 is an entity event, how an enemy signals its spawner). The block is read step by step
  * (header, tail word, operands): a block whose last step runs past its end is left alone.
  *
+ * N vars (g_ScriptNodeActiveFlags, zeroed at each room load) are shared by all of a room's scripts: those the
+ * source shares with its spawner and this room's spawner uses too stay (the spawn protocol); the source's
+ * others that a script of this room uses move to ones nothing here uses (mode 4 operands in the copy), but
+ * N0xa (the stat scale every enemy copies from V0x50).
+ *
  * The script slots (PM commands, effect programs) the source room installs and this room doesn't are
  * installed too, from the source room's records as its own load does it (each slot number has one handler in
  * every room); at the next room load, each one that room doesn't install is set back as it was.
@@ -28,7 +33,7 @@
 #include "pe_randomizer.h"
 
 #define MOD_ID "pe_randomizer"
-enum { PE_RAND_AIS = 8, PE_RAND_TYPES = 10, PE_RAND_AI_SLOTS = 32 };
+enum { PE_RAND_AIS = 8, PE_RAND_TYPES = 10, PE_RAND_AI_SLOTS = 32, PE_RAND_N_VARS = 64 };
 
 typedef struct PeRandAiMap {
     uint16_t room, from_room;
@@ -41,6 +46,8 @@ static uint8_t *s_copy[PE_RAND_TYPES];
 static unsigned s_copy_count;
 static struct { unsigned slot; const void *was, *now; } s_slot[PE_RAND_AI_SLOTS];
 static unsigned s_slot_count;
+/* The N vars the copies given at this load use (after their moves). */
+static uint64_t s_n_copies;
 
 static uint32_t pe_word(const uint8_t *p, uint32_t at) { uint32_t v; memcpy(&v, p + at, 4); return v; }
 
@@ -115,11 +122,39 @@ static int pe_spawner(const uint8_t *tasks, uint32_t bytes, unsigned t) {
     return who;
 }
 
-typedef struct PePatch { unsigned self, to_self; int spawner, to_spawner; unsigned done; } PePatch;
+/* Operand k's mode, 3 bits each: operands 0-4 in the header from bit 17, the rest in the tail word. */
+static unsigned pe_mode(const uint32_t *step, unsigned k) {
+    return k < 5 ? step[0] >> (17 + 3 * k) & 7 : step[1] >> (3 * (k - 5)) & 7;
+}
+
+static void pe_n_step(uint32_t *step, uint32_t at, void *user) {
+    uint64_t *used = user;
+    (void)at;
+    for (unsigned k = 0; k < ((step[0] >> 13) & 15); ++k)
+        if (pe_mode(step, k) == 4 && step[2 + k] < PE_RAND_N_VARS) *used |= 1ull << step[2 + k];
+}
+
+/* The N vars (mode 4 operands, g_ScriptNodeActiveFlags) actor type t's block uses; 0 if it has none. */
+static uint64_t pe_n_used(const uint8_t *tasks, uint32_t bytes, int t) {
+    uint32_t start, end;
+    uint64_t used = 0;
+    if (t >= 0 && pe_entry(tasks, bytes, (unsigned)t, &start, &end)) pe_steps(tasks, start, end, pe_n_step, &used);
+    return used;
+}
+
+typedef struct PePatch {
+    unsigned self, to_self; int spawner, to_spawner; unsigned done;
+    uint8_t n_to[PE_RAND_N_VARS]; unsigned n_done;
+} PePatch;
 static void pe_patch_step(uint32_t *step, uint32_t at, void *user) {
     PePatch *p = user;
     const int idx = pe_entity_arg(step);
     (void)at;
+    for (unsigned k = 0; k < ((step[0] >> 13) & 15); ++k)
+        if (pe_mode(step, k) == 4 && step[2 + k] < PE_RAND_N_VARS && p->n_to[step[2 + k]] != step[2 + k]) {
+            step[2 + k] = p->n_to[step[2 + k]];
+            ++p->n_done;
+        }
     if (idx < 0) return;
     uint32_t *v = &step[2 + idx];
     if (*v == p->self && p->self != p->to_self) { *v = p->to_self; ++p->done; }
@@ -147,6 +182,7 @@ void pe_rand_ai_clear(void) { s_map_count = 0; }
 static void pe_rand_ai_release(const uint8_t *assets) {
     for (unsigned i = 0; i < PE_RAND_TYPES; ++i) { free(s_copy[i]); s_copy[i] = NULL; }
     s_copy_count = 0;
+    s_n_copies = 0;
     for (unsigned i = s_slot_count; i-- > 0;)
         if (SceneRoom_ScriptSlot(s_slot[i].slot) == s_slot[i].now && !pe_room_has_slot(assets, s_slot[i].slot))
             SceneRoom_SetScriptSlot(s_slot[i].slot, s_slot[i].was);
@@ -183,8 +219,27 @@ int pe_rand_ai_apply(int room) {
         uint8_t *copy = malloc(task_bytes);
         if (!copy) { pe_disc_room_free(&src); continue; }
         memcpy(copy, theirs + start, task_bytes);
-        PePatch patch = {map->from_entity, map->entity, spawner, to_spawner, 0};
+        PePatch patch = {map->from_entity, map->entity, spawner, to_spawner, 0, {0}, 0};
+        /* N vars: the ones both spawners use stay (the spawn protocol); the source's others that this room's
+         * scripts use (not E's own block, which no longer runs) move to ones no script here uses. N0xa stays:
+         * every enemy sets it to the stat scale V0x50 (pe_rand_battle.c reads it). */
+        uint64_t room_n = s_n_copies, keep = (pe_n_used(mine, bytes, to_spawner) & pe_n_used(theirs, from_bytes, spawner)) | 1ull << 10;
+        const uint64_t their_n = pe_n_used(theirs, from_bytes, map->from_entity);
+        for (unsigned e = 0; e < pe_word(mine, 4); ++e)
+            if (e != map->entity) room_n |= pe_n_used(mine, bytes, (int)e);
+        uint64_t free_n = ~(room_n | their_n), moved = 0;
+        for (unsigned i = 0; i < PE_RAND_N_VARS; ++i) {
+            patch.n_to[i] = (uint8_t)i;
+            if (!(their_n & room_n & ~keep & (1ull << i)) || !free_n) continue;
+            unsigned to = 0;
+            while (!(free_n & (1ull << to))) ++to;
+            free_n &= ~(1ull << to);
+            patch.n_to[i] = (uint8_t)to;
+            ++moved;
+        }
         pe_steps(copy, 0, end - start, pe_patch_step, &patch);
+        for (unsigned i = 0; i < PE_RAND_N_VARS; ++i)
+            if (their_n & (1ull << i)) s_n_copies |= 1ull << patch.n_to[i];
         /* the source room's slots this room lacks */
         const SceneRoomDirectory *dir = (const void *)(src.data + pe_word(src.data, 4));
         const uint8_t *r = src.data + (dir->scripts & 0x3FFFFF);
@@ -200,8 +255,11 @@ int pe_rand_ai_apply(int room) {
         }
         tasks->offsets[map->entity] = s_copy[map->entity] = copy;
         ++s_copy_count;
-        pe_log("rand_ai", "map=%d e%u script of M%03u e%u, %u numbers patched (spawner e%d > e%d), %u slots installed",
-               room, map->entity, map->from_room, map->from_entity, patch.done, spawner, to_spawner, slots);
+        pe_log("rand_ai", "map=%d e%u script of M%03u e%u, %u numbers patched (spawner e%d > e%d), %u slots installed, "
+               "%u N vars moved (%u operands)", room, map->entity, map->from_room, map->from_entity, patch.done, spawner,
+               to_spawner, slots, (unsigned)moved, patch.n_done);
+        for (unsigned i = 0; i < PE_RAND_N_VARS; ++i)
+            if (patch.n_to[i] != i) pe_log("rand_ai", "map=%d e%u N%#x > N%#x", room, map->entity, i, patch.n_to[i]);
         pe_disc_room_free(&src);
         ++done;
     }

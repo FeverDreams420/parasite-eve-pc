@@ -31,7 +31,7 @@ model placed in the enemy VRAM blocks (randomizer-models.txt, the rooms ctest) a
 (story-writes.txt: replacing its script would drop the write; such actors stay), boss or not (the boss pool:
 a creature marked * in enemies.txt), with its room's VRAM use; and per slot the foes that may take it: same
 pool, another creature, no ent or events conflict, the same spawner events (a fight's spawner counts on them),
-both with one spawner or both not (pe_rand_ai.c patches one), and not in --deny (lines `MNNN<MBBB:E`: room
+both with one spawner or both not (pe_rand_ai.c patches one), scripted with scripted only, and not in --deny (lines `MNNN<MBBB:E`: room
 NNN's slots don't take room BBB's actor E; swaps whose fights fail headless, mod-randomizer-foefights).
 --check: every actor has steps in its block, every room slot an actor starts is installed in its own room
 with a handler the source binds, and each slot number has one handler in every room (what makes "pm" 0: B's
@@ -208,6 +208,9 @@ def write_table(pool, model, writers, path, deny=frozenset()):
         foes.append(dict(r=r, boss="*" in r["who"], block=block, count=count, shared=shared, end=end, rows_end=rows_end))
     def ok(a, b):
         if a is b or a["r"]["ids"] == b["r"]["ids"] or a["boss"] != b["boss"]: return False
+        # A scripted fight (M013's Rat) opens itself: its script runs the camera that brings the battle in, and a
+        # random fight's script doesn't (black screen at the start). Scripted takes scripted only.
+        if (a["r"]["kind"] == "scripted") != (b["r"]["kind"] == "scripted"): return False
         if (a["r"]["room"], b["r"]["room"], b["r"]["entity"]) in deny: return False
         c = pair(a["r"], b["r"], {})
         return (not c["ent"] and not c["events"] and to_spawner(a["r"]) == to_spawner(b["r"])

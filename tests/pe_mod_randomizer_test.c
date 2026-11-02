@@ -297,6 +297,10 @@ static void foe_plans(void) {
         for (unsigned w = 0; w < PE_RAND_FOE_WORDS; ++w) any |= g_pe_rand_foe_ok[i][w];
         assert(!(g_pe_rand_foe_ok[i][i / 32] >> (i % 32) & 1));
         movable += any != 0;
+        if (f->room == 13 && f->entity == 2) {   /* M013's scripted Rat opens its own fight: it stays, and goes nowhere */
+            assert(!any);
+            for (unsigned j = 0; j < PE_RAND_FOES; ++j) assert(!(g_pe_rand_foe_ok[j][i / 32] >> (i % 32) & 1));
+        }
     }
     for (uint32_t seed = 0; seed < seeds; ++seed) {
         unsigned n = pe_rand_foes_generate(g_pe_rand_foes, g_pe_rand_foe_ok[0], PE_RAND_FOES, seed, plan);

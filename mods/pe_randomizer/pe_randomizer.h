@@ -152,7 +152,7 @@ typedef struct PeRandFoe {
 unsigned pe_rand_foes_generate(const PeRandFoe *foes, const uint32_t *ok, unsigned count, uint32_t seed, uint16_t *out);
 /* Raise PE_RAND_FOES_VERSION whenever the same seed would give a different plan (the generator or pe_rand_foes.h).
  * A save keeps the version it was made with; a build that doesn't know it leaves that game's enemies vanilla. */
-#define PE_RAND_FOES_VERSION 1
+#define PE_RAND_FOES_VERSION 2
 
 /* The checks every plan passes (also used by the tests). 0 = fine, else a reason. */
 const char *pe_rand_foes_check(const PeRandFoe *foes, const uint32_t *ok, unsigned count, const uint16_t *plan);

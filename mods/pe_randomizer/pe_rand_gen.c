@@ -268,3 +268,51 @@ void pe_rand_generate(const PeRandSpot *spots, unsigned count, uint32_t seed, in
     result->attempts = (can_move ? 2 : 1) * PE_RAND_TRIES;
     result->fallback = 2;
 }
+
+/* Battle: foe b's model in foe a's slot, the room's first free block and palette row so far given: 1 if it fits
+ * (in a's own blocks when it's no bigger and no other slot shares them, else in the free ones, which it takes). */
+static int foe_fits(const PeRandFoe *a, const PeRandFoe *b, unsigned *end, unsigned *rows_end) {
+    if (b->blocks <= a->blocks && !a->shared) return 1;
+    if (*end + b->blocks > 8 || *rows_end + b->blocks > 8) return 0;
+    *end += b->blocks;
+    *rows_end += b->blocks;
+    return 1;
+}
+
+static int foe_ok(const uint32_t *ok, unsigned count, unsigned a, unsigned b) {
+    return ok[a * ((count + 31) / 32) + b / 32] >> (b % 32) & 1;
+}
+
+unsigned pe_rand_foes_generate(const PeRandFoe *foes, const uint32_t *ok, unsigned count, uint32_t seed, uint16_t *out) {
+    static uint16_t pick[PE_RAND_MAX_SPOTS];
+    unsigned moved = 0, end = 0, rows_end = 0;
+    PeRng rng;
+    for (unsigned i = 0; i < count; ++i) out[i] = (uint16_t)i;
+    if (count > PE_RAND_MAX_SPOTS) return 0;
+    rng_init(&rng, seed, 0xBA771Eu);
+    for (unsigned i = 0; i < count; ++i) {
+        unsigned n = 0;
+        if (!i || foes[i].room != foes[i - 1].room) { end = foes[i].end; rows_end = foes[i].rows_end; }
+        for (unsigned b = 0; b < count; ++b) if (foe_ok(ok, count, i, b)) pick[n++] = (uint16_t)b;
+        while (n) {   /* a random one of those left, until one fits */
+            const unsigned k = rng_below(&rng, n), b = pick[k];
+            pick[k] = pick[--n];
+            if (foe_fits(&foes[i], &foes[b], &end, &rows_end)) { out[i] = (uint16_t)b; ++moved; break; }
+        }
+    }
+    return moved;
+}
+
+const char *pe_rand_foes_check(const PeRandFoe *foes, const uint32_t *ok, unsigned count, const uint16_t *plan) {
+    unsigned end = 0, rows_end = 0;
+    for (unsigned i = 0; i < count; ++i) {
+        if (!i || foes[i].room != foes[i - 1].room) { end = foes[i].end; rows_end = foes[i].rows_end; }
+        if (i && (foes[i].room < foes[i - 1].room || (foes[i].room == foes[i - 1].room && foes[i].entity <= foes[i - 1].entity)))
+            return "table not in room order";
+        if (plan[i] == i) continue;
+        if (plan[i] >= count || !foe_ok(ok, count, i, plan[i])) return "a slot takes a foe it may not";
+        if (foes[i].boss != foes[plan[i]].boss) return "a boss and a foe swapped";
+        if (!foe_fits(&foes[i], &foes[plan[i]], &end, &rows_end)) return "a model doesn't fit its room";
+    }
+    return 0;
+}

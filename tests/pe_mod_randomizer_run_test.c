@@ -94,7 +94,25 @@
  * line with from=M024 first loads that room and starts it for the mod (Aya leaving it, its door moved),
  * then loads the line's room. Checks: arrive=0x17a (V0x1 after the mod's scene start: the mod set it),
  * door=M378 (the run ends at a door to that room; door=none: at no door), floor (at the end Aya stands on a floor triangle,
- * start=N). The output's V0x1= is the value after the scene start. */
+ * start=N). The output's V0x1= is the value after the scene start.
+ *
+ * Enemy stats (battle randomizer): a line with stats runs the enemy ops for real: op 111 takes a battle slot
+ * (Entity_AllocSlot's work, without its animation: no models here), ops 90 / 206 write the slot's fields
+ * (Entity_WriteFieldByCmd, so PE_HOOK_ENEMY_FIELD) and op 89 reads them. The line starts from the same
+ * random state every time, so two runs of a room roll the same. It ends in combat=<e5#3:v,v,...;...>: each
+ * slot taken (actor type, allocation), with its stat block (PE_RAND_STAT_CODES order, pe_rand_enemies.h) at
+ * the start of the frame after op 111 ran: the setup done, and on a gate line the mod's PE_HOOK_FRAME run. force=5<M005:2 (gate lines only: the real mod) gives actor 5
+ * of the line's room the stat block of M005's actor 2 (pe_rand_battle_force); the line then has force= too.
+ * ai=5<M012:5 (gate lines only) gives actor 5 the script and model of M012's actor 5 (pe_rand_ai_force,
+ * pe_rand_model_force): after the load the mod's PE_HOOK_PLAYER_ROWS runs, as the game's load does before the
+ * actors spawn. The line then ends in ai=5<M012:5, aisteps=<e5:N: steps actor 5 ran in the given script,
+ * outside the room's own task block> and pm=<script slots the hook installed>. It fails when the script wasn't
+ * given, the actor ran none of it, or a win line won no battle.
+ * foes (gate lines; then every gate line of the file has it): the mod host starts with Randomize enemies on, and
+ * the line keeps the swaps the mod's own New Game put in (this seed's foe plan) instead of forcing its ai=. Every
+ * actor of the room the plan moves (pe_rand_foes_generate here, same seed) must have been given a script, and
+ * no other; the line's ai= list (the moved actors that fight there) is checked as above.
+ * tools/battlestats.py checks the lines. */
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -102,6 +120,8 @@
 #include <SDL3/SDL.h>
 #include "common.h"
 #include "pe1/asset_table.h"
+#include "pe1/battle.h"
+#include "pe1/battle_runtime.h"
 #include "pe1/boot.h"
 #include "pe1/boot_disc_check.h"
 #include "pe1/boot_services.h"
@@ -122,6 +142,9 @@
 #include "pe1/script_queue.h"
 #include "pe1/script_state.h"
 #include "pe_hooks.h"
+#include "pe_randomizer.h"
+#include "pe_rand_foes.h"
+#include "pe_rand_enemies.h"
 #include "pe_rand_locks.h"
 #include "pe_rand_spots.h"
 
@@ -130,7 +153,7 @@ int CdRom_ImageReadSectorsFromLba(u32 lba, void *buffer, u32 count);
 int CdRom_ImagePollReady(void);
 int CdRom_ReadSectorsFromLba(u32 lba, void *buffer, u32 count) { return CdRom_ImageReadSectorsFromLba(lba, buffer, count); }
 int CdRom_PollReady(void) { return CdRom_ImagePollReady(); }
-int Asset_Find08w(int id, int mode, int x, int y, int z) { (void)id; (void)mode; (void)x; (void)y; (void)z; return 0; }
+int Asset_Find08w(int id, int mode, s16 x, s16 y, s16 z) { (void)id; (void)mode; (void)x; (void)y; (void)z; return 0; }
 
 void Entity_RelocateSceneData(void);
 void Script_GarbageCollectNodes(void);
@@ -176,6 +199,76 @@ static unsigned long frame_steps;
  * routine's last op 148 wait tested against, the frame the routine set 6 (-1: not yet). */
 static int win, fighting, won, awaited, set6_at, *state_read;
 static unsigned cur_frame;
+/* stats: enemy ops run; each slot taken, its stat block at the end of that frame. */
+static int stats;
+typedef struct Combat { u8 type, instance, slot, done; s32 v[PE_RAND_STATS]; } Combat;
+static Combat combats[32]; static unsigned combat_count;
+/* ai=: steps each actor type ran outside the room's task block (in a script the mod gave it). */
+static unsigned ai_steps[16];
+static u32 random_start[33];   /* the random generator's words when the test started */
+
+/* Entity_AllocSlot (battle/enemy_slots.c) without Entity_SetActionMode: no model banks here. */
+extern const EnemyCombatant g_EnemyCombatantInitial;
+static void alloc_slot(FieldActor *a) {
+    BattleEntity *e = (BattleEntity *)a;
+    for (u8 i = 0; i < 7; ++i) {
+        if (g_BattleEnemySlots[i].active) continue;
+        g_BattleEnemySlots[i].active = 1;
+        g_BattleEnemySlots[i].combatant = g_EnemyCombatantInitial;
+        EnemyCombatant *c = &g_BattleEnemySlots[i].combatant;
+        e->core = c;
+        c->lowAndEntityId.bytes.entityId = ++g_EntityInstanceCounter;
+        c->slotBit = 1 << i;
+        if (!(e->entityFlags & 0x2000)) { c->effect = &c->records[0]; g_BattleLiveEnemyCount++; }
+        if (combat_count < 32) combats[combat_count++] = (Combat){ a->type_id, c->lowAndEntityId.bytes.entityId, i, 0, {0} };
+        return;
+    }
+}
+
+/* A field code's value as Entity_WriteFieldByCmd stored it. */
+static s32 stat_of(const FieldActorState *s, u8 code) {
+    switch (code) {
+    case 0x28: return s->amount_mirror;
+    case 0x2c: return s->control10.command_value;
+    case 0x2d: return s->action_value14;
+    case 0x3c: return s->script_value88;
+    case 0x3d: return s->script_value8c;
+    case 0x3e: return s->script_value8e;
+    case 0x3f: return s->effect_chance;
+    case 0x41: return s->effect_param92;
+    case 0x42: return s->effect_param93;
+    case 0x43: return s->effect_level;
+    case 0x44: return s->effect_duration;
+    case 0x45: return s->script_value96;
+    case 0x5a: return s->script_value98;
+    case 0x5b: return s->script_value9a;
+    case 0x5c: return s->script_value9e;
+    case 0x5d: return s->script_value9f;
+    case 0x64: return s->status_flags2.bits.field64;
+    case 0x65: return s->status_flags2.bits.field65;
+    case 0x66: return s->status_flags2.bits.field66;
+    case 0x67: return s->status_flags2.bits.field67;
+    case 0x68: return s->status_flags2.bits.field68;
+    case 0x69: return s->status_flags2.bits.field69;
+    case 0x6a: return s->status_flags2.bits.field6a;
+    case 0x6b: return s->status_flags2.bits.field6b;
+    case 0x6c: return s->status_flags2.bits.field6c;
+    case 0x6d: return s->status_flags2.bits.field6d;
+    }
+    return -1;
+}
+
+/* stats: a frame starts (the mod's PE_HOOK_FRAME on gate lines: a forced block goes in), then each slot
+ * taken last frame has its setup done: its block is read. */
+struct Run;
+static void frame_start(const struct Run *r);
+
+/* Op 206's target: the actor op 139 would find (type, sub id, alive). */
+static FieldActor *actor_by_type(int type, int sub) {
+    FieldActor *a = g_FieldActorListHead;
+    while (a && (a->type_id != type || a->sub_id != sub || (a->flags & 0x10))) a = a->next;
+    return a;
+}
 /* Zones PointInPoly tested: listing offset and the polygon's whole-unit corners (x, z). */
 typedef struct Zone { u32 at; s16 x[4], z[4]; } Zone;
 static Zone zones[256]; static unsigned zone_count;
@@ -203,6 +296,7 @@ static void run_queue(void) {
             g_ScriptCursor = values + count;
             size_t at = (size_t)((const u8 *)step - block);
             if (at < block_bytes) ran[at / 4] = 1;
+            else if (entity->type_id < 16) ++ai_steps[entity->type_id];
             if (++frame_steps > SPIN_STEPS) { spin = 1; return; }
             if (op == 85) battle = 1;
             if (trace) { fprintf(stderr, "e%u +%#zx op %u\n", entity->type_id, at, op); fflush(stderr); }
@@ -230,6 +324,14 @@ static void run_queue(void) {
             if (op == 139 && *args[0] != 0) {   /* enemy field: actors here have no battle state, as if absent */
                 FieldActor *a = g_FieldActorListHead;
                 while (a && (a->type_id != *args[0] || a->sub_id != *args[1] || (a->flags & 0x10))) a = a->next;
+                result = a && a->state ? g_ScriptQueueOpcodeHandlers[op](args) : 1;
+            } else if (stats && op == 111) {                                      /* a battle slot */
+                if (!entity->state) alloc_slot(entity);
+                result = 1;
+            } else if (stats && (op == 89 || op == 90) && entity->type_id != 0) {   /* the slot's fields */
+                result = entity->state ? g_ScriptQueueOpcodeHandlers[op](args) : 1;
+            } else if (stats && op == 206 && *args[0] != 0) {
+                FieldActor *a = actor_by_type(*args[0], *args[1]);
                 result = a && a->state ? g_ScriptQueueOpcodeHandlers[op](args) : 1;
             } else if (op == 9 && count == 4 && (*args[0] == 16 || *args[0] == 21 || *args[0] == 22) && *args[3] == 0) {
                 /* x / 0, x % 0: fields skipped ops fill in the game (battle stats, op 89; op 14) read 0 here */
@@ -419,36 +521,41 @@ static int token_room(u32 token) {
     return atoi(name + 1);
 }
 
-typedef struct Run {
+typedef struct Run Run;
+struct Run {
     unsigned room; u32 area, left; unsigned nvars; u16 var[32]; u32 val[32]; int keys, press, animwait, win;
     int has_menu, menu;                                       /* menu=N */
     int at, at_x[AT_MAX], at_z[AT_MAX], at_angle[AT_MAX];   /* Aya's stops from AT_FRAME on, at of them */
     int at_actor[AT_MAX];                                     /* -1, or the actor type she stands on */
     int seeded, difficulty; u32 seed;                         /* seed=: the randomizer's layout */
+    int foes;                                                 /* foes: the mod's own enemy plan */
     unsigned nwant, nnever, nflag, nclear; u32 want[8], never[8], flag_bit[8], clear_bit[8]; u16 flag_var[8], clear_var[8];
     int gate; unsigned nshut, nopen; u32 shut[8], open[8];    /* gate: the real mod answers key tests */
     int held; unsigned nheld; u32 held_item[8];               /* keys=none / keys=D6,..: only those held */
     unsigned from, door; int has_door, has_arrive, floor; u32 arrive;   /* from=, door=, arrive=, floor */
     int full, swap; unsigned nhas, nlack; u32 has[4], lack[4];   /* bag=full, swap=N, has=, lack= */
+    int stats; unsigned nforce; u16 force_to[4], force_room[4], force_from[4];   /* stats, force=5<M005:2 */
+    unsigned nai; u16 ai_to[4], ai_room[4], ai_from[4];       /* ai=5<M012:5 */
     char id[48];                                              /* id=: echoed on the output line */
-} Run;
+};
 
 /* Gate lines: the mod host, started once for the first gate line's seed, its files in gate_dir. */
 static char gate_dir[1100];
-static int gate_started, gate_difficulty; static u32 gate_seed;
+static int gate_started, gate_difficulty, gate_foes; static u32 gate_seed;
 static int start_gate(const Run *r) {
     char path[1200];
     FILE *f;
-    if (gate_started) return gate_seed == r->seed && gate_difficulty == r->difficulty;
+    if (gate_started) return gate_seed == r->seed && gate_difficulty == r->difficulty && gate_foes == r->foes;
     if (!*gate_dir || !SDL_CreateDirectory(gate_dir)) return 0;
     snprintf(path, sizeof(path), "%s/pe_mods.ini", gate_dir);
     if (!(f = fopen(path, "w"))) return 0;
-    fprintf(f, "Manage mods/All mods=1\nManage mods/Randomizer=1\nRandomizer/Randomize new games=1\nRandomizer/Difficulty=%d\n", r->difficulty);
+    fprintf(f, "Manage mods/All mods=1\nManage mods/Randomizer=1\nRandomizer/Randomize new games=1\nRandomizer/Difficulty=%d\n"
+            "Randomizer/Randomize enemies=%d\n", r->difficulty, r->foes);
     for (u32 d = 0, div = 100000; d < 6; ++d, div /= 10) fprintf(f, "Randomizer/Seed digits/Digit %u=%u\n", d + 1, r->seed / div % 10);
     fclose(f);
     snprintf(path, sizeof(path), "%s/prefs", gate_dir);   /* only its folder is used */
     PE_HOOK(PE_HOOK_INIT, (&(PeHookInit){0, path}));
-    gate_started = 1; gate_seed = r->seed; gate_difficulty = r->difficulty;
+    gate_started = 1; gate_seed = r->seed; gate_difficulty = r->difficulty; gate_foes = r->foes;
     return 1;
 }
 
@@ -525,7 +632,22 @@ static int parse_run(char *line, Run *r) {
         if (!strncmp(tok, "lack=", 5)) { if (r->nlack == 4) return 0; r->lack[r->nlack++] = (u32)strtoul(tok + 5, NULL, 16); continue; }
         if (!strncmp(tok, "menu=", 5)) { r->has_menu = 1; r->menu = atoi(tok + 5); continue; }
         if (!strcmp(tok, "win")) { r->win = 1; continue; }
+        if (!strcmp(tok, "stats")) { r->stats = 1; continue; }
+        if (!strncmp(tok, "force=", 6)) {
+            unsigned to, room, from;
+            if (r->nforce == 4 || sscanf(tok + 6, "%u<M%u:%u", &to, &room, &from) != 3) return 0;
+            r->force_to[r->nforce] = (u16)to; r->force_room[r->nforce] = (u16)room; r->force_from[r->nforce++] = (u16)from;
+            r->stats = 1;
+            continue;
+        }
+        if (!strncmp(tok, "ai=", 3)) {
+            unsigned to, room, from;
+            if (r->nai == 4 || sscanf(tok + 3, "%u<M%u:%u", &to, &room, &from) != 3 || to >= 16) return 0;
+            r->ai_to[r->nai] = (u16)to; r->ai_room[r->nai] = (u16)room; r->ai_from[r->nai++] = (u16)from;
+            continue;
+        }
         if (!strcmp(tok, "gate")) { r->gate = 1; continue; }
+        if (!strcmp(tok, "foes")) { r->foes = 1; continue; }
         if (!strcmp(tok, "floor")) { r->floor = 1; continue; }
         if (!strncmp(tok, "from=M", 6)) { r->from = (unsigned)atoi(tok + 6); if (!r->from || r->from > SCENE_ROOM_COUNT) return 0; continue; }
         if (!strncmp(tok, "door=M", 6)) { r->door = (unsigned)atoi(tok + 6); r->has_door = 1; continue; }
@@ -586,12 +708,42 @@ static void set_vars(const Run *r) {
     }
 }
 
+static void frame_start(const Run *r) {
+    if (r->gate) PE_HOOK(PE_HOOK_FRAME, NULL);
+    for (unsigned c = 0; c < combat_count; ++c) {
+        Combat *k = &combats[c];
+        if (k->done) continue;
+        k->done = 1;
+        for (int i = 0; i < PE_RAND_STATS; ++i)
+            k->v[i] = stat_of((const FieldActorState *)&g_BattleEnemySlots[k->slot].combatant, PE_RAND_STAT_CODES[i]);
+    }
+}
+
 static void do_run(const Run *r, FILE *out) {
     char name[16]; snprintf(name, sizeof(name), "m%04ui", r->room);
     u32 token = (u32)Text_ParseBase32Id((signed char *)name);
     if (!g_RoomSectorTable[r->room - 1].roomSectors) { FAIL("M%03u is no room on the disc", r->room); return; }
     if (r->gate && (!r->seeded || !start_gate(r))) { FAIL("M%03u: a gate line needs the gate lines' one seed= (mod host in %s)", r->room, gate_dir); return; }
+    if (r->nforce && !r->gate) { FAIL("M%03u: force= needs gate (the real mod)", r->room); return; }
+    if (r->nai && !r->gate) { FAIL("M%03u: ai= needs gate (the real mod)", r->room); return; }
+    if (r->foes && !r->gate) { FAIL("M%03u: foes needs gate (the real mod)", r->room); return; }
     if (r->gate) PE_HOOK(PE_HOOK_NEW_GAME, (&(PeHookNewGame){PE_NEW_GAME_TITLE}));
+    pe_rand_battle_clear();
+    if (!r->foes) {   /* foes: the plan the mod's New Game gave the switches stays */
+        pe_rand_ai_clear();
+        pe_rand_model_clear();
+    }
+    for (unsigned i = 0; i < r->nai && !r->foes; ++i)
+        if (!pe_rand_ai_force(r->room, r->ai_to[i], r->ai_room[i], r->ai_from[i]) ||
+            !pe_rand_model_force(r->room, r->ai_to[i], r->ai_room[i], r->ai_from[i])) {
+            FAIL("M%03u: ai=%u<M%03u:%u: not taken", r->room, r->ai_to[i], r->ai_room[i], r->ai_from[i]);
+            return;
+        }
+    for (unsigned i = 0; i < r->nforce; ++i)
+        if (!pe_rand_battle_force(r->room, r->force_to[i], r->force_room[i], r->force_from[i])) {
+            FAIL("M%03u: force=%u<M%03u:%u: not both in pe_rand_enemies.h", r->room, r->force_to[i], r->force_room[i], r->force_from[i]);
+            return;
+        }
     Entity_ResetAllPools();   /* zeroes the variables, node flags and actors, as a new game does */
     if (r->from) {   /* the room Aya leaves: the mod sees it start and moves its door */
         char from_name[16]; snprintf(from_name, sizeof(from_name), "m%04ui", r->from);
@@ -632,6 +784,43 @@ static void do_run(const Run *r, FILE *out) {
             }
         } else patch_room(r->room, (u8 *)g_GameState.loaded_scene_assets);
     }
+    /* ai=: the banks are filled; the mod gives the scripts (and models) before the actors spawn. The slots
+     * the room doesn't install are emptied first (earlier lines' rooms filled some; not the global ones, 0-7
+     * and 85-114), so pm= is what the mod adds. */
+    char pm[256] = ""; size_t pm_len = 0;
+    memset(ai_steps, 0, sizeof(ai_steps));
+    if (r->nai || r->foes) {
+        static const void *slot_was[85 + 104];
+        RelocBlock *tasks = g_GameState.bank_reset_944[0];
+        const u8 *record = assets + (directory->scripts & 0x3FFFFF);
+        u8 own_slot[85 + 104] = {0};
+        for (unsigned i = 0; i < directory->scripts >> 22; ++i) if (record[12 * i + 7] < 85 + 104) own_slot[record[12 * i + 7]] = 1;
+        for (unsigned i = 0; i < 85 + 104; ++i) {
+            if (!own_slot[i] && i >= 8 && (i < 85 || i > 114)) SceneRoom_SetScriptSlot(i, NULL);
+            slot_was[i] = SceneRoom_ScriptSlot(i);
+        }
+        PE_HOOK(PE_HOOK_PLAYER_ROWS, NULL);
+        for (unsigned i = 0; i < 85 + 104; ++i)
+            if (SceneRoom_ScriptSlot(i) != slot_was[i] && pm_len < sizeof(pm) - 8)
+                pm_len += (size_t)snprintf(pm + pm_len, sizeof(pm) - pm_len, "%s%u", pm_len ? "," : "", i);
+        for (unsigned i = 0; i < r->nai; ++i) {
+            const u8 *own = r->ai_to[i] < tasks->count ? tasks->offsets[r->ai_to[i]] : NULL;
+            if (!own || (own >= block && own < block + block_bytes))
+                FAIL("M%03u: ai=%u<M%03u:%u: the mod gave no script", r->room, r->ai_to[i], r->ai_room[i], r->ai_from[i]);
+        }
+        if (r->foes) {   /* exactly the plan's swaps in this room */
+            static uint16_t plan[PE_RAND_FOES];
+            int moved[16] = {0};
+            pe_rand_foes_generate(g_pe_rand_foes, g_pe_rand_foe_ok[0], PE_RAND_FOES, r->seed, plan);
+            for (unsigned i = 0; i < PE_RAND_FOES; ++i)
+                if (g_pe_rand_foes[i].room == r->room && plan[i] != i) moved[g_pe_rand_foes[i].entity] = 1;
+            for (unsigned e = 0; e < tasks->count && e < 16; ++e) {
+                const int given = tasks->offsets[e] && !(tasks->offsets[e] >= block && tasks->offsets[e] < block + block_bytes);
+                if (given != moved[e]) FAIL("M%03u: foes: actor %u %s", r->room, e, moved[e] ? "moved by the plan got no script" : "got a script the plan doesn't give");
+                checks_done += moved[e];
+            }
+        }
+    }
 
     static u32 before[VARS];
     u32 left = g_ScriptVariableBank[SCRIPT_VAR_ROOM];
@@ -649,6 +838,12 @@ static void do_run(const Run *r, FILE *out) {
     }
     gate = r->gate; asked_count = 0;
     win = r->win; fighting = -1; won = 0; awaited = -1; set6_at = -1; state_read = 0;
+    stats = r->stats; combat_count = 0;
+    if (stats) {
+        memcpy(g_DrawPrimGeneratorWords, random_start, sizeof(random_start));
+        memset(g_BattleEnemySlots, 0, sizeof(g_BattleEnemySlots));
+        g_EntityInstanceCounter = 0; g_BattleLiveEnemyCount = 0;
+    }
     g_BattleModeState = 0; D_8009D2E8 &= ~1;
     g_FieldPadBits = g_FieldPadPressed = g_FieldPadReleased = 0;
     memset(g_FieldPadHeldFrameCounts, 0, 32 * sizeof(*g_FieldPadHeldFrameCounts));
@@ -662,6 +857,7 @@ static void do_run(const Run *r, FILE *out) {
     unsigned frame;
     for (frame = 0; frame < (r->at ? AT_FRAME + r->at * AT_FRAMES : FRAMES) && !spin && !(g_GameStateFlags & 0x2000); ++frame) {
         frame_steps = 0; cur_frame = frame;
+        if (stats) frame_start(r);
         if (fighting >= 0) {   /* the battle code's part of a won battle */
             int since = ++fighting;
             if (((g_BattleModeState == 6 || g_BattleModeState == 5) && (int)frame >= set6_at + BATTLE_FRAMES) || (g_BattleModeState == 0 && since >= BATTLE_FRAMES * 3)) {
@@ -695,6 +891,7 @@ static void do_run(const Run *r, FILE *out) {
         Entity_CollectGarbage();
         for (FieldActor *a = g_FieldActorListHead; a; a = a->next) a->flags &= ~0x10000000;
     }
+    if (stats) frame_start(r);
     ++runs_done;
     for (unsigned i = 0; r->seeded && i < gave_count && i < swapped_at; ++i)
         for (unsigned g = 0; g < PE_RAND_GIVES; ++g)
@@ -772,6 +969,18 @@ static void do_run(const Run *r, FILE *out) {
     for (int i = 0; i < r->at; ++i)
         if (r->at_actor[i] >= 0) fprintf(out, "%s@%d,%d", i ? ";" : "\tat=", r->at_actor[i], r->at_angle[i]);
         else fprintf(out, "%s%d,%d,%d", i ? ";" : "\tat=", r->at_x[i], r->at_z[i], r->at_angle[i]);
+    if (r->nai) {
+        fputs("\tai=", out);
+        for (unsigned i = 0; i < r->nai; ++i) fprintf(out, "%s%u<M%03u:%u", i ? "," : "", r->ai_to[i], r->ai_room[i], r->ai_from[i]);
+        fputs("\taisteps=", out);
+        for (unsigned i = 0; i < r->nai; ++i) {
+            fprintf(out, "%se%u:%u", i ? "," : "", r->ai_to[i], ai_steps[r->ai_to[i]]);
+            if (!ai_steps[r->ai_to[i]]) FAIL("M%03u: ai=%u<M%03u:%u: the actor ran none of the given script", r->room, r->ai_to[i], r->ai_room[i], r->ai_from[i]);
+        }
+        fprintf(out, "\tpm=%s", pm);
+        if (r->win && !won) FAIL("M%03u: ai= line won no battle", r->room);
+        checks_done += r->nai;
+    }
     if (press) fputs("\tpress=1", out);
     if (animwait) fputs("\tanimwait=1", out);
     if (r->has_menu) fprintf(out, "\tmenu=%d", r->menu);
@@ -790,6 +999,17 @@ static void do_run(const Run *r, FILE *out) {
         for (unsigned i = 0; i < asked_count; ++i) fprintf(out, "%s+%06X:%#x>%u", i ? "," : "", asked[i], asked_item[i], answer[i]);
     }
     if (won) fprintf(out, "\twon=%d", won);
+    if (r->nforce) {
+        fputs("\tforce=", out);
+        for (unsigned i = 0; i < r->nforce; ++i) fprintf(out, "%s%u<M%03u:%u", i ? "," : "", r->force_to[i], r->force_room[i], r->force_from[i]);
+    }
+    if (r->stats) {
+        fputs("\tcombat=", out);
+        for (unsigned c = 0; c < combat_count; ++c) {
+            fprintf(out, "%se%u#%u:", c ? ";" : "", combats[c].type, combats[c].instance);
+            for (int i = 0; i < PE_RAND_STATS; ++i) fprintf(out, "%s%d", i ? "," : "", combats[c].v[i]);
+        }
+    }
     if (battle && (!win || fighting >= 0)) fputs("\tbattle=1", out);
     if (r->id[0]) fprintf(out, "\tid=%s", r->id);
     fputc('\n', out);
@@ -811,6 +1031,7 @@ int main(int argc, char **argv) {
     if (Scene_LoadSceneData() < 0) { fputs("Scene_LoadSceneData failed\n", stderr); return 1; }
     Inv_InitNewGameInventory();
     for (size_t i = 0; i < sizeof(real_ops) / sizeof(*real_ops); ++i) is_real[real_ops[i]] = 1;
+    memcpy(random_start, g_DrawPrimGeneratorWords, sizeof(random_start));
     trace = getenv("PE_RUN_TRACE") != NULL;
     /* A third argument: start at that runs line (1-based) and append, after a run that crashed. */
     unsigned from = argc > 3 ? (unsigned)atoi(argv[3]) : 1;

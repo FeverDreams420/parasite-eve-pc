@@ -54,6 +54,8 @@ typedef enum PeHookId {
     PE_HOOK_FRAME_DRAWN, /* NULL: Draw_RenderFrame, the previous frame finished drawing (DrawSync)
                           * and not yet shown; its buffer is g_RenderDrawEnvArray[1 - g_ActiveDrawSlot] */
     PE_HOOK_NEW_GAME,    /* PeHookNewGame: a new game starts; the host has reset every save record */
+    PE_HOOK_ENEMY_FIELD, /* PeHookEnemyField: Entity_WriteFieldByCmd entry (script ops 90 / 206 on an
+                          * actor); the value may be changed */
     PE_HOOK_COUNT
 } PeHookId;
 
@@ -88,6 +90,12 @@ typedef struct PeHookTextLookup {
     unsigned table, index; /* table 8 = item names, 12 = item descriptions */
     void **text;
 } PeHookTextLookup;
+
+typedef struct PeHookEnemyField {
+    struct FieldActor *actor;
+    int code;  /* field code, 0x28+ (battle/context.c) */
+    int value;
+} PeHookEnemyField;
 
 typedef struct PeHookRewards {
     int exp;

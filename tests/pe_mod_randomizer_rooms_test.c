@@ -275,6 +275,43 @@ static void walk_room(unsigned room, FILE *out, FILE *spots, unsigned *steps_tot
 }
 
 /* Disc 2 must carry the same room table and room bytes as disc 1. */
+/* Third file: each room's actor models for the battle randomizer's model swap (bank slot, payload size,
+ * the bank root's VRAM word as Render_SetupEntityPrims splits it, model counts, row ids) and the TIM
+ * rectangles the loader uploads from the scratch and texture blobs. */
+static void list_tims(unsigned room, FILE *out, const char *blob_name, const u8 *blob) {
+    const SceneRoomDirectory *dir = (const SceneRoomDirectory *)(blob + word_at(blob, 4));
+    for (unsigned i = 0; i < dir->tims >> 22; ++i) {
+        const u8 *r = blob + (dir->tims & 0x3FFFFF) + 20 * i;
+        u32 src = word_at(r, 4), rect = word_at(r, 8), sec = word_at(r, 12), rect2 = word_at(r, 16);
+        fprintf(out, "M%03u\ttim\t%s\t%u,%u,%u,%u", room, blob_name, (rect >> 10) & 0x7FF, rect >> 21, rect & 0x3FF,
+                (src >> 24) ? (src >> 24) : 256u);
+        if (sec & 0xFFFFFF) fprintf(out, "\t%u,%u,%u,%u", (rect2 >> 10) & 0x7FF, rect2 >> 21, rect2 & 0x3FF, sec >> 24);
+        fputc('\n', out);
+    }
+}
+
+static void list_models(unsigned room, FILE *out) {
+    const u8 *assets = (const u8 *)g_GameState.loaded_scene_assets;
+    const SceneRoomDirectory *dir = (const SceneRoomDirectory *)(assets + word_at(assets, 4));
+    for (unsigned i = 0; i < dir->bankRoots >> 22; ++i) {
+        const SceneRoomRecord *r = (const SceneRoomRecord *)(assets + (dir->bankRoots & 0x3FFFFF)) + i;
+        const u8 *m = assets + (r->source.offsetAndSlot & 0xFFFFFF);
+        u32 v = r->u.handlerAddress, size = word_at((const u8 *)r, 0) & 0xFFFFFF;
+        fprintf(out, "M%03u\tmodel\t%u\tsize=%u\tx=%u\ty=%u\tpal=%u\tmode=%u\tparts=%u\tverts=%u\trows=", room,
+                r->source.bytes.slot, size, (v >> 6) & 0x3C0, (v >> 9) & 0x180, ((v >> 18) & 0xFF) + 0x1C0, (v >> 8) & 0xF,
+                m[2], m[6] | m[7] << 8);
+        const char *sep = "";
+        for (unsigned k = 0; k < dir->bankRows >> 22; ++k) {
+            const SceneRoomRecord *row = (const SceneRoomRecord *)(assets + (dir->bankRows & 0x3FFFFF)) + k;
+            if (row->u.row.group != r->source.bytes.slot) continue;
+            fprintf(out, "%s%u", sep, row->source.bytes.slot); sep = ",";
+        }
+        fputc('\n', out);
+    }
+    list_tims(room, out, "scratch", (const u8 *)g_GameState.scene_load_scratch);
+    list_tims(room, out, "texture", (const u8 *)g_GameState.texture_load_scratch);
+}
+
 static int same_rooms(PeDisc *one, const char *path) {
     PeDisc two = {0}; PeDiscFile exe1, exe2, img1, img2; int ok = 1;
     static u8 a[2048 * 64], b[2048 * 64]; u8 ta[SCENE_ROOM_COUNT * 8], tb[SCENE_ROOM_COUNT * 8];
@@ -309,7 +346,8 @@ int main(int argc, char **argv) {
     if (Asset_OpenPeImage() != 0) return 1;
     Boot_InitGameState(); D_8009CDC8 = 'm';
     FILE *out = argc > 1 ? fopen(argv[1], "w") : NULL, *spots = argc > 2 ? fopen(argv[2], "w") : NULL;
-    if ((argc > 1 && !out) || (argc > 2 && !spots)) return 1;
+    FILE *models = argc > 3 ? fopen(argv[3], "w") : NULL;
+    if ((argc > 1 && !out) || (argc > 2 && !spots) || (argc > 3 && !models)) return 1;
     unsigned rooms = 0, steps = 0, doors = 0;
     for (unsigned room = 1; room <= SCENE_ROOM_COUNT; ++room) {
         if (!g_RoomSectorTable[room - 1].roomSectors) continue;
@@ -317,9 +355,11 @@ int main(int argc, char **argv) {
         int status = Scene_LoadRoom((u32)Text_ParseBase32Id((signed char *)name));
         if (status) { FAIL("M%03u: Scene_LoadRoom %d", room, status); continue; }
         ++rooms; walk_room(room, out, spots, &steps, &doors);
+        if (models) list_models(room, models);
     }
     if (out) fclose(out);
     if (spots) fclose(spots);
+    if (models) fclose(models);
     if (sites_total != PE_RAND_SITES) FAIL("%u of %u table sites are in a loaded room", sites_total, PE_RAND_SITES);
     if (gives_listed != PE_RAND_GIVES) FAIL("%u of %u table gives are in a loaded room", gives_listed, PE_RAND_GIVES);
     if (locks_walked != PE_RAND_LOCKS) FAIL("%u of %u table locks are walked key tests", locks_walked, PE_RAND_LOCKS);

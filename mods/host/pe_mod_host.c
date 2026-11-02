@@ -400,6 +400,7 @@ static const char *pe_hook_name(int id) {
         [PE_HOOK_SCRIPT_RANDOM] = "script random",
         [PE_HOOK_INVENTORY_SORTED] = "inventory sorted",
         [PE_HOOK_MAIN_MENU_ICON] = "main menu icon",
+        [PE_HOOK_ENEMY_FIELD] = "enemy field",
     };
     if (id >= 0 && id < PE_HOOK_COUNT) return names[id] ? names[id] : "?";
     return id - PE_HOOK_COUNT < s_event_count ? s_events[id - PE_HOOK_COUNT] : "?";

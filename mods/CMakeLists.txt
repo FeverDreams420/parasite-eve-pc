@@ -163,8 +163,10 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
     target_compile_definitions(test-mod-randomizer-rooms PRIVATE __psyz PE_MODS=1)
     target_link_libraries(test-mod-randomizer-rooms PRIVATE psyz)
     # Second file: the randomizer's spot table against the walk (sites, and the GiveItems it leaves alone).
+    # Third: actor models, VRAM words and TIM rectangles (battle rando model swap).
     add_test(NAME mod-randomizer-rooms COMMAND test-mod-randomizer-rooms
-        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-rooms.txt" "${CMAKE_CURRENT_BINARY_DIR}/randomizer-spots.txt")
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-rooms.txt" "${CMAKE_CURRENT_BINARY_DIR}/randomizer-spots.txt"
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-models.txt")
     set_tests_properties(mod-randomizer-rooms PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer spots:")
 
@@ -189,6 +191,25 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
     set_tests_properties(mod-randomizer-exits PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer exits:")
 
+    # Battle rando models: enemy models, textures and rows swapped across rooms, through the real loader and spawn.
+    add_executable(test-mod-randomizer-models ${PROJECT_SOURCE_DIR}/tests/pe_mod_randomizer_models_test.c
+        $<TARGET_OBJECTS:parasite-eve-test-disc>
+        $<TARGET_OBJECTS:parasite-eve-original-akao>
+        $<TARGET_OBJECTS:parasite-eve-original-camera>
+        ${PE_COMMON_GAME_OBJECTS}
+        $<TARGET_OBJECTS:pe-mods>
+        $<TARGET_OBJECTS:parasite-eve-original-actor-animation>
+        $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
+        $<TARGET_OBJECTS:parasite-eve-original-pad>
+        $<TARGET_OBJECTS:parasite-eve-original-shadow>)
+    target_include_directories(test-mod-randomizer-models PRIVATE ${PROJECT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer "$<TARGET_PROPERTY:SDL3::SDL3,INTERFACE_INCLUDE_DIRECTORIES>")
+    target_compile_definitions(test-mod-randomizer-models PRIVATE __psyz PE_MODS=1)
+    target_link_libraries(test-mod-randomizer-models PRIVATE psyz)
+    add_test(NAME mod-randomizer-models COMMAND test-mod-randomizer-models
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-models-swap.txt")
+    set_tests_properties(mod-randomizer-models PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
+        ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer models:")
     # Room scripts run headless at given story values: which actors a room places, what its start writes.
     add_executable(test-mod-randomizer-run ${PROJECT_SOURCE_DIR}/tests/pe_mod_randomizer_run_test.c
         $<TARGET_OBJECTS:parasite-eve-test-disc>
@@ -228,6 +249,12 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
     add_test(NAME mod-randomizer-gate COMMAND test-mod-randomizer-run
         "${CMAKE_CURRENT_BINARY_DIR}/randomizer-gate.txt" "${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/gate-runs.txt")
     set_tests_properties(mod-randomizer-gate PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
+        ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer runs:")
+    # The enemy option end to end (tools/foegame-runs.txt): with F1 Randomize enemies on, the mod's own New Game puts
+    # in seed 123456's foe plan; each room it moves has exactly those swaps, and its fight runs them and is won.
+    add_test(NAME mod-randomizer-foegame COMMAND test-mod-randomizer-run
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-foegame.txt" "${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/foegame-runs.txt")
+    set_tests_properties(mod-randomizer-foegame PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer runs:")
     # Story windows for the fill (tools/windowruns.py wrote the runs from the story walk): every table give
     # in every walk state of its room, every walked lock with and without its key. Data, no checks;
@@ -274,6 +301,50 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
             story-graph.txt randomizer-exits.txt ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/pe_rand_spots.h
             --runs rwin/base-fix.txt --zones @rwin/zones.list --hard ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/pe_randomizer.c)
         set_tests_properties(mod-randomizer-keysolve PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 900 LABELS "story-walk"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+        # Enemy census (tools/enemyscan.py) from the rooms listing into enemies.txt, checked against the
+        # bestiary's creature keys. Reads the disc (PE_TEST_DISC) for starting actors only; no game window.
+        add_test(NAME mod-randomizer-enemies COMMAND ${Python3_EXECUTABLE} -I
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/enemyscan.py randomizer-rooms.txt
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_collection/pe_collection_data.h --out enemies.txt --check)
+        set_tests_properties(mod-randomizer-enemies PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
+            DEPENDS mod-randomizer-rooms WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+        # Enemy AI scan (tools/enemyai.py): what each census actor's script needs from its room (PM slots,
+        # entity numbers, spawner events and vars) and the conflicts per pair, into enemy-ai.txt. Reads the
+        # disc for the rooms' PM slot records; no game window.
+        add_test(NAME mod-randomizer-enemyai COMMAND ${Python3_EXECUTABLE} -I
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/enemyai.py randomizer-rooms.txt enemies.txt
+            --source ${PROJECT_SOURCE_DIR}/src/main/scene/room_load.c --out enemy-ai.txt --check)
+        set_tests_properties(mod-randomizer-enemyai PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
+            DEPENDS mod-randomizer-enemies PASS_REGULAR_EXPRESSION "Enemy AI: 0 problems"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+        # Battle randomizer stats: fights run headless with the real mod and the enemy ops on; each room's own
+        # setup matches pe_rand_enemies.h, and a forced actor takes another's stat block, the rest unchanged.
+        add_test(NAME mod-randomizer-battlestats COMMAND ${Python3_EXECUTABLE} -I
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/battlestats.py randomizer-battlestats.txt
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/pe_rand_enemies.h
+            --run $<TARGET_FILE:test-mod-randomizer-run> ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/battlestats-runs.txt)
+        set_tests_properties(mod-randomizer-battlestats PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
+            ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Battle stats: .* 0 problems"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+        # Battle randomizer AI: a forced actor runs another room's script (with its model and numbers) in a fight
+        # run headless with the real mod; the run test checks the script was given and run and the fight won.
+        add_test(NAME mod-randomizer-battleai COMMAND ${Python3_EXECUTABLE} -I
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/battlestats.py randomizer-battleai.txt
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/pe_rand_enemies.h
+            --run $<TARGET_FILE:test-mod-randomizer-run> ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/battleai-runs.txt)
+        set_tests_properties(mod-randomizer-battleai PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
+            ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Battle stats: .* 0 problems"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+        # Battle randomizer seed plans (seeds 1-3, the real generator's): each room whose own fight is won headless
+        # runs it with every moved slot's foe (script and model) and must win it (tools/foeruns.py: foefights*.txt).
+        add_test(NAME mod-randomizer-foefights COMMAND ${Python3_EXECUTABLE} -I
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/foeruns.py $<TARGET_FILE:test-mod-randomizer-keys>
+            $<TARGET_FILE:test-mod-randomizer-run> 1,2,3 enemies.txt randomizer-rooms.txt
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/pe_rand_enemies.h
+            --known ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/foefights-known.txt)
+        set_tests_properties(mod-randomizer-foefights PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
+            ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Foe fights: .* 0 problems"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     endif()
 endif()

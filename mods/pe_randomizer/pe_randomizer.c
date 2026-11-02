@@ -13,7 +13,12 @@
  * the full-bag swap, the item a chest keeps for the player, the opened bit, the "You got" popup.
  * Changing the id in Inv_AddItem instead would also catch steals, drops, unequips and the New Game
  * kit, and would turn the item a chest keeps for the player into the seed's item. A room whose
- * script isn't byte for byte what the table expects stays vanilla. */
+ * script isn't byte for byte what the table expects stays vanilla.
+ *
+ * Enemies (F1 > Randomizer > Randomize enemies, on top of the items, same seed): the seed's foe plan
+ * (pe_rand_foes_generate) goes into the model and AI switches, which give each moved slot its foe's model,
+ * animations and script at every load of its room; the foe's own script sets its stats. Bosses take bosses.
+ * The game keeps whether it was started with enemies on (the "pe_randomizer.foes" record). */
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -33,6 +38,7 @@
 #include "pe_randomizer.h"
 #include "pe_rand_locks.h"
 #include "pe_rand_spots.h"
+#include "pe_rand_foes.h"
 
 #define MOD_ID "pe_randomizer"
 
@@ -51,6 +57,16 @@ static int s_enabled, s_difficulty = PE_RAND_MEDIUM, s_digit[6];
 static int s_alone;            /* "Randomize new games" was on at start: this session runs no other mod */
 static unsigned char s_room_warned[SCENE_ROOM_COUNT + 1];
 static const char *const s_difficulty_names[] = {"Easy", "Medium", "Hard"};
+/* Enemies of this game: saved as the "pe_randomizer.foes" record (none in an older save: off). */
+typedef struct PeRandFoesRun {
+    uint8_t on, version, reserved[2];
+} PeRandFoesRun;
+_Static_assert(sizeof(PeRandFoesRun) == 4, "the saved record's layout");
+static PeRandFoesRun s_foes_run;
+static int s_foes_enabled;
+static uint16_t s_plan[PE_RAND_FOES];
+static unsigned s_plan_moved;
+static int s_plan_given;       /* the switches hold this game's plan (tests force their own swaps otherwise) */
 static const char *const s_digit_labels[] = {"Digit 1", "Digit 2", "Digit 3", "Digit 4", "Digit 5", "Digit 6"};
 
 static uint32_t pe_rand_seed(void) {
@@ -62,6 +78,30 @@ static uint32_t pe_rand_seed(void) {
 static int pe_rand_supported(void) {
     return s_run.logic == PE_RAND_LOGIC_VERSION && s_run.table == PE_RAND_TABLE_VERSION &&
            s_run.difficulty < PE_RAND_DIFFICULTIES;
+}
+
+static int pe_rand_foes_supported(void) {
+    return s_run.on && pe_rand_supported() && s_foes_run.on && s_foes_run.version == PE_RAND_FOES_VERSION;
+}
+
+/* This game's plan into the switches (they swap at each room load), or nothing when its enemies are vanilla. */
+static void pe_rand_foes_apply(void) {
+    if (s_plan_given) { pe_rand_model_clear(); pe_rand_ai_clear(); }
+    s_plan_given = 0;
+    s_plan_moved = 0;
+    if (!pe_rand_foes_supported()) return;
+    s_plan_moved = pe_rand_foes_generate(g_pe_rand_foes, g_pe_rand_foe_ok[0], PE_RAND_FOES, s_run.seed, s_plan);
+    pe_rand_model_clear();
+    pe_rand_ai_clear();
+    for (unsigned i = 0; i < PE_RAND_FOES; ++i) {
+        const PeRandFoe *a = &g_pe_rand_foes[i], *b = &g_pe_rand_foes[s_plan[i]];
+        if (s_plan[i] == i) continue;
+        pe_rand_model_force(a->room, a->entity, b->room, b->entity);
+        pe_rand_ai_force(a->room, a->entity, b->room, b->entity);
+    }
+    s_plan_given = 1;
+    pe_log("rand_foes", "seed=%06u version=%u moved=%u of %u", (unsigned)s_run.seed, PE_RAND_FOES_VERSION, s_plan_moved,
+           (unsigned)PE_RAND_FOES);
 }
 
 static int pe_is_key_item(unsigned id) { return (id >= 0x38 && id <= 0x3E) || (id >= 0xC8 && id <= 0xDC); }
@@ -543,8 +583,10 @@ static void pe_rand_spoiler(void) {
     if (pe_mod_path(path, sizeof path, name) != 0) return;
     snprintf(temp, sizeof temp, "%s.tmp", path);
     if (!(f = fopen(temp, "w"))) { pe_toast("Randomizer: couldn't write the spoiler file"); return; }
-    fprintf(f, "Parasite Eve randomizer, seed %06u, %s (logic %u, table %u)\n", (unsigned)s_run.seed,
-            s_difficulty_names[s_run.difficulty], (unsigned)s_run.logic, (unsigned)s_run.table);
+    fprintf(f, "Parasite Eve randomizer, seed %06u, %s%s (logic %u, table %u", (unsigned)s_run.seed,
+            s_difficulty_names[s_run.difficulty], s_foes_run.on ? ", enemies" : "", (unsigned)s_run.logic, (unsigned)s_run.table);
+    if (s_foes_run.on) fprintf(f, ", enemies %u", (unsigned)s_foes_run.version);
+    fprintf(f, ")\n");
     if (s_result.keys_locked) fprintf(f, "Key items stay in their places.\n");
     else if (s_result.fallback) fprintf(f, "No layout passed its checks: %s.\n", s_result.fallback == 1 ? "key items stay in their places" : "nothing moved");
     fprintf(f, "\nKey items (now in, was in):\n");
@@ -569,6 +611,15 @@ static void pe_rand_spoiler(void) {
         pe_rand_spot_rooms(f, n);
         fprintf(f, ": %s (was %s)\n", pe_item_name(s_layout[n]), pe_item_name(g_pe_rand_spots[n].vanilla));
     }
+    if (s_foes_run.on) {
+        fprintf(f, "\nEnemies (%u of %u slots moved; bosses take bosses):\n", s_plan_moved, (unsigned)PE_RAND_FOES);
+        for (unsigned i = 0; i < PE_RAND_FOES; ++i) {
+            const PeRandFoe *a = &g_pe_rand_foes[i], *b = &g_pe_rand_foes[s_plan[i]];
+            if (s_plan[i] == i) continue;
+            fprintf(f, "  %s M%03u e%u: %s, from %s M%03u (was %s)\n", a->place, (unsigned)a->room, (unsigned)a->entity,
+                    b->name, b->place, (unsigned)b->room, a->name);
+        }
+    }
     if (fclose(f) != 0) { remove(temp); pe_toast("Randomizer: couldn't write the spoiler file"); return; }
     remove(path);
     if (rename(temp, path) != 0) { remove(temp); pe_toast("Randomizer: couldn't write the spoiler file"); }
@@ -590,6 +641,9 @@ static int pe_rand_new_game(void *ctx, void *user) {
     s_run.logic = PE_RAND_LOGIC_VERSION;
     s_run.table = PE_RAND_TABLE_VERSION;
     s_run.seed = pe_rand_seed();
+    s_foes_run.on = (uint8_t)(s_run.on && s_foes_enabled);
+    s_foes_run.version = PE_RAND_FOES_VERSION;
+    pe_rand_foes_apply();
     if (!s_run.on || !pe_rand_ready()) {
         pe_log("rand_newgame", "on=0 keys_moved=0");
         return 0;
@@ -597,7 +651,8 @@ static int pe_rand_new_game(void *ctx, void *user) {
     pe_log("rand_newgame", "on=1 seed=%06u difficulty=%u keys_moved=%u", (unsigned)s_run.seed,
            (unsigned)s_run.difficulty, s_result.keys_moved);
     pe_rand_spoiler();
-    snprintf(line, sizeof line, "Randomizer: seed %06u, %s", (unsigned)s_run.seed, s_difficulty_names[s_run.difficulty]);
+    snprintf(line, sizeof line, "Randomizer: seed %06u, %s%s", (unsigned)s_run.seed, s_difficulty_names[s_run.difficulty],
+             s_foes_run.on ? ", enemies" : "");
     pe_toast(line);
     return 0;
 }
@@ -616,6 +671,12 @@ static int pe_rand_save_read(void *ctx, void *user) {
         pe_toast("This save is randomized: turn Randomize new games on and restart, so no other mod runs");
         pe_mod_log(MOD_ID, "randomized save (seed %06u) loaded while other mods run", (unsigned)s_run.seed);
     }
+    if (s_run.on && pe_rand_supported() && s_foes_run.on && s_foes_run.version != PE_RAND_FOES_VERSION) {
+        pe_toast("Randomizer: this save's enemies are from another version; enemies stay vanilla");
+        pe_mod_log(MOD_ID, "save's enemies from version %u, this build %u: enemies stay vanilla",
+                   (unsigned)s_foes_run.version, PE_RAND_FOES_VERSION);
+    }
+    pe_rand_foes_apply();
     return 0;
 }
 
@@ -634,6 +695,13 @@ static void pe_rand_release(void *data) {
 }
 static const PeSaveRecord s_record = {"pe_randomizer.run", 1, &s_run, sizeof s_run, pe_rand_check_record, NULL, NULL,
                                       pe_rand_release};
+/* Enemies from an unknown version are kept as they are, only not used; with the mod off they are vanilla anyway. */
+static int pe_rand_check_foes(void *data) {
+    const PeRandFoesRun *run = data;
+    return run->on > 1;
+}
+static const PeSaveRecord s_foes_record = {"pe_randomizer.foes", 1, &s_foes_run, sizeof s_foes_run, pe_rand_check_foes,
+                                           NULL, NULL, NULL};
 
 static void pe_rand_random_seed(void) {
     uint32_t x = (uint32_t)time(NULL) ^ (uint32_t)clock() * 2654435761u;
@@ -648,8 +716,9 @@ static void pe_rand_run_text(char *out, unsigned size) {
     if (!pe_save_loaded() || !s_run.on) { snprintf(out, size, "Not randomized"); return; }
     if (!pe_rand_supported()) { snprintf(out, size, "Other version: vanilla"); return; }
     pe_rand_ready();
-    snprintf(out, size, "%06u %s, %s", (unsigned)s_run.seed, s_difficulty_names[s_run.difficulty],
-             s_result.keys_locked || s_result.fallback ? "keys vanilla" : "keys moved");
+    snprintf(out, size, "%06u %s, %s%s", (unsigned)s_run.seed, s_difficulty_names[s_run.difficulty],
+             s_result.keys_locked || s_result.fallback ? "keys vanilla" : "keys moved",
+             pe_rand_foes_supported() ? ", enemies" : s_foes_run.on ? ", enemies vanilla" : "");
 }
 
 static int pe_rand_init(void) {
@@ -661,6 +730,9 @@ static int pe_rand_init(void) {
     s_alone = s_enabled && pe_mod_run_alone() == 0;
     pe_menu_register_choice(0, "Difficulty", "Easy: items stay on their story day. Medium: anywhere; keys to chests open before their lock, earlier days too. Hard: keys to any chest still reachable when their lock asks, some doors lead back.",
                             &s_difficulty, s_difficulty_names, PE_RAND_DIFFICULTIES);
+    pe_menu_register_toggle(0, "Randomize enemies", "New Game also shuffles enemies with the same seed: each takes another "
+                            "enemy's model, moves and stats, from any day; bosses only swap with bosses. Off: items only.",
+                            &s_foes_enabled, NULL);
     pe_menu_register_info(0, "Seed", "Six digits: the same seed and difficulty give the same items.", pe_rand_seed_text);
     pe_menu_register_action(0, "Random seed", "Pick a new seed.", pe_rand_random_seed);
     pe_menu_page("Seed digits", "Type the seed one digit at a time.", 0);
@@ -680,7 +752,10 @@ static int pe_rand_init(void) {
     pe_hook_add(PE_HOOK_ITEM_ADD, pe_rand_item_add, NULL, PE_PRIORITY_EARLY, MOD_ID);
     pe_hook_add(PE_HOOK_ITEM_COUNT, pe_rand_item_count, NULL, PE_PRIORITY_EARLY, MOD_ID);
     pe_hook_add(PE_HOOK_INV_COMMAND, pe_rand_inv_command, NULL, PE_PRIORITY_EARLY, MOD_ID);
-    return pe_save_register(&s_record) < 0;
+    pe_rand_battle_register();
+    pe_rand_model_register();
+    pe_rand_ai_register();
+    return pe_save_register(&s_record) < 0 || pe_save_register(&s_foes_record) < 0;
 }
 
 const PeMod pe_mod_pe_randomizer = {MOD_ID, "Randomizer", "0.1", NULL, pe_rand_init, NULL};

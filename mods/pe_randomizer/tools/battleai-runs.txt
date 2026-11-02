@@ -7,3 +7,18 @@ M012 0x0 0x0 win stats gate seed=123456,2 at=-90,-1612 id=plain-theater-rat
 M197 0x0 0x0 win stats gate seed=123456,2 at=0,-2200 id=plain-museum-dinosaur
 # a Day 5 Museum dinosaur slot with a Day 1 Theater rat: script, model and numbers (the rat needs slot 115)
 M197 0x0 0x0 win gate seed=123456,2 at=0,-2200 force=5<M012:5 ai=5<M012:5 id=museum-dinosaur-as-rat
+M028 0x0 0x0 win stats gate seed=123456,2 at=0,-3180 id=plain-sewer-frog
+M059 0x0 0x0 win stats gate seed=123456,2 at=1717,-6312 id=plain-central-park-green-snake
+M061 0x0 0x0 win stats gate seed=123456,2 at=-2596,-789 id=plain-central-park-blackbird
+M140 0x0 0x0 win stats gate seed=123456,2 at=570,-116 id=plain-hospital-slime
+# the Theater rat slot (Day 1) with a Sewer frog (Day 1) and a Central Park green snake (Day 2)
+M012 0x0 0x0 win gate seed=123456,2 at=-90,-1612 force=5<M028:8 ai=5<M028:8 id=theater-rat-as-frog
+M012 0x0 0x0 win gate seed=123456,2 at=-90,-1612 force=5<M059:5 ai=5<M059:5 id=theater-rat-as-green-snake
+# a Day 3 Hospital slime slot with a Day 2 Central Park blackbird
+M140 0x0 0x0 win gate seed=123456,2 at=570,-116 force=5<M061:5 ai=5<M061:5 id=hospital-slime-as-blackbird
+M063 0x0 0x0 win stats gate seed=123456,2 at=278,1747 id=plain-central-park-monkey
+# not clean, run as they are (the switch doesn't fix these yet): the monkey sends events (op 28) to its room's
+# e4, here the Theater's e4; the dinosaur shares N0x10-0x23 with the Museum spawner (sets bits in N0x1b, which
+# the Theater's room script uses as a flag) and sets the Museum story bit V0x2a|0x80
+M012 0x0 0x0 win gate seed=123456,2 at=-90,-1612 force=5<M063:3 ai=5<M063:3 id=theater-rat-as-monkey
+M012 0x0 0x0 win gate seed=123456,2 at=-90,-1612 force=5<M197:5 ai=5<M197:5 id=theater-rat-as-dinosaur

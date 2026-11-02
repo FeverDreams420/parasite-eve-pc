@@ -112,4 +112,14 @@ int pe_rand_battle_force(unsigned room, unsigned entity, unsigned from_room, uns
 void pe_rand_battle_clear(void);
 void pe_rand_battle_register(void);   /* pe_rand_init: the PE_HOOK_ENEMY_FIELD handler */
 
+/* Battle randomizer, models (pe_rand_model.c), test only too: actor `entity` of room `room` shows up with the
+ * model, textures and animation rows of actor `from_entity` of room `from_room` (read from the disc at each
+ * load of `room`). Both must be placed in the enemy VRAM blocks, and the new one must fit (its own blocks or
+ * the room's free ones). Up to 8; pe_rand_model_clear drops them all. pe_rand_model_apply does the swaps
+ * for the room just loaded (PE_HOOK_PLAYER_ROWS calls it), once a load; it returns how many it did. */
+int pe_rand_model_force(unsigned room, unsigned entity, unsigned from_room, unsigned from_entity);
+void pe_rand_model_clear(void);
+int pe_rand_model_apply(int room);
+void pe_rand_model_register(void);
+
 #endif

@@ -163,8 +163,10 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
     target_compile_definitions(test-mod-randomizer-rooms PRIVATE __psyz PE_MODS=1)
     target_link_libraries(test-mod-randomizer-rooms PRIVATE psyz)
     # Second file: the randomizer's spot table against the walk (sites, and the GiveItems it leaves alone).
+    # Third: actor models, VRAM words and TIM rectangles (battle rando model swap).
     add_test(NAME mod-randomizer-rooms COMMAND test-mod-randomizer-rooms
-        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-rooms.txt" "${CMAKE_CURRENT_BINARY_DIR}/randomizer-spots.txt")
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-rooms.txt" "${CMAKE_CURRENT_BINARY_DIR}/randomizer-spots.txt"
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-models.txt")
     set_tests_properties(mod-randomizer-rooms PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer spots:")
 
@@ -189,6 +191,25 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
     set_tests_properties(mod-randomizer-exits PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer exits:")
 
+    # Battle rando models: enemy models, textures and rows swapped across rooms, through the real loader and spawn.
+    add_executable(test-mod-randomizer-models ${PROJECT_SOURCE_DIR}/tests/pe_mod_randomizer_models_test.c
+        $<TARGET_OBJECTS:parasite-eve-test-disc>
+        $<TARGET_OBJECTS:parasite-eve-original-akao>
+        $<TARGET_OBJECTS:parasite-eve-original-camera>
+        ${PE_COMMON_GAME_OBJECTS}
+        $<TARGET_OBJECTS:pe-mods>
+        $<TARGET_OBJECTS:parasite-eve-original-actor-animation>
+        $<TARGET_OBJECTS:parasite-eve-original-entity-textures>
+        $<TARGET_OBJECTS:parasite-eve-original-pad>
+        $<TARGET_OBJECTS:parasite-eve-original-shadow>)
+    target_include_directories(test-mod-randomizer-models PRIVATE ${PROJECT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer "$<TARGET_PROPERTY:SDL3::SDL3,INTERFACE_INCLUDE_DIRECTORIES>")
+    target_compile_definitions(test-mod-randomizer-models PRIVATE __psyz PE_MODS=1)
+    target_link_libraries(test-mod-randomizer-models PRIVATE psyz)
+    add_test(NAME mod-randomizer-models COMMAND test-mod-randomizer-models
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-models-swap.txt")
+    set_tests_properties(mod-randomizer-models PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
+        ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer models:")
     # Room scripts run headless at given story values: which actors a room places, what its start writes.
     add_executable(test-mod-randomizer-run ${PROJECT_SOURCE_DIR}/tests/pe_mod_randomizer_run_test.c
         $<TARGET_OBJECTS:parasite-eve-test-disc>

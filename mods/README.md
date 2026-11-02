@@ -617,6 +617,12 @@ layout's keys, and no moved key can be walked past where its own spot can't. cte
 `mod-randomizer-keysolve` (label story-walk, skipped without the walk's outputs) checks seeds 1-300 on
 Hard that way (`tools/keysolve_ctest.py`, about 6 min).
 
+Battle randomizer groundwork: `tools/enemyscan.py` lists every enemy actor (an entity that runs op 111)
+from the rooms listing into `enemies.txt`: room, entity, script range, creature id and name, op 90 stats,
+model slot, formations, the fight's op 85 and its guard, what a won fight sets, and the PM effect
+commands it starts. ctest `mod-randomizer-enemies` (after `mod-randomizer-rooms`, about 100 s) checks it
+against the bestiary's creature keys (`pe_collection_data.h`): every key found, every actor named.
+
 ## Tools (pe_tools)
 
 Development and testing aids under F1 > PE Enhancements > Debug; each tool is its own file.

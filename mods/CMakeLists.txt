@@ -275,6 +275,13 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
             --runs rwin/base-fix.txt --zones @rwin/zones.list --hard ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/pe_randomizer.c)
         set_tests_properties(mod-randomizer-keysolve PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 900 LABELS "story-walk"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+        # Enemy census (tools/enemyscan.py) from the rooms listing into enemies.txt, checked against the
+        # bestiary's creature keys. Reads the disc (PE_TEST_DISC) for starting actors only; no game window.
+        add_test(NAME mod-randomizer-enemies COMMAND ${Python3_EXECUTABLE} -I
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/enemyscan.py randomizer-rooms.txt
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_collection/pe_collection_data.h --out enemies.txt --check)
+        set_tests_properties(mod-randomizer-enemies PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
+            DEPENDS mod-randomizer-rooms WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     endif()
 endif()
 

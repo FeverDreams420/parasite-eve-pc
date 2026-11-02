@@ -312,8 +312,20 @@ static void foe_plans(void) {
     assert(moved >= seeds * (movable - movable / 10));   /* VRAM keeps a few slots home, not many */
 }
 
+/* --plan SEED: the battle plan of that seed, one line per foe in table order (index, room, entity, boss, then
+ * the foe whose script and model its slot takes), for tools/foeruns.py. */
+static void print_foe_plan(uint32_t seed) {
+    static uint16_t plan[PE_RAND_FOES];
+    pe_rand_foes_generate(g_pe_rand_foes, g_pe_rand_foe_ok[0], PE_RAND_FOES, seed, plan);
+    for (unsigned i = 0; i < PE_RAND_FOES; ++i) {
+        const PeRandFoe *f = &g_pe_rand_foes[i], *b = &g_pe_rand_foes[plan[i]];
+        printf("foe\t%u\tM%03u\t%u\t%u\tM%03u\t%u\t%s\t%s\n", i, f->room, f->entity, f->boss, b->room, b->entity, f->name, b->name);
+    }
+}
+
 int main(int argc, char **argv) {
     if (argc == 3 && !strcmp(argv[1], "--layouts")) { print_key_layouts((unsigned)atoi(argv[2])); return 0; }
+    if (argc == 3 && !strcmp(argv[1], "--plan")) { print_foe_plan((uint32_t)strtoul(argv[2], NULL, 10)); return 0; }
     table_is_sane();
     every_seed_passes();
     foe_plans();

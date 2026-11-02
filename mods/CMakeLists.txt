@@ -250,6 +250,12 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
         "${CMAKE_CURRENT_BINARY_DIR}/randomizer-gate.txt" "${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/gate-runs.txt")
     set_tests_properties(mod-randomizer-gate PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
         ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer runs:")
+    # The enemy option end to end (tools/foegame-runs.txt): with F1 Randomize enemies on, the mod's own New Game puts
+    # in seed 123456's foe plan; each room it moves has exactly those swaps, and its fight runs them and is won.
+    add_test(NAME mod-randomizer-foegame COMMAND test-mod-randomizer-run
+        "${CMAKE_CURRENT_BINARY_DIR}/randomizer-foegame.txt" "${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/foegame-runs.txt")
+    set_tests_properties(mod-randomizer-foegame PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 300 LABELS "game-assets"
+        ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Randomizer runs:")
     # Story windows for the fill (tools/windowruns.py wrote the runs from the story walk): every table give
     # in every walk state of its room, every walked lock with and without its key. Data, no checks;
     # `windowruns.py table` turns the output into windows.txt.
@@ -329,6 +335,16 @@ if(BUILD_TESTING AND "pe_randomizer" IN_LIST PE_MOD_LIST)
             --run $<TARGET_FILE:test-mod-randomizer-run> ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/battleai-runs.txt)
         set_tests_properties(mod-randomizer-battleai PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
             ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Battle stats: .* 0 problems"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+        # Battle randomizer seed plans (seeds 1-3, the real generator's): each room whose own fight is won headless
+        # runs it with every moved slot's foe (script and model) and must win it (tools/foeruns.py: foefights*.txt).
+        add_test(NAME mod-randomizer-foefights COMMAND ${Python3_EXECUTABLE} -I
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/foeruns.py $<TARGET_FILE:test-mod-randomizer-keys>
+            $<TARGET_FILE:test-mod-randomizer-run> 1,2,3 enemies.txt randomizer-rooms.txt
+            ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/pe_rand_enemies.h
+            --known ${CMAKE_CURRENT_SOURCE_DIR}/pe_randomizer/tools/foefights-known.txt)
+        set_tests_properties(mod-randomizer-foefights PROPERTIES SKIP_RETURN_CODE 77 TIMEOUT 600 LABELS "game-assets"
+            ENVIRONMENT "PSYZ_HEADLESS=1;SDL_AUDIODRIVER=dummy" PASS_REGULAR_EXPRESSION "Foe fights: .* 0 problems"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     endif()
 endif()

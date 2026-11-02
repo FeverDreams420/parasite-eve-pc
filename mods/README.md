@@ -466,6 +466,18 @@ layout and F1 changes only reach the next New Game. A save from another logic or
 its record but plays vanilla, with a message. Every difficulty writes `randomizer-<seed>.txt` (the
 spoiler) beside the preferences: where each key item is now, Hard's ways back, then every changed spot.
 
+Randomize enemies (F1, before New Game, on top of the items; off = items only): the same seed also
+shuffles enemies. Each of 259 enemy slots (`pe_rand_foes.h`, written by `tools/enemyai.py --table`)
+takes another enemy's model, animations and script, so its moves and stats too, from any day; bosses
+only take bosses. Left out: enemies whose own script sets a story flag, multi-part bosses whose parts
+call each other, and swaps whose fights fail headless (`tools/foe-deny.txt`). The plan
+(`pe_rand_foes_generate`) goes into the model and AI switches, which swap at each load of a room. The
+game keeps the choice in the `pe_randomizer.foes` record with `PE_RAND_FOES_VERSION`; a save from
+another version plays its enemies vanilla, with a message. The spoiler gets an Enemies section. Checks:
+the unit test (every seed's plan), `mod-randomizer-models` (10 seeds' plans through the real switches),
+`mod-randomizer-foefights` (seeds 1-3, every reachable fight won headless) and `mod-randomizer-foegame`
+(the F1 option end to end through New Game).
+
 Randomized play is the original game plus this mod only. The on/off toggle applies at the next start:
 with it on, the randomizer runs alone (`pe_mod_run_alone`) and no other mod starts; with it off,
 New Game isn't randomized. New games come from PE_HOOK_NEW_GAME (the title's New Game and the EX

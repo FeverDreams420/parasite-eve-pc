@@ -108,6 +108,10 @@
  * actors spawn. The line then ends in ai=5<M012:5, aisteps=<e5:N: steps actor 5 ran in the given script,
  * outside the room's own task block> and pm=<script slots the hook installed>. It fails when the script wasn't
  * given, the actor ran none of it, or a win line won no battle.
+ * foes (gate lines; then every gate line of the file has it): the mod host starts with Randomize enemies on, and
+ * the line keeps the swaps the mod's own New Game put in (this seed's foe plan) instead of forcing its ai=. Every
+ * actor of the room the plan moves (pe_rand_foes_generate here, same seed) must have been given a script, and
+ * no other; the line's ai= list (the moved actors that fight there) is checked as above.
  * tools/battlestats.py checks the lines. */
 #include <stdint.h>
 #include <stdio.h>
@@ -139,6 +143,7 @@
 #include "pe1/script_state.h"
 #include "pe_hooks.h"
 #include "pe_randomizer.h"
+#include "pe_rand_foes.h"
 #include "pe_rand_enemies.h"
 #include "pe_rand_locks.h"
 #include "pe_rand_spots.h"
@@ -523,6 +528,7 @@ struct Run {
     int at, at_x[AT_MAX], at_z[AT_MAX], at_angle[AT_MAX];   /* Aya's stops from AT_FRAME on, at of them */
     int at_actor[AT_MAX];                                     /* -1, or the actor type she stands on */
     int seeded, difficulty; u32 seed;                         /* seed=: the randomizer's layout */
+    int foes;                                                 /* foes: the mod's own enemy plan */
     unsigned nwant, nnever, nflag, nclear; u32 want[8], never[8], flag_bit[8], clear_bit[8]; u16 flag_var[8], clear_var[8];
     int gate; unsigned nshut, nopen; u32 shut[8], open[8];    /* gate: the real mod answers key tests */
     int held; unsigned nheld; u32 held_item[8];               /* keys=none / keys=D6,..: only those held */
@@ -535,20 +541,21 @@ struct Run {
 
 /* Gate lines: the mod host, started once for the first gate line's seed, its files in gate_dir. */
 static char gate_dir[1100];
-static int gate_started, gate_difficulty; static u32 gate_seed;
+static int gate_started, gate_difficulty, gate_foes; static u32 gate_seed;
 static int start_gate(const Run *r) {
     char path[1200];
     FILE *f;
-    if (gate_started) return gate_seed == r->seed && gate_difficulty == r->difficulty;
+    if (gate_started) return gate_seed == r->seed && gate_difficulty == r->difficulty && gate_foes == r->foes;
     if (!*gate_dir || !SDL_CreateDirectory(gate_dir)) return 0;
     snprintf(path, sizeof(path), "%s/pe_mods.ini", gate_dir);
     if (!(f = fopen(path, "w"))) return 0;
-    fprintf(f, "Manage mods/All mods=1\nManage mods/Randomizer=1\nRandomizer/Randomize new games=1\nRandomizer/Difficulty=%d\n", r->difficulty);
+    fprintf(f, "Manage mods/All mods=1\nManage mods/Randomizer=1\nRandomizer/Randomize new games=1\nRandomizer/Difficulty=%d\n"
+            "Randomizer/Randomize enemies=%d\n", r->difficulty, r->foes);
     for (u32 d = 0, div = 100000; d < 6; ++d, div /= 10) fprintf(f, "Randomizer/Seed digits/Digit %u=%u\n", d + 1, r->seed / div % 10);
     fclose(f);
     snprintf(path, sizeof(path), "%s/prefs", gate_dir);   /* only its folder is used */
     PE_HOOK(PE_HOOK_INIT, (&(PeHookInit){0, path}));
-    gate_started = 1; gate_seed = r->seed; gate_difficulty = r->difficulty;
+    gate_started = 1; gate_seed = r->seed; gate_difficulty = r->difficulty; gate_foes = r->foes;
     return 1;
 }
 
@@ -640,6 +647,7 @@ static int parse_run(char *line, Run *r) {
             continue;
         }
         if (!strcmp(tok, "gate")) { r->gate = 1; continue; }
+        if (!strcmp(tok, "foes")) { r->foes = 1; continue; }
         if (!strcmp(tok, "floor")) { r->floor = 1; continue; }
         if (!strncmp(tok, "from=M", 6)) { r->from = (unsigned)atoi(tok + 6); if (!r->from || r->from > SCENE_ROOM_COUNT) return 0; continue; }
         if (!strncmp(tok, "door=M", 6)) { r->door = (unsigned)atoi(tok + 6); r->has_door = 1; continue; }
@@ -718,11 +726,14 @@ static void do_run(const Run *r, FILE *out) {
     if (r->gate && (!r->seeded || !start_gate(r))) { FAIL("M%03u: a gate line needs the gate lines' one seed= (mod host in %s)", r->room, gate_dir); return; }
     if (r->nforce && !r->gate) { FAIL("M%03u: force= needs gate (the real mod)", r->room); return; }
     if (r->nai && !r->gate) { FAIL("M%03u: ai= needs gate (the real mod)", r->room); return; }
+    if (r->foes && !r->gate) { FAIL("M%03u: foes needs gate (the real mod)", r->room); return; }
     if (r->gate) PE_HOOK(PE_HOOK_NEW_GAME, (&(PeHookNewGame){PE_NEW_GAME_TITLE}));
     pe_rand_battle_clear();
-    pe_rand_ai_clear();
-    pe_rand_model_clear();
-    for (unsigned i = 0; i < r->nai; ++i)
+    if (!r->foes) {   /* foes: the plan the mod's New Game gave the switches stays */
+        pe_rand_ai_clear();
+        pe_rand_model_clear();
+    }
+    for (unsigned i = 0; i < r->nai && !r->foes; ++i)
         if (!pe_rand_ai_force(r->room, r->ai_to[i], r->ai_room[i], r->ai_from[i]) ||
             !pe_rand_model_force(r->room, r->ai_to[i], r->ai_room[i], r->ai_from[i])) {
             FAIL("M%03u: ai=%u<M%03u:%u: not taken", r->room, r->ai_to[i], r->ai_room[i], r->ai_from[i]);
@@ -778,7 +789,7 @@ static void do_run(const Run *r, FILE *out) {
      * and 85-114), so pm= is what the mod adds. */
     char pm[256] = ""; size_t pm_len = 0;
     memset(ai_steps, 0, sizeof(ai_steps));
-    if (r->nai) {
+    if (r->nai || r->foes) {
         static const void *slot_was[85 + 104];
         RelocBlock *tasks = g_GameState.bank_reset_944[0];
         const u8 *record = assets + (directory->scripts & 0x3FFFFF);
@@ -796,6 +807,18 @@ static void do_run(const Run *r, FILE *out) {
             const u8 *own = r->ai_to[i] < tasks->count ? tasks->offsets[r->ai_to[i]] : NULL;
             if (!own || (own >= block && own < block + block_bytes))
                 FAIL("M%03u: ai=%u<M%03u:%u: the mod gave no script", r->room, r->ai_to[i], r->ai_room[i], r->ai_from[i]);
+        }
+        if (r->foes) {   /* exactly the plan's swaps in this room */
+            static uint16_t plan[PE_RAND_FOES];
+            int moved[16] = {0};
+            pe_rand_foes_generate(g_pe_rand_foes, g_pe_rand_foe_ok[0], PE_RAND_FOES, r->seed, plan);
+            for (unsigned i = 0; i < PE_RAND_FOES; ++i)
+                if (g_pe_rand_foes[i].room == r->room && plan[i] != i) moved[g_pe_rand_foes[i].entity] = 1;
+            for (unsigned e = 0; e < tasks->count && e < 16; ++e) {
+                const int given = tasks->offsets[e] && !(tasks->offsets[e] >= block && tasks->offsets[e] < block + block_bytes);
+                if (given != moved[e]) FAIL("M%03u: foes: actor %u %s", r->room, e, moved[e] ? "moved by the plan got no script" : "got a script the plan doesn't give");
+                checks_done += moved[e];
+            }
         }
     }
 

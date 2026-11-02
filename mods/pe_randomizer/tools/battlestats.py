@@ -10,7 +10,9 @@ Each combat= entry is an enemy slot's stat block after its setup (PE_RAND_STAT_C
   code the source has, and the plain line's value for the others; every other slot equals the plain line's.
 - A forced actor that also runs the source's script (ai=5<M005:2, the AI switch) sets the codes the source's
   table lacks (rolled drops and steals) in that script's own setup: those aren't compared with the plain line.
-- At least one forced slot ends up with numbers different from its plain run (the swap did something).
+- A line with ai= and no force= (a seed plan's, tools/foeruns.py): the other actors' slots are checked as on a
+  plain line; the moved actors' stats are their own scripts' business.
+- With force= lines, at least one forced slot ends up with numbers different from its plain run (the swap did something).
 Exit 1 on a failure, 77 when an input is missing."""
 import os, re, subprocess, sys
 
@@ -82,8 +84,9 @@ def main():
     plain = {}
     for ln in lines:
         if ln["force"]: continue
-        plain.setdefault(ln["room"], ln)
+        if not ln["ai"]: plain.setdefault(ln["room"], ln)
         for ent, vals in ln["slots"]:
+            if ent in ln["ai"]: continue   # another foe's script (a seed plan's line) sets its own
             for i, want in rows.get((ln["room"], ent), {}).items():
                 checked += 1
                 if vals[i] != want: bad.append(f"M{ln['room']:03d} e{ent} ({ln['id']}): sets {name(i)}={vals[i]}, the table says {want}")
@@ -111,7 +114,7 @@ def main():
                                + (f" (M{ln['force'][ent][0]:03d} e{ln['force'][ent][1]}'s)" if src is not None and i in src else " (its own)"))
             if src is not None and vals != was: swapped += 1
         if not forced_slots: bad.append(f"M{ln['room']:03d} ({ln['id']}): no forced actor took a slot")
-    if not swapped: bad.append("no forced slot changed: the swap did nothing")
+    if not swapped and any(ln["force"] for ln in lines): bad.append("no forced slot changed: the swap did nothing")
     for b in bad[:60]: print("FAIL " + b)
     print(f"Battle stats: {len(lines)} lines, {checked} values checked, {swapped} slots swapped, {len(bad)} problems")
     sys.exit(1 if bad else 0)

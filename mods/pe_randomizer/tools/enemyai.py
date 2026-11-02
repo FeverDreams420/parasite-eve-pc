@@ -1,6 +1,6 @@
 """AI script scan for the battle randomizer (section 4: enemy B's actor script runs in A's room):
 python -I enemyai.py <randomizer-rooms.txt> <enemies.txt> [--disc disc.cue|.bin] [--source room_load.c] [--out enemy-ai.txt] [--check]
-                   [--table pe_rand_foes.h --models randomizer-models.txt --writes story-writes.txt]
+                   [--table pe_rand_foes.h --models randomizer-models.txt --writes story-writes.txt [--deny foe-deny.txt]]
 (the disc defaults to PE_TEST_DISC, the source to the checkout's src/main/scene/room_load.c.)
 
 Each actor type has its own script block (Scene_LoadMap: script_base = the room task block's RelocBlock
@@ -31,7 +31,8 @@ model placed in the enemy VRAM blocks (randomizer-models.txt, the rooms ctest) a
 (story-writes.txt: replacing its script would drop the write; such actors stay), boss or not (the boss pool:
 a creature marked * in enemies.txt), with its room's VRAM use; and per slot the foes that may take it: same
 pool, another creature, no ent or events conflict, the same spawner events (a fight's spawner counts on them),
-both with one spawner or both not (pe_rand_ai.c patches one).
+both with one spawner or both not (pe_rand_ai.c patches one), and not in --deny (lines `MNNN<MBBB:E`: room
+NNN's slots don't take room BBB's actor E; swaps whose fights fail headless, mod-randomizer-foefights).
 --check: every actor has steps in its block, every room slot an actor starts is installed in its own room
 with a handler the source binds, and each slot number has one handler in every room (what makes "pm" 0: B's
 slots only need installing in A's room). Exit 1 on a failure, 77 when an input (or the disc) is missing."""
@@ -181,7 +182,15 @@ def story_writers(path):
     return out
 
 
-def write_table(pool, model, writers, path):
+def deny_list(path):
+    out = set()
+    for line in open(path) if path else []:
+        m = re.match(r"M(\d+)<M(\d+):(\d+)", line)
+        if m: out.add((int(m[1]), int(m[2]), int(m[3])))
+    return out
+
+
+def write_table(pool, model, writers, path, deny=frozenset()):
     """pe_rand_foes.h; returns the foe count."""
     foes = []
     for r in pool:
@@ -199,6 +208,7 @@ def write_table(pool, model, writers, path):
         foes.append(dict(r=r, boss="*" in r["who"], block=block, count=count, shared=shared, end=end, rows_end=rows_end))
     def ok(a, b):
         if a is b or a["r"]["ids"] == b["r"]["ids"] or a["boss"] != b["boss"]: return False
+        if (a["r"]["room"], b["r"]["room"], b["r"]["entity"]) in deny: return False
         c = pair(a["r"], b["r"], {})
         return (not c["ent"] and not c["events"] and to_spawner(a["r"]) == to_spawner(b["r"])
                 and (len(a["r"]["spawners"]) == 1) == (len(b["r"]["spawners"]) == 1))
@@ -231,7 +241,7 @@ def main():
         if name in args: i = args.index(name); v = args[i + 1]; del args[i:i + 2]; return v
         return default
     disc, source, out_path = opt("--disc", os.environ.get("PE_TEST_DISC")), opt("--source", SOURCE), opt("--out")
-    table_path, models_path, writes_path = opt("--table"), opt("--models"), opt("--writes")
+    table_path, models_path, writes_path, deny_path = opt("--table"), opt("--models"), opt("--writes"), opt("--deny")
     do_check = "--check" in args
     args = [a for a in args if a != "--check"]
     if len(args) != 2: sys.exit(__doc__)
@@ -295,7 +305,7 @@ def main():
     if out_path: f.close()
     if table_path:
         if not models_path or not writes_path: sys.exit("--table needs --models and --writes")
-        n = write_table(pool, models(models_path), story_writers(writes_path), table_path)
+        n = write_table(pool, models(models_path), story_writers(writes_path), table_path, deny_list(deny_path))
         print(f"enemyai: {n} foes in {table_path}", file=sys.stderr)
     print(f"enemyai: {len(rows)} actors, {len(slots)} rooms, {total} pairs, {hist.get((), 0)} clean "
           f"({len(random_)} random <- random)" + ("" if disc else "; no disc: room PM slots not read"), file=sys.stderr)

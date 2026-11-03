@@ -14,10 +14,13 @@
  * are read, walked as the rooms ctest does (blocks keep data between their routines): a block whose walk leaves
  * the room's code is left alone.
  *
- * N vars (g_ScriptNodeActiveFlags, zeroed at each room load) are shared by all of a room's scripts: those the
- * source shares with its spawner and this room's spawner uses too stay (the spawn protocol); the source's
- * others that a script of this room uses move to ones nothing here uses (mode 4 operands in the copy), but
- * N0xa (the stat scale every enemy copies from V0x50).
+ * N vars (g_ScriptNodeActiveFlags, zeroed at each room load) are shared by all of a room's scripts. The ones
+ * the source shares with its spawner (the fight routine's flags, sums and foe count) become the ones E's own
+ * actor shares with this room's spawner, k-th for k-th in the order each block first uses them: spawners run
+ * the same routine on different vars (M012 N0x0/4/1/2, Chrysler M391 N0x3/7/4/5; a Plant there waited on
+ * N0x3 in M012 and its fight never went on). If the two lists differ in length, those both spawners use stay.
+ * The source's others that a script of this room uses move to ones nothing here uses (mode 4 operands in the
+ * copy), but N0xa (the stat scale every enemy copies from V0x50).
  *
  * The script slots (PM commands, effect programs) the source room installs and this room doesn't are
  * installed too, from the source room's records as its own load does it (each slot number has one handler in
@@ -163,6 +166,31 @@ static uint64_t pe_n_used(const uint8_t *tasks, uint32_t bytes, int t) {
     return used;
 }
 
+/* The N vars actor t shares with spawner s (not N0xa), in the order t's block first uses them; their count. */
+typedef struct PeFirst { uint32_t at[PE_RAND_N_VARS]; } PeFirst;
+static void pe_first_step(uint32_t *step, uint32_t at, void *user) {
+    PeFirst *f = user;
+    for (unsigned k = 0; k < ((step[0] >> 13) & 15); ++k)
+        if (pe_mode(step, k) == 4 && step[2 + k] < PE_RAND_N_VARS && at < f->at[step[2 + k]]) f->at[step[2 + k]] = at;
+}
+static unsigned pe_fight_vars(const uint8_t *tasks, uint32_t bytes, int t, int s, uint8_t *out) {
+    uint64_t shared = pe_n_used(tasks, bytes, t) & pe_n_used(tasks, bytes, s) & ~(1ull << 10);
+    PeFirst f;
+    uint32_t start;
+    unsigned n = 0;
+    if (!shared || !pe_entry(tasks, bytes, (unsigned)t, &start)) return 0;
+    memset(f.at, 0xff, sizeof f.at);
+    pe_walk(tasks, start, pe_word(tasks, 0), pe_first_step, &f);
+    for (; shared; ++n) {
+        unsigned best = PE_RAND_N_VARS;
+        for (unsigned i = 0; i < PE_RAND_N_VARS; ++i)
+            if ((shared >> i & 1) && (best == PE_RAND_N_VARS || f.at[i] < f.at[best])) best = i;
+        out[n] = (uint8_t)best;
+        shared &= ~(1ull << best);
+    }
+    return n;
+}
+
 typedef struct PePatch {
     unsigned self, to_self; int spawner, to_spawner; unsigned done;
     uint8_t n_to[PE_RAND_N_VARS]; unsigned n_done;
@@ -183,8 +211,9 @@ static void pe_patch_step(uint32_t *step, uint32_t at, void *user) {
 }
 
 /* The lead sub id: a source actor sends its spawner event 0x70 (which brings the battle in) only when its sub id
- * (op 38) is K: op 9 `T = A == K`, op 5 jump if zero T, op 28 (spawner, 0, 0x70), three steps in a row. */
-typedef struct PeLead { uint64_t subs; int lead; uint32_t at[2]; const uint32_t *step[2]; } PeLead;
+ * (op 38) is K: op 9 `T = A == K`, op 5 jump if zero T, op 28 (spawner, 0, 0x70), three steps in a row. gate:
+ * those op 9 steps. */
+typedef struct PeLead { uint64_t subs; int lead; uint32_t at[2]; const uint32_t *step[2]; uint32_t *gate[4]; unsigned gates; } PeLead;
 static void pe_sub_step(uint32_t *step, uint32_t at, void *user) {
     PeLead *l = user;
     (void)at;
@@ -198,8 +227,10 @@ static void pe_lead_step(uint32_t *step, uint32_t at, void *user) {
         l->at[1] + 8 + 4 * ((b[0] >> 13) & 15) == at && l->at[0] + 8 + 4 * ((a[0] >> 13) & 15) == l->at[1] &&
         (a[0] & 0x1FFF) == 9 && ((a[0] >> 13) & 15) == 4 && pe_mode(a, 0) == 0 && a[2] == 0xb && pe_mode(a, 2) == 1 &&
         a[4] < 64 && (l->subs >> a[4] & 1) && pe_mode(a, 3) == 0 &&
-        (b[0] & 0x1FFF) == 5 && ((b[0] >> 13) & 15) && pe_mode(b, 0) == pe_mode(a, 1) && b[2] == a[3])
+        (b[0] & 0x1FFF) == 5 && ((b[0] >> 13) & 15) && pe_mode(b, 0) == pe_mode(a, 1) && b[2] == a[3]) {
         l->lead = (int)a[5];
+        if (l->gates < 4) l->gate[l->gates++] = (uint32_t *)a;
+    }
     l->at[0] = l->at[1]; l->step[0] = l->step[1];
     l->at[1] = at; l->step[1] = step;
 }
@@ -278,16 +309,28 @@ int pe_rand_ai_apply(int room) {
         if (!copy) { pe_disc_room_free(&src); continue; }
         memcpy(copy, theirs + start, task_bytes);
         PePatch patch = {map->from_entity, map->entity, spawner, to_spawner, 0, {0}, 0};
-        /* N vars: the ones both spawners use stay (the spawn protocol); the source's others that this room's
-         * scripts use (not E's own block, which no longer runs) move to ones no script here uses. N0xa stays:
-         * every enemy sets it to the stat scale V0x50 (pe_rand_battle.c reads it). */
-        uint64_t room_n = s_n_copies, keep = (pe_n_used(mine, bytes, to_spawner) & pe_n_used(theirs, from_bytes, spawner)) | 1ull << 10;
+        /* N vars: the fight routine's (shared with the spawner) become E's own actor's, k-th for k-th (else the
+         * ones both spawners use stay); the source's others that this room's scripts use (not E's own block,
+         * which no longer runs) move to ones no script here uses. N0xa stays: every enemy sets it to the stat
+         * scale V0x50 (pe_rand_battle.c reads it). */
+        uint8_t fight_from[PE_RAND_N_VARS], fight_to[PE_RAND_N_VARS];
+        const unsigned fights = pe_fight_vars(theirs, from_bytes, map->from_entity, spawner, fight_from);
+        const unsigned own_fights = pe_fight_vars(mine, bytes, map->entity, to_spawner, fight_to);
+        uint64_t room_n = s_n_copies, keep = 1ull << 10;
+        for (unsigned i = 0; i < PE_RAND_N_VARS; ++i) patch.n_to[i] = (uint8_t)i;
+        if (fights && fights == own_fights)
+            for (unsigned i = 0; i < fights; ++i) { patch.n_to[fight_from[i]] = fight_to[i]; keep |= 1ull << fight_from[i]; }
+        else {
+            keep |= pe_n_used(mine, bytes, to_spawner) & pe_n_used(theirs, from_bytes, spawner);
+            if (fights || own_fights)
+                pe_log("rand_ai", "map=%d e%u: fight vars don't line up (M%03u e%u %u, this slot %u): the shared ones stay",
+                       room, map->entity, map->from_room, map->from_entity, fights, own_fights);
+        }
         const uint64_t their_n = pe_n_used(theirs, from_bytes, map->from_entity);
         for (unsigned e = 0; e < pe_word(mine, 4); ++e)
             if (e != map->entity) room_n |= pe_n_used(mine, bytes, (int)e);
-        uint64_t free_n = ~(room_n | their_n), moved = 0;
+        uint64_t free_n = ~(room_n | their_n | keep), moved = 0;
         for (unsigned i = 0; i < PE_RAND_N_VARS; ++i) {
-            patch.n_to[i] = (uint8_t)i;
             if (!(their_n & room_n & ~keep & (1ull << i)) || !free_n) continue;
             unsigned to = 0;
             while (!(free_n & (1ull << to))) ++to;
@@ -313,10 +356,12 @@ int pe_rand_ai_apply(int room) {
         }
         /* A slot whose own actor sends 0x70 at any sub id and that its spawner places with one op 8 (M013's
          * scripted Rat) gets the sub id the copy needs to bring its battle in (the room's live task block is
-         * rebuilt at each load). A slot with a lead of its own is left: in a group only the lead sends it. */
-        PeLead lead = {0, -1, {0, 0}, {0, 0}}, own = {0, -1, {0, 0}, {0, 0}};
+         * rebuilt at each load). A slot with a lead of its own keeps its spawns: the copy's lead gates take
+         * that sub id instead (M012 places its pair with sub ids 0 and 1, a Chrysler Plant's lead is another:
+         * no 0x70, the battle came in with nobody able to move). */
+        PeLead lead = {0, -1, {0, 0}, {0, 0}, {0}, 0}, own = {0, -1, {0, 0}, {0, 0}, {0}, 0};
         uint32_t spawner_at, own_at;
-        int lead_set = -1;
+        int lead_set = -1, lead_was = -1;
         pe_walk(copy, 0, pe_word(theirs, 0) - start, pe_sub_step, &lead);
         pe_walk(copy, 0, pe_word(theirs, 0) - start, pe_lead_step, &lead);
         if (pe_entry(mine, bytes, map->entity, &own_at)) {
@@ -334,6 +379,12 @@ int pe_rand_ai_apply(int room) {
                 pe_walk(live, spawner_at, pe_word(mine, 0), pe_op8_step, &spawn);
             }
         }
+        if (lead.lead >= 0 && own.lead >= 0 && lead.lead != own.lead) {
+            for (unsigned k = 0; k < lead.gates; ++k) lead.gate[k][5] = (uint32_t)own.lead;
+            lead_was = lead.lead;
+        }
+        if (lead_was >= 0)
+            pe_log("rand_ai", "map=%d e%u lead sub id %#x (the slot's; was %#x)", room, map->entity, own.lead, lead_was);
         if (lead_set >= 0)
             pe_log("rand_ai", "map=%d e%u spawned by e%d's op 8 with sub id %#x (its lead; was %#x)", room, map->entity,
                    to_spawner, lead.lead, lead_set);

@@ -22,3 +22,7 @@ M063 0x0 0x0 win stats gate seed=123456,2 at=278,1747 id=plain-central-park-monk
 # "N0x1b > N0x6"), and sets the Museum story bit V0x2a|0x80 (not fixed)
 M012 0x0 0x0 win gate seed=123456,2 at=-90,-1612 force=5<M063:3 ai=5<M063:3 id=theater-rat-as-monkey
 M012 0x0 0x0 win gate seed=123456,2 at=-90,-1612 force=5<M197:5 ai=5<M197:5 id=theater-rat-as-dinosaur
+# playtest 641276: a Chrysler Plant in the Theater rat slot sends 0x70 only with its own lead sub id (0x1f) and
+# waits on its spawner's N0x3; the Theater spawner places its pair with sub ids 0 and 1 and keeps its flags in
+# N0x0. The copy takes the slot's lead and its fight vars (N0x3 > N0x0 ...): the spawner's 0x70 step runs
+M012 0x0 0x0 win stats gate seed=123456,2 at=-90,-1612 ai=5<M391:6 ran=+6748 id=theater-rat-as-chrysler-plant

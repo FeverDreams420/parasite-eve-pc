@@ -379,4 +379,375 @@ static const PeRandEnemy g_pe_rand_enemies[PE_RAND_ENEMIES] = {
     { 437, 5, 61, 0x3ff3fff, 0x0000000, { 420, 420, 420, 85, 115, 96, 10, 10, 60, 1, 120, 3, 18, 3, 0, 0, 2, 2, 1, 2, 1, 1, 2, 1, 2, 1 } }, /* Parrot */
 };
 
+/* Row i: g_pe_rand_enemies[i]'s attack power { value, scaled } (enemyscan.py attack_power); 0: unknown. */
+static const uint16_t g_pe_rand_enemy_power[PE_RAND_ENEMIES][2] = {
+    { 17, 1 }, /* M005 e2 Actress* */
+    { 21, 1 }, /* M012 e5 Rat */
+    { 21, 1 }, /* M013 e2 Rat */
+    { 21, 1 }, /* M014 e6 Rat, Parrot */
+    { 22, 1 }, /* M014 e7 Rat, Parrot */
+    { 21, 1 }, /* M016 e6 Rat */
+    { 22, 1 }, /* M022 e4 Parrot */
+    { 30, 1 }, /* M023 e2 Eve* */
+    { 21, 1 }, /* M027 e3 Rat */
+    { 21, 1 }, /* M028 e7 Rat */
+    { 30, 1 }, /* M028 e8 Frog */
+    { 25, 1 }, /* M030 e5 Rat */
+    { 30, 1 }, /* M032 e6 Frog */
+    { 39, 1 }, /* M034 e3 Alligator* */
+    { 0, 0 }, /* M034 e4 Alligator* */
+    { 42, 1 }, /* M059 e5 Green Snake */
+    { 46, 1 }, /* M059 e6 Red Snake */
+    { 0, 0 }, /* M061 e5 Blackbird */
+    { 42, 1 }, /* M062 e6 Green Snake */
+    { 54, 1 }, /* M063 e3 Monkey */
+    { 55, 1 }, /* M065 e3 Plant */
+    { 46, 1 }, /* M066 e5 Red Snake */
+    { 0, 0 }, /* M067 e3 Red Snake, Blackbird */
+    { 46, 1 }, /* M067 e4 Red Snake, Blackbird */
+    { 65, 1 }, /* M075 e5 Bear */
+    { 46, 1 }, /* M078 e4 Red Snake */
+    { 42, 1 }, /* M078 e5 Green Snake */
+    { 65, 1 }, /* M080 e5 Blackbird, Bear */
+    { 0, 0 }, /* M080 e6 Blackbird, Bear */
+    { 0, 0 }, /* M081 e3 Blackbird */
+    { 46, 1 }, /* M082 e3 Red Snake */
+    { 65, 1 }, /* M082 e5 Bear */
+    { 54, 1 }, /* M083 e3 Monkey */
+    { 55, 1 }, /* M085 e3 Plant */
+    { 74, 1 }, /* M086 e3 Worm* */
+    { 55, 1 }, /* M087 e3 Plant */
+    { 0, 0 }, /* M087 e4 Blackbird, Plant */
+    { 85, 1 }, /* M089 e1 Eve* */
+    { 0, 0 }, /* M100 e5 Blackbird */
+    { 84, 1 }, /* M100 e6 Yellow Rat */
+    { 85, 1 }, /* M104 e4 Spider */
+    { 77, 1 }, /* M104 e5 Spider */
+    { 88, 1 }, /* M107 e5 Dogman */
+    { 0, 0 }, /* M107 e6 Blackbird */
+    { 84, 1 }, /* M110 e5 Yellow Rat */
+    { 0, 0 }, /* M110 e6 Blackbird */
+    { 88, 1 }, /* M111 e6 Dogman */
+    { 84, 1 }, /* M113 e6 Yellow Rat */
+    { 85, 1 }, /* M113 e7 Spider */
+    { 77, 1 }, /* M113 e8 Spider */
+    { 88, 1 }, /* M114 e6 Dogman */
+    { 85, 1 }, /* M115 e5 Spider */
+    { 77, 1 }, /* M115 e6 Spider */
+    { 85, 1 }, /* M116 e7 Spider */
+    { 0, 0 }, /* M116 e8 Blackbird */
+    { 77, 1 }, /* M116 e9 Spider */
+    { 108, 1 }, /* M118 e6 Giant Dogman* */
+    { 85, 1 }, /* M120 e4 Spider */
+    { 77, 1 }, /* M120 e5 Spider */
+    { 0, 0 }, /* M120 e6 Blackbird */
+    { 0, 0 }, /* M121 e8 Blackbird */
+    { 84, 1 }, /* M121 e9 Yellow Rat */
+    { 85, 1 }, /* M122 e3 Spider */
+    { 77, 1 }, /* M122 e4 Spider */
+    { 88, 1 }, /* M122 e5 Dogman */
+    { 110, 1 }, /* M123 e1 Sheeva* */
+    { 0, 0 }, /* M123 e2 Sheeva* */
+    { 0, 0 }, /* M123 e3 Sheeva* */
+    { 0, 0 }, /* M123 e4 Sheeva* */
+    { 90, 1 }, /* M126 e7 Slime */
+    { 90, 1 }, /* M129 e3 Slime */
+    { 90, 1 }, /* M137 e4 Slime */
+    { 98, 1 }, /* M137 e5 Fly */
+    { 90, 1 }, /* M139 e6 Slime */
+    { 90, 1 }, /* M140 e5 Slime */
+    { 98, 1 }, /* M140 e6 Fly */
+    { 117, 1 }, /* M141 e6 Ratman */
+    { 90, 1 }, /* M141 e7 Slime */
+    { 78, 1 }, /* M145 e6 Spawn* */
+    { 0, 0 }, /* M145 e7 Spawn* */
+    { 98, 1 }, /* M146 e6 Fly */
+    { 117, 1 }, /* M146 e7 Ratman */
+    { 98, 1 }, /* M147 e5 Fly */
+    { 90, 1 }, /* M147 e6 Slime */
+    { 135, 1 }, /* M149 e4 Giant Slime* */
+    { 78, 1 }, /* M152 e4 Spawn* */
+    { 0, 0 }, /* M152 e5 Spawn* */
+    { 90, 1 }, /* M152 e6 Slime */
+    { 78, 1 }, /* M153 e4 Spawn* */
+    { 0, 0 }, /* M153 e5 Spawn* */
+    { 117, 1 }, /* M153 e6 Ratman */
+    { 78, 1 }, /* M154 e7 Spawn* */
+    { 0, 0 }, /* M154 e8 Spawn* */
+    { 117, 1 }, /* M154 e9 Ratman */
+    { 115, 1 }, /* M156 e3 Giant Spider* */
+    { 118, 1 }, /* M162 e5 Cat */
+    { 110, 1 }, /* M162 e6 Snake */
+    { 118, 1 }, /* M163 e7 Cat */
+    { 110, 1 }, /* M163 e8 Snake */
+    { 123, 1 }, /* M167 e7 Bat */
+    { 110, 1 }, /* M167 e8 Snake */
+    { 123, 1 }, /* M168 e8 Bat */
+    { 139, 1 }, /* M168 e9 Frog */
+    { 139, 1 }, /* M169 e7 Frog */
+    { 123, 1 }, /* M169 e8 Bat */
+    { 123, 1 }, /* M173 e7 Bat */
+    { 189, 1 }, /* M174 e6 Alligator* */
+    { 123, 1 }, /* M178 e3 Bat */
+    { 142, 1 }, /* M186 e4 Mole */
+    { 123, 1 }, /* M186 e5 Bat */
+    { 142, 1 }, /* M187 e4 Mole */
+    { 143, 1 }, /* M188 e5 Centipede* */
+    { 138, 1 }, /* M188 e6 Centipede* */
+    { 138, 1 }, /* M188 e7 Centipede* */
+    { 143, 1 }, /* M188 e8 Centipede* */
+    { 150, 1 }, /* M197 e5 Dinosaur */
+    { 136, 1 }, /* M197 e6 Lizard, Armadillo* */
+    { 152, 1 }, /* M197 e7 Lizard, Armadillo* */
+    { 150, 1 }, /* M198 e4 Dinosaur */
+    { 136, 1 }, /* M198 e5 Lizard, Armadillo* */
+    { 152, 1 }, /* M198 e6 Lizard, Armadillo* */
+    { 150, 1 }, /* M199 e6 Dinosaur */
+    { 136, 1 }, /* M199 e7 Lizard, Armadillo* */
+    { 152, 1 }, /* M199 e8 Lizard, Armadillo* */
+    { 136, 1 }, /* M201 e3 Lizard */
+    { 150, 1 }, /* M203 e4 Dinosaur */
+    { 152, 1 }, /* M203 e5 Armadillo* */
+    { 162, 1 }, /* M203 e6 Pterodactyl* */
+    { 168, 1 }, /* M205 e4 Scorpion */
+    { 150, 1 }, /* M206 e3 Dinosaur */
+    { 136, 1 }, /* M206 e4 Lizard, Armadillo* */
+    { 152, 1 }, /* M206 e5 Lizard, Armadillo* */
+    { 150, 1 }, /* M207 e4 Dinosaur */
+    { 136, 1 }, /* M207 e5 Lizard, Armadillo* */
+    { 152, 1 }, /* M207 e6 Lizard, Armadillo* */
+    { 0, 0 }, /* M210 e5 Armadillo* */
+    { 150, 1 }, /* M214 e5 Dinosaur */
+    { 152, 1 }, /* M214 e6 Armadillo* */
+    { 150, 1 }, /* M217 e4 Dinosaur */
+    { 136, 1 }, /* M217 e5 Lizard, Armadillo* */
+    { 152, 1 }, /* M217 e6 Lizard, Armadillo* */
+    { 150, 1 }, /* M218 e3 Dinosaur */
+    { 136, 1 }, /* M218 e4 Lizard */
+    { 150, 1 }, /* M219 e3 Dinosaur */
+    { 152, 1 }, /* M219 e4 Armadillo* */
+    { 136, 1 }, /* M220 e3 Lizard, Armadillo* */
+    { 152, 1 }, /* M220 e4 Lizard, Armadillo* */
+    { 150, 1 }, /* M220 e5 Dinosaur */
+    { 162, 1 }, /* M221 e5 Pterodactyl* */
+    { 150, 1 }, /* M223 e3 Dinosaur */
+    { 136, 1 }, /* M223 e4 Lizard */
+    { 162, 1 }, /* M223 e5 Pterodactyl* */
+    { 150, 1 }, /* M224 e3 Dinosaur */
+    { 162, 1 }, /* M224 e4 Pterodactyl* */
+    { 152, 1 }, /* M224 e5 Armadillo* */
+    { 150, 1 }, /* M226 e3 Dinosaur */
+    { 136, 1 }, /* M226 e4 Lizard, Armadillo* */
+    { 152, 1 }, /* M226 e5 Lizard, Armadillo* */
+    { 136, 1 }, /* M227 e5 Lizard, Armadillo* */
+    { 152, 1 }, /* M227 e6 Lizard, Armadillo* */
+    { 150, 1 }, /* M229 e3 Dinosaur */
+    { 162, 1 }, /* M229 e4 Pterodactyl* */
+    { 136, 1 }, /* M229 e5 Lizard */
+    { 150, 1 }, /* M231 e3 Dinosaur */
+    { 168, 1 }, /* M231 e4 Scorpion */
+    { 162, 1 }, /* M231 e5 Pterodactyl* */
+    { 136, 1 }, /* M232 e5 Lizard */
+    { 152, 1 }, /* M233 e3 Armadillo* */
+    { 162, 1 }, /* M233 e4 Pterodactyl* */
+    { 150, 1 }, /* M234 e4 Dinosaur */
+    { 168, 1 }, /* M234 e5 Scorpion */
+    { 162, 1 }, /* M234 e6 Pterodactyl* */
+    { 150, 1 }, /* M242 e4 Dinosaur */
+    { 162, 1 }, /* M242 e5 Pterodactyl* */
+    { 152, 1 }, /* M242 e6 Armadillo* */
+    { 168, 1 }, /* M243 e3 Scorpion */
+    { 190, 1 }, /* M245 e6 Triceratops* */
+    { 190, 1 }, /* M245 e7 Triceratops* */
+    { 0, 0 }, /* M245 e8 Triceratops* */
+    { 150, 1 }, /* M246 e5 Dinosaur */
+    { 152, 1 }, /* M246 e6 Armadillo* */
+    { 162, 1 }, /* M246 e7 Pterodactyl* */
+    { 220, 1 }, /* M256 e2 Tyrannosaur* */
+    { 182, 1 }, /* M263 e7 Grey Rat, Gold Spider */
+    { 190, 1 }, /* M263 e8 Grey Rat, Gold Spider */
+    { 190, 1 }, /* M263 e9 Grey Rat, Gold Spider */
+    { 190, 1 }, /* M265 e3 Grey Rat, Gold Spider */
+    { 182, 1 }, /* M265 e4 Grey Rat, Gold Spider */
+    { 190, 1 }, /* M265 e5 Grey Rat, Gold Spider */
+    { 152, 1 }, /* M269 e3 Crab* */
+    { 152, 1 }, /* M269 e4 Crab* */
+    { 152, 1 }, /* M269 e5 Crab* */
+    { 0, 0 }, /* M269 e6 Crab* */
+    { 0, 0 }, /* M269 e7 Crab* */
+    { 0, 0 }, /* M269 e8 Crab* */
+    { 0, 0 }, /* M269 e9 Crab* */
+    { 229, 1 }, /* M273 e2 Eve* */
+    { 0, 0 }, /* M273 e5 Eve* */
+    { 0, 0 }, /* M273 e6 Eve* */
+    { 0, 0 }, /* M273 e7 Eve* */
+    { 180, 0 }, /* M291 e3 Giant Spider* */
+    { 435, 0 }, /* M295 e3 Monster Box* */
+    { 98, 0 }, /* M295 e4 Bat* */
+    { 110, 0 }, /* M295 e5 Dinosaur* */
+    { 0, 0 }, /* M298 e3 Bird */
+    { 92, 0 }, /* M298 e4 Rat */
+    { 110, 0 }, /* M299 e3 Dinosaur* */
+    { 98, 0 }, /* M299 e4 Bat* */
+    { 0, 0 }, /* M308 e3 Bird */
+    { 92, 0 }, /* M308 e4 Rat */
+    { 110, 0 }, /* M309 e3 Dinosaur* */
+    { 98, 0 }, /* M309 e4 Bat* */
+    { 98, 0 }, /* M310 e3 Bat* */
+    { 110, 0 }, /* M310 e4 Dinosaur* */
+    { 0, 0 }, /* M311 e3 Bird */
+    { 92, 0 }, /* M311 e4 Rat */
+    { 1600, 0 }, /* M318 e3 Eve* */
+    { 0, 0 }, /* M318 e4 Eve* */
+    { 90, 1 }, /* M324 e4 Slime */
+    { 98, 1 }, /* M324 e5 Fly */
+    { 90, 1 }, /* M326 e6 Slime */
+    { 90, 1 }, /* M327 e5 Slime */
+    { 98, 1 }, /* M327 e6 Fly */
+    { 117, 1 }, /* M328 e6 Ratman */
+    { 90, 1 }, /* M328 e7 Slime */
+    { 78, 1 }, /* M332 e6 Spawn* */
+    { 0, 0 }, /* M332 e7 Spawn* */
+    { 190, 1 }, /* M333 e4 Grey Rat, Gold Spider */
+    { 182, 1 }, /* M333 e5 Grey Rat, Gold Spider */
+    { 190, 1 }, /* M333 e6 Grey Rat, Gold Spider */
+    { 39, 1 }, /* M348 e2 Alligator* */
+    { 228, 1 }, /* M350 e2 Ultimate Being* */
+    { 178, 1 }, /* M350 e3 Ultimate Being* */
+    { 54, 1 }, /* M358 e4 Monkey */
+    { 0, 0 }, /* M358 e6 Blackbird, Monkey */
+    { 120, 1 }, /* M380 e3 Giant Spider* */
+    { 224, 0 }, /* M383 e3 Alligator* */
+    { 90, 0 }, /* M384 e3 Snake */
+    { 135, 0 }, /* M384 e4 Monkey */
+    { 160, 0 }, /* M385 e3 Mole */
+    { 98, 0 }, /* M385 e4 Bat* */
+    { 90, 0 }, /* M386 e3 Snake */
+    { 90, 0 }, /* M387 e3 Snake */
+    { 135, 0 }, /* M387 e4 Monkey */
+    { 98, 0 }, /* M388 e3 Bat* */
+    { 160, 0 }, /* M388 e4 Mole */
+    { 98, 0 }, /* M389 e3 Bat* */
+    { 160, 0 }, /* M389 e4 Mole */
+    { 224, 0 }, /* M390 e3 Centipede* */
+    { 180, 0 }, /* M390 e4 Centipede* */
+    { 180, 0 }, /* M390 e5 Centipede* */
+    { 224, 0 }, /* M390 e6 Centipede* */
+    { 90, 0 }, /* M391 e3 Snake */
+    { 152, 0 }, /* M391 e4 Spider */
+    { 108, 0 }, /* M391 e5 Spider */
+    { 138, 0 }, /* M391 e6 Plant */
+    { 90, 0 }, /* M392 e3 Snake */
+    { 152, 0 }, /* M392 e4 Spider */
+    { 108, 0 }, /* M392 e5 Spider */
+    { 100, 0 }, /* M392 e6 Fly */
+    { 90, 0 }, /* M393 e3 Snake */
+    { 138, 0 }, /* M393 e4 Plant */
+    { 100, 0 }, /* M393 e5 Fly */
+    { 90, 0 }, /* M394 e3 Snake */
+    { 152, 0 }, /* M394 e4 Spider */
+    { 108, 0 }, /* M394 e5 Spider */
+    { 138, 0 }, /* M394 e6 Plant */
+    { 90, 0 }, /* M395 e3 Snake */
+    { 152, 0 }, /* M395 e4 Spider */
+    { 108, 0 }, /* M395 e5 Spider */
+    { 138, 0 }, /* M395 e6 Plant */
+    { 90, 0 }, /* M396 e3 Snake */
+    { 138, 0 }, /* M396 e4 Plant */
+    { 100, 0 }, /* M396 e5 Fly */
+    { 295, 0 }, /* M397 e3 Triceratops* */
+    { 295, 0 }, /* M397 e4 Triceratops* */
+    { 0, 0 }, /* M397 e5 Triceratops* */
+    { 100, 0 }, /* M398 e3 Lizard */
+    { 190, 0 }, /* M398 e4 Cat */
+    { 138, 0 }, /* M399 e3 Plant */
+    { 155, 0 }, /* M399 e4 Spawn* */
+    { 0, 0 }, /* M399 e5 Spawn* */
+    { 190, 0 }, /* M400 e3 Cat */
+    { 100, 0 }, /* M400 e4 Lizard */
+    { 138, 0 }, /* M401 e3 Plant */
+    { 155, 0 }, /* M401 e4 Spawn* */
+    { 0, 0 }, /* M401 e5 Spawn* */
+    { 100, 0 }, /* M401 e6 Fly */
+    { 138, 0 }, /* M402 e3 Plant */
+    { 155, 0 }, /* M402 e4 Spawn* */
+    { 0, 0 }, /* M402 e5 Spawn* */
+    { 100, 0 }, /* M403 e3 Lizard */
+    { 190, 0 }, /* M403 e4 Cat */
+    { 360, 0 }, /* M404 e3 Cockroach* */
+    { 0, 0 }, /* M404 e4 Cockroach* */
+    { 280, 0 }, /* M405 e3 Armadillo */
+    { 140, 0 }, /* M405 e4 Parrot */
+    { 196, 0 }, /* M405 e5 Frog */
+    { 310, 0 }, /* M406 e3 Scorpion */
+    { 140, 0 }, /* M406 e4 Parrot */
+    { 140, 0 }, /* M407 e3 Parrot */
+    { 196, 0 }, /* M407 e4 Frog */
+    { 140, 0 }, /* M408 e3 Parrot */
+    { 280, 0 }, /* M408 e4 Armadillo */
+    { 196, 0 }, /* M408 e5 Frog */
+    { 140, 0 }, /* M409 e3 Parrot */
+    { 196, 0 }, /* M409 e4 Frog */
+    { 280, 0 }, /* M409 e5 Armadillo */
+    { 196, 0 }, /* M410 e3 Frog */
+    { 310, 0 }, /* M410 e4 Scorpion */
+    { 460, 0 }, /* M411 e3 Crab* */
+    { 460, 0 }, /* M411 e4 Crab* */
+    { 460, 0 }, /* M411 e5 Crab* */
+    { 0, 0 }, /* M411 e6 Crab* */
+    { 0, 0 }, /* M411 e7 Crab* */
+    { 0, 0 }, /* M411 e8 Crab* */
+    { 0, 0 }, /* M411 e9 Crab* */
+    { 250, 0 }, /* M412 e3 Gold Rat */
+    { 275, 0 }, /* M412 e4 Ratman */
+    { 350, 0 }, /* M412 e5 Giant Rat */
+    { 300, 0 }, /* M413 e3 Squirrel */
+    { 280, 0 }, /* M413 e4 Armadillo */
+    { 250, 0 }, /* M414 e3 Gold Rat */
+    { 275, 0 }, /* M414 e4 Ratman */
+    { 250, 0 }, /* M415 e3 Gold Rat */
+    { 275, 0 }, /* M415 e4 Ratman */
+    { 300, 0 }, /* M416 e3 Squirrel */
+    { 280, 0 }, /* M416 e4 Armadillo */
+    { 300, 0 }, /* M417 e3 Squirrel */
+    { 280, 0 }, /* M417 e4 Armadillo */
+    { 360, 0 }, /* M418 e3 Small Bee*, Large Bee*, Queen Bee* */
+    { 480, 0 }, /* M418 e4 Small Bee*, Large Bee*, Queen Bee* */
+    { 640, 0 }, /* M418 e5 Small Bee*, Large Bee*, Queen Bee* */
+    { 296, 0 }, /* M419 e3 Snake */
+    { 400, 0 }, /* M419 e5 Bear */
+    { 280, 0 }, /* M419 e6 Slime */
+    { 296, 0 }, /* M420 e3 Snake */
+    { 400, 0 }, /* M420 e5 Bear */
+    { 280, 0 }, /* M420 e6 Slime */
+    { 250, 0 }, /* M421 e3 Gold Rat */
+    { 360, 0 }, /* M421 e4 Dogman */
+    { 280, 0 }, /* M421 e5 Slime */
+    { 250, 0 }, /* M422 e3 Gold Rat */
+    { 360, 0 }, /* M422 e4 Dogman */
+    { 280, 0 }, /* M422 e5 Slime */
+    { 250, 0 }, /* M423 e3 Gold Rat */
+    { 360, 0 }, /* M423 e4 Dogman */
+    { 280, 0 }, /* M423 e5 Slime */
+    { 250, 0 }, /* M424 e3 Gold Rat */
+    { 360, 0 }, /* M424 e4 Dogman */
+    { 178, 1 }, /* M428 e2 Ultimate Being* */
+    { 205, 1 }, /* M429 e2 Ultimate Being* */
+    { 186, 1 }, /* M429 e3 Ultimate Being* */
+    { 164, 1 }, /* M430 e2 Ultimate Being* */
+    { 190, 1 }, /* M432 e2 Eve* */
+    { 435, 0 }, /* M434 e3 Monster Box* */
+    { 190, 0 }, /* M434 e4 Cat */
+    { 110, 0 }, /* M434 e5 Dinosaur* */
+    { 435, 0 }, /* M435 e3 Monster Box* */
+    { 190, 0 }, /* M435 e4 Cat */
+    { 140, 0 }, /* M435 e5 Parrot */
+    { 435, 0 }, /* M436 e3 Monster Box* */
+    { 280, 0 }, /* M436 e4 Armadillo */
+    { 140, 0 }, /* M436 e5 Parrot */
+    { 435, 0 }, /* M437 e3 Monster Box* */
+    { 300, 0 }, /* M437 e4 Squirrel */
+    { 140, 0 }, /* M437 e5 Parrot */
+};
+
 #endif

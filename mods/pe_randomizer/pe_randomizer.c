@@ -86,18 +86,22 @@ static int pe_rand_foes_supported(void) {
 
 /* This game's plan into the switches (they swap at each room load), or nothing when its enemies are vanilla. */
 static void pe_rand_foes_apply(void) {
-    if (s_plan_given) { pe_rand_model_clear(); pe_rand_ai_clear(); }
+    if (s_plan_given) { pe_rand_model_clear(); pe_rand_ai_clear(); pe_rand_battle_clear(); }
     s_plan_given = 0;
     s_plan_moved = 0;
     if (!pe_rand_foes_supported()) return;
     s_plan_moved = pe_rand_foes_generate(g_pe_rand_foes, g_pe_rand_foe_ok[0], PE_RAND_FOES, s_run.seed, s_plan);
     pe_rand_model_clear();
     pe_rand_ai_clear();
+    pe_rand_battle_clear();
     for (unsigned i = 0; i < PE_RAND_FOES; ++i) {
         const PeRandFoe *a = &g_pe_rand_foes[i], *b = &g_pe_rand_foes[s_plan[i]];
         if (s_plan[i] == i) continue;
         pe_rand_model_force(a->room, a->entity, b->room, b->entity);
         pe_rand_ai_force(a->room, a->entity, b->room, b->entity);
+        /* the new foe keeps the slot's own numbers (HP, defense, speed, exp...) and attack power */
+        pe_rand_battle_force(a->room, a->entity, a->room, a->entity);
+        pe_rand_battle_attack(a->room, a->entity, b->room, b->entity);
     }
     s_plan_given = 1;
     pe_log("rand_foes", "seed=%06u version=%u moved=%u of %u", (unsigned)s_run.seed, PE_RAND_FOES_VERSION, s_plan_moved,

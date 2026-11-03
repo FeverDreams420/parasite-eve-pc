@@ -19,6 +19,11 @@
  * the scale of the room the fight is in, so the swapped creature scales as it would at home. A source value
  * the scan couldn't read as a constant or k (a rolled drop or steal, a spawner's field) isn't in the
  * block, and the actor keeps its own for that code.
+ *
+ * Attack power (pe_rand_battle_attack): a slot whose script came from another foe scales each power that
+ * script sets (PE_HOOK_ENEMY_POWER) by the slot's own attack power over that foe's (g_pe_rand_enemy_power,
+ * both at this room's scale), so a Bat in a Rat's slot hits like the Rat. Left as written when either power
+ * is unknown.
  */
 #include "pe_mod_host.h"
 #include "pe_game.h"
@@ -31,12 +36,13 @@
 #include "pe_rand_enemies.h"
 
 #define MOD_ID "pe_randomizer"
-enum { PE_RAND_FORCED = 8, PE_RAND_SLOTS = 7 };
+enum { PE_RAND_FORCED = 320, PE_RAND_SLOTS = 7 };
 
 typedef struct PeRandBattleMap {
     uint16_t room;
     uint8_t entity;
     const PeRandEnemy *from;
+    const PeRandEnemy *ai;   /* the foe whose script runs in the slot, or NULL: powers as written */
 } PeRandBattleMap;
 static PeRandBattleMap s_map[PE_RAND_FORCED];
 static unsigned s_map_count;
@@ -56,8 +62,29 @@ static const PeRandEnemy *pe_rand_enemy(unsigned room, unsigned entity) {
 int pe_rand_battle_force(unsigned room, unsigned entity, unsigned from_room, unsigned from_entity) {
     const PeRandEnemy *from = pe_rand_enemy(from_room, from_entity);
     if (!from || !pe_rand_enemy(room, entity) || s_map_count == PE_RAND_FORCED) return 0;
-    s_map[s_map_count++] = (PeRandBattleMap){(uint16_t)room, (uint8_t)entity, from};
+    s_map[s_map_count++] = (PeRandBattleMap){(uint16_t)room, (uint8_t)entity, from, NULL};
     return 1;
+}
+
+int pe_rand_battle_attack(unsigned room, unsigned entity, unsigned ai_room, unsigned ai_entity) {
+    const PeRandEnemy *ai = pe_rand_enemy(ai_room, ai_entity);
+    for (unsigned i = 0; i < s_map_count; ++i)
+        if (s_map[i].room == room && s_map[i].entity == entity) { s_map[i].ai = ai; return ai != NULL; }
+    return 0;
+}
+
+static int32_t pe_rand_scale(void) { return g_ScriptNodeActiveFlags[10] ? g_ScriptNodeActiveFlags[10] : 0x10000; }
+
+/* An actor's attack power at this scale, 0 when unknown. */
+static uint32_t pe_rand_power(const PeRandEnemy *e, int32_t scale) {
+    const uint16_t *p = g_pe_rand_enemy_power[e - g_pe_rand_enemies];
+    return p[1] ? ((uint32_t)scale * p[0]) >> 16 : p[0];
+}
+
+static const PeRandBattleMap *pe_rand_map_of(int room, unsigned entity) {
+    for (unsigned i = 0; i < s_map_count; ++i)
+        if (s_map[i].room == room && s_map[i].entity == entity) return &s_map[i];
+    return NULL;
 }
 
 void pe_rand_battle_clear(void) {
@@ -83,15 +110,15 @@ static int pe_rand_battle_field(void *ctx, void *user) {
     if (s_slot_instance[slot] == instance) return 0;
     s_slot_instance[slot] = instance;
     room = pe_room_number();
-    for (unsigned i = 0; i < s_map_count && !from; ++i)
-        if (s_map[i].room == room && s_map[i].entity == f->actor->type_id) from = s_map[i].from;
+    const PeRandBattleMap *map = pe_rand_map_of(room, f->actor->type_id);
+    if (map) from = map->from;
     s_pending[slot] = from;
     s_pending_actor[slot] = f->actor;
     return 0;
 }
 
 static int pe_rand_battle_frame(void *ctx, void *user) {
-    int32_t scale = g_ScriptNodeActiveFlags[10] ? g_ScriptNodeActiveFlags[10] : 0x10000;
+    int32_t scale = pe_rand_scale();
     (void)ctx;
     (void)user;
     for (int slot = 0; slot < PE_RAND_SLOTS; ++slot) {
@@ -109,8 +136,29 @@ static int pe_rand_battle_frame(void *ctx, void *user) {
             Entity_WriteFieldByCmd(actor, PE_RAND_STAT_CODES[i], v);
         }
         s_writing = 0;
-        pe_log("rand_battle", "map=%d e%u stats of M%03u e%u", pe_room_number(), actor->type_id, from->room, from->entity);
+        const PeRandBattleMap *map = pe_rand_map_of(pe_room_number(), actor->type_id);
+        if (map && map->ai)
+            pe_log("rand_battle", "map=%d e%u stats of M%03u e%u, power %u for M%03u e%u's %u", pe_room_number(),
+                   actor->type_id, from->room, from->entity, (unsigned)pe_rand_power(from, scale), map->ai->room,
+                   map->ai->entity, (unsigned)pe_rand_power(map->ai, scale));
+        else
+            pe_log("rand_battle", "map=%d e%u stats of M%03u e%u", pe_room_number(), actor->type_id, from->room, from->entity);
     }
+    return 0;
+}
+
+/* A moved foe's attack: the power its script sets, times the slot's own power over the foe's. */
+static int pe_rand_battle_power(void *ctx, void *user) {
+    PeHookEnemyPower *p = ctx;
+    const PeRandBattleMap *map;
+    int32_t scale = pe_rand_scale();
+    uint32_t own, theirs, v;
+    (void)user;
+    if (!s_map_count || !p->actor || p->power <= 0 || !(map = pe_rand_map_of(pe_room_number(), p->actor->type_id)) ||
+        !map->ai || !(own = pe_rand_power(map->from, scale)) || !(theirs = pe_rand_power(map->ai, scale)))
+        return 0;
+    v = ((uint32_t)p->power * own + theirs / 2) / theirs;
+    p->power = v < 1 ? 1 : v > 0xFFFF ? 0xFFFF : (int)v;
     return 0;
 }
 
@@ -124,6 +172,7 @@ static int pe_rand_battle_scene(void *ctx, void *user) {
 void pe_rand_battle_register(void) {
     pe_hook_add(PE_HOOK_SCENE_START, pe_rand_battle_scene, NULL, PE_PRIORITY_NORMAL, MOD_ID);
     pe_hook_add(PE_HOOK_ENEMY_FIELD, pe_rand_battle_field, NULL, PE_PRIORITY_NORMAL, MOD_ID);
+    pe_hook_add(PE_HOOK_ENEMY_POWER, pe_rand_battle_power, NULL, PE_PRIORITY_NORMAL, MOD_ID);
     pe_hook_add(PE_HOOK_FRAME, pe_rand_battle_frame, NULL, PE_PRIORITY_NORMAL, MOD_ID);
     pe_hook_add(PE_HOOK_BATTLE_UPDATE, pe_rand_battle_frame, NULL, PE_PRIORITY_NORMAL, MOD_ID);
 }

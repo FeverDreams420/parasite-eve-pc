@@ -331,6 +331,8 @@ static void run_queue(void) {
                 result = 1;
             } else if (stats && (op == 89 || op == 90) && entity->type_id != 0) {   /* the slot's fields */
                 result = entity->state ? g_ScriptQueueOpcodeHandlers[op](args) : 1;
+            } else if (stats && (op == 112 || op == 183) && entity->type_id != 0) {   /* attack power (PE_HOOK_ENEMY_POWER) */
+                result = entity->state ? g_ScriptQueueOpcodeHandlers[op](args) : 1;
             } else if (stats && op == 206 && *args[0] != 0) {
                 FieldActor *a = actor_by_type(*args[0], *args[1]);
                 result = a && a->state ? g_ScriptQueueOpcodeHandlers[op](args) : 1;
@@ -730,8 +732,8 @@ static void do_run(const Run *r, FILE *out) {
     if (r->nai && !r->gate) { FAIL("M%03u: ai= needs gate (the real mod)", r->room); return; }
     if (r->foes && !r->gate) { FAIL("M%03u: foes needs gate (the real mod)", r->room); return; }
     if (r->gate) PE_HOOK(PE_HOOK_NEW_GAME, (&(PeHookNewGame){PE_NEW_GAME_TITLE}));
-    pe_rand_battle_clear();
     if (!r->foes) {   /* foes: the plan the mod's New Game gave the switches stays */
+        pe_rand_battle_clear();
         pe_rand_ai_clear();
         pe_rand_model_clear();
     }

@@ -56,6 +56,8 @@ typedef enum PeHookId {
     PE_HOOK_NEW_GAME,    /* PeHookNewGame: a new game starts; the host has reset every save record */
     PE_HOOK_ENEMY_FIELD, /* PeHookEnemyField: Entity_WriteFieldByCmd entry (script ops 90 / 206 on an
                           * actor); the value may be changed */
+    PE_HOOK_ENEMY_POWER, /* PeHookEnemyPower: an actor's script sets an attack's power (ops 112 / 183); the
+                          * power may be changed */
     PE_HOOK_COUNT
 } PeHookId;
 
@@ -96,6 +98,11 @@ typedef struct PeHookEnemyField {
     int code;  /* field code, 0x28+ (battle/context.c) */
     int value;
 } PeHookEnemyField;
+
+typedef struct PeHookEnemyPower {
+    struct FieldActor *actor;
+    int power;
+} PeHookEnemyPower;
 
 typedef struct PeHookRewards {
     int exp;

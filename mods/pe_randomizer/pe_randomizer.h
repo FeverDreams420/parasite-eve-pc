@@ -105,12 +105,16 @@ typedef struct PeRandEnemy {
     int32_t value[PE_RAND_STATS];
 } PeRandEnemy;
 
-/* Test only for now (no F1 option, no generator): actor `entity` of room `room` takes the stat block of actor
- * `from_entity` of room `from_room`, from its next battle slot on. 0 when either isn't in the table. Up to 8;
- * pe_rand_battle_clear drops them all. */
+/* Actor `entity` of room `room` takes the stat block of actor `from_entity` of room `from_room`, from its next
+ * battle slot on, over what its script's setup wrote. 0 when either isn't in the table. Up to 320;
+ * pe_rand_battle_clear drops them all. Randomize enemies maps each moved slot to its own block: the new foe
+ * fights with the numbers of the one it replaced. */
 int pe_rand_battle_force(unsigned room, unsigned entity, unsigned from_room, unsigned from_entity);
+/* That forced actor runs the script of actor `ai_entity` of room `ai_room`: each attack power the script sets is
+ * scaled by the stat block's attack power over the script's own (pe_rand_battle.c). 0 when not forced or unknown. */
+int pe_rand_battle_attack(unsigned room, unsigned entity, unsigned ai_room, unsigned ai_entity);
 void pe_rand_battle_clear(void);
-void pe_rand_battle_register(void);   /* pe_rand_init: the PE_HOOK_ENEMY_FIELD handler */
+void pe_rand_battle_register(void);   /* pe_rand_init: the PE_HOOK_ENEMY_FIELD / _POWER handlers */
 
 /* Battle randomizer, models (pe_rand_model.c), test only too: actor `entity` of room `room` shows up with the
  * model, textures and animation rows of actor `from_entity` of room `from_room` (read from the disc at each

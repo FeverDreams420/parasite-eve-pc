@@ -22,7 +22,7 @@ One line per enemy actor and creature id it sets:
 An actor with no creature that only creatures spawn shows as their part.
 --blocks pe_rand_enemies.h: each enemy actor's stat block for the battle randomizer (STAT_CODES, the first op 90
 write of each in the actor's own script: a constant, or (N0xa * k) >> 16, the difficulty scale; any other
-operand, such as a rolled drop, is left out and the actor keeps its own).
+operand, such as a rolled drop, is left out and the actor keeps its own), and its attack power (attack_power).
 --check: every creature key is found as some actor's id in its room, and every enemy actor maps to a
 creature (or has a reason in UNMAPPED). Exit 1 on a failure, 77 when an input is missing."""
 import os, re, struct, sys
@@ -149,6 +149,30 @@ def stat_block(steps, succ, t):
     return {c: next(iter(s)) for c, s in final.items() if len(s) == 1 and None not in s and "?" not in s}
 
 
+def attack_power(steps, t):
+    """(scaled, value): the strongest attack power entity t's script sets (op 112/183, operand 4), compared at
+    scale 0x10000: a constant (0, v), (N0xa * k) >> 16 (1, k), or a Chrysler base + N4 * 2 (0, base). None when
+    no power reads that way (Blackbirds pass it as an argument)."""
+    mine = [(op, a) for _, (e, op, a, _) in sorted(steps.items()) if e == t]
+    best = None
+    for i, (op, a) in enumerate(mine):
+        if op not in (112, 183) or len(a) < 5: continue
+        mode, v = a[4]
+        val = None
+        if mode == 0: val = (0, v & 0xFFFF)
+        elif mode == 3 and i >= 2:
+            (op1, a1), (op2, a2) = mine[i - 2], mine[i - 1]
+            if op1 == 9 and op2 == 9 and len(a1) == 4 and len(a2) == 4 and a1[0] == (0, 0xf) and a1[1][0] == 3:
+                if a2[0] == (0, 0x12) and a2[1] == (3, v) and a2[2] == a1[1] and a2[3] == (0, 0x10) \
+                        and a1[2] == (4, 0xa) and a1[3][0] == 0:
+                    val = (1, a1[3][1])
+                elif a2[0] == (0, 0) and a2[1] == (3, v) and a2[2][0] == 0 and a2[3] == a1[1] \
+                        and a1[2] == (2, 4) and a1[3] == (0, 2):
+                    val = (0, a2[2][1])
+        if val and (best is None or val[1] > best[1]): best = val
+    return best
+
+
 def write_blocks(rows, rooms, path):
     """pe_rand_enemies.h: one row per enemy actor that maps to a creature, by room and entity."""
     NL = chr(10)
@@ -157,7 +181,7 @@ def write_blocks(rows, rooms, path):
             " * (N0xa * k) >> 16 (the room's difficulty scale), else the value itself. Do not edit. */",
             "#ifndef PE_RAND_ENEMIES_H", "#define PE_RAND_ENEMIES_H", "", '#include "pe_randomizer.h"', "",
             f"static const uint8_t PE_RAND_STAT_CODES[PE_RAND_STATS] = {{ {', '.join(f'{c:#04x}' for c in STAT_CODES)} }};", ""]
-    out, succs = [], {}
+    out, powers, succs = [], [], {}
     def succ_of(m):
         if m not in succs:
             succs[m] = {}
@@ -172,8 +196,11 @@ def write_blocks(rows, rooms, path):
                          for c in STAT_CODES)
         out.append(f"    {{ {r['room']}, {r['entity']}, {r['creatures'][0]}, {have:#09x}, {scaled:#09x}, {{ {vals} }} }},"
                    f" /* {r['who']} */")
+        power = attack_power(rooms[r["room"]][1], r["entity"]) or (0, 0)
+        powers.append(f"    {{ {power[1]}, {power[0]} }}, /* M{r['room']:03d} e{r['entity']} {r['who']} */")
     lines = head + [f"#define PE_RAND_ENEMIES {len(out)}", "static const PeRandEnemy g_pe_rand_enemies[PE_RAND_ENEMIES] = {"] + \
-        out + ["};", "", "#endif"]
+        out + ["};", "", "/* Row i: g_pe_rand_enemies[i]'s attack power { value, scaled } (enemyscan.py attack_power); 0: unknown. */",
+               "static const uint16_t g_pe_rand_enemy_power[PE_RAND_ENEMIES][2] = {"] + powers + ["};", "", "#endif"]
     with open(path, "w", newline=NL) as f: f.write(NL.join(lines) + NL)
     return len(out)
 

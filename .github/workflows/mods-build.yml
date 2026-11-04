@@ -220,13 +220,13 @@ jobs:
 
           How to play:
           1. F1, Manage mods, turn All mods on, restart the game.
-          2. F1, Randomizer: turn Randomize new games on, pick a difficulty and a six-digit seed, restart the game.
+          2. F1, Randomizer: turn Randomize new games on, pick a six-digit seed, restart the game.
           3. Start a New Game. A spoiler, randomizer-SEED.txt, is written beside your preferences.
 
           What is in this release:
-          - Chests, pickups and gifts are shuffled, keys too, and every layout is checked so the game can be finished. Hard is the difficulty that has been tested most.
-          - One seed row in F1: type it, C copies it, Ctrl+V pastes one. Share a seed and difficulty to get the same items.
-          - Randomize enemies is greyed out: it is not ready yet, so enemies stay as they are.
+          - Chests, pickups and gifts are shuffled, keys too, and every layout is checked so the game can be finished.
+          - One seed row in F1: type it, C copies it, Ctrl+V pastes one. Share a seed to get the same items.
+          - New in this release: the Difficulty and Randomize enemies options are gone for now. Every new game uses Medium and enemies stay as they are. Games already started on another difficulty keep it.
           - Claire (RE2) skin support: the costume shows in the Wardrobe and keeps working during a randomized game. The Claire model is not included. It only appears if you have the skin files in pe_skins/claire beside your preferences.
           - While Randomize new games is on, the only other mods that run are the Wardrobe and Claire.
 

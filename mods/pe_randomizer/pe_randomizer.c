@@ -64,6 +64,9 @@ typedef struct PeRandFoesRun {
 _Static_assert(sizeof(PeRandFoesRun) == 4, "the saved record's layout");
 static PeRandFoesRun s_foes_run;
 static int s_foes_enabled;
+
+/* Randomize enemies is greyed out and off until it is ready. Only the run test turns it on, to keep it checked. */
+void pe_rand_test_enemies(int on) { s_foes_enabled = on; }
 static uint16_t s_plan[PE_RAND_FOES];
 static unsigned s_plan_moved;
 static int s_plan_given;       /* the switches hold this game's plan (tests force their own swaps otherwise) */
@@ -728,9 +731,8 @@ static int pe_rand_init(void) {
     s_alone = s_enabled && pe_mod_run_alone() == 0;
     pe_menu_register_choice(0, "Difficulty", "Easy: items stay on their story day. Medium: anywhere; keys to chests open before their lock, earlier days too. Hard: keys to any chest still reachable when their lock asks, some doors lead back.",
                             &s_difficulty, s_difficulty_names, PE_RAND_DIFFICULTIES);
-    pe_menu_register_toggle(0, "Randomize enemies", "New Game also shuffles enemies with the same seed: each takes another "
-                            "enemy's model, moves and stats, from any day; bosses only swap with bosses. Off: items only.",
-                            &s_foes_enabled, NULL);
+    pe_menu_register_toggle(0, "Randomize enemies", "Not ready yet: this release shuffles items only.", &s_foes_enabled, NULL);
+    pe_menu_grey_last();
     pe_menu_register_digits(0, "Seed", "Six digits: the same seed and difficulty give the same items. Enter types a seed, "
                             "C copies it to share.", &s_seed, 6);
     pe_menu_register_action(0, "Random seed", "Pick a new seed.", pe_rand_random_seed);

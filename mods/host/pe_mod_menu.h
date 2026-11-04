@@ -50,6 +50,9 @@ int pe_menu_register_live_choice(const char *sub, const char *label, const char 
 int pe_menu_register_dynamic_choice(const char *sub, const char *label, const char *description,
                                     int *index, unsigned max_count, PeMenuChoiceCount count_fn,
                                     PeMenuChoiceName name_fn);
+/* Grey out the toggle just registered: it shows Off, stays off whatever was saved, and can't be
+ * changed (a feature that isn't ready; its description can say so). */
+void pe_menu_grey_last(void);
 int pe_menu_register_tick(PeMenuPerFrame fn);
 /* A read-only line: text() fills the value shown on the right (Junk, prices, results). */
 typedef void (*PeMenuText)(char *out, unsigned size);
@@ -87,6 +90,7 @@ typedef struct PeMenuRow {
     PeMenuChoiceName name_fn;
     PeMenuText text_fn;
     const char *mod_id;  /* the mod that registered it (NULL: the host) */
+    int greyed;          /* pe_menu_grey_last */
 } PeMenuRow;
 
 /* The row's mod is active: settings of an inactive mod can still be set (saved), but its live

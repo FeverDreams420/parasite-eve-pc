@@ -142,6 +142,13 @@ int pe_menu_register_toggle(const char *sub, const char *label, const char *desc
     return per_frame ? pe_menu_register_tick(per_frame) : 0;
 }
 
+void pe_menu_grey_last(void) {
+    PeMenuRow *row = s_row_count ? &s_rows[s_row_count - 1] : NULL;
+    if (!row || row->kind != PE_ROW_TOGGLE) return;
+    row->greyed = 1;
+    *row->value = 0;
+}
+
 int pe_menu_register_action(const char *sub, const char *label, const char *description,
                             PeMenuAction action) {
     PeMenuRow *row;
@@ -305,7 +312,8 @@ const PeMenuPageInfo *pe_menu_page_info(const char *path) {
 }
 
 int pe_menu_row_adjustable(const PeMenuRow *row) {
-    return row->kind != PE_ROW_ACTION && row->kind != PE_ROW_INFO && row->kind != PE_ROW_DIGITS;   /* digits: Enter edits */
+    return !row->greyed && row->kind != PE_ROW_ACTION && row->kind != PE_ROW_INFO &&
+           row->kind != PE_ROW_DIGITS;   /* digits: Enter edits */
 }
 
 static const char *s_tick_mod[PE_MAX_TICKS];   /* each tick's mod: inactive mods' are skipped */
@@ -396,6 +404,7 @@ static int pe_clamp(int v, int lo, int hi) { return v < lo ? lo : v > hi ? hi : 
 void pe_menu_row_step(PeMenuRow *row, int direction) {
     unsigned count;
     /* An inactive mod's settings can be set up (saved); what writes the game can't run. */
+    if (row->greyed) return;
     if (!pe_menu_row_active(row) && (row->kind == PE_ROW_LIVE_INT || row->kind == PE_ROW_LIVE_CHOICE)) return;
     pe_mod_call_begin(row->mod_id, "F1 row", row->label);
     switch (row->kind) {

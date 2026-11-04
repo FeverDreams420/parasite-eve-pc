@@ -372,7 +372,8 @@ static void pe_wrapped(float x, float baseline, float step, float width, float e
 static void pe_paint_row_pe(const Entry *e, int slot, int selected) {
     const float s = s_scale, top = (HEADER_H + slot * ROW_H) * s, mid = top + ROW_H * 0.5f * s, base = mid + 6 * s;
     const float label_x = (PANEL_PAD + 16) * s, value_x = (PANEL_W - PANEL_PAD - VALUE_W * 0.5f) * s;
-    const int off = e->row >= 0 ? !pe_menu_row_active(pe_menu_row(e->row)) : !pe_page_active(e->page);
+    const int off = e->row >= 0 ? !pe_menu_row_active(pe_menu_row(e->row)) || pe_menu_row(e->row)->greyed
+                                : !pe_page_active(e->page);
     const PeColor label = pe_ui_alpha(pe_look_text, (selected ? 1.0f : 0.78f) * (off ? 0.55f : 1.0f));
     const int band_x = (int)(PANEL_PAD * 0.5f * s), band_y = (int)(top + 4 * s), band_w = (int)((PANEL_W - PANEL_PAD) * s),
               band_h = (int)((ROW_H - 8) * s);
@@ -424,7 +425,7 @@ static void pe_paint_row_pe(const Entry *e, int slot, int selected) {
             pe_ui_draw_text(&s_surface, value_x, base, 17 * s, value, selected ? pe_look_text : pe_ui_alpha(pe_look_text, 0.85f),
                             PE_ALIGN_CENTRE);
         }
-        if (selected) {
+        if (selected && !row->greyed) {
             const float reach = (VALUE_W * 0.5f - 22) * s;
             pe_arrow(value_x - reach, mid, 10 * s, -1, pe_look_red);
             pe_arrow(value_x + reach, mid, 10 * s, 1, pe_look_red);

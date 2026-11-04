@@ -42,7 +42,7 @@ enum {
     OVERLAY_HEADER_H = 128,
     OVERLAY_ROW_H = 46,
     OVERLAY_ACTION_GAP = 14,
-    OVERLAY_FOOTER_H = 74,
+    OVERLAY_FOOTER_H = 100,
     OVERLAY_VALUE_W = 250,
     /* "< 2x >" stepper in front of the speed row's label */
     OVERLAY_SPEED_STEP_CENTRE = 22,
@@ -90,12 +90,6 @@ typedef struct HostOverlayState {
     int skip;   /* the question's answer */
 } HostOverlayState;
 
-static const Color kPanel = {0.075f, 0.082f, 0.102f, 0.96f};
-static const Color kBorder = {1.0f, 1.0f, 1.0f, 0.10f};
-static const Color kAccent = {0.27f, 0.62f, 1.0f, 1.0f};
-static const Color kText = {0.93f, 0.95f, 0.98f, 1.0f};
-static const Color kMuted = {0.60f, 0.65f, 0.73f, 1.0f};
-static const Color kDanger = {1.0f, 0.45f, 0.42f, 1.0f};
 
 static Color WithAlpha(Color c, float a) {
     c.a = a;
@@ -224,7 +218,13 @@ static int Host_SettingsTotalRowCount(int page) {
 
 enum {
     OVERLAY_CONTROLS_ITEM_COUNT = HOST_BINDING_COUNT + 1,
+#ifdef PE_PS5_GPU_NATIVE
     OVERLAY_CONTROLS_VISIBLE_BINDINGS = OVERLAY_VISIBLE_CONTROLS - 1,
+#else
+    /* The window is as tall as the longest page: bindings fill it instead of leaving a gap. */
+    OVERLAY_CONTROLS_VISIBLE_BINDINGS =
+        (COUNT_OF(kGraphics) > OVERLAY_VISIBLE_CONTROLS ? COUNT_OF(kGraphics) : OVERLAY_VISIBLE_CONTROLS) - 1,
+#endif
     OVERLAY_CONTROLS_MAX_SCROLL = OVERLAY_CONTROLS_ITEM_COUNT - OVERLAY_CONTROLS_VISIBLE_BINDINGS
 };
 
@@ -296,72 +296,6 @@ static void BlendPixel(OverlaySurface *s, int x, int y, Color c, float coverage)
     p[1] = (uint8_t)(c.g * a * 255.0f + p[1] * keep + 0.5f);
     p[2] = (uint8_t)(c.b * a * 255.0f + p[2] * keep + 0.5f);
     p[3] = (uint8_t)(a * 255.0f + p[3] * keep + 0.5f);
-}
-
-/* ---- shapes ---- */
-
-static float RoundRectDistance(float px, float py, float x, float y, float w,
-                               float h, float r) {
-    float cx = x + w * 0.5f;
-    float cy = y + h * 0.5f;
-    float qx = fabsf(px - cx) - (w * 0.5f - r);
-    float qy = fabsf(py - cy) - (h * 0.5f - r);
-    float ox = qx > 0.0f ? qx : 0.0f;
-    float oy = qy > 0.0f ? qy : 0.0f;
-    float inside = qx > qy ? qx : qy;
-
-    return sqrtf(ox * ox + oy * oy) + (inside < 0.0f ? inside : 0.0f) - r;
-}
-
-static void FillRoundRect(OverlaySurface *s, float x, float y, float w, float h,
-                          float r, Color c) {
-    int x0 = (int)floorf(x) - 1, x1 = (int)ceilf(x + w) + 1;
-    int y0 = (int)floorf(y) - 1, y1 = (int)ceilf(y + h) + 1;
-    int ix, iy;
-
-    for (iy = y0; iy < y1; iy++) {
-        for (ix = x0; ix < x1; ix++) {
-            float d = RoundRectDistance((float)ix + 0.5f, (float)iy + 0.5f, x,
-                                        y, w, h, r);
-            BlendPixel(s, ix, iy, c, Clamp01(0.5f - d));
-        }
-    }
-}
-
-/* A capsule: the thick line segment the chevrons are made of. */
-static void DrawSegment(OverlaySurface *s, float ax, float ay, float bx,
-                        float by, float width, Color c) {
-    float minX = (ax < bx ? ax : bx) - width - 1.0f;
-    float maxX = (ax > bx ? ax : bx) + width + 1.0f;
-    float minY = (ay < by ? ay : by) - width - 1.0f;
-    float maxY = (ay > by ? ay : by) + width + 1.0f;
-    float ex = bx - ax, ey = by - ay;
-    float length2 = ex * ex + ey * ey;
-    int ix, iy;
-
-    for (iy = (int)floorf(minY); iy < (int)ceilf(maxY); iy++) {
-        for (ix = (int)floorf(minX); ix < (int)ceilf(maxX); ix++) {
-            float px = (float)ix + 0.5f - ax;
-            float py = (float)iy + 0.5f - ay;
-            float t = length2 > 0.0f ? (px * ex + py * ey) / length2 : 0.0f;
-            float qx, qy, d;
-
-            t = Clamp01(t);
-            qx = px - ex * t;
-            qy = py - ey * t;
-            d = sqrtf(qx * qx + qy * qy) - width * 0.5f;
-            BlendPixel(s, ix, iy, c, Clamp01(0.5f - d));
-        }
-    }
-}
-
-static void DrawChevron(OverlaySurface *s, float cx, float cy, float size,
-                        int direction, float width, Color c) {
-    float tipX = cx + (float)direction * size * 0.5f;
-    float backX = cx - (float)direction * size * 0.5f;
-
-    DrawSegment(s, backX, cy - size, tipX, cy, width, c);
-    DrawSegment(s, backX, cy + size, tipX, cy, width, c);
 }
 
 /* ---- text ---- */
@@ -544,6 +478,117 @@ static OverlayRect OverlayRowRect(const HostOverlayState *state, int row) {
     };
 }
 
+/* ---- the game's look (as the F1 Mods panel): deep navy window, silver double frame, PE red ---- */
+
+static const Color kPeRed = {0.90f, 0.14f, 0.15f, 1.0f};
+static const Color kPeSteel = {0.42f, 0.58f, 0.80f, 1.0f};
+static const Color kPeSilver = {0.80f, 0.86f, 0.95f, 1.0f};
+static const Color kPeText = {0.92f, 0.94f, 0.98f, 1.0f};
+static const Color kPeDim = {0.55f, 0.62f, 0.74f, 1.0f};
+
+static int PxThick(float s) { return (int)(2.0f * s) > 1 ? (int)(2.0f * s) : 2; }
+
+/* Whole pixels, so stacked strips meet without seams. */
+static void PxRect(OverlaySurface *s, int x, int y, int w, int h, Color c) {
+    int ix, iy;
+    for (iy = y; iy < y + h; iy++)
+        for (ix = x; ix < x + w; ix++) BlendPixel(s, ix, iy, c, 1.0f);
+}
+
+static Color MixColor(Color a, Color b, float t) {
+    Color c = {a.r + (b.r - a.r) * t, a.g + (b.g - a.g) * t, a.b + (b.b - a.b) * t, a.a + (b.a - a.a) * t};
+    return c;
+}
+
+static void VGradient(OverlaySurface *s, int x, int y, int w, int h, Color top, Color bottom) {
+    int i;
+    for (i = 0; i < h; i++) PxRect(s, x, y + i, w, 1, MixColor(top, bottom, h > 1 ? (float)i / (float)(h - 1) : 0.0f));
+}
+
+static void HGradient(OverlaySurface *s, int x, int y, int w, int h, Color left, Color right) {
+    int i;
+    for (i = 0; i < w; i++) PxRect(s, x + i, y, 1, h, MixColor(left, right, w > 1 ? (float)i / (float)(w - 1) : 0.0f));
+}
+
+static void PeFrame(OverlaySurface *s, int x, int y, int w, int h, Color c) {
+    PxRect(s, x, y, w, 1, c);
+    PxRect(s, x, y + h - 1, w, 1, c);
+    PxRect(s, x, y + 1, 1, h - 2, c);
+    PxRect(s, x + w - 1, y + 1, 1, h - 2, c);
+}
+
+/* Bright L-shaped brackets on a box's four corners. */
+static void PeCorners(OverlaySurface *s, int x, int y, int w, int h, int len, int t, Color c) {
+    PxRect(s, x, y, len, t, c);                   PxRect(s, x, y, t, len, c);
+    PxRect(s, x + w - len, y, len, t, c);         PxRect(s, x + w - t, y, t, len, c);
+    PxRect(s, x, y + h - t, len, t, c);           PxRect(s, x, y + h - len, t, len, c);
+    PxRect(s, x + w - len, y + h - t, len, t, c); PxRect(s, x + w - t, y + h - len, t, len, c);
+}
+
+/* A solid triangle `size` tall, its point at (x, y): dir 1 points right, -1 left. */
+static void PeArrow(OverlaySurface *s, float x, float y, float size, int dir, Color c) {
+    const int half = (int)(size * 0.5f + 0.5f), px = (int)(x + 0.5f), py = (int)(y + 0.5f);
+    int i;
+    for (i = 0; i < half; i++) {
+        const int col = dir > 0 ? px - 1 - i : px + i;
+        PxRect(s, col, py - i - 1, 1, 2 * i + 2, c);
+    }
+}
+
+/* Letter-spaced text (`track` pixels between letters). */
+static float SpacedWidth(const char *text, float em, float track) {
+    const size_t n = strlen(text);
+    return TextWidth(text, em) + (n > 1 ? (float)(n - 1) * track : 0.0f);
+}
+
+static void DrawSpaced(OverlaySurface *s, float x, float baseline, float em, float track, const char *text, Color c,
+                       TextAlign align) {
+    char one[2] = {0, 0};
+    if (align != ALIGN_LEFT) x -= SpacedWidth(text, em, track) * (align == ALIGN_CENTRE ? 0.5f : 1.0f);
+    for (; *text; text++) {
+        one[0] = *text;
+        DrawText(s, x, baseline, em, one, c, ALIGN_LEFT);
+        x += TextWidth(one, em) + track;
+    }
+}
+
+static void UpperCopy(char *out, size_t size, const char *in) {
+    size_t i;
+    for (i = 0; in[i] && i + 1 < size; i++) out[i] = (char)(in[i] >= 'a' && in[i] <= 'z' ? in[i] - 32 : in[i]);
+    out[i] = '\0';
+}
+
+/* Word-wrap `text` into up to `lines` lines of at most `width` pixels; the last line takes the rest. */
+static void DrawWrapped(OverlaySurface *s, float x, float baseline, float step, float width, float em, int lines,
+                        const char *text, Color c) {
+    char line[320];
+    int n;
+    for (n = 0; n < lines && *text; n++) {
+        size_t fit = 0, i = 0;
+        if (n < lines - 1)
+            for (;;) {
+                size_t next = i;
+                while (text[next] && text[next] != ' ') next++;
+                if (next >= sizeof line) break;
+                memcpy(line, text, next);
+                line[next] = '\0';
+                if (fit && TextWidth(line, em) > width) break;
+                fit = next;
+                if (!text[next]) break;
+                i = next + 1;
+            }
+        else
+            fit = strlen(text);
+        if (fit >= sizeof line) fit = sizeof line - 1;
+        if (!fit) fit = strlen(text) < sizeof line - 1 ? strlen(text) : sizeof line - 1;
+        memcpy(line, text, fit);
+        line[fit] = '\0';
+        DrawText(s, x, baseline + step * (float)n, em, line, c, ALIGN_LEFT);
+        text += fit;
+        while (*text == ' ') text++;
+    }
+}
+
 /* ---- the panel (rage-racer-pc Painter) ---- */
 
 typedef struct Painter {
@@ -552,77 +597,118 @@ typedef struct Painter {
     float s; /* design units to pixels */
 } Painter;
 
+/* The window: navy to black, faint scanlines, a silver double frame with bright corners. */
 static void PaintFrame(const Painter *p, float width, float height) {
     const float s = p->s;
+    const int w = (int)ceilf(width), h = (int)ceilf(height), inset = (int)(5.0f * s);
+    int i;
 
-    FillRoundRect(p->surface, 0.0f, 0.0f, width, height, 16.0f * s, kBorder);
-    FillRoundRect(p->surface, 1.0f, 1.0f, width - 2.0f, height - 2.0f,
-                  15.0f * s, kPanel);
+    VGradient(p->surface, 0, 0, w, h, (Color){0.055f, 0.075f, 0.140f, 0.97f}, (Color){0.010f, 0.014f, 0.032f, 0.97f});
+    for (i = 0; i < h; i += 3) PxRect(p->surface, 1, i, w - 2, 1, WithAlpha(kPeSilver, 0.022f));
+    PeFrame(p->surface, 0, 0, w, h, WithAlpha(kPeSilver, 0.50f));
+    PeFrame(p->surface, inset, inset, w - 2 * inset, h - 2 * inset, WithAlpha(kPeSilver, 0.13f));
+    PeCorners(p->surface, 0, 0, w, h, (int)(22.0f * s), PxThick(s), WithAlpha(kPeSilver, 0.95f));
+}
+
+/* "PARASITE EVE" in red over the title in big spaced capitals; a red rule fading out at ruleY. */
+static void PaintTitle(const Painter *p, float panelW, float ruleY, const char *title, const char *corner) {
+    const float s = p->s;
+    const int x = (int)((float)OVERLAY_PAD * s), w = (int)((panelW - 2.0f * OVERLAY_PAD) * s);
+
+    DrawSpaced(p->surface, (float)OVERLAY_PAD * s, 26.0f * s, 11.0f * s, 4.0f * s, "PARASITE EVE", kPeRed, ALIGN_LEFT);
+    DrawSpaced(p->surface, (panelW - (float)OVERLAY_PAD) * s, 26.0f * s, 11.0f * s, 3.0f * s, corner,
+               WithAlpha(kPeDim, 0.85f), ALIGN_RIGHT);
+    DrawSpaced(p->surface, (float)OVERLAY_PAD * s, 55.0f * s, 24.0f * s, 5.0f * s, title, kPeText, ALIGN_LEFT);
+    HGradient(p->surface, x, (int)(ruleY * s), w, PxThick(s), kPeRed, WithAlpha(kPeRed, 0.0f));
+    PxRect(p->surface, x, (int)((ruleY + 6.0f) * s), w, 1, WithAlpha(kPeSilver, 0.08f));
 }
 
 static void PaintHeader(const Painter *p) {
     const float s = p->s;
     int page;
 
-    DrawText(p->surface, (float)OVERLAY_PAD * s, 40.0f * s, 26.0f * s,
-             "Settings", kText, ALIGN_LEFT);
-    DrawText(p->surface, (float)(OVERLAY_PANEL_W - OVERLAY_PAD) * s, 38.0f * s,
-             14.0f * s, "GAME PAUSED", kMuted, ALIGN_RIGHT);
+    PaintTitle(p, (float)OVERLAY_PANEL_W, (float)(OVERLAY_HEADER_H - 20), "SETTINGS", "GAME PAUSED");
     for (page = 0; page < OVERLAY_PAGE_COUNT; page++) {
         OverlayRect tab = OverlayTabRect(page);
         int current = page == p->state->page;
+        char name[32];
 
-        if (current) {
-            FillRoundRect(p->surface, tab.x * s, tab.y * s, tab.w * s,
-                          tab.h * s, 8.0f * s, WithAlpha(kAccent, 0.18f));
+        UpperCopy(name, sizeof name, OverlayPageName(page));
+        if (current) {                                  /* a steel glow over a red bar under the page you are on */
+            const int tx = (int)((tab.x + 3.0f) * s), tw = (int)((tab.w - 6.0f) * s);
+            const int ty = (int)(tab.y * s), th = (int)(tab.h * s);
+            VGradient(p->surface, tx, ty, tw, th, WithAlpha(kPeSteel, 0.0f), WithAlpha(kPeSteel, 0.30f));
+            PxRect(p->surface, tx, ty + th - PxThick(s), tw, PxThick(s), kPeRed);
         }
-        DrawText(p->surface, (tab.x + tab.w * 0.5f) * s,
-                 (tab.y + tab.h * 0.5f + 5.5f) * s, 15.0f * s,
-                 OverlayPageName(page), current ? kText : kMuted, ALIGN_CENTRE);
+        DrawSpaced(p->surface, (tab.x + tab.w * 0.5f) * s, (tab.y + tab.h * 0.5f + 5.0f) * s, 12.0f * s, 2.0f * s, name,
+                   current ? kPeText : WithAlpha(kPeDim, 0.9f), ALIGN_CENTRE);
     }
-    FillRoundRect(p->surface, (float)OVERLAY_PAD * s,
-                  (float)(OVERLAY_HEADER_H - 12) * s,
-                  (float)(OVERLAY_PANEL_W - 2 * OVERLAY_PAD) * s, 1.0f, 0.0f,
-                  WithAlpha(kText, 0.10f));
 }
 
+/* The selected row: a steel band fading right, hairlines, the red cursor. Others: a faint rule above. */
+static void PaintRowBand(const Painter *p, float panelW, float top, float mid, int selected, int first) {
+    const float s = p->s;
+    const int bx = (int)((float)(OVERLAY_PAD / 2) * s), by = (int)(top + 4.0f * s);
+    const int bw = (int)((panelW - (float)OVERLAY_PAD) * s), bh = (int)((float)(OVERLAY_ROW_H - 8) * s);
+
+    if (selected) {
+        HGradient(p->surface, bx, by, bw, bh, WithAlpha(kPeSteel, 0.34f), WithAlpha(kPeSteel, 0.0f));
+        HGradient(p->surface, bx, by, bw, 1, WithAlpha(kPeSilver, 0.55f), WithAlpha(kPeSilver, 0.0f));
+        HGradient(p->surface, bx, by + bh - 1, bw, 1, WithAlpha(kPeSilver, 0.40f), WithAlpha(kPeSilver, 0.0f));
+        PeArrow(p->surface, (float)(OVERLAY_PAD + 10) * s, mid, 12.0f * s, 1, kPeRed);
+    } else if (!first) {
+        HGradient(p->surface, (int)((float)(OVERLAY_PAD + 16) * s), (int)top,
+                  (int)((panelW - 2.0f * OVERLAY_PAD - 16.0f) * s), 1, WithAlpha(kPeSilver, 0.07f),
+                  WithAlpha(kPeSilver, 0.0f));
+    }
+}
+
+static float OverlayLabelX(void) { return (float)(OVERLAY_PAD + 16); }
+
+/* The label, and on the right a framed field for the value; red arrows on the selected row. */
 static void PaintValueRow(const Painter *p, const char *labelText,
                           const char *valueText, float mid, float baseline,
                           int selected, int highlightValue, Color label) {
     const float s = p->s;
-    float centre = OverlayValueCentre() * s;
-    float reach = ((float)OVERLAY_VALUE_W * 0.5f - 14.0f) * s;
-    Color chevron = selected ? kAccent : WithAlpha(kMuted, 0.75f);
+    const float centre = OverlayValueCentre() * s;
+    const float reach = ((float)OVERLAY_VALUE_W * 0.5f - 20.0f) * s;
+    const int fx = (int)(centre - ((float)OVERLAY_VALUE_W * 0.5f - 6.0f) * s);
+    const int fy = (int)(mid - (float)(OVERLAY_ROW_H - 16) * 0.5f * s);
+    const int fw = (int)((float)(OVERLAY_VALUE_W - 12) * s), fh = (int)((float)(OVERLAY_ROW_H - 16) * s);
 
-    DrawText(p->surface, (float)OVERLAY_PAD * s, baseline, 17.0f * s,
-             labelText, label, ALIGN_LEFT);
-    DrawChevron(p->surface, centre - reach, mid, 5.0f * s, -1, 2.0f * s,
-                chevron);
-    DrawChevron(p->surface, centre + reach, mid, 5.0f * s, 1, 2.0f * s,
-                chevron);
+    DrawText(p->surface, OverlayLabelX() * s, baseline, 17.0f * s, labelText, label, ALIGN_LEFT);
+    PxRect(p->surface, fx, fy, fw, fh, (Color){0.0f, 0.0f, 0.0f, selected ? 0.45f : 0.25f});
+    PeFrame(p->surface, fx, fy, fw, fh, WithAlpha(kPeSilver, selected ? 0.38f : 0.12f));
+    if (selected) {
+        PeArrow(p->surface, centre - reach, mid, 10.0f * s, -1, kPeRed);
+        PeArrow(p->surface, centre + reach, mid, 10.0f * s, 1, kPeRed);
+    }
+    if (strcmp(valueText, "On") == 0 || strcmp(valueText, "Off") == 0) {
+        const int on = valueText[1] == 'n';
+        DrawSpaced(p->surface, centre, baseline - 1.0f * s, 14.0f * s, 3.0f * s, on ? "ON" : "OFF",
+                   on ? (selected ? kPeRed : WithAlpha(kPeRed, 0.85f)) : WithAlpha(kPeDim, 0.9f), ALIGN_CENTRE);
+        return;
+    }
     DrawText(p->surface, centre, baseline, 17.0f * s, valueText,
-             highlightValue ? kAccent : (selected ? kText : WithAlpha(kText, 0.9f)),
-             ALIGN_CENTRE);
+             highlightValue ? kPeRed : (selected ? kPeText : WithAlpha(kPeText, 0.85f)), ALIGN_CENTRE);
 }
 
 /* "< 3x > speed": the arrows step the hold's speed; a dim arrow is the limit. */
 static void PaintSpeedLabel(const Painter *p, float mid, float baseline,
                             int selected, Color label) {
     const float s = p->s;
-    float centre = (float)(OVERLAY_PAD + OVERLAY_SPEED_STEP_CENTRE) * s;
+    float centre = (OverlayLabelX() + (float)OVERLAY_SPEED_STEP_CENTRE) * s;
     float reach = (float)OVERLAY_SPEED_STEP_REACH * s;
     unsigned factor = host_options.speed_factor;
-    Color chevron = selected ? kAccent : WithAlpha(kMuted, 0.75f);
-    Color limit = WithAlpha(kMuted, 0.3f);
+    Color arrow = selected ? kPeRed : WithAlpha(kPeDim, 0.75f);
+    Color limit = WithAlpha(kPeDim, 0.3f);
     char text[8];
 
     snprintf(text, sizeof(text), "%ux", factor);
-    DrawChevron(p->surface, centre - reach, mid, 5.0f * s, -1, 2.0f * s,
-                factor > 2 ? chevron : limit);
-    DrawChevron(p->surface, centre + reach, mid, 5.0f * s, 1, 2.0f * s,
-                factor < PSYZ_SPEED_MAX ? chevron : limit);
+    PeArrow(p->surface, centre - reach, mid, 9.0f * s, -1, factor > 2 ? arrow : limit);
+    PeArrow(p->surface, centre + reach, mid, 9.0f * s, 1, factor < PSYZ_SPEED_MAX ? arrow : limit);
     DrawText(p->surface, centre, baseline, 17.0f * s, text, label, ALIGN_CENTRE);
-    DrawText(p->surface, (float)(OVERLAY_PAD + OVERLAY_SPEED_STEP_W) * s,
+    DrawText(p->surface, (OverlayLabelX() + (float)OVERLAY_SPEED_STEP_W) * s,
              baseline, 17.0f * s, "speed", label, ALIGN_LEFT);
 }
 
@@ -681,17 +767,9 @@ static void PaintRows(const Painter *p) {
         float mid = top + (float)OVERLAY_ROW_H * 0.5f * s;
         float baseline = mid + 6.0f * s;
         int selected = row == p->state->row;
-        Color label = selected ? kText : WithAlpha(kText, 0.82f);
+        Color label = WithAlpha(kPeText, selected ? 1.0f : 0.78f);
 
-        if (selected) {
-            FillRoundRect(p->surface, (float)(OVERLAY_PAD / 2) * s,
-                          top + 3.0f * s, (float)(OVERLAY_PANEL_W - OVERLAY_PAD) * s,
-                          (float)(OVERLAY_ROW_H - 6) * s, 9.0f * s,
-                          WithAlpha(kAccent, 0.16f));
-            FillRoundRect(p->surface, (float)(OVERLAY_PAD / 2) * s + 4.0f * s,
-                          mid - 10.0f * s, 3.0f * s, 20.0f * s, 1.5f * s,
-                          kAccent);
-        }
+        PaintRowBand(p, (float)OVERLAY_PANEL_W, top, mid, selected, slot == 0 || slot == visibleSettings);
         if (row < pureCount) {
             if (settings != NULL && row < declCount) {
                 PaintSettingRow(p, &settings[row], mid, baseline, selected, label);
@@ -723,8 +801,8 @@ static void PaintRows(const Painter *p) {
                 const char *names[]={"HD backgrounds","Background pack","Integrity check"};
                 if(row==0)PaintValueRow(p,names[row],Host_HdValue(row),mid,baseline,selected,0,label);
                 else {
-                    DrawText(p->surface,OVERLAY_PAD*s,baseline,17*s,names[row],label,ALIGN_LEFT);
-                    DrawText(p->surface,OverlayValueCentre()*s,baseline,17*s,Host_HdValue(row),selected?kAccent:kText,ALIGN_CENTRE);
+                    DrawText(p->surface,OverlayLabelX()*s,baseline,17*s,names[row],label,ALIGN_LEFT);
+                    DrawSpaced(p->surface,OverlayValueCentre()*s,baseline-1*s,12*s,2.5f*s,Host_HdValue(row),selected?kPeRed:WithAlpha(kPeDim,0.95f),ALIGN_CENTRE);
                 }
             } else if (page == OVERLAY_PAGE_DISCS) {
                 char discLabel[32];
@@ -735,9 +813,13 @@ static void PaintRows(const Painter *p) {
         } else {
             int quit = row == pureCount + 1;
 
-            DrawText(p->surface, (float)OVERLAY_PAD * s, baseline, 17.0f * s,
-                     quit ? "Quit game" : "Resume game", quit ? kDanger : label,
+            DrawText(p->surface, OverlayLabelX() * s, baseline, 17.0f * s,
+                     quit ? "Quit game" : "Resume game", quit ? WithAlpha(kPeRed, selected ? 1.0f : 0.85f) : label,
                      ALIGN_LEFT);
+            if (selected) {
+                DrawSpaced(p->surface, OverlayValueCentre() * s, baseline - 1.0f * s, 12.0f * s, 2.5f * s,
+                           "PRESS ENTER", kPeRed, ALIGN_CENTRE);
+            }
         }
     }
 
@@ -745,12 +827,13 @@ static void PaintRows(const Painter *p) {
         float x=OVERLAY_PAD*s,y=(OVERLAY_HEADER_H+5*OVERLAY_ROW_H)*s,w=(OVERLAY_PANEL_W-2*OVERLAY_PAD)*s;
         if(Host_HdBusy()) {
             char text[80];snprintf(text,sizeof(text),"Downloading / verifying: %d%%",Host_HdPercent());
-            DrawText(p->surface,x,y,15*s,text,kText,ALIGN_LEFT);
-            FillRoundRect(p->surface,x,y+18*s,w,10*s,5*s,WithAlpha(kText,.12f));
-            FillRoundRect(p->surface,x,y+18*s,w*Host_HdPercent()/100.f,10*s,5*s,kAccent);
+            DrawText(p->surface,x,y,15*s,text,kPeText,ALIGN_LEFT);
+            PxRect(p->surface,(int)x,(int)(y+18*s),(int)w,(int)(10*s),(Color){0,0,0,.45f});
+            PeFrame(p->surface,(int)x,(int)(y+18*s),(int)w,(int)(10*s),WithAlpha(kPeSilver,.30f));
+            HGradient(p->surface,(int)x+1,(int)(y+19*s),(int)(w*Host_HdPercent()/100.f)-2,(int)(8*s),WithAlpha(kPeRed,.7f),kPeRed);
         } else {
             char text[96];snprintf(text,sizeof(text),"Installed version: %s",*host_hd.version?host_hd.version:host_hd.development?"local preview":"none");
-            DrawText(p->surface,x,y,15*s,text,kMuted,ALIGN_LEFT);
+            DrawText(p->surface,x,y,15*s,text,kPeDim,ALIGN_LEFT);
         }
     }
     if (page == OVERLAY_PAGE_CONTROLS) {
@@ -762,10 +845,8 @@ static void PaintRows(const Painter *p) {
                                  (float)OVERLAY_CONTROLS_ITEM_COUNT);
         float thumbTop = trackTop + (trackH - thumbH) *
                          ((float)scroll / (float)OVERLAY_CONTROLS_MAX_SCROLL);
-        FillRoundRect(p->surface, trackX, trackTop, 4.0f * s, trackH, 2.0f * s,
-                      WithAlpha(kText, 0.10f));
-        FillRoundRect(p->surface, trackX, thumbTop, 4.0f * s, thumbH, 2.0f * s,
-                      WithAlpha(kAccent, 0.65f));
+        PxRect(p->surface, (int)(trackX + 1.0f * s), (int)trackTop, 1, (int)trackH, WithAlpha(kPeSilver, 0.15f));
+        PxRect(p->surface, (int)trackX, (int)thumbTop, (int)(3.0f * s), (int)thumbH, kPeRed);
     }
 }
 
@@ -808,20 +889,32 @@ static const char *OverlayRowHelp(const HostOverlayState *state) {
     return "";
 }
 
-static void PaintFooter(const Painter *p, int visibleRowCount) {
+/* The help box, as the game frames its own: the description, then the keys. */
+static void PaintHelpBox(const Painter *p, float panelW, float boxTop, float boxH, const char *help, const char *keys) {
     const float s = p->s;
-    float footerTop = (float)(OverlayDesignHeight(visibleRowCount) - OVERLAY_FOOTER_H) * s;
-    const char *help = OverlayRowHelp(p->state);
+    const int bx = (int)((float)(OVERLAY_PAD / 2) * s), by = (int)(boxTop * s);
+    const int bw = (int)((panelW - (float)OVERLAY_PAD) * s), bh = (int)(boxH * s);
+    char upper[160];
 
-    FillRoundRect(p->surface, (float)OVERLAY_PAD * s, footerTop,
-                  (float)(OVERLAY_PANEL_W - 2 * OVERLAY_PAD) * s, 1.0f, 0.0f,
-                  WithAlpha(kText, 0.10f));
-    DrawText(p->surface, (float)OVERLAY_PAD * s, footerTop + 28.0f * s,
-             14.0f * s, help, kMuted, ALIGN_LEFT);
-    DrawText(p->surface, (float)OVERLAY_PAD * s, footerTop + 54.0f * s,
-             13.0f * s,
-             p->state->page==OVERLAY_PAGE_MODS?"Enter / click activate   PgUp/PgDn page   Esc resume":"Up/Down select   Left/Right change   PgUp/PgDn page   Esc resume",
-             WithAlpha(kMuted, 0.7f), ALIGN_LEFT);
+    VGradient(p->surface, bx, by, bw, bh, (Color){0.02f, 0.03f, 0.06f, 0.85f}, (Color){0.0f, 0.0f, 0.0f, 0.85f});
+    PeFrame(p->surface, bx, by, bw, bh, WithAlpha(kPeSilver, 0.30f));
+    PeCorners(p->surface, bx, by, bw, bh, (int)(10.0f * s), 1, WithAlpha(kPeSilver, 0.85f));
+    if (help && *help) {
+        DrawWrapped(p->surface, (float)OVERLAY_PAD * s, boxTop * s + 23.0f * s, 19.0f * s,
+                    (panelW - 2.0f * OVERLAY_PAD) * s, 14.0f * s, 2, help, kPeText);
+    }
+    UpperCopy(upper, sizeof upper, keys);
+    DrawSpaced(p->surface, (float)OVERLAY_PAD * s, (boxTop + boxH - 12.0f) * s, 10.0f * s, 1.6f * s, upper,
+               WithAlpha(kPeDim, 0.85f), ALIGN_LEFT);
+}
+
+static void PaintFooter(const Painter *p, int visibleRowCount) {
+    float footerTop = (float)(OverlayDesignHeight(visibleRowCount) - OVERLAY_FOOTER_H);
+
+    PaintHelpBox(p, (float)OVERLAY_PANEL_W, footerTop + 8.0f, (float)(OVERLAY_FOOTER_H - 20), OverlayRowHelp(p->state),
+                 p->state->page == OVERLAY_PAGE_MODS
+                     ? "Enter / click activate   PgUp/PgDn page   Esc resume"
+                     : "Up/Down select   Left/Right change   PgUp/PgDn page   Esc resume");
 }
 
 static void OverlayPaint(OverlaySurface *surface, const HostOverlayState *state,
@@ -852,15 +945,9 @@ static void OverlayPaintPrompt(OverlaySurface *surface, const HostOverlayState *
 
     memset(surface->pixels, 0, (size_t)surface->w * (size_t)surface->h * 4u);
     PaintFrame(&painter, (float)PROMPT_PANEL_W * s, (float)OverlayPromptDesignHeight() * s);
-    DrawText(surface, (float)OVERLAY_PAD * s, 40.0f * s, 26.0f * s, "Skip cutscene",
-             kText, ALIGN_LEFT);
-    DrawText(surface, (float)(PROMPT_PANEL_W - OVERLAY_PAD) * s, 38.0f * s, 14.0f * s,
-             "MOVIE PAUSED", kMuted, ALIGN_RIGHT);
-    DrawText(surface, (float)OVERLAY_PAD * s, 80.0f * s, 17.0f * s,
-             "Do you want to skip the cutscene?", WithAlpha(kText, 0.82f), ALIGN_LEFT);
-    FillRoundRect(surface, (float)OVERLAY_PAD * s, (float)(PROMPT_HEADER_H - 12) * s,
-                  (float)(PROMPT_PANEL_W - 2 * OVERLAY_PAD) * s, 1.0f, 0.0f,
-                  WithAlpha(kText, 0.10f));
+    PaintTitle(&painter, (float)PROMPT_PANEL_W, 66.0f, "SKIP CUTSCENE", "MOVIE PAUSED");
+    DrawText(surface, (float)OVERLAY_PAD * s, 96.0f * s, 16.0f * s,
+             "Do you want to skip the cutscene?", WithAlpha(kPeText, 0.82f), ALIGN_LEFT);
 
     for (row = 0; row < PROMPT_ROWS; row++) {
         OverlayRect rect = OverlayPromptRowRect(row);
@@ -868,23 +955,18 @@ static void OverlayPaintPrompt(OverlaySurface *surface, const HostOverlayState *
         float mid = top + (float)OVERLAY_ROW_H * 0.5f * s;
         int selected = row == state->row;
 
-        if (selected) {
-            FillRoundRect(surface, rect.x * s, top + 3.0f * s, rect.w * s,
-                          (float)(OVERLAY_ROW_H - 6) * s, 9.0f * s,
-                          WithAlpha(kAccent, 0.16f));
-            FillRoundRect(surface, rect.x * s + 4.0f * s, mid - 10.0f * s, 3.0f * s,
-                          20.0f * s, 1.5f * s, kAccent);
-        }
-        DrawText(surface, (float)OVERLAY_PAD * s, mid + 6.0f * s, 17.0f * s,
-                 kAnswers[row], selected ? kText : WithAlpha(kText, 0.82f), ALIGN_LEFT);
+        PaintRowBand(&painter, (float)PROMPT_PANEL_W, top, mid, selected, row == 0);
+        DrawText(surface, OverlayLabelX() * s, mid + 6.0f * s, 17.0f * s,
+                 kAnswers[row], WithAlpha(kPeText, selected ? 1.0f : 0.78f), ALIGN_LEFT);
     }
 
-    FillRoundRect(surface, (float)OVERLAY_PAD * s, footerTop,
-                  (float)(PROMPT_PANEL_W - 2 * OVERLAY_PAD) * s, 1.0f, 0.0f,
-                  WithAlpha(kText, 0.10f));
-    DrawText(surface, (float)OVERLAY_PAD * s, footerTop + 36.0f * s, 13.0f * s,
-             "Up/Down select   Enter confirm   Esc keep watching",
-             WithAlpha(kMuted, 0.7f), ALIGN_LEFT);
+    {
+        const float keysY = footerTop / s + 36.0f;
+        PxRect(surface, (int)((float)OVERLAY_PAD * s), (int)(footerTop + 4.0f * s),
+               (int)((float)(PROMPT_PANEL_W - 2 * OVERLAY_PAD) * s), 1, WithAlpha(kPeSilver, 0.10f));
+        DrawSpaced(surface, (float)OVERLAY_PAD * s, keysY * s, 10.0f * s, 1.6f * s,
+                   "UP/DOWN SELECT   ENTER CONFIRM   ESC KEEP WATCHING", WithAlpha(kPeDim, 0.85f), ALIGN_LEFT);
+    }
     solid = surface->pixels + (size_t)(surface->h - 1) * (size_t)surface->w * 4u;
     solid[3] = 255;
 }

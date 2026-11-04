@@ -50,10 +50,16 @@ int pe_menu_register_live_choice(const char *sub, const char *label, const char 
 int pe_menu_register_dynamic_choice(const char *sub, const char *label, const char *description,
                                     int *index, unsigned max_count, PeMenuChoiceCount count_fn,
                                     PeMenuChoiceName name_fn);
+/* Grey out the toggle just registered: it shows Off, stays off whatever was saved, and can't be
+ * changed (a feature that isn't ready; its description can say so). */
+void pe_menu_grey_last(void);
 int pe_menu_register_tick(PeMenuPerFrame fn);
 /* A read-only line: text() fills the value shown on the right (Junk, prices, results). */
 typedef void (*PeMenuText)(char *out, unsigned size);
 int pe_menu_register_info(const char *sub, const char *label, const char *description, PeMenuText text);
+/* A number of `digits` digits (1-9, shown zero-padded), saved like the others: Enter edits it in
+ * place a digit at a time, C copies it and Ctrl+V pastes one (a seed to share). */
+int pe_menu_register_digits(const char *sub, const char *label, const char *description, int *value, unsigned digits);
 /* Describe sub-page `sub` of the current page: the footer line when its link is selected,
  * and its place among its sibling pages (lower first; pages without one keep their order). */
 int pe_menu_page(const char *sub, const char *description, int order);
@@ -66,7 +72,7 @@ int pe_menu_top_page(const char *page, const char *description, int order);
 
 typedef enum PeRowKind {
     PE_ROW_TOGGLE, PE_ROW_ACTION, PE_ROW_CHOICE, PE_ROW_INT,
-    PE_ROW_LIVE_INT, PE_ROW_LIVE_CHOICE, PE_ROW_DYNAMIC_CHOICE, PE_ROW_INFO
+    PE_ROW_LIVE_INT, PE_ROW_LIVE_CHOICE, PE_ROW_DYNAMIC_CHOICE, PE_ROW_INFO, PE_ROW_DIGITS
 } PeRowKind;
 
 typedef struct PeMenuRow {
@@ -84,6 +90,7 @@ typedef struct PeMenuRow {
     PeMenuChoiceName name_fn;
     PeMenuText text_fn;
     const char *mod_id;  /* the mod that registered it (NULL: the host) */
+    int greyed;          /* pe_menu_grey_last */
 } PeMenuRow;
 
 /* The row's mod is active: settings of an inactive mod can still be set (saved), but its live
@@ -104,5 +111,9 @@ PeMenuRow *pe_menu_row(int index);
 void pe_menu_row_value_text(PeMenuRow *row, char *out, unsigned size);
 void pe_menu_row_step(PeMenuRow *row, int direction); /* left/right */
 void pe_menu_row_accept(PeMenuRow *row);              /* Enter */
+/* Digits rows: the value to the clipboard; the clipboard's digits (exactly row->count of them,
+ * other characters ignored) to the value. 1 on success. */
+int pe_menu_row_copy(PeMenuRow *row);
+int pe_menu_row_paste(PeMenuRow *row);
 
 #endif

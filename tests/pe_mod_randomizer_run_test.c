@@ -109,7 +109,8 @@
  * actors spawn. The line then ends in ai=5<M012:5, aisteps=<e5:N: steps actor 5 ran in the given script,
  * outside the room's own task block> and pm=<script slots the hook installed>. It fails when the script wasn't
  * given, the actor ran none of it, or a win line won no battle.
- * foes (gate lines; then every gate line of the file has it): the mod host starts with Randomize enemies on, and
+ * foes (gate lines; then every gate line of the file has it): the mod host starts with Randomize enemies on (the row
+ * is greyed out for players: checked here, then set past it), and
  * the line keeps the swaps the mod's own New Game put in (this seed's foe plan) instead of forcing its ai=. Every
  * actor of the room the plan moves (pe_rand_foes_generate here, same seed) must have been given a script, and
  * no other; the line's ai= list (the moved actors that fight there) is checked as above.
@@ -144,6 +145,7 @@
 #include "pe1/script_state.h"
 #include "pe_hooks.h"
 #include "pe_randomizer.h"
+#include "../mods/host/pe_mod_menu.h"
 #include "pe_rand_foes.h"
 #include "pe_rand_enemies.h"
 #include "pe_rand_locks.h"
@@ -543,6 +545,7 @@ struct Run {
 };
 
 /* Gate lines: the mod host, started once for the first gate line's seed, its files in gate_dir. */
+void pe_rand_test_enemies(int on);
 static char gate_dir[1100];
 static int gate_started, gate_difficulty, gate_foes; static u32 gate_seed;
 static int start_gate(const Run *r) {
@@ -553,11 +556,23 @@ static int start_gate(const Run *r) {
     snprintf(path, sizeof(path), "%s/pe_mods.ini", gate_dir);
     if (!(f = fopen(path, "w"))) return 0;
     fprintf(f, "Manage mods/All mods=1\nManage mods/Randomizer=1\nRandomizer/Randomize new games=1\nRandomizer/Difficulty=%d\n"
-            "Randomizer/Randomize enemies=%d\n", r->difficulty, r->foes);
-    for (u32 d = 0, div = 100000; d < 6; ++d, div /= 10) fprintf(f, "Randomizer/Seed digits/Digit %u=%u\n", d + 1, r->seed / div % 10);
+            "Randomizer/Randomize enemies=%d\nRandomizer/Seed=%u\n", r->difficulty, r->foes, r->seed);
     fclose(f);
     snprintf(path, sizeof(path), "%s/prefs", gate_dir);   /* only its folder is used */
     PE_HOOK(PE_HOOK_INIT, (&(PeHookInit){0, path}));
+    if (r->foes) {   /* the row saved on above: the player still can't have it */
+        int found = 0;
+        for (int i = 0; i < pe_menu_row_count(); ++i) {
+            PeMenuRow *row = pe_menu_row(i);
+            if (strcmp(row->label, "Randomize enemies")) continue;
+            found = 1;
+            pe_menu_row_step(row, 1);
+            pe_menu_row_accept(row);
+            if (!row->greyed || *row->value || pe_menu_row_adjustable(row)) FAIL("Randomize enemies isn't greyed out");
+        }
+        if (!found) FAIL("no Randomize enemies row");
+        pe_rand_test_enemies(1);
+    }
     gate_started = 1; gate_seed = r->seed; gate_difficulty = r->difficulty; gate_foes = r->foes;
     return 1;
 }

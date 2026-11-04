@@ -53,7 +53,7 @@ static PeRandRun s_run, s_layout_for;
 static uint16_t s_layout[PE_RAND_SPOTS];
 static PeRandResult s_result;
 static int s_layout_ready;
-static int s_enabled, s_difficulty = PE_RAND_MEDIUM, s_digit[6];
+static int s_enabled, s_difficulty = PE_RAND_MEDIUM, s_seed;   /* s_seed: six digits, 0..999999 */
 static int s_alone;            /* "Randomize new games" was on at start: this session runs no other mod */
 static unsigned char s_room_warned[SCENE_ROOM_COUNT + 1];
 static const char *const s_difficulty_names[] = {"Easy", "Medium", "Hard"};
@@ -64,15 +64,15 @@ typedef struct PeRandFoesRun {
 _Static_assert(sizeof(PeRandFoesRun) == 4, "the saved record's layout");
 static PeRandFoesRun s_foes_run;
 static int s_foes_enabled;
+
+/* Randomize enemies is greyed out and off until it is ready. Only the run test turns it on, to keep it checked. */
+void pe_rand_test_enemies(int on) { s_foes_enabled = on; }
 static uint16_t s_plan[PE_RAND_FOES];
 static unsigned s_plan_moved;
 static int s_plan_given;       /* the switches hold this game's plan (tests force their own swaps otherwise) */
-static const char *const s_digit_labels[] = {"Digit 1", "Digit 2", "Digit 3", "Digit 4", "Digit 5", "Digit 6"};
 
 static uint32_t pe_rand_seed(void) {
-    uint32_t seed = 0;
-    for (int d = 0; d < 6; ++d) seed = seed * 10 + (uint32_t)(s_digit[d] >= 0 && s_digit[d] <= 9 ? s_digit[d] : 0);
-    return seed;
+    return s_seed >= 0 && s_seed <= 999999 ? (uint32_t)s_seed : 0;
 }
 
 static int pe_rand_supported(void) {
@@ -710,11 +710,8 @@ static const PeSaveRecord s_foes_record = {"pe_randomizer.foes", 1, &s_foes_run,
 static void pe_rand_random_seed(void) {
     uint32_t x = (uint32_t)time(NULL) ^ (uint32_t)clock() * 2654435761u;
     x ^= x >> 15; x *= 2246822519u; x ^= x >> 13;
-    x %= 1000000u;
-    for (int d = 5; d >= 0; --d) { s_digit[d] = (int)(x % 10); x /= 10; }
+    s_seed = (int)(x % 1000000u);
 }
-
-static void pe_rand_seed_text(char *out, unsigned size) { snprintf(out, size, "%06u", (unsigned)pe_rand_seed()); }
 
 static void pe_rand_run_text(char *out, unsigned size) {
     if (!pe_save_loaded() || !s_run.on) { snprintf(out, size, "Not randomized"); return; }
@@ -734,14 +731,11 @@ static int pe_rand_init(void) {
     s_alone = s_enabled && pe_mod_run_alone() == 0;
     pe_menu_register_choice(0, "Difficulty", "Easy: items stay on their story day. Medium: anywhere; keys to chests open before their lock, earlier days too. Hard: keys to any chest still reachable when their lock asks, some doors lead back.",
                             &s_difficulty, s_difficulty_names, PE_RAND_DIFFICULTIES);
-    pe_menu_register_toggle(0, "Randomize enemies", "New Game also shuffles enemies with the same seed: each takes another "
-                            "enemy's model, moves and stats, from any day; bosses only swap with bosses. Off: items only.",
-                            &s_foes_enabled, NULL);
-    pe_menu_register_info(0, "Seed", "Six digits: the same seed and difficulty give the same items.", pe_rand_seed_text);
+    pe_menu_register_toggle(0, "Randomize enemies", "Not ready yet: this release shuffles items only.", &s_foes_enabled, NULL);
+    pe_menu_grey_last();
+    pe_menu_register_digits(0, "Seed", "Six digits: the same seed and difficulty give the same items. Enter types a seed, "
+                            "C copies it to share.", &s_seed, 6);
     pe_menu_register_action(0, "Random seed", "Pick a new seed.", pe_rand_random_seed);
-    pe_menu_page("Seed digits", "Type the seed one digit at a time.", 0);
-    for (int d = 0; d < 6; ++d)
-        pe_menu_register_int("Seed digits", s_digit_labels[d], "Left and right change this digit.", &s_digit[d], 0, 9, 1);
     pe_menu_register_info(0, "This game", "The seed this game was started with. F1 changes only reach the next New Game.",
                           pe_rand_run_text);
     pe_menu_begin(0);

@@ -460,13 +460,14 @@ Economy > Warner helps out.
 
 F1 > Randomizer, before New Game: on/off, difficulty (Easy: items stay on their story day; Medium and
 Hard: items anywhere, and keys move where the key logic allows, each by its own rule) and a
-six-digit seed (Random seed, or one digit at a time). New Game takes them; the game keeps them in the
+six-digit seed (Random seed, or typed in: Enter edits it, C copies, Ctrl+V pastes). New Game takes them; the game keeps them in the
 `pe_randomizer.run` record (seed, difficulty, logic and table version), so loading gives the same
 layout and F1 changes only reach the next New Game. A save from another logic or table version keeps
 its record but plays vanilla, with a message. Every difficulty writes `randomizer-<seed>.txt` (the
 spoiler) beside the preferences: where each key item is now, Hard's ways back, then every changed spot.
 
-Randomize enemies (F1, before New Game, on top of the items; off = items only): the same seed also
+Randomize enemies is greyed out in F1 and stays off for now (`pe_menu_grey_last`): it isn't ready. Saves
+already started with it keep their enemies. The code and its checks stay: with it on, the same seed also
 shuffles enemies. Each of 259 enemy slots (`pe_rand_foes.h`, written by `tools/enemyai.py --table`)
 takes another enemy's model, animations and script, so its moves and stats too, from any day. Boss
 fights stay vanilla for now (`PE_RAND_MOVE_BOSSES` 0; with 1, bosses only take bosses). M013's scripted

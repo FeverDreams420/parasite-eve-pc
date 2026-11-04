@@ -1,5 +1,5 @@
 /* Item randomizer: New Game shuffles what room chests, pickups and character gifts hand out, from a
- * six-digit seed and a difficulty picked under F1 > Randomizer. The game keeps the seed it started
+ * six-digit seed picked under F1 > Randomizer (always Medium for now). The game keeps the seed it started
  * with (a save record), so loading always gives the same layout; F1 changes only reach the next New
  * Game. Battle drops, Wayne's Junk trades and the Chrysler Building stay vanilla.
  *
@@ -15,7 +15,7 @@
  * kit, and would turn the item a chest keeps for the player into the seed's item. A room whose
  * script isn't byte for byte what the table expects stays vanilla.
  *
- * Enemies (F1 > Randomizer > Randomize enemies, on top of the items, same seed): the seed's foe plan
+ * Enemies (not in F1 for now, on top of the items, same seed): the seed's foe plan
  * (pe_rand_foes_generate) goes into the model and AI switches, which give each moved slot its foe's model,
  * animations and script at every load of its room; the foe's own script sets its stats. Bosses take bosses.
  * The game keeps whether it was started with enemies on (the "pe_randomizer.foes" record). */
@@ -65,8 +65,9 @@ _Static_assert(sizeof(PeRandFoesRun) == 4, "the saved record's layout");
 static PeRandFoesRun s_foes_run;
 static int s_foes_enabled;
 
-/* Randomize enemies is greyed out and off until it is ready. Only the run test turns it on, to keep it checked. */
-void pe_rand_test_enemies(int on) { s_foes_enabled = on; }
+/* New games are Medium with enemies off for now: F1 has no rows for these. Saves started with others keep theirs.
+ * Only the run test sets them, to keep the rest checked. */
+void pe_rand_test_options(int difficulty, int enemies) { s_difficulty = difficulty; s_foes_enabled = enemies; }
 static uint16_t s_plan[PE_RAND_FOES];
 static unsigned s_plan_moved;
 static int s_plan_given;       /* the switches hold this game's plan (tests force their own swaps otherwise) */
@@ -729,11 +730,7 @@ static int pe_rand_init(void) {
                             "starts; while on, no other mod runs. A game keeps the seed it began with.", &s_enabled, NULL);
     /* the saved value is in s_enabled now: a randomized session is this mod and the original game only */
     s_alone = s_enabled && pe_mod_run_alone() == 0;
-    pe_menu_register_choice(0, "Difficulty", "Easy: items stay on their story day. Medium: anywhere; keys to chests open before their lock, earlier days too. Hard: keys to any chest still reachable when their lock asks, some doors lead back.",
-                            &s_difficulty, s_difficulty_names, PE_RAND_DIFFICULTIES);
-    pe_menu_register_toggle(0, "Randomize enemies", "Not ready yet: this release shuffles items only.", &s_foes_enabled, NULL);
-    pe_menu_grey_last();
-    pe_menu_register_digits(0, "Seed", "Six digits: the same seed and difficulty give the same items. Enter types a seed, "
+    pe_menu_register_digits(0, "Seed", "Six digits: the same seed gives the same items. Enter types a seed, "
                             "C copies it to share.", &s_seed, 6);
     pe_menu_register_action(0, "Random seed", "Pick a new seed.", pe_rand_random_seed);
     pe_menu_register_info(0, "This game", "The seed this game was started with. F1 changes only reach the next New Game.",

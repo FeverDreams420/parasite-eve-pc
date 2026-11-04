@@ -460,7 +460,7 @@ Economy > Warner helps out.
 
 F1 > Randomizer, before New Game: on/off, difficulty (Easy: items stay on their story day; Medium and
 Hard: items anywhere, and keys move where the key logic allows, each by its own rule) and a
-six-digit seed (Random seed, or one digit at a time). New Game takes them; the game keeps them in the
+six-digit seed (Random seed, or typed in: Enter edits it, C copies, Ctrl+V pastes). New Game takes them; the game keeps them in the
 `pe_randomizer.run` record (seed, difficulty, logic and table version), so loading gives the same
 layout and F1 changes only reach the next New Game. A save from another logic or table version keeps
 its record but plays vanilla, with a message. Every difficulty writes `randomizer-<seed>.txt` (the

@@ -553,8 +553,7 @@ static int start_gate(const Run *r) {
     snprintf(path, sizeof(path), "%s/pe_mods.ini", gate_dir);
     if (!(f = fopen(path, "w"))) return 0;
     fprintf(f, "Manage mods/All mods=1\nManage mods/Randomizer=1\nRandomizer/Randomize new games=1\nRandomizer/Difficulty=%d\n"
-            "Randomizer/Randomize enemies=%d\n", r->difficulty, r->foes);
-    for (u32 d = 0, div = 100000; d < 6; ++d, div /= 10) fprintf(f, "Randomizer/Seed digits/Digit %u=%u\n", d + 1, r->seed / div % 10);
+            "Randomizer/Randomize enemies=%d\nRandomizer/Seed=%u\n", r->difficulty, r->foes, r->seed);
     fclose(f);
     snprintf(path, sizeof(path), "%s/prefs", gate_dir);   /* only its folder is used */
     PE_HOOK(PE_HOOK_INIT, (&(PeHookInit){0, path}));

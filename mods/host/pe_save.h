@@ -75,6 +75,9 @@ typedef struct PeSaveRecord {
      * the original, and leaves in data what it couldn't. The host saves the record from data. The
      * only mod code that runs for a mod that is off. */
     void (*release)(void *data);
+    /* Optional. Asked on a load with this record in data (the mod is active): non-zero = this game
+     * must be played with this mod alone, so every other mod stops before their records load. */
+    int (*wants_alone)(const void *data);
 } PeSaveRecord;
 
 /* In the mod's init (it owns the record). The record must stay valid while the game runs.
@@ -84,6 +87,8 @@ int pe_save_register(const PeSaveRecord *record);
 /* Host internals: the mod host calls these. */
 void pe_save_install(void);
 void pe_save_on_read(const uint8_t *block);     /* PE_HOOK_SAVE_READ, before any mod */
+/* The mod whose record in this save asks to play alone (wants_alone), else NULL. */
+const char *pe_save_wants_alone(const uint8_t *block);
 void pe_save_on_write(uint8_t *block);          /* PE_HOOK_SAVE_WRITE, after every mod */
 void pe_save_new_game(void);
 /* Crash report: the records as a save made now would hold them, into block's tail. Reads memory

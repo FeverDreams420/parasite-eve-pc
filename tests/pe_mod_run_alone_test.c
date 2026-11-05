@@ -7,18 +7,22 @@
 #include "pe_mod_host.h"
 #include "pe_mod_menu.h"
 
-static int frames_a, frames_b, frames_alone, frames_late, late_request = 1;
+static int frames_a, frames_b, frames_alone, frames_late, frames_beside, frames_off, late_request = 1;
 static const int api = 1;
 
 static int on_frame_a(void *ctx, void *user) { (void)ctx; (void)user; frames_a++; return 0; }
 static int on_frame_b(void *ctx, void *user) { (void)ctx; (void)user; frames_b++; return 0; }
 static int on_frame_alone(void *ctx, void *user) { (void)ctx; (void)user; frames_alone++; return 0; }
 static int on_frame_late(void *ctx, void *user) { (void)ctx; (void)user; frames_late++; return 0; }
+static int on_frame_beside(void *ctx, void *user) { (void)ctx; (void)user; frames_beside++; return 0; }
+static int on_frame_off(void *ctx, void *user) { (void)ctx; (void)user; frames_off++; return 0; }
 
 static int init_a(void) {
     pe_service_publish("pe_test_a", 1, &api, "pe_a");
+    if (pe_hook_add_beside(PE_HOOK_FRAME, on_frame_beside, NULL, PE_PRIORITY_NORMAL, "pe_a") < 0) return 1;
     return pe_hook_add(PE_HOOK_FRAME, on_frame_a, NULL, PE_PRIORITY_NORMAL, "pe_a") < 0;
 }
+static int init_off(void) { return pe_hook_add_beside(PE_HOOK_FRAME, on_frame_off, NULL, PE_PRIORITY_NORMAL, "pe_off") < 0; }
 static int init_b(void) { return pe_hook_add(PE_HOOK_FRAME, on_frame_b, NULL, PE_PRIORITY_NORMAL, "pe_b") < 0; }
 static int init_alone(void) {
     if (pe_mod_run_alone() != 0 || pe_mod_run_alone() != 0) return 1;   /* asking twice is fine */
@@ -34,7 +38,8 @@ static const PeMod mod_a = {"pe_a", "A", "1", NULL, init_a, NULL};
 static const PeMod mod_b = {"pe_b", "B", "1", needs_a, init_b, NULL};
 static const PeMod mod_alone = {"pe_alone", "Alone", "1", NULL, init_alone, NULL};
 static const PeMod mod_late = {"pe_late", "Late", "1", NULL, init_late, NULL};
-const PeMod *const g_pe_mods[] = {&mod_a, &mod_b, &mod_alone, &mod_late, NULL};
+static const PeMod mod_off = {"pe_off", "Off", "1", NULL, init_off, NULL};   /* off in Manage mods */
+const PeMod *const g_pe_mods[] = {&mod_a, &mod_b, &mod_alone, &mod_late, &mod_off, NULL};
 
 /* The host's menu and panel, not under test: every toggle on. */
 void pe_main_menu_init(void) {}
@@ -44,8 +49,8 @@ void pe_menu_begin(const char *page) { (void)page; }
 void pe_menu_load_settings(void) {}
 int pe_menu_register_toggle(const char *sub, const char *label, const char *description, int *flag,
                             PeMenuPerFrame per_frame) {
-    (void)sub; (void)label; (void)description; (void)per_frame;
-    *flag = 1;
+    (void)sub; (void)description; (void)per_frame;
+    *flag = strcmp(label, "Off") != 0;
     return 0;
 }
 PeMenuRow *pe_menu_row(int index) { (void)index; return NULL; }
@@ -80,6 +85,8 @@ int main(void) {
     pe_hook_dispatch(PE_HOOK_FRAME, NULL);
     CHECK(frames_alone == 1);
     CHECK(frames_a == 0 && frames_b == 0 && frames_late == 0);
+    CHECK(frames_beside == 1);                       /* the one hook that goes on beside a lone mod */
+    CHECK(frames_off == 0);                          /* but not for a mod that is off anyway */
     CHECK(pe_mod_run_alone() == -1);                 /* after start-up */
 
     if (failures) return 1;

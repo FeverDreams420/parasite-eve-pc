@@ -71,6 +71,13 @@ if(BUILD_TESTING)
     target_compile_definitions(test-mod-run-alone PRIVATE __psyz PE_MODS=1)
     target_link_libraries(test-mod-run-alone PRIVATE psyz)
     add_test(NAME mod-run-alone COMMAND test-mod-run-alone)
+
+    add_executable(test-mod-alone-save ${PROJECT_SOURCE_DIR}/tests/pe_mod_alone_save_test.c host/pe_mod_host.c host/pe_save.c)
+    target_include_directories(test-mod-alone-save PRIVATE ${PROJECT_SOURCE_DIR}/include host
+        "$<TARGET_PROPERTY:SDL3::SDL3,INTERFACE_INCLUDE_DIRECTORIES>")
+    target_compile_definitions(test-mod-alone-save PRIVATE __psyz PE_MODS=1)
+    target_link_libraries(test-mod-alone-save PRIVATE psyz)
+    add_test(NAME mod-alone-save COMMAND test-mod-alone-save)
 endif()
 
 if(BUILD_TESTING AND "pe_qol" IN_LIST PE_MOD_LIST)

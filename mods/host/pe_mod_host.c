@@ -29,6 +29,7 @@ typedef struct {
     void *user;
     const char *mod_id;
     int active;      /* its mod is active (set when the mods have started) */
+    int beside;      /* keeps running while another mod runs alone (pe_hook_add_beside) */
 } PeHandler;
 
 typedef struct {
@@ -117,7 +118,7 @@ void pe_mod_call_end(void) {
 
 /* ---- hooks and events ---- */
 
-int pe_hook_add(int id, PeHookFn fn, void *user, int priority, const char *mod_id) {
+static int pe_hook_insert(int id, PeHookFn fn, void *user, int priority, const char *mod_id, int beside) {
     int i;
     if (!fn || id < 0 || id >= PE_HOOK_COUNT + s_event_count || s_handler_count >= PE_MAX_HANDLERS)
         return -1;
@@ -127,9 +128,17 @@ int pe_hook_add(int id, PeHookFn fn, void *user, int priority, const char *mod_i
         if (prev->id < id || (prev->id == id && prev->priority <= priority)) break;
         s_handlers[i] = *prev;
     }
-    s_handlers[i] = (PeHandler){id, priority, s_handler_order++, fn, user, mod_id, 1};
+    s_handlers[i] = (PeHandler){id, priority, s_handler_order++, fn, user, mod_id, 1, beside};
     s_handler_count++;
     return 0;
+}
+
+int pe_hook_add(int id, PeHookFn fn, void *user, int priority, const char *mod_id) {
+    return pe_hook_insert(id, fn, user, priority, mod_id, 0);
+}
+
+int pe_hook_add_beside(int id, PeHookFn fn, void *user, int priority, const char *mod_id) {
+    return pe_hook_insert(id, fn, user, priority, mod_id, 1);
 }
 
 int pe_hook_dispatch(int id, void *ctx);
@@ -191,12 +200,13 @@ int pe_mod_is_running(const char *mod_id) {
 
 const char *pe_mod_current(void) { return s_current_mod; }
 
-/* The host's own (NULL, "host", "menu") are always active; a mod while it is starting too. */
+/* The host's own (NULL, "host", "menu") are always active; a mod while it is starting too. A mod
+ * whose init failed is still one of the mods, so it isn't active either. */
 int pe_mod_active(const char *mod_id) {
     int i;
     if (!mod_id || !s_started) return 1;
-    for (i = 0; i < s_inited_count; i++)
-        if (strcmp(s_inited_ids[i], mod_id) == 0) return pe_mod_is_running(mod_id);
+    for (i = 0; g_pe_mods[i] && i < PE_MAX_MODS; i++)
+        if (strcmp(g_pe_mods[i]->id, mod_id) == 0) return pe_mod_is_running(mod_id);
     return 1;
 }
 
@@ -257,6 +267,7 @@ static void pe_manage_register(int mod_count) {
 }
 
 enum { PE_MOD_RUNNING, PE_MOD_OFF, PE_MOD_NEEDS, PE_MOD_FAILED, PE_MOD_ALL_OFF, PE_MOD_ALONE };
+static int s_mod_state[PE_MAX_MODS], s_mod_count;
 
 /* Each row's footer: what the mod is, what it needs, and how it is now. */
 static void pe_manage_notes(int mod_count, const int *state) {
@@ -279,10 +290,60 @@ static void pe_manage_notes(int mod_count, const int *state) {
 }
 
 
+/* Stood aside only for a mod that runs alone: its beside hooks go on. A mod off in Manage mods stays off. */
+static int pe_mod_aside(const char *mod_id) {
+    int i;
+    for (i = 0; i < s_mod_count; i++)
+        if (strcmp(g_pe_mods[i]->id, mod_id) == 0) return s_mod_state[i] == PE_MOD_ALONE;
+    return 0;
+}
+
+static void pe_handlers_refresh(void) {
+    int i;
+    for (i = 0; i < s_handler_count; i++) {
+        PeHandler *h = &s_handlers[i];
+        h->active = pe_mod_active(h->mod_id) || (h->beside && h->mod_id && pe_mod_aside(h->mod_id));
+    }
+}
+
+/* The mod that runs alone keeps running; every other running one goes back to inactive. */
+static void pe_alone_apply(void) {
+    int i;
+    for (i = 0; i < s_mod_count; i++)
+        if (s_mod_state[i] == PE_MOD_RUNNING && strcmp(g_pe_mods[i]->id, s_alone_mod) != 0) {
+            s_mod_state[i] = PE_MOD_ALONE;
+            pe_mod_log(g_pe_mods[i]->id, "inactive (%s runs alone): pages only", s_alone_mod);
+        }
+    s_running_count = 0;
+    for (i = 0; i < s_mod_count; i++)
+        if (strcmp(g_pe_mods[i]->id, s_alone_mod) == 0) s_running[s_running_count++] = g_pe_mods[i];
+}
+
+/* A running session turns alone: a save asked for it, before any record of that save went back.
+ * Each other mod gets its shutdown, which takes back what it changed in the game. */
+int pe_mod_stand_alone(const char *mod_id) {
+    int i;
+    if (!s_started || !mod_id || !pe_mod_is_running(mod_id) || s_alone_mod) return 0;
+    for (i = s_running_count - 1; i >= 0; i--) {
+        const PeMod *mod = s_running[i];
+        if (!mod->shutdown || strcmp(mod->id, mod_id) == 0) continue;
+        pe_mod_call_begin(mod->id, "shutdown", NULL);
+        mod->shutdown();
+        pe_mod_call_end();
+    }
+    s_alone_mod = mod_id;
+    pe_alone_apply();
+    pe_handlers_refresh();
+    pe_manage_notes(s_mod_count, s_mod_state);
+    pe_mod_log(mod_id, "runs alone from here on: a save asked for it");
+    return 1;
+}
+
 static void pe_start_mods(void) {
-    int mod_count = 0, tried[PE_MAX_MODS] = {0}, state[PE_MAX_MODS] = {0}, progress = 1, i;
+    int mod_count = 0, tried[PE_MAX_MODS] = {0}, *state = s_mod_state, progress = 1, i;
 
     while (g_pe_mods[mod_count] && mod_count < PE_MAX_MODS) mod_count++;
+    s_mod_count = mod_count;
     pe_manage_register(mod_count);
     if (!s_all_on) pe_mod_log(NULL, "All mods off (Manage mods): pages browsable, the game plays as the original");
     /* Init every mod once the mods it needs have, in that order; active only if on and every mod
@@ -318,16 +379,7 @@ static void pe_start_mods(void) {
         }
     /* A running mod that asked to run alone: every other one goes back to inactive (inits only
      * register, so nothing of theirs has touched the game yet). */
-    if (s_alone_mod && pe_mod_is_running(s_alone_mod)) {
-        for (i = 0; i < mod_count; i++)
-            if (state[i] == PE_MOD_RUNNING && strcmp(g_pe_mods[i]->id, s_alone_mod) != 0) {
-                state[i] = PE_MOD_ALONE;
-                pe_mod_log(g_pe_mods[i]->id, "inactive (%s runs alone): pages only", s_alone_mod);
-            }
-        s_running_count = 0;
-        for (i = 0; i < mod_count; i++)
-            if (strcmp(g_pe_mods[i]->id, s_alone_mod) == 0) s_running[s_running_count++] = g_pe_mods[i];
-    }
+    if (s_alone_mod && pe_mod_is_running(s_alone_mod)) pe_alone_apply();
     for (i = 0; i < s_running_count; i++)
         pe_mod_log(s_running[i]->id, "started %s %s", s_running[i]->name, s_running[i]->version);
     pe_manage_notes(mod_count, state);
@@ -360,10 +412,7 @@ static void pe_host_start(const PeHookInit *init) {
     pe_save_install();                           /* always: a save made with mods off keeps their data too */
     if (s_interactive) pe_panel_install();
     s_started = 1;
-    {                                            /* inactive mods' handlers stay registered, skipped */
-        int i;
-        for (i = 0; i < s_handler_count; i++) s_handlers[i].active = pe_mod_active(s_handlers[i].mod_id);
-    }
+    pe_handlers_refresh();                       /* inactive mods' handlers stay registered, skipped */
 }
 
 int pe_host_init(const PeHookInit *init) {
@@ -399,7 +448,11 @@ int pe_hook_dispatch(int id, void *ctx) {
     int i, handled = 0;
     if (!s_started) return 0;
     /* The mods' saved records go back before any mod's own load handler sees the save. */
-    if (id == PE_HOOK_SAVE_READ && ctx) pe_save_on_read((const uint8_t *)ctx);
+    if (id == PE_HOOK_SAVE_READ && ctx) {
+        const char *alone = pe_save_wants_alone((const uint8_t *)ctx);
+        if (alone) pe_mod_stand_alone(alone);    /* first: the other mods' records load as off */
+        pe_save_on_read((const uint8_t *)ctx);
+    }
     /* A new game: every record resets, and nothing carries over, before any mod hears of it. */
     if (id == PE_HOOK_NEW_GAME) pe_save_new_game();
     for (i = 0; i < s_handler_count; i++) {

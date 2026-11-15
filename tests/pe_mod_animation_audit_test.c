@@ -10,7 +10,7 @@
 #include "pe1/game_state.h"
 FieldActor *g_PlayerEntity;
 Pe1GameState g_GameState;
-EntityAllocationBlock g_EntityAllocationTable[16];
+EntityAllocationBlock g_EntityAllocationTable[ENTITY_ALLOCATION_SLOTS];
 static PeHookFn frame,render;
 static PeMenuAction audit;
 static int *enabled;

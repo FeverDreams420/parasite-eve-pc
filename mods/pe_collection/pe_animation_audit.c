@@ -20,7 +20,7 @@ static size_t pe_required(const RenderObjectHeader *h) {
         2*sizeof(RenderShadowQuad) : 0;
 }
 static size_t pe_capacity(const FieldActor *p) {
-    for(int i=0;i<16;++i)if(g_EntityAllocationTable[i].address==p->allocation_block)
+    for(int i=0;i<ENTITY_ALLOCATION_SLOTS;++i)if(g_EntityAllocationTable[i].address==p->allocation_block)
         return (size_t)g_EntityAllocationTable[i].blockCount*ENTITY_ALLOCATION_BLOCK_SIZE;
     return 0;
 }

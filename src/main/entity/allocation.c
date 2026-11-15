@@ -215,6 +215,9 @@ void Scene_UpdateEntityPositions(void)
 }
 
 
+/* The native blocks after the original sixteen (see entity_allocation.h). */
+static _Alignas(16) u8 entity_overflow[(ENTITY_ALLOCATION_SLOTS - ENTITY_ALLOCATION_ORIGINAL_SLOTS) * ENTITY_ALLOCATION_BLOCK_SIZE];
+
 void *Entity_AllocBlock(u32 size) {
     s32 blocks;
     u8 slot;
@@ -237,13 +240,13 @@ void *Entity_AllocBlock(u32 size) {
     count = blocks & 0xFF;
     scratch = g_RenderScratchBufferBase[0];
     if (!scratch) return 0;
-    while (slot < 0x10U) {
+    while (slot < ENTITY_ALLOCATION_SLOTS) {
         offset = slot;
         if (g_EntityAllocationTable[slot].address == 0) {
             free = 1;
             if (slot < slot + count) {
                 end = blocks + slot;
-                if (end > 16) return 0;
+                if (end > ENTITY_ALLOCATION_SLOTS) return 0;
                 do {
                     EntityAllocationBlock *run = &g_EntityAllocationTable[offset];
                     if (run->address != 0) {
@@ -258,7 +261,11 @@ void *Entity_AllocBlock(u32 size) {
                 uintptr_t address;
 
                 g_EntityAllocationTable[slot].blockCount = count;
-                address = (uintptr_t)(scratch + slot * ENTITY_ALLOCATION_BLOCK_SIZE);
+                /* runs are aligned to their size (8 at most), so none crosses from the original sixteen into the overflow */
+                if (slot < ENTITY_ALLOCATION_ORIGINAL_SLOTS)
+                    address = (uintptr_t)(scratch + slot * ENTITY_ALLOCATION_BLOCK_SIZE);
+                else
+                    address = (uintptr_t)(entity_overflow + (slot - ENTITY_ALLOCATION_ORIGINAL_SLOTS) * ENTITY_ALLOCATION_BLOCK_SIZE);
                 g_EntityAllocationTable[slot].address = address;
                 return (void *)address;
             }
@@ -278,7 +285,7 @@ void Entity_FreeAllocationBlock(uintptr_t arg0) {
     int i;
 
     i = 0;
-    while ((unsigned int)(i & 0xFF) < 0x10U) {
+    while ((unsigned int)(i & 0xFF) < ENTITY_ALLOCATION_SLOTS) {
         if (g_EntityAllocationTable[i & 0xFF].address == arg0) {
             g_EntityAllocationTable[i & 0xFF].address = 0;
             return;
